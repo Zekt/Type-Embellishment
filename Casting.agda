@@ -176,28 +176,11 @@ VecC : (A : Set) → (n : ℕ) → Set
 VecC A zero = ⊤
 VecC A (suc n) = A × VecC A n
 
-isNil : Name → Name → TC Set
-isNil c x = do t ← getType c
-               case t of λ { (con c (x ∷ [])) → return (isNilArg x) ; _ → return ⊥ }
-
-isCons : Name → Name → TC Set
-isCons c x = do t ← getType c
-                case t of λ { (con c (x ∷ [])) → return (isNilArg x) ; _ → return ⊥ }
-
-isList' : Name → Definition → TC Set
-isList' x (data-type pars (b ∷ s ∷ [])) = do isnil  ← isNil b x
-                                             iscons ← isCons s x
-                                             return (isnil × iscons)
-isList' _ _ = return ⊥
-
 isList : Name → TC Set
 isList n = do df ← getDefinition n
               return Name
 
 macro
   listToVec' : Name → Term → TC _
-  --listToVec' (def (quote nil) []) hole = unify hole (def (quote nilV) [])
-  --listToVec (def (quote cons) (x ∷ xs ∷ [])) hole =
-  --                                   unify hole (def (quote consV) (hra ∷ ? ∷ ? ∷ [] ))
   listToVec' n hole = do df ← getDefinition n
                          return tt
