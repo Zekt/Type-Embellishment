@@ -14,6 +14,7 @@ open import Data.Nat.Properties
 open import Data.List
 open import Agda.Builtin.Sigma
 open import Data.Product
+open import Data.Bool
 open import Function.Base using (case_of_)
 
 open import Relation.Nullary
@@ -113,12 +114,12 @@ data ListB (A : Set) : Set where
   nil'  : ListB A
   cons' : A → ListB A → ListB A
 
-isNilType : Type → TC Bool
+isNilType : Type → Bool
 isNilType (pi (hArg (agda-sort (Sort.lit 0)))
-              (abs _ (def _ (vArg (var 0 []) ∷ [])))) = return true
-isNilType _ = return false
+              (abs _ (def _ (vArg (var 0 []) ∷ [])))) = true
+isNilType _ = false
 
-isConsType : Type → TC Bool
+isConsType : Type → Bool
 isConsType (pi (hArg (agda-sort (Sort.lit 0)))
                (abs _ (pi (vArg (var 0 []))
                           (abs _ (pi (vArg (def a (vArg (var 1 []) ∷ [])))
@@ -127,20 +128,22 @@ isConsType (pi (hArg (agda-sort (Sort.lit 0)))
                           )
                       )
                )
-           ) = return (does (a Reflection.Name.≟ b))
-isConsType _ = return false
+           ) = does (a Reflection.Name.≟ b)
+isConsType _ = false
 
 macro
   isNilMacro : Name → Term → TC _
   isNilMacro n hole = do
-                 getType n >>= isNilType >>= λ where
+                 t ← getType n
+                 case isNilType t of λ where
                    false → debugPrint "meta" 2  (nameErr n ∷ strErr " is not Nil!" ∷ [])
                    true  → debugPrint "meta" 2  (nameErr n ∷ strErr " is Nil!" ∷ [])
 
 macro
   isConsMacro : Name → Term → TC _
   isConsMacro n hole = do
-                  getType n >>= isConsType >>= λ where
+                  t ← getType n
+                  case isConsType t of λ where
                     false → debugPrint "meta" 2  (nameErr n ∷ strErr " is not Cons!" ∷ [])
                     true  → debugPrint "meta" 2  (nameErr n ∷ strErr " is Cons!" ∷ [])
 --A : ⊤
@@ -159,7 +162,6 @@ B₂ : ⊤
 B₂ = isConsMacro cons
 
 notcons : {A : Set} → A → ListB A → ListA A
-notcons = _
 
 B₃ : ⊤
 B₃ = isConsMacro notcons
@@ -176,11 +178,23 @@ VecC : (A : Set) → (n : ℕ) → Set
 VecC A zero = ⊤
 VecC A (suc n) = A × VecC A n
 
-isList : Name → TC Set
+isList : Name → TC Bool
 isList n = do df ← getDefinition n
-              return Name
+              case df of λ where
+                (data-type 1 (b ∷ s ∷ [])) → getType b >>= λ bt →
+                                             getType s >>= λ st →
+                                             return (isNilType bt ∧ isConsType st)
+                _ → return false
+
+isLength : Name → Name → TC Bool
+isLength f d = {!!}
 
 macro
-  listToVec' : Name → Term → TC _
-  listToVec' n hole = do df ← getDefinition n
-                         return tt
+  withFuncListToVec : Name → Name → Term → TC _
+  withFuncListToVec f n hole = isList n >>= λ islist →
+                               case islist of λ where
+                                 false → debugPrint "meta" 2 (nameErr n ∷ strErr " is not List!" ∷ [])
+                                 true  → isLength f n >>= λ islength →
+                                         case islength of λ where
+                                           false → debugPrint "meta" 2 (nameErr f ∷ strErr " is not a function on " ∷ nameErr n ∷ strErr "!" ∷ [])
+                                           true  → {!!}
