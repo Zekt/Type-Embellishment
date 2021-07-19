@@ -1,0 +1,38 @@
+checking datatype Casting.newtype
+  type (parameters instantiated):    ℕ → Set
+  type (full):    Set → ℕ → Set
+  sort:    Set
+  indices: 1
+  gparams: []
+  params: 
+[DomainFree Nothing(Arg {
+    argInfo = ArgInfo {
+        argInfoHiding = NotHidden, argInfoModality = Modality {
+            modRelevance = Relevant, modQuantity = Quantityω QωInferred, modCohesion = Continuous
+        }, argInfoOrigin = Reflected, argInfoFreeVariables = UnknownFVs, argInfoAnnotation = Annotation {
+            annLock = IsNotLock
+        }
+    }, unArg = Named {
+        nameOf = Just(WithOrigin {
+            woOrigin = Inserted, woThing = Ranged {
+                rangeOf = NoRange, rangedThing = "A"
+            }
+        }), namedThing = Binder {
+            binderPattern = Nothing, binderName = BindName {
+                unBind = Name {
+                    nameId = NameId 27709(ModuleNameHash 2796852512287677142), nameConcrete = Name {
+                        nameRange = NoRange, nameInScope = NotInScope, nameNameParts = Id "A": | []
+                    }, nameCanonical = Name {
+                        nameRange = NoRange, nameInScope = InScope, nameNameParts = Id "A": | []
+                    }, nameBindingSite = NoRange, nameFixity = Fixity' {
+                        theFixity = Fixity {
+                            fixityRange = NoRange, fixityLevel = Unrelated, fixityAssoc = NonAssoc
+                        }
+                        , theNotation = []
+                        , theNameRange = NoRange
+                    }, nameIsRecordName = False
+                }
+            }
+        }
+    }
+})]
