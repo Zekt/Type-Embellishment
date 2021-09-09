@@ -3,31 +3,31 @@ open import Data.Product
 open import Data.Sum
 open import Data.Empty
 open import Data.Unit
-open import Data.Maybe using (Maybe; maybe′; just; nothing)
+open import Data.Maybe using (Maybe; maybe′; just; nothing; fromMaybe)
 open import Data.List using (List; []; _∷_; _++_)
+open import Category.Monad
 open import Relation.Binary.PropositionalEquality
 open import Reflection
+open import Agda.Builtin.Reflection
 
 
 --------
 -- A universe of sums of products
 
 data Mono : Set₁ where
-  ∅   : Mono  -- alternative form of K ⊤
+  ∅   : Mono -- alternative form of K ⊤
   I   : Mono
-  K   : (Name × Set) → Mono
+  K   : Set  → Mono
   _⊗_ : Mono → Mono → Mono
 
 Poly : Set₁
 Poly = List Mono
 
-uq : Name → Term → TC _
-uq n hole = getType n >>= unify hole
-
+-- Translating native datatypes to poly
 ⟦_⟧ᴹ : Mono → Set → Set
 ⟦ ∅      ⟧ᴹ X = ⊤
 ⟦ I      ⟧ᴹ X = X
-⟦ K (A , B) ⟧ᴹ X = B
+⟦ K A    ⟧ᴹ X = A
 ⟦ M ⊗ M' ⟧ᴹ X = ⟦ M ⟧ᴹ X × ⟦ M' ⟧ᴹ X
 
 ⟦_⟧ : Poly → Set → Set
@@ -47,30 +47,52 @@ fmap (M ∷ F) f (inj₂ xs) = inj₂ (fmap F f xs)
 data μ (F : Poly) : Set where
   con : ⟦ F ⟧ (μ F) → μ F
 
-endsIn : Type → Name → Type
-endsIn t dat = pi (vArg t) (abs "_" (def dat []))
+toCon' : Mono → Name → Type → TC Type
+toCon' ∅ _ t = return t
+toCon' I ν t = return (pi (vArg (def ν [])) (abs "_" t))
+toCon' (K A) ν t = do a ← quoteTC A
+                      return (pi (vArg a) (abs "_" t))
+toCon' (M ⊗ M') ν t = do t' ← toCon' M' ν t
+                         toCon' M ν t'
 
-toTyp : Mono → Name → Type
-toTyp ∅ dat           = quoteTerm ⊤
-toTyp I dat           = def dat []
-toTyp (K (A , B)) dat = def A   []
-toTyp (M ⊗ M') dat    = pi (vArg (toTyp M dat)) (abs "_" (toTyp M' dat))
+toCon : Mono → Name → TC Type
+toCon M ν = toCon' M ν (def ν [])
 
-toCon : Mono → Name → Type
-toCon ∅ dat           = def dat []
-toCon I dat           = endsIn (def dat []) dat
-toCon (K (A , B)) dat = endsIn (def A   []) dat
-toCon (M ⊗ M') dat    = pi (vArg (toTyp M dat)) (abs "_" (endsIn (toTyp M' dat) dat))
+toCons : Poly → Name → TC (List Type)
+toCons [] _ = return []
+toCons (M ∷ F) ν = do t  ← toCon M ν
+                      ts ← toCons F ν
+                      return (t ∷ ts)
 
+-- zip that drops tails
+zip' : {A B : Set} → List A → List B → List (A × B)
+zip' [] _ = []
+zip' _ [] = []
+zip' (x ∷ xs) (y ∷ ys) = (x , y) ∷ zip' xs ys
 
-toData : Poly → Name → List (Name → Type)
-toData [] _ = []
-toData (c ∷ p) dat = (λ _ → toCon c dat) ∷ toData p dat
+genData : Name → List Name → Poly → TC _
+genData ν ξs F = do ts ← toCons F ν
+                    declareData ν 0 (def (quote Set) [])
+                    defineData ν (zip' ξs ts)
 
 -- Specialising to lists
-
 ListF : Set → Poly
-ListF A = ∅ ∷ (K {!!} ⊗ I) ∷ []
+ListF A = ∅ ∷ (K A ⊗ I) ∷ []
+
+-- use case
+data ℕ : Set where
+  zero : ℕ
+  suc  : ℕ → ℕ
+
+--data Vec (A : Set) : ℕ → Set where
+--  nilV  : Vec A 0
+--  consV : A → Vec A →
+
+unquoteDecl data ListN constructor nil cons =
+  genData ListN (nil ∷ cons ∷ []) (ListF ℕ)
+
+test : ListN
+test = cons zero (cons (suc zero) nil)
 
 toList : {A : Set} → μ (ListF A) → List A
 toList (con (inj₁ tt))              = []
