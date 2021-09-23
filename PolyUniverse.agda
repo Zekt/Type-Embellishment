@@ -2,17 +2,16 @@
 open import Function
 open import Data.Nat
 open import Data.Bool
-open import Data.Product
-open import Data.Sum
+open import Data.Product using (_×_; _,_; proj₁; proj₂; zip)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Empty
 open import Data.Unit
 open import Data.Maybe using (Maybe; maybe′; just; nothing; fromMaybe)
-open import Data.List using (List; []; _∷_; _++_)
+open import Data.List using (List; []; _∷_; _++_; map; length)
 open import Category.Monad
 open import Relation.Binary.PropositionalEquality
 open import Reflection
 open import Agda.Builtin.Reflection
-
 
 --------
 -- A universe of sums of products
@@ -36,6 +35,13 @@ Poly = List Mono
 ⟦ []    ⟧ X = ⊥
 ⟦ M ∷ F ⟧ X = ⟦ M ⟧ᴹ X ⊎ ⟦ F ⟧ X
 
+record Def : Set₁ where
+  field
+    fname : Name
+    cons  : List Name
+    base  : Poly
+    prf   : length cons ≡ length base
+
 fmapᴹ : (M : Mono) {X Y : Set} → (X → Y) → ⟦ M ⟧ᴹ X → ⟦ M ⟧ᴹ Y
 fmapᴹ ∅        f _          = tt
 fmapᴹ I        f x          = f x
@@ -49,16 +55,16 @@ fmap (M ∷ F) f (inj₂ xs) = inj₂ (fmap F f xs)
 data μ (F : Poly) : Set where
   con : ⟦ F ⟧ (μ F) → μ F
 
-toCon' : Mono → Name → Type → TC Type
-toCon' ∅        _ t = return t
-toCon' I        ν t = return (pi (vArg (def ν [])) (abs "_" t))
-toCon' (K A)    ν t = do a ← quoteTC A --?
-                         return (pi (vArg a) (abs "_" t))
-toCon' (M ⊗ M') ν t = do t' ← toCon' M' ν t
-                         toCon' M ν t'
+toTyp : Mono → Name → Type → TC Type
+toTyp ∅        _ t = return t
+toTyp I        ν t = return (pi (vArg (def ν [])) (abs "_" t))
+toTyp (K A)    ν t = do a ← quoteTC A --?
+                        return (pi (vArg a) (abs "_" t))
+toTyp (M ⊗ M') ν t = do t' ← toTyp M' ν t
+                        toTyp M ν t'
 
 toCon : Mono → Name → TC Type
-toCon M ν = toCon' M ν (def ν [])
+toCon M ν = toTyp M ν (def ν [])
 
 toCons : Poly → Name → TC (List Type)
 toCons [] _ = return []
@@ -96,9 +102,6 @@ data Dep : ℕ → Set where
 
 unquoteDecl data ListN constructor nil cons =
   genData ListN (nil ∷ cons ∷ []) (ListF ℕ)
-
-test : ListN
-test = cons 0 (cons 1 nil)
 
 toList : {A : Set} → μ (ListF A) → List A
 toList (con (inj₁ tt))              = []
@@ -185,35 +188,85 @@ foldr' {A} e f []       = fold (ListF A) e f (fromList [])
 foldr' {A} e f (a ∷ as) = fold (ListF A) e f (fromList (a ∷ as))
   -- in general derived definitions
 
---toFoldᴹ : Mono → Type → Type → ℕ → TC Type
---toFoldᴹ ∅ X Y n = return (shiftVar Y n)
---toFoldᴹ I X Y n = return (pi (vArg X) (abs "_" (shiftVar Y (suc n))))
---toFoldᴹ (K A)    X Y n = do a ← quoteTC A
---                            return (pi (vArg a) (abs "_" (shiftVar Y (suc n))))
---toFoldᴹ (M ⊗ M') X Y n = do Y' ← toFoldᴹ M' X Y (suc n)
---                            toFoldᴹ M X Y' n
+genFold : Poly → Set → TC Term
+genFold F T = quoteTC ({X : Set} → Alg F X (T → X))
 
--- base functor, X, end type, and depth of de brujin index
---toFold : Poly → Type → Type → ℕ → TC Type
---toFold []      X Y n = return (shiftVar Y n)
---toFold (M ∷ F) X Y n = do M' ← toFoldᴹ M X X 0
---                          F' ← toFold  F X Y (suc n)
---                          return (pi (vArg M') (abs "_" F'))
--- toFoldᴹ ∅ (def ListN []) (var 0 []) 0
--- → var 0 []
--- toFold (K ℕ ⊗ I) ListN 1
--- → toFoldᴹ (K ℕ) (def ListN []) (var 1 []) 0
---   → pi (vArg ⟦ℕ⟧) (abs "_" (var 1 []))
+-- number of arguments of a constructor of a Mono
+conArgs : Mono → ℕ
+conArgs ∅ = 0
+conArgs I = 1
+conArgs (K _) = 1
+conArgs (M ⊗ M') = conArgs M + conArgs M'
 
---genFold : Name → Name → Poly → TC _
---genFold dataName foldName F = do f ← toFold F (var 0 []) (pi (vArg (def dataName [])) (abs "_" (var 0 []))) 0
---                                 declareDef (vArg foldName) (pi (hArg (quoteTerm Set)) (abs "X" f))
+foldPats : Poly → List (Arg Pattern)
+foldPats [] = []
+foldPats (M ∷ F) = vArg (var (length F + conArgs M)) ∷ foldPats F
+
+varArgs : {X : Set} → Mono → ℕ → (Mono → ℕ → X) → List (Arg X)
+varArgs ∅        n  f = []
+varArgs I        n  f = vArg (f I n) ∷ []
+varArgs Κ@(K _)  n  f = vArg (f Κ n) ∷ []
+varArgs (M ⊗ M') n  f = let ms = varArgs M' n f
+                         in varArgs M (n + length ms) f ++ ms
+
+--varPats : ℕ → Mono → List (Arg Pattern)
+--varPats n ∅ = []
+--varPats n I = vArg (var n) ∷ []
+--varPats n (K _) = vArg (var n) ∷ []
+--varPats n (M ⊗ M') = let ms = varPats n M'
+--                      in varPats (n + length ms) M ++ ms
+
+--varTerms : ℕ → Mono → List (Arg Term)
+--varTerms n ∅ = []
+--varTerms n I = vArg (var n []) ∷ []
+--varTerms n (K _) = vArg (var n []) ∷ []
+--varTerms n (M ⊗ M') = let ms = varTerms n M'
+--                       in varTerms (n + length ms) M ++ ms
+
+--patᴹ : Mono → Name → Arg Pattern
+--patᴹ M ν = vArg (con ν (varPats 0 M))
+
+-- assuming given datatype and constructors are generated from F
+genFoldDef : Poly → Poly → Name → List Name → TC (List Clause)
+genFoldDef _ [] ν _              = return []
+genFoldDef _ M ν []              = typeError (strErr "number of constructors doesn't match polynomial" ∷ [])
+genFoldDef F (M ∷ F') ν (ξ ∷ ξs) = do
+  cls   ← genFoldDef F F' ν ξs
+  typs  ← toCons F ν
+  typsᴹ ← varTyps M
+  return (clause (map (_,_ "_" ∘ vArg) (typs ++ typsᴹ))
+                 (foldPats F ++ (conPat ξ ∷ []))
+                 (var (length cls + conArgs M) varTerms)
+            ∷ cls)
+  where
+    varTyps : Mono → TC (List Type)
+    varTyps ∅        = return []
+    varTyps I        = return ((def ν []) ∷ [])
+    varTyps (K A)    = do a ← quoteTC A
+                          return (a ∷ [])
+    varTyps (M ⊗ M') = do ts  ← varTyps M
+                          ts' ← varTyps M'
+                          return (ts ++ ts')
+
+    varPats : List (Arg Pattern)
+    varPats = varArgs M 0 λ _ → var
+
+    conPat : Name → Arg Pattern
+    conPat ν = vArg (con ν varPats)
+
+    varTerms : List (Arg Term)
+    varTerms = varArgs M 0 λ _ n → var n []
 
 testAlg : Poly → Name → TC _
 testAlg F foldName = withNormalisation true
-                       do a ← quoteTC ({X : Set} → Alg F X (μ F → X))
+                       do a   ← genFold F ListN
+                          cls ← genFoldDef F F (quote ListN) (quote nil ∷ quote cons ∷ [])
                           debugPrint "meta" 5 (termErr a ∷ [])
                           declareDef (vArg foldName) a
-                          defineFun foldName (clause [] [] unknown ∷ [])
+                          defineFun foldName cls
 
-unquoteDecl foldN = testAlg (ListF ℕ) foldN
+--unquoteDecl foldN = testAlg (ListF ℕ) foldN
+
+--foldN : {X : Set} → Alg (ListF ℕ) X (ListN → X)
+--foldN f g nil = f
+--foldN f g (cons x xs) = g x (foldN f {!!} {!!})
