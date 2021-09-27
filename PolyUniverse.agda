@@ -1,6 +1,8 @@
 {-# OPTIONS -v meta:5 #-}
 open import Function
+open import Function.Base using (case_of_)
 open import Data.Nat
+open import Data.Nat.Show
 open import Data.Bool
 open import Data.Product using (_×_; _,_; proj₁; proj₂; zip)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
@@ -55,16 +57,31 @@ fmap (M ∷ F) f (inj₂ xs) = inj₂ (fmap F f xs)
 data μ (F : Poly) : Set where
   con : ⟦ F ⟧ (μ F) → μ F
 
-toTyp : Mono → Name → Type → TC Type
-toTyp ∅        _ t = return t
-toTyp I        ν t = return (pi (vArg (def ν [])) (abs "_" t))
-toTyp (K A)    ν t = do a ← quoteTC A --?
-                        return (pi (vArg a) (abs "_" t))
-toTyp (M ⊗ M') ν t = do t' ← toTyp M' ν t
-                        toTyp M ν t'
+argMap : {X : Set} → (X → X) → Arg X → Arg X
+argMap f (arg i x) = arg i (f x)
+
+{-# TERMINATING #-}
+shiftVar : ℕ → Term → Term
+shiftVar n (var x args) = var (x + n) (map (argMap (shiftVar n)) args)
+shiftVar n t = t
+
+-- number of arguments of a constructor of a Mono
+conArgs : Mono → ℕ
+conArgs ∅ = 0
+conArgs I = 1
+conArgs (K _) = 1
+conArgs (M ⊗ M') = conArgs M + conArgs M'
+
+toTyp : Mono → Name → Type → Type → ℕ → TC Type
+toTyp ∅        _ s t n = return (shiftVar n t)
+toTyp I        ν s t n = return (pi (vArg (shiftVar n s)) (abs "_" (shiftVar (suc n) t)))
+toTyp (K A)    ν s t n = do a ← quoteTC A --?
+                            return (pi (vArg a) (abs "_" (shiftVar (suc n) t)))
+toTyp (M ⊗ M') ν s t n = do t' ← toTyp M' ν s t (conArgs M)
+                            toTyp M ν s t' n
 
 toCon : Mono → Name → TC Type
-toCon M ν = toTyp M ν (def ν [])
+toCon M ν = toTyp M ν (def ν []) (def ν []) 0
 
 toCons : Poly → Name → TC (List Type)
 toCons [] _ = return []
@@ -122,7 +139,6 @@ conList' (inj₂ (inj₁ (a , as))) =  conList (inj₂ (inj₁ (a , as)))
   --   check Allais et al's 'New equations for neutral terms' (DTP 2013)
   -- making toList and fromList meet may be problematic (e.g., when involving if_then_else_)
 
-
 --------
 -- Iteration (fold)
 
@@ -154,7 +170,6 @@ iterList' {A} alg (a ∷ as) = iteration (ListF A) alg (fromList (a ∷ as))
   -- have to deal with recursion
 
 -- Curried fold
-
 Algᴹ : (M : Mono) → Set → Set → Set
 Algᴹ ∅        X Y = Y
 Algᴹ I        X Y = X → Y
@@ -191,23 +206,12 @@ foldr' {A} e f (a ∷ as) = fold (ListF A) e f (fromList (a ∷ as))
 genFold : Poly → Set → TC Term
 genFold F T = quoteTC ({X : Set} → Alg F X (T → X))
 
--- number of arguments of a constructor of a Mono
-conArgs : Mono → ℕ
-conArgs ∅ = 0
-conArgs I = 1
-conArgs (K _) = 1
-conArgs (M ⊗ M') = conArgs M + conArgs M'
-
-foldPats : Poly → List (Arg Pattern)
-foldPats [] = []
-foldPats (M ∷ F) = vArg (var (length F + conArgs M)) ∷ foldPats F
-
 varArgs : {X : Set} → Mono → ℕ → (Mono → ℕ → X) → List (Arg X)
-varArgs ∅        n  f = []
-varArgs I        n  f = vArg (f I n) ∷ []
-varArgs Κ@(K _)  n  f = vArg (f Κ n) ∷ []
-varArgs (M ⊗ M') n  f = let ms = varArgs M' n f
-                         in varArgs M (n + length ms) f ++ ms
+varArgs ∅        n f = []
+varArgs I        n f = vArg (f I n) ∷ []
+varArgs Κ@(K _)  n f = vArg (f Κ n) ∷ []
+varArgs (M ⊗ M') n f = let ms = varArgs M' n f
+                        in varArgs M (n + length ms) f ++ ms
 
 --varPats : ℕ → Mono → List (Arg Pattern)
 --varPats n ∅ = []
@@ -226,18 +230,42 @@ varArgs (M ⊗ M') n  f = let ms = varArgs M' n f
 --patᴹ : Mono → Name → Arg Pattern
 --patᴹ M ν = vArg (con ν (varPats 0 M))
 
+--toVarType : Mono → Name → ℕ → TC Type
+--toVarType ∅ ν n = return (var n [])
+--toVarType I ν n = return (pi (vArg (var n [])) (abs "_" (var (suc n) [])))
+--toVarType (K A) ν n = do a ← quoteTC A
+--                         return (pi (vArg a) (abs "_" (var (suc n) [])))
+--toVarType (M ⊗ M') ν n = do t' ← toVarType M' ν (n + conArgs M)
+--                            return {!!}
+
+toVarType : Mono → Name → ℕ → TC Type
+toVarType M ν n = toTyp M ν (var 0 []) (var 0 []) n
+
+toTel : Poly → Name → ℕ → TC (List Type)
+toTel [] ν n      = return []
+toTel (M ∷ F) ν n = do m  ← toVarType M ν n
+                       ms ← toTel F ν (conArgs M)
+                       return (m ∷ ms)
+
 -- assuming given datatype and constructors are generated from F
 genFoldDef : Poly → Poly → Name → List Name → TC (List Clause)
 genFoldDef _ [] ν _              = return []
-genFoldDef _ M ν []              = typeError (strErr "number of constructors doesn't match polynomial" ∷ [])
+genFoldDef _ M  ν []             = typeError (strErr "number of constructors doesn't match polynomial" ∷ [])
 genFoldDef F (M ∷ F') ν (ξ ∷ ξs) = do
   cls   ← genFoldDef F F' ν ξs
   typs  ← toCons F ν
   typsᴹ ← varTyps M
+  let lenTotal = length F' + length typsᴹ
+      varN     = case lenTotal of λ { zero    → zero
+                                    ; (suc n) → n }
+  debugPrint "meta" 5 (map termErr (typs ++ typsᴹ))
+  debugPrint "meta" 5 ( strErr (show lenTotal)
+                      ∷ strErr (show (length varTerms))
+                      ∷ [])
   return (clause (map (_,_ "_" ∘ vArg) (typs ++ typsᴹ))
-                 (foldPats F ++ (conPat ξ ∷ []))
-                 (var (length cls + conArgs M) varTerms)
-            ∷ cls)
+                 (foldPats F ++ (conPat ∷ []))
+                 (var lenTotal varTerms)
+            ∷ []) -- only one clause for debugging
   where
     varTyps : Mono → TC (List Type)
     varTyps ∅        = return []
@@ -245,26 +273,60 @@ genFoldDef F (M ∷ F') ν (ξ ∷ ξs) = do
     varTyps (K A)    = do a ← quoteTC A
                           return (a ∷ [])
     varTyps (M ⊗ M') = do ts  ← varTyps M
-                          ts' ← varTyps M'
+                          ts' ← varTyps M
                           return (ts ++ ts')
 
-    varPats : List (Arg Pattern)
-    varPats = varArgs M 0 λ _ → var
+    varPats : Mono → List (Arg Pattern)
+    varPats M = varArgs M 0 λ _ → var
 
-    conPat : Name → Arg Pattern
-    conPat ν = vArg (con ν varPats)
+    conPat : Arg Pattern
+    conPat = vArg (con ν (varPats M))
 
     varTerms : List (Arg Term)
     varTerms = varArgs M 0 λ _ n → var n []
 
-testAlg : Poly → Name → TC _
-testAlg F foldName = withNormalisation true
-                       do a   ← genFold F ListN
-                          cls ← genFoldDef F F (quote ListN) (quote nil ∷ quote cons ∷ [])
-                          debugPrint "meta" 5 (termErr a ∷ [])
-                          declareDef (vArg foldName) a
-                          defineFun foldName cls
+    foldPats : Poly → List (Arg Pattern)
+    foldPats []      = []
+    foldPats (_ ∷ F) = vArg (var (length F + conArgs M)) ∷ foldPats F
 
+    --prf : (M : Mono) → conArgs M ≡ length (varPats M)
+    --prf ∅ = refl
+    --prf I = refl
+    --prf (K x) = refl
+    --prf (M ⊗ M') = {!!}
+
+cls : Name → Clause
+cls ν = clause (("X" , (hArg (quoteTerm Set))) ∷ map (_,_ "_" ∘ vArg)
+                                                     ( var 0 []
+                                                     ∷ pi (vArg (quoteTerm ℕ))
+                                                          (abs "_" (pi (vArg (var 2 []))
+                                                                       (abs "_" (var 3 []))))
+                                                     ∷ quoteTerm ℕ
+                                                     ∷ quoteTerm ListN
+                                                     ∷ []))
+               (hArg (var 4) ∷ map vArg (var 3 ∷ var 2 ∷ con (quote cons) (map vArg (var 1 ∷ var 0 ∷ [])) ∷ []))
+               (var 2 (map vArg (var 1 [] ∷ def ν (map vArg (var 3 [] ∷ var 2 [] ∷ var 0 [] ∷ [])) ∷ [])))
+
+--foldListN : {X : Set} → X → (ℕ → X → X) → ListN → X
+--foldListN e f nil = e
+--foldListN e f (cons z l) = f z (foldListN e f l)
+
+--macro
+--  testM : Term → TC _
+--  testM hole = do types ← toCons (ListF ℕ) (quote ListN)
+--                  debugPrint "meta" 5 (map termErr types)
+--                  unify hole (quoteTerm tt)
+--
+--printTyps = testM
+
+--testAlg : Poly → Name → TC _
+--testAlg F foldName = withNormalisation true
+--                       do a   ← genFold F ListN
+--                          --cls ← genFoldDef F F (quote ListN) (quote nil ∷ quote cons ∷ [])
+--                          --debugPrint "meta" 5 (termErr a ∷ [])
+--                          declareDef (vArg foldName) a
+--                          defineFun foldName (cls foldName ∷ [])
+--
 --unquoteDecl foldN = testAlg (ListF ℕ) foldN
 
 --foldN : {X : Set} → Alg (ListF ℕ) X (ListN → X)
