@@ -4,6 +4,7 @@ open import Function.Base using (case_of_)
 open import Data.Nat
 open import Data.Nat.Show
 open import Data.Bool
+open import Data.String using (String) renaming (_++_ to _<>_)
 open import Data.Product using (_×_; _,_; proj₁; proj₂; zip)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Empty
@@ -60,10 +61,19 @@ data μ (F : Poly) : Set where
 argMap : {X : Set} → (X → X) → Arg X → Arg X
 argMap f (arg i x) = arg i (f x)
 
+
 {-# TERMINATING #-}
-shiftVar : ℕ → Term → Term
-shiftVar n (var x args) = var (x + n) (map (argMap (shiftVar n)) args)
-shiftVar n t = t
+mutual
+  shiftArgs : ℕ → List (Arg Term) → List (Arg Term)
+  shiftArgs n args = map (argMap (shift n)) args
+
+  shift : ℕ → Term → Term
+  shift n (var x args) = var (x + n) (shiftArgs n args)
+  shift n (pi (arg i x) (abs s y)) = pi (arg i (shift n x)) (abs s (shift n y))
+  shift n (con c args) = con c (shiftArgs n args)
+  shift n (def f args) = def f (shiftArgs n args)
+  shift n (lam v (abs s x)) = lam v (abs s (shift n x))
+  shift n t = t
 
 -- number of arguments of a constructor of a Mono
 conArgs : Mono → ℕ
@@ -72,16 +82,16 @@ conArgs I = 1
 conArgs (K _) = 1
 conArgs (M ⊗ M') = conArgs M + conArgs M'
 
-toTyp : Mono → Name → Type → Type → ℕ → TC Type
-toTyp ∅        _ s t n = return (shiftVar n t)
-toTyp I        ν s t n = return (pi (vArg (shiftVar n s)) (abs "_" (shiftVar (suc n) t)))
-toTyp (K A)    ν s t n = do a ← quoteTC A --?
-                            return (pi (vArg a) (abs "_" (shiftVar (suc n) t)))
-toTyp (M ⊗ M') ν s t n = do t' ← toTyp M' ν s t (conArgs M)
-                            toTyp M ν s t' n
+toTyp : Mono → Type → Type → TC Type
+toTyp ∅        s t = return t
+toTyp I        s t = return (pi (vArg s) (abs "_" (shift 1 t)))
+toTyp (K A)    s t = do a ← quoteTC A --?
+                        return (pi (vArg a) (abs "_" (shift 1 t)))
+toTyp (M ⊗ M') s t = do t' ← toTyp M' s t
+                        toTyp M s t'
 
 toCon : Mono → Name → TC Type
-toCon M ν = toTyp M ν (def ν []) (def ν []) 0
+toCon M ν = toTyp M (def ν []) (def ν [])
 
 toCons : Poly → Name → TC (List Type)
 toCons [] _ = return []
@@ -238,14 +248,14 @@ varArgs (M ⊗ M') n f = let ms = varArgs M' n f
 --toVarType (M ⊗ M') ν n = do t' ← toVarType M' ν (n + conArgs M)
 --                            return {!!}
 
-toVarType : Mono → Name → ℕ → TC Type
-toVarType M ν n = toTyp M ν (var 0 []) (var 0 []) n
+toVarType : Mono → TC Type
+toVarType M = toTyp M (var 0 []) (var 0 [])
 
-toTel : Poly → Name → ℕ → TC (List Type)
-toTel [] ν n      = return []
-toTel (M ∷ F) ν n = do m  ← toVarType M ν n
-                       ms ← toTel F ν (conArgs M)
-                       return (m ∷ ms)
+toTel : Poly → TC (List Type)
+toTel []      = return []
+toTel (M ∷ F) = do m  ← toVarType M
+                   ms ← toTel F
+                   return (m ∷ map (shift 1) ms)
 
 -- assuming given datatype and constructors are generated from F
 genFoldDef : Poly → Poly → Name → List Name → TC (List Clause)
@@ -290,22 +300,27 @@ genFoldDef F (M ∷ F') ν (ξ ∷ ξs) = do
     foldPats (_ ∷ F) = vArg (var (length F + conArgs M)) ∷ foldPats F
 
     --prf : (M : Mono) → conArgs M ≡ length (varPats M)
-    --prf ∅ = refl
+
     --prf I = refl
     --prf (K x) = refl
     --prf (M ⊗ M') = {!!}
 
-cls : Name → Clause
-cls ν = clause (("X" , (hArg (quoteTerm Set))) ∷ map (_,_ "_" ∘ vArg)
-                                                     ( var 0 []
-                                                     ∷ pi (vArg (quoteTerm ℕ))
-                                                          (abs "_" (pi (vArg (var 2 []))
-                                                                       (abs "_" (var 3 []))))
-                                                     ∷ quoteTerm ℕ
-                                                     ∷ quoteTerm ListN
-                                                     ∷ []))
-               (hArg (var 4) ∷ map vArg (var 3 ∷ var 2 ∷ con (quote cons) (map vArg (var 1 ∷ var 0 ∷ [])) ∷ []))
-               (var 2 (map vArg (var 1 [] ∷ def ν (map vArg (var 3 [] ∷ var 2 [] ∷ var 0 [] ∷ [])) ∷ [])))
+--showVar : Term → String
+--showVar (var x args) = "Var " <> (show x)
+--showVar (pi (arg i t1) (abs s t2)) = "Pi " <> showVar t1 <> " → " <> showVar t2
+--showVar T = " others"
+
+cls : Name → TC Clause
+cls ν = do tel ← toTel (ListF ℕ)
+           --let tel = var 0 [] ∷ pi (vArg (quoteTerm ℕ)) (abs "_" (pi (vArg (var 2 [])) (abs "_" (var 3 [])))) ∷ []
+           --debugPrint "meta" 5 (map (strErr ∘ showVar) tel)--(strErr (show (length tel)) ∷ [])
+           return $ clause (("X" , (hArg (quoteTerm Set))) ∷ map (_,_ "_" ∘ vArg)
+                                                                 ( tel ++
+                                                                   quoteTerm ℕ
+                                                                 ∷ quoteTerm ListN
+                                                                 ∷ []))
+                           (hArg (var 4) ∷ map vArg (var 3 ∷ var 2 ∷ con (quote cons) (map vArg (var 1 ∷ var 0 ∷ [])) ∷ []))
+                           (var 2 (map vArg (var 1 [] ∷ def ν (map vArg (var 3 [] ∷ var 2 [] ∷ var 0 [] ∷ [])) ∷ [])))
 
 --foldListN : {X : Set} → X → (ℕ → X → X) → ListN → X
 --foldListN e f nil = e
@@ -319,15 +334,16 @@ cls ν = clause (("X" , (hArg (quoteTerm Set))) ∷ map (_,_ "_" ∘ vArg)
 --
 --printTyps = testM
 
---testAlg : Poly → Name → TC _
---testAlg F foldName = withNormalisation true
---                       do a   ← genFold F ListN
---                          --cls ← genFoldDef F F (quote ListN) (quote nil ∷ quote cons ∷ [])
---                          --debugPrint "meta" 5 (termErr a ∷ [])
---                          declareDef (vArg foldName) a
---                          defineFun foldName (cls foldName ∷ [])
---
---unquoteDecl foldN = testAlg (ListF ℕ) foldN
+testAlg : Poly → Name → TC _
+testAlg F foldName = withNormalisation true
+                       do a   ← genFold F ListN
+                          cls ← cls foldName
+                          --cls ← genFoldDef F F (quote ListN) (quote nil ∷ quote cons ∷ [])
+                          --debugPrint "meta" 5 (termErr a ∷ [])
+                          declareDef (vArg foldName) a
+                          defineFun foldName (cls ∷ [])
+
+unquoteDecl foldN = testAlg (ListF ℕ) foldN
 
 --foldN : {X : Set} → Alg (ListF ℕ) X (ListN → X)
 --foldN f g nil = f
