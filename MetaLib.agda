@@ -3,38 +3,49 @@ open import Function
 open import Function.Base using (case_of_)
 open import Data.Nat
 open import Data.Nat.Show
-open import Data.Bool
+open import Data.Bool using (if_then_else_; true; false)
 open import Data.String using (String) renaming (_++_ to _<>_)
 open import Data.Product using (_×_; _,_; proj₁; proj₂; zip)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Empty
-open import Data.Unit
+--open import Data.Unit
 open import Data.Maybe using (Maybe; maybe′; just; nothing; fromMaybe)
 open import Data.List using (List; []; _∷_; _++_; map; length)
 open import Category.Monad
 open import Relation.Binary.PropositionalEquality
+open import Relation.Nullary using (Dec; does)
 open import Reflection
 --open import Reflection.Traversal ? ?
 open import Agda.Builtin.Reflection
 open import PolyUniverse
 
-argMap : {X : Set} → (X → X) → Arg X → Arg X
-argMap f (arg i x) = arg i (f x)
+import Reflection.Name as Name
+import Reflection.Traversal {id} (record { pure = id ; _⊛_ = id }) as T
 
-{-# TERMINATING #-}
-mutual
-  shiftArgs : ℕ → List (Arg Term) → List (Arg Term)
-  shiftArgs n args = map (argMap (shift n)) args
+shift : ℕ → Term → Term
+shift n = T.traverseTerm (record T.defaultActions
+                            {onVar = λ Γ m → if does (T.Cxt.len Γ ≤? m)
+                                               then m + n
+                                               else m})
+                         (0 T., [])
 
-  shift : ℕ → Term → Term
-  shift n (var x args) = var (x + n) (shiftArgs n args)
-  shift n (pi (arg i x) (abs s y)) = pi (arg i (shift n x)) (abs s (shift n y))
-  shift n (con c args) = con c (shiftArgs n args)
-  shift n (def f args) = def f (shiftArgs n args)
-  shift n (lam v (abs s x)) = lam v (abs s (shift n x))
-  shift n t = t
+--argMap : {X : Set} → (X → X) → Arg X → Arg X
+--argMap f (arg i x) = arg i (f x) ∷
+--
+--{-# TERMINATING #-}
+--mutual
+--  shiftArgs : ℕ → List (Arg Term) → List (Arg Term)
+--  shiftArgs n args = map (argMap (shift n)) args
+--
+--  shift : ℕ → Term → Term
+--  shift n (var x args) = var (x + n) (shiftArgs n args)
+--  shift n (pi (arg i x) (abs s y)) = pi (arg i (shift n x)) (abs s (shift n y))
+--  shift n (con c args) = con c (shiftArgs n args)
+--  shift n (def f args) = def f (shiftArgs n args)
+--  shift n (lam v (abs s x)) = lam v (abs s (shift n x))
+--  shift n t = t
 
--- number of arguments of a constructor of a Mono
+-- number of arguments of a corresponding constructor of a Mono
 conArgs : Mono → ℕ
 conArgs ∅ = 0
 conArgs I = 1
@@ -72,7 +83,8 @@ genData ν ξs F = do ts ← toCons F ν
 unquoteDecl data ListN constructor nil cons =
   genData ListN (nil ∷ cons ∷ []) (ListF ℕ)
 
----- specialized generation of fold
+--------
+---- specialized generalisation of fold
 
 foldrN : {X : Set} → Alg (ListF ℕ) X (ListN → X)
 foldrN e f nil         = e
@@ -81,37 +93,35 @@ foldrN e f (cons n ns) = f n (foldrN e f ns)
 genFold : Poly → Set → TC Term
 genFold F T = quoteTC ({X : Set} → Alg F X (T → X))
 
+replaceμ : Name → Term → Term
+replaceμ ν = T.traverseTerm
+               (record T.defaultActions
+                  {onDef = λ _ name → if does (name Name.≟ quote μ)
+                                        then ν
+                                        else name})
+               (zero T., [])
+
+ϕ : Poly → Set
+ϕ F = ListN
+
+genType : Name → Poly → TC Type
+genType n T = do typ ← getType n
+                 let typ' = replaceμ (quote ϕ) typ
+                 pT  ← quoteTC T
+                 pos ← freshName "_"
+                 declarePostulate (vArg pos) typ'
+                 t  ← inferType (def pos (vArg pT ∷ []))
+                 t' ← normalise t
+                 return t'
+
+--unquoteDecl = genType (quote fold) (ListF ℕ)
+
 varArgs : {X : Set} → Mono → ℕ → (Mono → ℕ → X) → List (Arg X)
 varArgs ∅        n f = []
 varArgs I        n f = vArg (f I n) ∷ []
 varArgs Κ@(K _)  n f = vArg (f Κ n) ∷ []
 varArgs (M ⊗ M') n f = let ms = varArgs M' n f
                         in varArgs M (n + length ms) f ++ ms
-
---varPats : ℕ → Mono → List (Arg Pattern)
---varPats n ∅ = []
---varPats n I = vArg (var n) ∷ []
---varPats n (K _) = vArg (var n) ∷ []
---varPats n (M ⊗ M') = let ms = varPats n M'
---                      in varPats (n + length ms) M ++ ms
-
---varTerms : ℕ → Mono → List (Arg Term)
---varTerms n ∅ = []
---varTerms n I = vArg (var n []) ∷ []
---varTerms n (K _) = vArg (var n []) ∷ []
---varTerms n (M ⊗ M') = let ms = varTerms n M'
---                       in varTerms (n + length ms) M ++ ms
-
---patᴹ : Mono → Name → Arg Pattern
---patᴹ M ν = vArg (con ν (varPats 0 M))
-
---toVarType : Mono → Name → ℕ → TC Type
---toVarType ∅ ν n = return (var n [])
---toVarType I ν n = return (pi (vArg (var n [])) (abs "_" (var (suc n) [])))
---toVarType (K A) ν n = do a ← quoteTC A
---                         return (pi (vArg a) (abs "_" (var (suc n) [])))
---toVarType (M ⊗ M') ν n = do t' ← toVarType M' ν (n + conArgs M)
---                            return {!!}
 
 toVarType : Mono → TC Type
 toVarType M = toTyp M (var 0 []) (var 0 [])

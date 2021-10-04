@@ -52,14 +52,9 @@ fmap (M ∷ F) f (inj₂ xs) = inj₂ (fmap F f xs)
 data μ (F : Poly) : Set where
   con : ⟦ F ⟧ (μ F) → μ F
 
-
 -- Specialising to lists
 ListF : Set → Poly
 ListF A = ∅ ∷ (K A ⊗ I) ∷ []
-
---data Dep : ℕ → Set where
---  nilV  : Dep zero
---  consV : {n : ℕ} → (m : ℕ) → Dep n → Dep (n + m)
 
 toList : {A : Set} → μ (ListF A) → List A
 toList (con (inj₁ tt))              = []
@@ -145,4 +140,3 @@ foldr' : {A X : Set} → X → (A → X → X) → List A → X
 foldr' {A} e f []       =  fold (ListF A) e f (fromList []) 
 foldr' {A} e f (a ∷ as) =  fold (ListF A) e f (fromList (a ∷ as)) 
   -- in general derived definitions
-
