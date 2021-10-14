@@ -1,3 +1,4 @@
+{-# OPTIONS --allow-unsolved-metas #-}
 {-# OPTIONS -v meta:5 #-}
 open import Function
 open import Function.Base using (case_of_)
@@ -6,15 +7,13 @@ open import Data.Nat.Show
 open import Data.Bool
 open import Data.String using (String) renaming (_++_ to _<>_)
 open import Data.Product using (_×_; _,_; proj₁; proj₂; zip)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to join)
 open import Data.Empty
 open import Data.Unit
 open import Data.Maybe using (Maybe; maybe′; just; nothing; fromMaybe)
 open import Data.List using (List; []; _∷_; _++_; map; length)
 open import Category.Monad
-open import Relation.Binary.PropositionalEquality
 open import Reflection
---open import Reflection.Traversal ? ?
 open import Agda.Builtin.Reflection
 
 --------
@@ -125,18 +124,44 @@ fromAlgᴹ (M ⊗ M') alg (xs , xs') = fromAlgᴹ M' (fromAlgᴹ M alg xs) xs'
 
 toAlg : (F : Poly) {X Y : Set} → ((⟦ F ⟧ X → X) → Y) → Alg F X Y
 toAlg []      f = f λ ()
-toAlg (M ∷ F) f alg = toAlg F λ g → f λ { (inj₁ xs) → fromAlgᴹ M alg xs
-                                        ; (inj₂ xs) → g xs }
+toAlg (M ∷ F) f alg = toAlg F λ g → f (join (fromAlgᴹ M alg) g)
 
+toAlgL : {X Y : Set} → ((⊤ ⊎ (ℕ × X) ⊎ ⊥ → X) → Y) → X → (ℕ → X → X) → Y
+toAlgL alg e f = toAlg (ListF ℕ) alg e f
+
+-- def (quote μ) ()
 fold : (F : Poly) → {X : Set} → Alg F X (μ F → X)
 fold F = toAlg F (iteration F)
-
 --------
+
+{-
 
 foldr : {A X : Set} → Alg (ListF A) X (List A → X)
 foldr {A} e f as = fold (ListF A) e f (fromList as)
 
 foldr' : {A X : Set} → X → (A → X → X) → List A → X
-foldr' {A} e f []       =  fold (ListF A) e f (fromList []) 
-foldr' {A} e f (a ∷ as) =  fold (ListF A) e f (fromList (a ∷ as)) 
+foldr' {A} e f []       =  fold (ListF A) e f (fromList [])
+                           -- e
+foldr' {A} e f (a ∷ as) =  {! fold (ListF A) e f (fromList (a ∷ as)) !}
+                           -- f a (foldr' e f as)
   -- in general derived definitions
+
+-}
+
+iterationL : {X : Set} → (⊤ ⊎ (ℕ × X) ⊎ ⊥ → X) → List ℕ → X
+iterationL alg ns = iteration (ListF ℕ) alg (fromList ns)
+
+-- iterationL' : {X : Set} → (⊤ ⊎ (ℕ × X) ⊎ ⊥ → X) → List ℕ → X
+-- iterationL' alg []       = alg (inj₁ tt)
+-- iterationL' alg (n ∷ ns) = alg (inj₂ (inj₁ (n , iteration (ListF ℕ) alg (fromList ns))))
+
+iterationL' : {X : Set} → (⊤ ⊎ (ℕ × X) ⊎ ⊥ → X) → List ℕ → X
+iterationL' alg []       = alg (inj₁ tt)
+iterationL' alg (n ∷ ns) = alg (inj₂ (inj₁ (n , iterationL' alg ns)))
+
+foldr : {X : Set} → Alg (ListF ℕ) X (List ℕ → X)
+foldr e f as = toAlg (ListF ℕ) iterationL' e f as
+
+foldr' : {X : Set} → Alg (ListF ℕ) X (List ℕ → X)
+foldr' e f [] =  toAlg (ListF ℕ) iterationL' e f []
+foldr' e f (a ∷ as) = {! toAlg (ListF ℕ) iterationL e f (a ∷ as) !}
