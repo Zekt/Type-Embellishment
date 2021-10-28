@@ -86,15 +86,12 @@ genData ν ξs F = do ts ← toCons F ν
                     declareData ν 0 (def (quote Set) [])
                     defineData ν (zip' ξs ts)
 
-unquoteDecl data ListN constructor nil cons =
-  genData ListN (nil ∷ cons ∷ []) (ListF ℕ)
-
 --------
 ---- specialized generalisation of fold
 
-foldrN : {X : Set} → Alg (ListF ℕ) X (ListN → X)
-foldrN e f nil         = e
-foldrN e f (cons n ns) = f n (foldrN e f ns)
+--foldrN : {X : Set} → Alg (ListF ℕ) X (ListN → X)
+--foldrN e f nil         = e
+--foldrN e f (cons n ns) = f n (foldrN e f ns)
 
 genFold : Poly → Set → TC Term
 genFold F T = quoteTC ({X : Set} → Alg F X (T → X))
@@ -107,42 +104,49 @@ replaceμ ν = T.traverseTerm
                                         else name})
                (zero T., [])
 
+breakAt : Type → Telescope → Telescope × Telescope
+breakAt target tel = break eq tel
+  where eq : (a : String × Arg Type) → Dec (A.unArg (proj₂ a) ≡ target)
+        eq (_ , (arg _ x)) = x Term.≟ target
+
+-- ν is the name of the function to be translated, e.g. fold.
+-- F is the polynomial definition of the target datatype that should appears in the type of ν.
+-- The target datatype is assumed to be represented by μ : Poly → Set.
+-- ϕ is the transformation to be substituted for μ.
+
 module _ (ν : Name) (F : Poly) (ϕ : Name) where
 
-  genType : Name → TC Type
-  genType f = do typ ← getType f
-                 let typ' = replaceμ ϕ typ
-                 pT  ← quoteTC F
-                 pos ← freshName "_"
-                 declarePostulate (vArg pos) typ'
-                 t  ← inferType (def pos [ vArg pT ])
-                 t' ← normalise t
-                 term ← normalise (def f [ vArg pT ])
-                 debugPrint "meta" 5 [ termErr t' ]
-                 return term
+  genType : TC Type
+  genType = do typ ← getType ν
+               let typ' = replaceμ ϕ typ
+               qF  ← quoteTC F
+               pos ← freshName "_"
+               declarePostulate (vArg pos) typ'
+               t  ← inferType (def pos [ vArg qF ])
+               t' ← normalise t
+               μtyp ← inferType (def ν [ vArg qF ])
+               μtyp' ← normalise μtyp
+               debugPrint "meta" 5 [ termErr μtyp' ]
+               return t'
 
-
-  breakAt : Type → Telescope → Telescope × Telescope
-  breakAt target tel = break eq tel
-    where eq : (x : String × Arg Type) → Dec (A.unArg (proj₂ x) ≡ target)
-          eq (_ , (arg _ x)) = x Term.≟ target
-
-  genClauses : Telescope → String × Arg Type → Telescope
+  -- generate the clauses with two list of types that appear in the patterns,
+  -- between which the deconstructed target datatype should be in the middle.
+  genClauses : Telescope → Telescope
              → Poly → List Name → TC Clauses
-  genClauses _ _ _ _ [] = return []
-  genClauses _ _ _ [] _ = return []
-  genClauses tel₁ x tel₂ (M ∷ G) (n ∷ ns) = do
-    cls   ← genClauses tel₁ x tel₂ G ns
+  genClauses _ _ _ [] = return []
+  genClauses _ _ [] _ = return []
+  genClauses tel₁ tel₂ (M ∷ G) (n ∷ ns) = do
+    cls   ← genClauses tel₁ tel₂ G ns
     typsᴹ ← varTyps M
     qF    ← quoteTC F
     let len₁ = length tel₁
         lenᴹ = length typsᴹ
         len₂ = length tel₂
         lenTotal = len₁ + lenᴹ + len₂
-    term  ← normalise $ def {!!} $
+    term  ← normalise $ con n (
                vArg qF ∷ weakenArgs (lenᴹ + len₂) (vars len₁)
             ++ [ conTerm n ]
-            ++ vars len₂
+            ++ vars len₂)
     return $ clause (tel₁
                       ++ map (_,_ "_" ∘ vArg) typsᴹ
                       ++ map (weakenTelescope len₂ lenᴹ) tel₂)
@@ -187,15 +191,47 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
       weakenTelescope   = λ a b → map² id (A.map (weakenFrom a b))
 
   -- Only one occurence of the datatype is supported for now.
-  genDef : Type → TC _
-  genDef T = do let tel  = toTelescope T
-                    tel₁ , tel₂ = breakAt (def ν []) tel
-                case tel₂ of λ where
-                  [] → typeError [ strErr "no datatype found in the definition." ]
-                  ((s , arg _ x) ∷ _) → {!!}
-                return tt
+  -- genFun firstly calls genType,
+  --   * it replaces μ with ϕ and normalises the function type.
+  -- Then it calls genClauses,
+  --   * it starts from the type before replacing μ,
+  --   * parses it and splits it at the first occurence of μ.
+  genFun : Name → List Name → TC _
+  genFun f cs = do funType ← genType
+                   declareDef (vArg f) funType
+                   qF' ← quoteTC F
+                   qF ← normalise qF'
+                   T' ← inferType (def ν [ vArg qF ])
+                   T ← normalise T'
+                   debugPrint "meta" 5 [ termErr T ]
+                   let tel  = toTelescope T
+                       tel₁ , xtel₂ = break (≟-μ qF) tel
+                   tel₂ ← case xtel₂ of λ where
+                     [] → typeError [ strErr "no datatype found in the definition." ]
+                     (_ ∷ xs) → return xs
+                   cls ← genClauses tel₁ tel₂ F cs
+                   return tt
+                   --defineFun f cls
+    where
+    -- The decidable equality should identify something like (μ (∅ ∷ (K ℕ ⊗ I) ∷ []))
+      ≟-μ : (qF : Type) → (x : String × Arg Type)
+          → Dec (A.unArg (proj₂ x) ≡ def (quote μ) [ vArg qF ])
+      ≟-μ qF (_ , arg _ x) = x Term.≟ def (quote μ) [ vArg qF ]
 
---unquoteDecl = genType (quote fold) (ListF ℕ)
+
+--------
+-- Examples, this part should be user-defined.
+-- A ϕ transformation from the univserse to native datatype should be defined.
+-- For example, A (ListF ℕ) in Poly should be mapped to native (List ℕ).
+-- genFun : (ν : Name) (F : Poly) (ϕ : Name) → Name → List Name → TC _
+
+unquoteDecl data ListN constructor nilN consN =
+  genData ListN (nilN ∷ consN ∷ []) (ListF ℕ)
+
+ϕ : Poly → Set
+ϕ _ = ListN
+
+--unquoteDecl foldN = genFun (quote fold) (ListF ℕ) (quote ϕ) foldN (quote nilN ∷ quote consN ∷ [])
 
 --genPat : Name → Poly → TC Term
 --genPat n T = {!!}
@@ -237,16 +273,16 @@ toTel (M ∷ F) = do m  ← toVarType M
 
 
 -- assuming given datatype and constructors are generated from F
-genFoldDef : Poly → Poly → Name → Name → List Name → TC (List Clause)
-genFoldDef _ [] ν funName _              = return []
-genFoldDef _ M  ν funName []             = typeError (strErr "number of constructors doesn't match polynomial" ∷ [])
-genFoldDef F (M ∷ F') ν funName (ξ ∷ ξs) = do
-  cls   ← genFoldDef F F' ν funName ξs
-  typs  ← toTel F
-  typsᴹ ← varTyps M
-  let lenTotal = length typs + length typsᴹ
-      varN     = case lenTotal of λ { zero    → zero
-                                    ; (suc n) → n }
+--genFoldDef : Poly → Poly → Name → Name → List Name → TC (List Clause)
+--genFoldDef _ [] ν funName _              = return []
+--genFoldDef _ M  ν funName []             = typeError (strErr "number of constructors doesn't match polynomial" ∷ [])
+--genFoldDef F (M ∷ F') ν funName (ξ ∷ ξs) = do
+--  cls   ← genFoldDef F F' ν funName ξs
+--  typs  ← toTel F
+--  typsᴹ ← varTyps M
+--  let lenTotal = length typs + length typsᴹ
+--      varN     = case lenTotal of λ { zero    → zero
+--                                    ; (suc n) → n }
   --debugPrint "meta" 5 (map termErr typs ++ strErr " " ∷ map termErr typsᴹ)
   --debugPrint "meta" 5 ( strErr (show lenTotal)
   --                    ∷ strErr " "
@@ -256,37 +292,37 @@ genFoldDef F (M ∷ F') ν funName (ξ ∷ ξs) = do
   --                    ∷ strErr " "
   --                    ∷ strErr (show (length varTerms))
   --                    ∷ [])
-  return (clause (("X" , (hArg (quoteTerm Set)))
-                  ∷ map (_,_ "_" ∘ vArg) (typs ++ typsᴹ))
-                 (hArg (var lenTotal)
-                  ∷ A.map-Args (weakenPattern (length (varPats M))) (foldPats F)
-                  ++ [ conPat ξ ])
-                 (var (length F' + length typsᴹ) varTerms)
-                   ∷ cls)
-  where
-    varTyps : Mono → TC (List Type)
-    varTyps ∅        = return []
-    varTyps I        = return [ def ν [] ]
-    varTyps (K A)    = do a ← quoteTC A
-                          return [ a ]
-    varTyps (M ⊗ M') = do ts  ← varTyps M
-                          ts' ← varTyps M'
-                          return (ts ++ ts')
+  --return (clause (("X" , (hArg (quoteTerm Set)))
+  --                ∷ map (_,_ "_" ∘ vArg) (typs ++ typsᴹ))
+  --               (hArg (var lenTotal)
+  --                ∷ A.map-Args (weakenPattern (length (varPats M))) (foldPats F)
+  --                ++ [ conPat ξ ])
+  --               (var (length F' + length typsᴹ) varTerms)
+  --                 ∷ cls)
+  --where
+  --  varTyps : Mono → TC (List Type)
+  --  varTyps ∅        = return []
+  --  varTyps I        = return [ def ν [] ]
+  --  varTyps (K A)    = do a ← quoteTC A
+  --                        return [ a ]
+  --  varTyps (M ⊗ M') = do ts  ← varTyps M
+  --                        ts' ← varTyps M'
+  --                        return (ts ++ ts')
 
-    foldPats : Poly → List (Arg Pattern)
-    foldPats []      = []
-    foldPats (_ ∷ F') = vArg (var (length F')) ∷ foldPats F'
+  --  foldPats : Poly → List (Arg Pattern)
+  --  foldPats []      = []
+  --  foldPats (_ ∷ F') = vArg (var (length F')) ∷ foldPats F'
 
-    varPats : Mono → List (Arg Pattern)
-    varPats M = varArgs M 0 λ _ → var
+  --  varPats : Mono → List (Arg Pattern)
+  --  varPats M = varArgs M 0 λ _ → var
 
-    conPat : Name → Arg Pattern
-    conPat ν = vArg (con ν (varPats M))
+  --  conPat : Name → Arg Pattern
+  --  conPat ν = vArg (con ν (varPats M))
 
-    varTerms : List (Arg Term)
-    varTerms = varArgs M 0 λ _ n → var n []
+  --  varTerms : List (Arg Term)
+  --  varTerms = varArgs M 0 λ _ n → var n []
 
-    weakenPattern = weakenFrom′ T.traversePattern 0
+  --  weakenPattern = weakenFrom′ T.traversePattern 0
 
     --prf : (M : Mono) → conArgs M ≡ length (varPats M)
 
@@ -299,14 +335,14 @@ genFoldDef F (M ∷ F') ν funName (ξ ∷ ξs) = do
 --showVar (pi (arg i t1) (abs s t2)) = "Pi " <> showVar t1 <> " → " <> showVar t2
 --showVar T = " others"
 
-testAlg : Poly → Name → TC _
-testAlg F foldName = withNormalisation true
-                       do a   ← genFold F ListN
-                          --cls ← cls foldName
-                          cls ← genFoldDef F F (quote ListN) foldName (quote nil ∷ quote cons ∷ [])
-                          debugPrint "meta" 5 (termErr a ∷ [])
-                          declareDef (vArg foldName) a
-                          defineFun foldName (cls)
+--testAlg : Poly → Name → TC _
+--testAlg F foldName = withNormalisation true
+--                       do a   ← genFold F ListN
+--                          --cls ← cls foldName
+--                          cls ← genFoldDef F F (quote ListN) foldName (quote nil ∷ quote cons ∷ [])
+--                          debugPrint "meta" 5 (termErr a ∷ [])
+--                          declareDef (vArg foldName) a
+--                          defineFun foldName (cls)
 
 --unquoteDecl foldN = testAlg (ListF ℕ) foldN
 

@@ -67,6 +67,7 @@ conList : {A : Set} → ⟦ ListF A ⟧ (List A) → List A
 conList {A} = toList ∘ con ∘ fmap (ListF A) fromList
   -- transporting con by univalence?
 
+
 conList' : {A : Set} → ⊤ ⊎ A × List A ⊎ ⊥ → List A
 conList' (inj₁ tt)              = conList (inj₁ tt)
 conList' (inj₂ (inj₁ (a , as))) = conList (inj₂ (inj₁ (a , as)))
@@ -76,6 +77,10 @@ conList' (inj₂ (inj₁ (a , as))) = conList (inj₂ (inj₁ (a , as)))
 
 --------
 -- Iteration (fold)
+
+--mapList : {A B : Set} → (A → B) → μ (ListF A) → μ (ListF B)
+--mapList f (con (inj₁ tt))              = con (inj₁ tt)
+--mapList f (con (inj₂ (inj₁ (a , as)))) = con (inj₂ (inj₁ ((f a) , (mapList f as))))
 
 module _ (F : Poly) {X : Set} (f : ⟦ F ⟧ X → X) where
 
@@ -164,4 +169,4 @@ foldr e f as = toAlg (ListF ℕ) iterationL' e f as
 
 foldr' : {X : Set} → Alg (ListF ℕ) X (List ℕ → X)
 foldr' e f [] =  toAlg (ListF ℕ) iterationL' e f []
-foldr' e f (a ∷ as) = {! toAlg (ListF ℕ) iterationL e f (a ∷ as) !}
+foldr' e f (a ∷ as) =  toAlg (ListF ℕ) iterationL e f (a ∷ as) 
