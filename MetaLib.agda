@@ -121,7 +121,14 @@ weakenArgPatterns = A.map-Args ∘ weakenFrom′ Trav.traversePattern 0
 -- the De Brujin index could be weakened, but more importantly, it could
 -- be reduced by one (i.e. when the constructor takes no arguments).
 shiftTel : ℕ → List (String × Arg Term) → List (String × Arg Term)
-shiftTel conTelLen = weakenFrom′ Trav.traverseTel 0 (conTelLen ∸ 1)
+shiftTel zero = Trav.traverseTel
+                  (record Trav.defaultActions {
+                            onVar = λ {
+                              (len Trav., _) n → if n <ᵇ len then n else n ∸ 1
+                            } -- Might be prone to errors!
+                          })
+                  (zero Trav., [])
+shiftTel (suc n) = weakenFrom′ Trav.traverseTel 0 n
 --shiftTel from zero (str , arg _ x) = do x ← TravTC.traverseTerm
 --                                              (record TravTC.defaultActions {
 --                                                        onVar = λ where
@@ -222,21 +229,21 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
   --   * it starts from the type before replacing μ,
   --   * parses it and splits it at the first occurence of μ.
   genFun : Name → List Name → TC _
-  genFun f cs = do --funType ← genType
-                   --declareDef (vArg f) funType
+  genFun f cs = do funType ← genType
+                   declareDef (vArg f) funType
                    qF' ← quoteTC F
                    qF ← normalise qF'
                    T' ← inferType (def ν [ vArg qF ])
                    T ← normalise T'
                    let tel  = toTelescope T
                        tel₁ , xtel₂ = break (≟-μ qF) tel
-                   debugPrint "meta" 5 [ strErr (showTel tel₁) ]
                    tel₂ ← case xtel₂ of λ where
                      [] → typeError [ strErr "no datatype found in the definition." ]
                      (_ ∷ xs) → return xs
+                   debugPrint "meta" 5 [ strErr (showTel tel₂) ]
                    cls ← genClauses tel₁ tel₂ F cs
                    debugPrint "meta" 5 [ strErr (showClauses cls) ]
-                   --defineFun f cls
+                   defineFun f cls
                    return tt
     where
     -- The decidable equality should identify something like (μ (∅ ∷ (K ℕ ⊗ I) ∷ []))
