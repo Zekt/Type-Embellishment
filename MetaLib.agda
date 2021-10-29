@@ -10,7 +10,7 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Empty
 open import Data.Unit using (⊤; tt)
 open import Data.Maybe using (Maybe; maybe′; just; nothing; fromMaybe)
-open import Data.List using (List; []; _∷_; _++_; map; length; break; [_])
+open import Data.List using (List; []; _∷_; _++_; map; length; break; [_]; concat)
 open import Category.Monad
 open import Relation.Binary.PropositionalEquality using (_≡_)
 open import Relation.Nullary --using (Dec; does)
@@ -23,7 +23,10 @@ open import PolyUniverse
 import Reflection.Name as Name
 import Reflection.Argument as A
 open import Reflection.Term as Term
-import Reflection.Traversal {id} (record { pure = id ; _⊛_ = id }) as T
+import Reflection.Traversal {id} (record { pure = id ; _⊛_ = id }) as Trav
+import Reflection.Traversal {TC} (record { pure = return
+                                         ; _⊛_ = λ A→Bᵀ Aᵀ → A→Bᵀ >>= λ A→B
+                                                           → bindTC Aᵀ (return ∘ A→B) }) as TravTC
 open import Reflection.DeBruijn
 
 toTelescope : Term → Telescope
@@ -97,17 +100,39 @@ genFold : Poly → Set → TC Term
 genFold F T = quoteTC ({X : Set} → Alg F X (T → X))
 
 replaceμ : Name → Term → Term
-replaceμ ν = T.traverseTerm
-               (record T.defaultActions
+replaceμ ν = Trav.traverseTerm
+               (record Trav.defaultActions
                   {onDef = λ _ name → if does (name Name.≟ quote μ)
                                         then ν
                                         else name})
-               (zero T., [])
+               (zero Trav., [])
 
 breakAt : Type → Telescope → Telescope × Telescope
 breakAt target tel = break eq tel
   where eq : (a : String × Arg Type) → Dec (A.unArg (proj₂ a) ≡ target)
         eq (_ , (arg _ x)) = x Term.≟ target
+
+
+--import Reflection.Traversal TC ? as TCTerm
+
+weakenArgPatterns = A.map-Args ∘ weakenFrom′ Trav.traversePattern 0
+-- Modify the telescope after the occurence of the target datatype.
+-- Since the occurence is now replaced with a pattern of a constructor and arguments,
+-- the De Brujin index could be weakened, but more importantly, it could
+-- be reduced by one (i.e. when the constructor takes no arguments).
+shiftTel : ℕ → List (String × Arg Term) → List (String × Arg Term)
+shiftTel conTelLen = weakenFrom′ Trav.traverseTel 0 (conTelLen ∸ 1)
+--shiftTel from zero (str , arg _ x) = do x ← TravTC.traverseTerm
+--                                              (record TravTC.defaultActions {
+--                                                        onVar = λ where
+--                                                          Γ zero → typeError [ strErr "De Brujin index of the original type is malformed." ]
+--                                                          Γ (suc n) → return n
+--                                                      })
+--                                              (zero TravTC., [])
+--                                              x
+--                                        return {!!}
+--weakenTel : ℕ → ℕ → (String × Arg Term) → (String × Arg Term)
+--weakenTel = λ a b → map² id (A.map (weakenFrom a b))
 
 -- ν is the name of the function to be translated, e.g. fold.
 -- F is the polynomial definition of the target datatype that should appears in the type of ν.
@@ -115,6 +140,15 @@ breakAt target tel = break eq tel
 -- ϕ is the transformation to be substituted for μ.
 
 module _ (ν : Name) (F : Poly) (ϕ : Name) where
+
+  genMonoTypes : Mono → TC (List Type)
+  genMonoTypes ∅        = return []
+  genMonoTypes I        = return [ def ν [] ]
+  genMonoTypes (K A)    = do a ← quoteTC A
+                             return [ a ]
+  genMonoTypes (M ⊗ M') = do ts ← genMonoTypes M
+                             ts' ← genMonoTypes M'
+                             return (ts ++ ts')
 
   genType : TC Type
   genType = do typ ← getType ν
@@ -137,33 +171,26 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
   genClauses _ _ [] _ = return []
   genClauses tel₁ tel₂ (M ∷ G) (n ∷ ns) = do
     cls   ← genClauses tel₁ tel₂ G ns
-    typsᴹ ← varTyps M
+    typsᴹ ← genMonoTypes M
     qF    ← quoteTC F
     let len₁ = length tel₁
         lenᴹ = length typsᴹ
         len₂ = length tel₂
         lenTotal = len₁ + lenᴹ + len₂
-    term  ← normalise $ con n (
+    term  ← return $ con n (
                vArg qF ∷ weakenArgs (lenᴹ + len₂) (vars len₁)
             ++ [ conTerm n ]
             ++ vars len₂)
+    debugPrint "meta" 5 [ strErr (showTerm term) ]
     return $ clause (tel₁
                       ++ map (_,_ "_" ∘ vArg) typsᴹ
-                      ++ map (weakenTelescope len₂ lenᴹ) tel₂)
+                      ++ shiftTel lenᴹ tel₂)
                     (weakenArgPatterns (lenᴹ + len₂) (pats len₁)
                        ++ [ conPat n ]
                        ++ (pats len₂))
                     term
            ∷ cls
     where
-      varTyps : Mono → TC (List Type)
-      varTyps ∅        = return []
-      varTyps I        = return [ def ν [] ]
-      varTyps (K A)    = do a ← quoteTC A
-                            return [ a ]
-      varTyps (M ⊗ M') = do ts  ← varTyps M
-                            ts' ← varTyps M'
-                            return (ts ++ ts')
 
       fN : {A : Set} → (ℕ → A) → ℕ → List A
       fN f zero    = []
@@ -187,8 +214,6 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
       conTerm : Name → Arg Term
       conTerm ν = vArg (con ν varTerms)
 
-      weakenArgPatterns = A.map-Args ∘ weakenFrom′ T.traversePattern 0
-      weakenTelescope   = λ a b → map² id (A.map (weakenFrom a b))
 
   -- Only one occurence of the datatype is supported for now.
   -- genFun firstly calls genType,
@@ -197,21 +222,22 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
   --   * it starts from the type before replacing μ,
   --   * parses it and splits it at the first occurence of μ.
   genFun : Name → List Name → TC _
-  genFun f cs = do funType ← genType
-                   declareDef (vArg f) funType
+  genFun f cs = do --funType ← genType
+                   --declareDef (vArg f) funType
                    qF' ← quoteTC F
                    qF ← normalise qF'
                    T' ← inferType (def ν [ vArg qF ])
                    T ← normalise T'
-                   debugPrint "meta" 5 [ termErr T ]
                    let tel  = toTelescope T
                        tel₁ , xtel₂ = break (≟-μ qF) tel
+                   debugPrint "meta" 5 [ strErr (showTel tel₁) ]
                    tel₂ ← case xtel₂ of λ where
                      [] → typeError [ strErr "no datatype found in the definition." ]
                      (_ ∷ xs) → return xs
                    cls ← genClauses tel₁ tel₂ F cs
-                   return tt
+                   debugPrint "meta" 5 [ strErr (showClauses cls) ]
                    --defineFun f cls
+                   return tt
     where
     -- The decidable equality should identify something like (μ (∅ ∷ (K ℕ ⊗ I) ∷ []))
       ≟-μ : (qF : Type) → (x : String × Arg Type)
