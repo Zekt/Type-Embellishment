@@ -31,7 +31,7 @@ open import Reflection.DeBruijn
 
 toTelescope : Term → Telescope
 toTelescope (pi (arg i x) (abs s y)) = (s , arg i x) ∷ toTelescope y
-toTelescope t = [ "_" , vArg t ]
+toTelescope t = [] -- ignoring the last term in a pi chain
 
 varArgs : {X : Set} → Mono → ℕ → (Mono → ℕ → X) → List (Arg X)
 varArgs ∅        n f = []
@@ -115,7 +115,7 @@ breakAt target tel = break eq tel
 
 --import Reflection.Traversal TC ? as TCTerm
 
-weakenArgPatterns = A.map-Args ∘ weakenFrom′ Trav.traversePattern 0
+weakenArgPats = A.map-Args ∘ weakenFrom′ Trav.traversePattern 0
 -- Modify the telescope after the occurence of the target datatype.
 -- Since the occurence is now replaced with a pattern of a constructor and arguments,
 -- the De Brujin index could be weakened, but more importantly, it could
@@ -172,6 +172,14 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
 
   -- generate the clauses with two list of types that appear in the patterns,
   -- between which the deconstructed target datatype should be in the middle.
+  -- A clause:
+  -- fun w x (by₁ z₁ z₂) y = by₂ z₁ z₂
+  -- is implicitly:
+  -- fun [ w : T₁ , x : T₂ , z₁ : T₃ , z₂ : T₄ ]            --→ Telescope
+  --  ╭ (var 4 , var 3 , ⟦ by₁ ⟧ [ var 2 , var 1 ] , var 0) --→ Pattern
+  --  │  (⟦ by₂ ⟧ [ var 2 , var 1 ])                        --→ Term
+  --  │
+  --  ╰── originally (var 3 , var 2 , var _ , var 0)
   genClauses : Telescope → Telescope
              → Poly → List Name → TC Clauses
   genClauses _ _ _ [] = return []
@@ -192,9 +200,9 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
     return $ clause (tel₁
                       ++ map (_,_ "_" ∘ vArg) typsᴹ
                       ++ shiftTel lenᴹ tel₂)
-                    (weakenArgPatterns (lenᴹ + len₂) (pats len₁)
-                       ++ [ conPat n ]
-                       ++ (pats len₂))
+                    (weakenArgPats (lenᴹ + len₂) (pats len₁)
+                      ++ weakenArgPats len₂ [ conPat n ]
+                      ++ (pats len₂))
                     term
            ∷ cls
     where
@@ -264,7 +272,7 @@ unquoteDecl data ListN constructor nilN consN =
 ϕ : Poly → Set
 ϕ _ = ListN
 
---unquoteDecl foldN = genFun (quote fold) (ListF ℕ) (quote ϕ) foldN (quote nilN ∷ quote consN ∷ [])
+unquoteDecl foldN = genFun (quote fold) (ListF ℕ) (quote ϕ) foldN (quote nilN ∷ quote consN ∷ [])
 
 --genPat : Name → Poly → TC Term
 --genPat n T = {!!}
