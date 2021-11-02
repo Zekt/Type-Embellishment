@@ -5,12 +5,12 @@ open import Data.Nat
 open import Data.Nat.Show
 open import Data.Bool using (if_then_else_; true; false)
 open import Data.String using (String) renaming (_++_ to _<>_)
-open import Data.Product using (Σ; Σ-syntax; ∃; ∃-syntax; _×_; _,_; proj₁; proj₂; zip) renaming (map to map²)
+open import Data.Product using (Σ; Σ-syntax; ∃; ∃-syntax; _×_; _,_; proj₁; proj₂) renaming (map to map²)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Empty
 open import Data.Unit using (⊤; tt)
 open import Data.Maybe using (Maybe; maybe′; just; nothing; fromMaybe)
-open import Data.List using (List; []; _∷_; _++_; map; length; break; [_]; concat)
+open import Data.List using (List; []; _∷_; _++_; map; length; break; [_]; concat; zip)
 open import Category.Monad
 open import Relation.Binary.PropositionalEquality using (_≡_)
 open import Relation.Nullary --using (Dec; does)
@@ -34,12 +34,12 @@ piToTel : Term → Telescope
 piToTel (pi (arg i x) (abs s y)) = (s , arg i x) ∷ piToTel y
 piToTel t = [] -- ignoring the last term in a pi chain
 
-monoArgs : {X : Set} → Mono → ℕ → (Mono → ℕ → X) → List (Arg X)
-monoArgs ∅        n f = []
-monoArgs I        n f = [ vArg (f I n) ]
-monoArgs Κ@(K _)  n f = [ vArg (f Κ n) ]
-monoArgs (M ⊗ M') n f = let ms = monoArgs M' n f
-                        in monoArgs M (n + length ms) f ++ ms
+fromMonoGenArgs : {X : Set} → Mono → ℕ → (Mono → ℕ → X) → List (Arg X)
+fromMonoGenArgs ∅        n f = []
+fromMonoGenArgs I        n f = [ vArg (f I n) ]
+fromMonoGenArgs Κ@(K _)  n f = [ vArg (f Κ n) ]
+fromMonoGenArgs (M ⊗ M') n f = let ms = fromMonoGenArgs M' n f
+                        in fromMonoGenArgs M (n + length ms) f ++ ms
 
 
 --{-# TERMINATING #-}
@@ -71,6 +71,7 @@ polyTel (M ∷ F) = do m  ← monoType M
                      ms ← polyTel F
                      return (m ∷ map (weaken 1) ms)
 
+-- the corresponding constructor type of a Mono
 toCon : Mono → Name → TC Type
 toCon M ν = ⟪ M ⟫ (def ν []) (def ν [])
 
@@ -78,16 +79,10 @@ toCons : Poly → Name → TC (List Type)
 toCons [] _ = return []
 toCons (M ∷ F) ν = ⦇ toCon M ν ∷ toCons F ν ⦈
 
--- zip that drops tails
-zip' : {A B : Set} → List A → List B → List (A × B)
-zip' [] _ = []
-zip' _ [] = []
-zip' (x ∷ xs) (y ∷ ys) = (x , y) ∷ zip' xs ys
-
 genData : Name → List Name → Poly → TC _
 genData ν ξs F = do ts ← toCons F ν
                     declareData ν 0 (def (quote Set) [])
-                    defineData ν (zip' ξs ts)
+                    defineData ν (zip ξs ts)
 
 --------
 ---- specialized generalisation of fold
@@ -111,8 +106,6 @@ breakAt : Type → Telescope → Telescope × Telescope
 breakAt target tel = break eq tel
   where eq : (a : String × Arg Type) → Dec (A.unArg (proj₂ a) ≡ target)
         eq (_ , (arg _ x)) = x Term.≟ target
-
---import Reflection.Traversal TC ? as TCTerm
 
 weakenArgPats = A.map-Args ∘ weakenFrom′ Trav.traversePattern 0
 -- Modify the telescope after the occurence of the target datatype.
@@ -213,10 +206,10 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
     -- then traverse and search for a pattern normalised from
     -- "fold (ListF ℕ) e f ?" and replace it with the realized fold
     -- Apparently, some meta fromList should be derived first.
-            -- $ con n (
-            --   vArg qF ∷ weakenArgs (lenᴹ + len₂) (vars len₁)
-            --++ [ conTerm n ]
-            --++ vars len₂)
+
+      -- $ con n (vArg qF ∷ weakenArgs (lenᴹ + len₂) (vars len₁)
+      --           ++ [ conTerm n ]
+      --           ++ vars len₂)
     debugPrint "meta" 5 [ strErr (showTerm term) ]
     return $ clause (tel₁
                       ++ map (_,_ "_" ∘ vArg) typsᴹ
@@ -239,10 +232,10 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
       vars = fN λ x → vArg (var x [])
 
       varPats : List (Arg Pattern)
-      varPats = monoArgs M 0 λ _ → var
+      varPats = fromMonoGenArgs M 0 λ _ → var
 
       varTerms : List (Arg Term)
-      varTerms = monoArgs M 0 λ _ n → var n []
+      varTerms = fromMonoGenArgs M 0 λ _ n → var n []
 
       conPat : Name → Arg Pattern
       conPat ν = vArg (con ν varPats)
@@ -364,13 +357,13 @@ unquoteDecl data ListN constructor nilN consN =
   --  foldPats (_ ∷ F') = vArg (var (length F')) ∷ foldPats F'
 
   --  varPats : Mono → List (Arg Pattern)
-  --  varPats M = monoArgs M 0 λ _ → var
+  --  varPats M = fromMonoGenArgs M 0 λ _ → var
 
   --  conPat : Name → Arg Pattern
   --  conPat ν = vArg (con ν (varPats M))
 
   --  varTerms : List (Arg Term)
-  --  varTerms = monoArgs M 0 λ _ n → var n []
+  --  varTerms = fromMonoGenArgs M 0 λ _ n → var n []
 
   --  weakenPattern = weakenFrom′ T.traversePattern 0
 
