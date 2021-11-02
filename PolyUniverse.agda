@@ -51,6 +51,7 @@ fmap (M ∷ F) f (inj₂ xs) = inj₂ (fmap F f xs)
 data μ (F : Poly) : Set where
   con : ⟦ F ⟧ (μ F) → μ F
 
+
 -- Specialising to lists
 ListF : Set → Poly
 ListF A = ∅ ∷ (K A ⊗ I) ∷ []
@@ -164,9 +165,13 @@ iterationL' : {X : Set} → (⊤ ⊎ (ℕ × X) ⊎ ⊥ → X) → List ℕ → 
 iterationL' alg []       = alg (inj₁ tt)
 iterationL' alg (n ∷ ns) = alg (inj₂ (inj₁ (n , iterationL' alg ns)))
 
+--test : {X : Set} → Alg (ListF ℕ) X (List ℕ → X)
+--test e f [] = fold (ListF ℕ) e f (con (inj₂ (inj₁ (0 , (con (inj₁ tt))))))
+
 foldr : {X : Set} → Alg (ListF ℕ) X (List ℕ → X)
 foldr e f as = toAlg (ListF ℕ) iterationL' e f as
 
 foldr' : {X : Set} → Alg (ListF ℕ) X (List ℕ → X)
-foldr' e f [] =  toAlg (ListF ℕ) iterationL' e f []
-foldr' e f (a ∷ as) =  toAlg (ListF ℕ) iterationL e f (a ∷ as) 
+foldr' e f []       = {! fold (ListF ℕ) e f!} -- {! toAlg (ListF ℕ) iterationL' e f [] !}
+foldr' e f (a ∷ as) = {! fold (ListF ℕ) e f (fromList (a ∷ as))!}
+--foldr' e f (a ∷ as) = {! toAlg (ListF ℕ) iterationL e f (a ∷ as)!}

@@ -29,16 +29,16 @@ import Reflection.Traversal {TC} (record { pure = return
                                                            → bindTC Aᵀ (return ∘ A→B) }) as TravTC
 open import Reflection.DeBruijn
 
-toTelescope : Term → Telescope
-toTelescope (pi (arg i x) (abs s y)) = (s , arg i x) ∷ toTelescope y
-toTelescope t = [] -- ignoring the last term in a pi chain
+piToTel : Term → Telescope
+piToTel (pi (arg i x) (abs s y)) = (s , arg i x) ∷ piToTel y
+piToTel t = [] -- ignoring the last term in a pi chain
 
-varArgs : {X : Set} → Mono → ℕ → (Mono → ℕ → X) → List (Arg X)
-varArgs ∅        n f = []
-varArgs I        n f = [ vArg (f I n) ]
-varArgs Κ@(K _)  n f = [ vArg (f Κ n) ]
-varArgs (M ⊗ M') n f = let ms = varArgs M' n f
-                        in varArgs M (n + length ms) f ++ ms
+monoArgs : {X : Set} → Mono → ℕ → (Mono → ℕ → X) → List (Arg X)
+monoArgs ∅        n f = []
+monoArgs I        n f = [ vArg (f I n) ]
+monoArgs Κ@(K _)  n f = [ vArg (f Κ n) ]
+monoArgs (M ⊗ M') n f = let ms = monoArgs M' n f
+                        in monoArgs M (n + length ms) f ++ ms
 
 
 --{-# TERMINATING #-}
@@ -54,23 +54,16 @@ varArgs (M ⊗ M') n f = let ms = varArgs M' n f
 --  shift n (lam v (abs s x)) = lam v (abs s (shift n x))
 --  shift n t = t
 
--- number of arguments of a corresponding constructor of a Mono
-conArgs : Mono → ℕ
-conArgs ∅ = 0
-conArgs I = 1
-conArgs (K _) = 1
-conArgs (M ⊗ M') = conArgs M + conArgs M'
-
-toTyp : Mono → Type → Type → TC Type
-toTyp ∅        s t = return t
-toTyp I        s t = return (pi (vArg s) (abs "_" (weaken 1 t)))
-toTyp (K A)    s t = do a ← quoteTC A --?
-                        return (pi (vArg a) (abs "_" (weaken 1 t)))
-toTyp (M ⊗ M') s t = do t' ← toTyp M' s t
-                        toTyp M s t'
+⟪_⟫ : Mono → Type → Type → TC Type
+⟪_⟫ ∅        s t = return t
+⟪_⟫ I        s t = return (pi (vArg s) (abs "_" (weaken 1 t)))
+⟪_⟫ (K A)    s t = do a ← quoteTC A --?
+                      return (pi (vArg a) (abs "_" (weaken 1 t)))
+⟪_⟫ (M ⊗ M') s t = do t' ← ⟪ M' ⟫ s t
+                      ⟪ M ⟫ s t'
 
 toCon : Mono → Name → TC Type
-toCon M ν = toTyp M (def ν []) (def ν [])
+toCon M ν = ⟪ M ⟫ (def ν []) (def ν [])
 
 toCons : Poly → Name → TC (List Type)
 toCons [] _ = return []
@@ -112,7 +105,6 @@ breakAt target tel = break eq tel
   where eq : (a : String × Arg Type) → Dec (A.unArg (proj₂ a) ≡ target)
         eq (_ , (arg _ x)) = x Term.≟ target
 
-
 --import Reflection.Traversal TC ? as TCTerm
 
 weakenArgPats = A.map-Args ∘ weakenFrom′ Trav.traversePattern 0
@@ -146,6 +138,26 @@ shiftTel (suc n) = weakenFrom′ Trav.traverseTel 0 n
 -- The target datatype is assumed to be represented by μ : Poly → Set.
 -- ϕ is the transformation to be substituted for μ.
 
+--data _∈_ : Mono → Poly → Set where
+--  here  : {M : Mono} → {F : Poly} → M ∈ (M ∷ F)
+--  there : {M' : Mono} → {M : Mono} → {F : Poly} → M ∈ F → M ∈ (M' ∷ F)
+--
+--getTerm : {M : Mono} {F : Poly} → M ∈ F → μ F → TC Term
+--getTerm {M} {.(M ∷ _)} here (con (inj₁ x)) = {!x!}
+--getTerm {M} {.(M ∷ _)} here (con (inj₂ y)) = {!!}
+--getTerm {M} {.(_ ∷ _)} (there M∈F) μF = {!!}
+
+-- fromList : ListN → TC Term
+
+genIso : (from : Name) → (to : Name)
+       → (target : Name) → (universe : Poly) → TC _
+genIso from to target universe =
+  do definition ← getDefinition target
+     case definition of λ where
+       (data-type pars cs) → {!!}
+       _ → typeError {!!}
+
+
 module _ (ν : Name) (F : Poly) (ϕ : Name) where
 
   genMonoTypes : Mono → TC (List Type)
@@ -175,11 +187,11 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
   -- A clause:
   -- fun w x (by₁ z₁ z₂) y = by₂ z₁ z₂
   -- is implicitly:
-  -- fun [ w : T₁ , x : T₂ , z₁ : T₃ , z₂ : T₄ ]            --→ Telescope
-  --  ╭ (var 4 , var 3 , ⟦ by₁ ⟧ [ var 2 , var 1 ] , var 0) --→ Pattern
-  --  │  (⟦ by₂ ⟧ [ var 2 , var 1 ])                        --→ Term
+  -- fun [ w : T₁ , x : T₂ , z₁ : T₃ , z₂ : T₄ ]             --→ Telescope
+  --  ╭─ (var 4 , var 3 , ⟦ by₁ ⟧ [ var 2 , var 1 ] , var 0) --→ Pattern
+  --  │  (⟦ by₂ ⟧ [ var 2 , var 1 ])                         --→ Term
   --  │
-  --  ╰── originally (var 3 , var 2 , var _ , var 0)
+  --  ╰─ originally (var 3 , var 2 , var _ , var 0)
   genClauses : Telescope → Telescope
              → Poly → List Name → TC Clauses
   genClauses _ _ _ [] = return []
@@ -192,10 +204,15 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
         lenᴹ = length typsᴹ
         len₂ = length tel₂
         lenTotal = len₁ + lenᴹ + len₂
-    term  ← return $ con n (
-               vArg qF ∷ weakenArgs (lenᴹ + len₂) (vars len₁)
-            ++ [ conTerm n ]
-            ++ vars len₂)
+    term  ← return {!!}
+    -- should be normalised from "fold (ListF ℕ) e f (fromList ?)"
+    -- then traverse and search for a pattern normalised from
+    -- "fold (ListF ℕ) e f ?" and replace it with the realized fold
+    -- Apparently, some meta fromList should be derived first.
+            -- $ con n (
+            --   vArg qF ∷ weakenArgs (lenᴹ + len₂) (vars len₁)
+            --++ [ conTerm n ]
+            --++ vars len₂)
     debugPrint "meta" 5 [ strErr (showTerm term) ]
     return $ clause (tel₁
                       ++ map (_,_ "_" ∘ vArg) typsᴹ
@@ -218,10 +235,10 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
       vars = fN λ x → vArg (var x [])
 
       varPats : List (Arg Pattern)
-      varPats = varArgs M 0 λ _ → var
+      varPats = monoArgs M 0 λ _ → var
 
       varTerms : List (Arg Term)
-      varTerms = varArgs M 0 λ _ n → var n []
+      varTerms = monoArgs M 0 λ _ n → var n []
 
       conPat : Name → Arg Pattern
       conPat ν = vArg (con ν varPats)
@@ -243,7 +260,7 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
                    qF ← normalise qF'
                    T' ← inferType (def ν [ vArg qF ])
                    T ← normalise T'
-                   let tel  = toTelescope T
+                   let tel  = piToTel T
                        tel₁ , xtel₂ = break (≟-μ qF) tel
                    tel₂ ← case xtel₂ of λ where
                      [] → typeError [ strErr "no datatype found in the definition." ]
@@ -272,19 +289,19 @@ unquoteDecl data ListN constructor nilN consN =
 ϕ : Poly → Set
 ϕ _ = ListN
 
-unquoteDecl foldN = genFun (quote fold) (ListF ℕ) (quote ϕ) foldN (quote nilN ∷ quote consN ∷ [])
+--unquoteDecl foldN = genFun (quote fold) (ListF ℕ) (quote ϕ) foldN (quote nilN ∷ quote consN ∷ [])
 
 --genPat : Name → Poly → TC Term
 --genPat n T = {!!}
 
 toVarType : Mono → TC Type
-toVarType M = toTyp M (var 0 []) (var 0 [])
+toVarType M = ⟪ M ⟫ (var 0 []) (var 0 [])
 
-toTel : Poly → TC (List Type)
-toTel []      = return []
-toTel (M ∷ F) = do m  ← toVarType M
-                   ms ← toTel F
-                   return (m ∷ map (weaken 1) ms)
+polyTel : Poly → TC (List Type)
+polyTel []      = return []
+polyTel (M ∷ F) = do m  ← toVarType M
+                     ms ← polyTel F
+                     return (m ∷ map (weaken 1) ms)
 
 
 --cls : Name → TC Clause
@@ -355,13 +372,13 @@ toTel (M ∷ F) = do m  ← toVarType M
   --  foldPats (_ ∷ F') = vArg (var (length F')) ∷ foldPats F'
 
   --  varPats : Mono → List (Arg Pattern)
-  --  varPats M = varArgs M 0 λ _ → var
+  --  varPats M = monoArgs M 0 λ _ → var
 
   --  conPat : Name → Arg Pattern
   --  conPat ν = vArg (con ν (varPats M))
 
   --  varTerms : List (Arg Term)
-  --  varTerms = varArgs M 0 λ _ n → var n []
+  --  varTerms = monoArgs M 0 λ _ n → var n []
 
   --  weakenPattern = weakenFrom′ T.traversePattern 0
 
