@@ -5,7 +5,7 @@ open import Data.Nat
 open import Data.Nat.Show
 open import Data.Bool using (if_then_else_; true; false)
 open import Data.String using (String) renaming (_++_ to _<>_)
-open import Data.Product using (_×_; _,_; proj₁; proj₂; zip) renaming (map to map²)
+open import Data.Product using (Σ; Σ-syntax; ∃; ∃-syntax; _×_; _,_; proj₁; proj₂; zip) renaming (map to map²)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Empty
 open import Data.Unit using (⊤; tt)
@@ -15,11 +15,10 @@ open import Category.Monad
 open import Relation.Binary.PropositionalEquality using (_≡_)
 open import Relation.Nullary --using (Dec; does)
 open import Relation.Nullary.Decidable using (True)
-open import Reflection
---open import Reflection.Traversal ? ?
-open import Agda.Builtin.Reflection
-open import PolyUniverse
 
+open import Reflection
+open import Agda.Builtin.Reflection
+open import Reflection.TypeChecking.Monad.Syntax
 import Reflection.Name as Name
 import Reflection.Argument as A
 open import Reflection.Term as Term
@@ -28,6 +27,8 @@ import Reflection.Traversal {TC} (record { pure = return
                                          ; _⊛_ = λ A→Bᵀ Aᵀ → A→Bᵀ >>= λ A→B
                                                            → bindTC Aᵀ (return ∘ A→B) }) as TravTC
 open import Reflection.DeBruijn
+
+open import PolyUniverse
 
 piToTel : Term → Telescope
 piToTel (pi (arg i x) (abs s y)) = (s , arg i x) ∷ piToTel y
@@ -59,17 +60,23 @@ monoArgs (M ⊗ M') n f = let ms = monoArgs M' n f
 ⟪_⟫ I        s t = return (pi (vArg s) (abs "_" (weaken 1 t)))
 ⟪_⟫ (K A)    s t = do a ← quoteTC A --?
                       return (pi (vArg a) (abs "_" (weaken 1 t)))
-⟪_⟫ (M ⊗ M') s t = do t' ← ⟪ M' ⟫ s t
-                      ⟪ M ⟫ s t'
+⟪_⟫ (M ⊗ M') s t = ⟪ M' ⟫ s t >>= ⟪ M ⟫ s
+
+monoType : Mono → TC Type
+monoType M = ⟪ M ⟫ (var 0 []) (var 0 [])
+
+polyTel : Poly → TC (List Type)
+polyTel []      = return []
+polyTel (M ∷ F) = do m  ← monoType M
+                     ms ← polyTel F
+                     return (m ∷ map (weaken 1) ms)
 
 toCon : Mono → Name → TC Type
 toCon M ν = ⟪ M ⟫ (def ν []) (def ν [])
 
 toCons : Poly → Name → TC (List Type)
 toCons [] _ = return []
-toCons (M ∷ F) ν = do t  ← toCon M ν
-                      ts ← toCons F ν
-                      return (t ∷ ts)
+toCons (M ∷ F) ν = ⦇ toCon M ν ∷ toCons F ν ⦈
 
 -- zip that drops tails
 zip' : {A B : Set} → List A → List B → List (A × B)
@@ -149,13 +156,16 @@ shiftTel (suc n) = weakenFrom′ Trav.traverseTel 0 n
 
 -- fromList : ListN → TC Term
 
-genIso : (from : Name) → (to : Name)
-       → (target : Name) → (universe : Poly) → TC _
-genIso from to target universe =
-  do definition ← getDefinition target
-     case definition of λ where
-       (data-type pars cs) → {!!}
-       _ → typeError {!!}
+--data Conformanceᴹ : Type → Mono → Set
+--Conformanceᴹ T M = Σ Name (λ x → T ≡ {!monoType!})
+--
+--genIso : (from : Name) → (to : Name)
+--       → (target : Name) → (universe : Poly) → TC _
+--genIso from to target universe =
+--  do definition ← getDefinition target
+--     case definition of λ where
+--       (data-type pars cs) → {!!}
+--       _ → typeError {!!}
 
 
 module _ (ν : Name) (F : Poly) (ϕ : Name) where
@@ -163,24 +173,18 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
   genMonoTypes : Mono → TC (List Type)
   genMonoTypes ∅        = return []
   genMonoTypes I        = return [ def ν [] ]
-  genMonoTypes (K A)    = do a ← quoteTC A
-                             return [ a ]
-  genMonoTypes (M ⊗ M') = do ts ← genMonoTypes M
-                             ts' ← genMonoTypes M'
-                             return (ts ++ ts')
+  genMonoTypes (K A)    = ⦇ [ quoteTC A ] ⦈
+  genMonoTypes (M ⊗ M') = ⦇ genMonoTypes M ++ genMonoTypes M' ⦈
 
   genType : TC Type
-  genType = do typ ← getType ν
-               let typ' = replaceμ ϕ typ
-               qF  ← quoteTC F
-               pos ← freshName "_"
+  genType = do typ' ← replaceμ ϕ <$> getType ν
+               qF   ← quoteTC F
+               pos  ← freshName "_"
                declarePostulate (vArg pos) typ'
-               t  ← inferType (def pos [ vArg qF ])
-               t' ← normalise t
-               μtyp ← inferType (def ν [ vArg qF ])
-               μtyp' ← normalise μtyp
-               debugPrint "meta" 5 [ termErr μtyp' ]
-               return t'
+               t    ← inferType (def pos [ vArg qF ]) >>= normalise
+               --μtyp ← inferType (def ν   [ vArg qF ]) >>= normalise
+               --debugPrint "meta" 5 [ termErr μtyp ]
+               return t
 
   -- generate the clauses with two list of types that appear in the patterns,
   -- between which the deconstructed target datatype should be in the middle.
@@ -204,7 +208,7 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
         lenᴹ = length typsᴹ
         len₂ = length tel₂
         lenTotal = len₁ + lenᴹ + len₂
-    term  ← return {!!}
+    term ← return {!!}
     -- should be normalised from "fold (ListF ℕ) e f (fromList ?)"
     -- then traverse and search for a pattern normalised from
     -- "fold (ListF ℕ) e f ?" and replace it with the realized fold
@@ -254,13 +258,10 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
   --   * it starts from the type before replacing μ,
   --   * parses it and splits it at the first occurence of μ.
   genFun : Name → List Name → TC _
-  genFun f cs = do funType ← genType
-                   declareDef (vArg f) funType
-                   qF' ← quoteTC F
-                   qF ← normalise qF'
-                   T' ← inferType (def ν [ vArg qF ])
-                   T ← normalise T'
-                   let tel  = piToTel T
+  genFun f cs = do genType >>= declareDef (vArg f)
+                   qF ← (quoteTC F) >>= normalise
+                   T  ← inferType (def ν [ vArg qF ]) >>= normalise
+                   let tel = piToTel T
                        tel₁ , xtel₂ = break (≟-μ qF) tel
                    tel₂ ← case xtel₂ of λ where
                      [] → typeError [ strErr "no datatype found in the definition." ]
@@ -293,15 +294,6 @@ unquoteDecl data ListN constructor nilN consN =
 
 --genPat : Name → Poly → TC Term
 --genPat n T = {!!}
-
-toVarType : Mono → TC Type
-toVarType M = ⟪ M ⟫ (var 0 []) (var 0 [])
-
-polyTel : Poly → TC (List Type)
-polyTel []      = return []
-polyTel (M ∷ F) = do m  ← toVarType M
-                     ms ← polyTel F
-                     return (m ∷ map (weaken 1) ms)
 
 
 --cls : Name → TC Clause
