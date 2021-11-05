@@ -1,7 +1,10 @@
 {-# OPTIONS -v meta:5 #-}
+open import Level using (0ℓ)
+
 open import Function
 open import Function.Base using (case_of_)
 open import Data.Nat
+import Data.Nat.GeneralisedArithmetic as G using (fold)
 open import Data.Nat.Show
 open import Data.Bool using (if_then_else_; true; false)
 open import Data.String using (String) renaming (_++_ to _<>_)
@@ -10,7 +13,7 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Empty
 open import Data.Unit using (⊤; tt)
 open import Data.Maybe using (Maybe; maybe′; just; nothing; fromMaybe)
-open import Data.List using (List; []; _∷_; _++_; map; length; break; [_]; concat; zip)
+open import Data.List using (List; []; _∷_; _++_; map; length; break; [_]; concat; zip; foldr)
 open import Category.Monad
 open import Relation.Binary.PropositionalEquality using (_≡_)
 open import Relation.Nullary --using (Dec; does)
@@ -39,21 +42,7 @@ fromMonoGenArgs ∅        n f = []
 fromMonoGenArgs I        n f = [ vArg (f I n) ]
 fromMonoGenArgs Κ@(K _)  n f = [ vArg (f Κ n) ]
 fromMonoGenArgs (M ⊗ M') n f = let ms = fromMonoGenArgs M' n f
-                        in fromMonoGenArgs M (n + length ms) f ++ ms
-
-
---{-# TERMINATING #-}
---mutual
---  shiftArgs : ℕ → List (Arg Term) → List (Arg Term)
---  shiftArgs n args = map (argMap (shift n)) args
---
---  shift : ℕ → Term → Term
---  shift n (var x args) = var (x + n) (shiftArgs n args)
---  shift n (pi (arg i x) (abs s y)) = pi (arg i (shift n x)) (abs s (shift n y))
---  shift n (con c args) = con c (shiftArgs n args)
---  shift n (def f args) = def f (shiftArgs n args)
---  shift n (lam v (abs s x)) = lam v (abs s (shift n x))
---  shift n t = t
+                                in fromMonoGenArgs M (n + length ms) f ++ ms
 
 ⟪_⟫ : Mono → Type → Type → TC Type
 ⟪_⟫ ∅        s t = return t
@@ -72,17 +61,23 @@ polyTel (M ∷ F) = do m  ← monoType M
                      return (m ∷ map (weaken 1) ms)
 
 -- the corresponding constructor type of a Mono
-toCon : Mono → Name → TC Type
-toCon M ν = ⟪ M ⟫ (def ν []) (def ν [])
+toConDef : Mono → Name → TC Type
+toConDef M ν = ⟪ M ⟫ (def ν []) (def ν [])
 
-toCons : Poly → Name → TC (List Type)
-toCons [] _ = return []
-toCons (M ∷ F) ν = ⦇ toCon M ν ∷ toCons F ν ⦈
+toConCon : Mono → Name → TC Type
+toConCon M ν = ⟪ M ⟫ (con ν []) (con ν [])
+
+toConDefs : Poly → Name → TC (List Type)
+toConDefs [] _ = return []
+toConDefs (M ∷ F) ν = ⦇ toConDef M ν ∷ toConDefs F ν ⦈
 
 genData : Name → List Name → Poly → TC _
-genData ν ξs F = do ts ← toCons F ν
+genData ν ξs F = do ts ← toConDefs F ν
                     declareData ν 0 (def (quote Set) [])
                     defineData ν (zip ξs ts)
+
+unquoteDecl data ListN constructor nilN consN =
+  genData ListN (nilN ∷ consN ∷ []) (ListF ℕ)
 
 --------
 ---- specialized generalisation of fold
@@ -121,6 +116,7 @@ shiftTel zero = Trav.traverseTel
                           })
                   (zero Trav., [])
 shiftTel (suc n) = weakenFrom′ Trav.traverseTel 0 n
+
 --shiftTel from zero (str , arg _ x) = do x ← TravTC.traverseTerm
 --                                              (record TravTC.defaultActions {
 --                                                        onVar = λ where
@@ -143,22 +139,85 @@ shiftTel (suc n) = weakenFrom′ Trav.traverseTel 0 n
 --  there : {M' : Mono} → {M : Mono} → {F : Poly} → M ∈ F → M ∈ (M' ∷ F)
 --
 --getTerm : {M : Mono} {F : Poly} → M ∈ F → μ F → TC Term
---getTerm {M} {.(M ∷ _)} here (con (inj₁ x)) = {!x!}
---getTerm {M} {.(M ∷ _)} here (con (inj₂ y)) = {!!}
 --getTerm {M} {.(_ ∷ _)} (there M∈F) μF = {!!}
 
--- fromList : ListN → TC Term
+parseCon : Name → Mono → TC Telescope
+parseCon n M = do t  ← getType n
+                  tᴹ' ← toConCon M n
+                  tᴹ ← inferType tᴹ'
+                  --debugPrint "meta" 5 (termErr t ∷ termErr tᴹ ∷ [])
+                  let d   = t Term.≟ tᴹ
+                      tel = piToTel t
+                  if (does d)
+                    then return tel
+                    else typeError (strErr "Given datatype constructor "
+                                   ∷ termErr t
+                                   ∷ strErr " and Mono definition "
+                                   ∷ termErr tᴹ
+                                   ∷ strErr " does not match."
+                                   ∷ [])
 
---data Conformanceᴹ : Type → Mono → Set
---Conformanceᴹ T M = Σ Name (λ x → T ≡ {!monoType!})
---
---genIso : (from : Name) → (to : Name)
---       → (target : Name) → (universe : Poly) → TC _
---genIso from to target universe =
---  do definition ← getDefinition target
---     case definition of λ where
---       (data-type pars cs) → {!!}
---       _ → typeError {!!}
+--prodType : Telescope → Type
+--prodType [] = quoteTerm ⊤
+--prodType ((_ , arg _ x) ∷ xs) = def (quote _×_)
+--                                    (hArg (quoteTerm 0ℓ)
+--                                    ∷ hArg (quoteTerm 0ℓ)
+--                                    ∷ vArg x
+--                                    ∷ vArg (prodType xs)
+--                                    ∷ [])
+
+-- fromList : ListN → μ (ListF ℕ)
+-- inj₁ _
+-- inj₂ (inj₁ _)
+-- inj₂ (inj₂ (inj₁ _))
+-- ...
+genFromClauses : List Name → Poly → Poly → TC Clauses
+genFromClauses [] [] _ = return []
+genFromClauses (n ∷ ns) (M ∷ Ms) F = do
+  tel ← parseCon n M
+  let len = length tel
+      cl = clause
+             tel
+             [ vArg $ con n (pats len) ]
+           $ con (quote μ.con)
+                 [ vArg $ inj (length F ∸ length Ms) (prodTerm len) ]
+  debugPrint "meta" 5 [ strErr (showClause cl) ]
+  cls ← genFromClauses ns Ms F
+  return (cl ∷ cls)
+  where
+    pats : ℕ → List (Arg Pattern)
+    pats n = G.fold [] (λ xs → (vArg ∘ var) n ∷ xs) n
+
+    prodTerm : ℕ → Term
+    prodTerm = proj₂ ∘
+               G.fold (0 , quoteTerm tt)
+                      λ { (n , t) →
+                            suc n ,
+                            con (quote _,_)
+                                (vArg (var n []) ∷ [ vArg t ]) }
+
+    inj : ℕ → Term → Term
+    inj zero t = t
+    inj (suc zero)    t = con (quote inj₁) [ vArg t ]
+    inj (suc (suc n)) t = con (quote inj₂) [ vArg (inj n t) ]
+genFromClauses _ _ _ = typeError [ strErr "Number of constructors do not match the given Poly definition." ]
+
+genIso : (from : Name) → (to : Name)
+       → (target : Name) → Poly → TC ⊤
+genIso from to target F =
+  do definition ← getDefinition target
+     qF ← quoteTC F
+     case definition of λ where
+       (data-type pars cs) → do
+         cls ← genFromClauses cs F F
+         declareDef (vArg from)
+                  $ pi (vArg $ def target [])
+                       (abs "_" $ def (quote μ) [ vArg qF ])
+         defineFun from cls
+       _ → typeError (nameErr target ∷ [ strErr " is not a datatype." ])
+
+
+--unquoteDecl μfromList μtoList = genIso μfromList μtoList (quote ListN) (ListF ℕ)
 
 
 module _ (ν : Name) (F : Poly) (ϕ : Name) where
@@ -175,20 +234,23 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
                pos  ← freshName "_"
                declarePostulate (vArg pos) typ'
                t    ← inferType (def pos [ vArg qF ]) >>= normalise
-               --μtyp ← inferType (def ν   [ vArg qF ]) >>= normalise
+               --μtyp ← inferType (def ν [ vArg qF ]) >>= normalise
                --debugPrint "meta" 5 [ termErr μtyp ]
                return t
 
   -- generate the clauses with two list of types that appear in the patterns,
   -- between which the deconstructed target datatype should be in the middle.
   -- A clause:
+  -- f : A → B → μ F → C
+  -- f : A → B → D → C
+  -- fun w x (...) y = 
   -- fun w x (by₁ z₁ z₂) y = by₂ z₁ z₂
   -- is implicitly:
-  -- fun [ w : T₁ , x : T₂ , z₁ : T₃ , z₂ : T₄ ]             --→ Telescope
+  -- fun [ w : T₁ , x : T₂ , z₁ : T₃ , z₂ : T₄ , y : T₅ ]             --→ Telescope
   --  ╭─ (var 4 , var 3 , ⟦ by₁ ⟧ [ var 2 , var 1 ] , var 0) --→ Pattern
   --  │  (⟦ by₂ ⟧ [ var 2 , var 1 ])                         --→ Term
   --  │
-  --  ╰─ originally (var 3 , var 2 , var _ , var 0)
+  --  ╰─── originally (var 3 , var 2 , var _ , var 0)
   genClauses : Telescope → Telescope
              → Poly → List Name → TC Clauses
   genClauses _ _ _ [] = return []
@@ -221,15 +283,11 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
            ∷ cls
     where
 
-      fN : {A : Set} → (ℕ → A) → ℕ → List A
-      fN f zero    = []
-      fN f (suc n) = f n ∷ fN f n
-
       pats : ℕ → List (Arg Pattern)
-      pats = fN (vArg ∘ var)
+      pats n = G.fold [] (λ xs → (vArg ∘ var) n ∷ xs) n
 
       vars : ℕ → List (Arg Term)
-      vars = fN λ x → vArg (var x [])
+      vars n = G.fold [] (λ xs → vArg (var n []) ∷ xs) n
 
       varPats : List (Arg Pattern)
       varPats = fromMonoGenArgs M 0 λ _ → var
@@ -276,9 +334,6 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
 -- A ϕ transformation from the univserse to native datatype should be defined.
 -- For example, A (ListF ℕ) in Poly should be mapped to native (List ℕ).
 -- genFun : (ν : Name) (F : Poly) (ϕ : Name) → Name → List Name → TC _
-
-unquoteDecl data ListN constructor nilN consN =
-  genData ListN (nilN ∷ consN ∷ []) (ListF ℕ)
 
 ϕ : Poly → Set
 ϕ _ = ListN
