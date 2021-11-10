@@ -3,7 +3,8 @@ open import Level using (0ℓ)
 
 open import Function
 open import Function.Base using (case_of_)
-open import Data.Nat
+open import Data.Nat as N
+open import Agda.Builtin.Nat using (_==_)
 import Data.Nat.GeneralisedArithmetic as G using (fold)
 open import Data.Nat.Show
 open import Data.Bool using (if_then_else_; true; false)
@@ -13,7 +14,8 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Empty
 open import Data.Unit using (⊤; tt)
 open import Data.Maybe using (Maybe; maybe′; just; nothing; fromMaybe)
-open import Data.List using (List; []; _∷_; _++_; map; length; break; [_]; concat; zip; foldr)
+open import Data.List using (List; []; _∷_; _++_; map; length; break; [_]; concat; zip; foldr; lookup)
+open import Data.Fin using (Fin; fromℕ; fromℕ<; fromℕ<″)
 open import Category.Monad
 open import Relation.Binary.PropositionalEquality using (_≡_)
 open import Relation.Nullary --using (Dec; does)
@@ -143,9 +145,9 @@ shiftTel (suc n) = weakenFrom′ Trav.traverseTel 0 n
 
 parseCon : Name → Mono → TC Telescope
 parseCon n M = do t  ← getType n
-                  tᴹ' ← toConCon M n
-                  tᴹ ← inferType tᴹ'
-                  --debugPrint "meta" 5 (termErr t ∷ termErr tᴹ ∷ [])
+                  --debugPrint "meta" 5 (termErr t ∷ [])
+                  tᴹ ← inferType (con n [])
+                  --debugPrint "meta" 5 (termErr tᴹ ∷ [])
                   let d   = t Term.≟ tᴹ
                       tel = piToTel t
                   if (does d)
@@ -171,65 +173,98 @@ parseCon n M = do t  ← getType n
 -- inj₂ (inj₁ _)
 -- inj₂ (inj₂ (inj₁ _))
 -- ...
-genFromClauses : List Name → Poly → Poly → TC Clauses
-genFromClauses [] [] _ = return []
-genFromClauses (n ∷ ns) (M ∷ Ms) F = do
+genFromClauses : Name → Type → List Name → Poly → Poly → TC Clauses
+genFromClauses _ _ [] [] _ = return []
+genFromClauses funName typ (n ∷ ns) (M ∷ Ms) F = do
   tel ← parseCon n M
   let len = length tel
+      term = prodTerm (recurse tel typ) len
       cl = clause
              tel
-             [ vArg $ con n (pats len) ]
+             [ vArg $ con n (pats tel) ]
            $ con (quote μ.con)
-                 [ vArg $ inj (length F ∸ length Ms) (prodTerm len) ]
-  debugPrint "meta" 5 [ strErr (showClause cl) ]
-  cls ← genFromClauses ns Ms F
+                 [ vArg $ inj (length F ∸ length Ms) term ]
+  --debugPrint "meta" 5 [ strErr (showClause cl) ]
+  cls ← genFromClauses funName typ ns Ms F
   return (cl ∷ cls)
   where
-    pats : ℕ → List (Arg Pattern)
-    pats n = G.fold [] (λ xs → (vArg ∘ var) n ∷ xs) n
+    pats : Telescope → List (Arg Pattern)
+    pats = foldr (λ { (_ , arg i _) xs → arg i (var (length xs)) ∷ xs}) []
 
-    prodTerm : ℕ → Term
-    prodTerm = proj₂ ∘
-               G.fold (0 , quoteTerm tt)
-                      λ { (n , t) →
-                            suc n ,
-                            con (quote _,_)
-                                (vArg (var n []) ∷ [ vArg t ]) }
+    -- lookup from last
+    lookupCxt : ∀ {A : Set} → List A → ℕ → Maybe A
+    lookupCxt xs n with n <? length xs
+    ... | no  _ = nothing
+    ... | yes p = just $ lookup xs (fromℕ< (reverse< p))
+      where
+        <≤ : ∀ {a b} → a < b → a ≤ b
+        <≤ (s≤s z≤n) = z≤n
+        <≤ (s≤s (s≤s a<b)) = s≤s (<≤ (s≤s a<b))
+
+        reverse< : ∀ {a b : ℕ} → (a < b) → (b ∸ (a + 1)) < b
+        reverse< {zero} {suc zero} a<b = s≤s z≤n
+        reverse< {zero} {suc (suc b)} a<b = s≤s (reverse< (s≤s z≤n))
+        reverse< {suc a} {suc (suc b)} (s≤s a<b) = s≤s (<≤ (reverse< a<b))
+
+
+    recurse : Telescope → Type → Term → Term
+    recurse tel target t@(var x args) =
+      case lookupCxt tel x of λ where
+        (just (_ , arg _ typ)) → if does (typ Term.≟ target) then
+                                   def funName [ vArg t ]
+                                 else t
+        nothing → t
+    recurse tel _ t = t
+
+    prodTerm : (Term → Term) → ℕ → Term
+    prodTerm f = proj₂ ∘
+                 G.fold (0 , quoteTerm tt)
+                        λ { (zero  , t) →
+                               suc zero , f (var 0 [])
+                          ; (suc n , t) →
+                               suc (suc n)
+                             , con (quote _,_)
+                                   (vArg (f (var (suc n) []))
+                                   ∷ [ vArg t ])
+                          }
 
     inj : ℕ → Term → Term
     inj zero t = t
-    inj (suc zero)    t = con (quote inj₁) [ vArg t ]
-    inj (suc (suc n)) t = con (quote inj₂) [ vArg (inj n t) ]
-genFromClauses _ _ _ = typeError [ strErr "Number of constructors do not match the given Poly definition." ]
+    inj (suc zero) t = con (quote inj₁) [ vArg t ]
+    inj (suc n)    t = con (quote inj₂) [ vArg (inj n t) ]
+genFromClauses _ _ _ _ _ = typeError [ strErr "Number of constructors does not match the given Poly definition." ]
 
 genIso : (from : Name) → (to : Name)
        → (target : Name) → Poly → TC ⊤
 genIso from to target F =
   do definition ← getDefinition target
+     --debugPrint "meta" 5 (strErr "typ: " ∷ [ termErr (def target []) ])
      qF ← quoteTC F
      case definition of λ where
        (data-type pars cs) → do
-         cls ← genFromClauses cs F F
+         cls ← genFromClauses from (def target []) cs F F
+         --debugPrint "meta" 5 [ strErr (showClauses cls) ]
          declareDef (vArg from)
                   $ pi (vArg $ def target [])
                        (abs "_" $ def (quote μ) [ vArg qF ])
          defineFun from cls
        _ → typeError (nameErr target ∷ [ strErr " is not a datatype." ])
 
+unquoteDecl μfromList = genIso μfromList (quote tt) (quote ListN) (ListF ℕ)
 
---unquoteDecl μfromList μtoList = genIso μfromList μtoList (quote ListN) (ListF ℕ)
+a : μ (ListF ℕ)
+a = μfromList (consN 0 (consN 1 nilN))
 
-
-module _ (ν : Name) (F : Poly) (ϕ : Name) where
+module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name) (from : Name) (to : Name) where
 
   genMonoTypes : Mono → TC (List Type)
   genMonoTypes ∅        = return []
-  genMonoTypes I        = return [ def ν [] ]
+  genMonoTypes I        = return [ def data₀ [] ]
   genMonoTypes (K A)    = ⦇ [ quoteTC A ] ⦈
   genMonoTypes (M ⊗ M') = ⦇ genMonoTypes M ++ genMonoTypes M' ⦈
 
   genType : TC Type
-  genType = do typ' ← replaceμ ϕ <$> getType ν
+  genType = do typ' ← replaceμ ϕ <$> getType fun₀
                qF   ← quoteTC F
                pos  ← freshName "_"
                declarePostulate (vArg pos) typ'
@@ -243,7 +278,7 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
   -- A clause:
   -- f : A → B → μ F → C
   -- f : A → B → D → C
-  -- fun w x (...) y = 
+  -- fun w x (...) y =
   -- fun w x (by₁ z₁ z₂) y = by₂ z₁ z₂
   -- is implicitly:
   -- fun [ w : T₁ , x : T₂ , z₁ : T₃ , z₂ : T₄ , y : T₅ ]             --→ Telescope
@@ -256,14 +291,20 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
   genClauses _ _ _ [] = return []
   genClauses _ _ [] _ = return []
   genClauses tel₁ tel₂ (M ∷ G) (n ∷ ns) = do
-    cls   ← genClauses tel₁ tel₂ G ns
     typsᴹ ← genMonoTypes M
     qF    ← quoteTC F
     let len₁ = length tel₁
         lenᴹ = length typsᴹ
         len₂ = length tel₂
         lenTotal = len₁ + lenᴹ + len₂
-    term ← return {!!}
+    ty ← getType fun₀ >>= normalise
+    debugPrint "meta" 5 [ termErr ty ]
+    let term = --← normalise $
+             def fun₀ (vArg qF
+                      ∷ weakenArgs (lenᴹ + len₂) (vars tel₁)
+                      ++ [ vArg (def from [ conTerm n ]) ]
+                      ++ vars tel₂)
+    --debugPrint "meta" 5 [ termErr term ]
     -- should be normalised from "fold (ListF ℕ) e f (fromList ?)"
     -- then traverse and search for a pattern normalised from
     -- "fold (ListF ℕ) e f ?" and replace it with the realized fold
@@ -272,22 +313,23 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
       -- $ con n (vArg qF ∷ weakenArgs (lenᴹ + len₂) (vars len₁)
       --           ++ [ conTerm n ]
       --           ++ vars len₂)
-    debugPrint "meta" 5 [ strErr (showTerm term) ]
+    --debugPrint "meta" 5 [ strErr $ "RHS of the clause: " <> (showTerm term) ]
+    cls ← genClauses tel₁ tel₂ G ns
     return $ clause (tel₁
                       ++ map (_,_ "_" ∘ vArg) typsᴹ
                       ++ shiftTel lenᴹ tel₂)
-                    (weakenArgPats (lenᴹ + len₂) (pats len₁)
+                    (weakenArgPats (lenᴹ + len₂) (pats tel₁)
                       ++ weakenArgPats len₂ [ conPat n ]
-                      ++ (pats len₂))
+                      ++ (pats tel₂))
                     term
            ∷ cls
     where
 
-      pats : ℕ → List (Arg Pattern)
-      pats n = G.fold [] (λ xs → (vArg ∘ var) n ∷ xs) n
+      pats : Telescope → List (Arg Pattern)
+      pats = foldr (λ { (_ , arg i _) xs → arg i (var (length xs)) ∷ xs}) []
 
-      vars : ℕ → List (Arg Term)
-      vars n = G.fold [] (λ xs → vArg (var n []) ∷ xs) n
+      vars : Telescope → List (Arg Term)
+      vars = foldr (λ { (_ , arg i _) xs → arg i (var (length xs) []) ∷ xs}) []
 
       varPats : List (Arg Pattern)
       varPats = fromMonoGenArgs M 0 λ _ → var
@@ -308,19 +350,28 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
   -- Then it calls genClauses,
   --   * it starts from the type before replacing μ,
   --   * parses it and splits it at the first occurence of μ.
-  genFun : Name → List Name → TC _
-  genFun f cs = do genType >>= declareDef (vArg f)
+  genFun : Name → TC _
+  genFun fun₁ = do t ← genType
+                   declareDef (vArg fun₁) t
+                   debugPrint "meta" 5 (strErr "Type of f: " ∷ [ termErr t ])
                    qF ← (quoteTC F) >>= normalise
-                   T  ← inferType (def ν [ vArg qF ]) >>= normalise
+                   T  ← inferType (def fun₀ [ vArg qF ]) >>= normalise
                    let tel = piToTel T
                        tel₁ , xtel₂ = break (≟-μ qF) tel
                    tel₂ ← case xtel₂ of λ where
                      [] → typeError [ strErr "no datatype found in the definition." ]
                      (_ ∷ xs) → return xs
-                   debugPrint "meta" 5 [ strErr (showTel tel₂) ]
+                   debugPrint "meta" 5
+                              [ case tel₁ of (λ where
+                                  [] → strErr "tel₁ is empty."
+                                  t  → strErr $ "tel₁: " <> showTel t) ]
+                   definition ← getDefinition data₀
+                   cs ← case definition of λ where
+                     (data-type _ cs) → return cs
+                     _ → typeError (strErr "Given name " ∷ nameErr data₀ ∷ [ strErr " is not a datatype."])
                    cls ← genClauses tel₁ tel₂ F cs
-                   debugPrint "meta" 5 [ strErr (showClauses cls) ]
-                   defineFun f cls
+                   debugPrint "meta" 5 [ strErr $ "Clauses: " <> (showClauses cls) ]
+                   defineFun fun₁ cls
                    return tt
     where
     -- The decidable equality should identify something like (μ (∅ ∷ (K ℕ ⊗ I) ∷ []))
@@ -333,12 +384,27 @@ module _ (ν : Name) (F : Poly) (ϕ : Name) where
 -- Examples, this part should be user-defined.
 -- A ϕ transformation from the univserse to native datatype should be defined.
 -- For example, A (ListF ℕ) in Poly should be mapped to native (List ℕ).
--- genFun : (ν : Name) (F : Poly) (ϕ : Name) → Name → List Name → TC _
+-- genFun : (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name) (from : Name) (to : Name) → Name → TC _
 
 ϕ : Poly → Set
 ϕ _ = ListN
 
---unquoteDecl foldN = genFun (quote fold) (ListF ℕ) (quote ϕ) foldN (quote nilN ∷ quote consN ∷ [])
+--foldN : {X : Set} (z : X) (f : ℕ → X → X) → ListN → X
+--foldN {X} z f nilN = fold (ListF ℕ) {X} z f (μfromList nilN)
+--foldN {X} z f (consN z₁ m) = fold (ListF ℕ) {X} z f (μfromList (consN z₁ m))
+
+unquoteDecl foldN = genFun (quote ListN) (quote fold) (ListF ℕ) (quote ϕ) (quote μfromList) (quote tt) foldN
+
+foldTyp : TC _
+foldTyp = do t ← getDefinition (quote foldN)
+             case t of λ where
+               (function cs) → debugPrint "meta" 5 [ strErr (showClauses cs) ]
+               _ → typeError [ strErr "" ]
+
+unquoteDecl = foldTyp
+
+sum : ListN → ℕ
+sum = foldN 0 _+_
 
 --genPat : Name → Poly → TC Term
 --genPat n T = {!!}
