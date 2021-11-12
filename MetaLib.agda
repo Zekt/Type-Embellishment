@@ -39,6 +39,8 @@ piToTel : Term → Telescope
 piToTel (pi (arg i x) (abs s y)) = (s , arg i x) ∷ piToTel y
 piToTel t = [] -- ignoring the last term in a pi chain
 
+--foldMono : {X : Set} → Mono → X
+
 fromMonoGenArgs : {X : Set} → Mono → ℕ → (Mono → ℕ → X) → List (Arg X)
 fromMonoGenArgs ∅        n f = []
 fromMonoGenArgs I        n f = [ vArg (f I n) ]
@@ -46,28 +48,26 @@ fromMonoGenArgs Κ@(K _)  n f = [ vArg (f Κ n) ]
 fromMonoGenArgs (M ⊗ M') n f = let ms = fromMonoGenArgs M' n f
                                 in fromMonoGenArgs M (n + length ms) f ++ ms
 
+--???: Is weakening needed?
 ⟪_⟫ : Mono → Type → Type → TC Type
 ⟪_⟫ ∅        s t = return t
-⟪_⟫ I        s t = return (pi (vArg s) (abs "_" (weaken 1 t)))
+⟪_⟫ I        s t = return (pi (vArg s) (abs "_" t))
 ⟪_⟫ (K A)    s t = do a ← quoteTC A --?
-                      return (pi (vArg a) (abs "_" (weaken 1 t)))
+                      return (pi (vArg a) (abs "_" t))
 ⟪_⟫ (M ⊗ M') s t = ⟪ M' ⟫ s t >>= ⟪ M ⟫ s
 
-monoType : Mono → TC Type
-monoType M = ⟪ M ⟫ (var 0 []) (var 0 [])
-
-polyTel : Poly → TC (List Type)
-polyTel []      = return []
-polyTel (M ∷ F) = do m  ← monoType M
-                     ms ← polyTel F
-                     return (m ∷ map (weaken 1) ms)
+--monoType : Mono → TC Type
+--monoType M = ⟪ M ⟫ (var 0 []) (var 0 [])
+--
+--polyTel : Poly → TC (List Type)
+--polyTel []      = return []
+--polyTel (M ∷ F) = do m  ← monoType M
+--                     ms ← polyTel F
+--                     return (m ∷ ms)
 
 -- the corresponding constructor type of a Mono
 toConDef : Mono → Name → TC Type
 toConDef M ν = ⟪ M ⟫ (def ν []) (def ν [])
-
-toConCon : Mono → Name → TC Type
-toConCon M ν = ⟪ M ⟫ (con ν []) (con ν [])
 
 toConDefs : Poly → Name → TC (List Type)
 toConDefs [] _ = return []
@@ -143,49 +143,65 @@ shiftTel (suc n) = weakenFrom′ Trav.traverseTel 0 n
 --getTerm : {M : Mono} {F : Poly} → M ∈ F → μ F → TC Term
 --getTerm {M} {.(_ ∷ _)} (there M∈F) μF = {!!}
 
-parseCon : Name → Mono → TC Telescope
-parseCon n M = do t  ← getType n
-                  --debugPrint "meta" 5 (termErr t ∷ [])
-                  tᴹ ← inferType (con n [])
-                  --debugPrint "meta" 5 (termErr tᴹ ∷ [])
-                  let d   = t Term.≟ tᴹ
-                      tel = piToTel t
-                  if (does d)
-                    then return tel
-                    else typeError (strErr "Given datatype constructor "
-                                   ∷ termErr t
-                                   ∷ strErr " and Mono definition "
-                                   ∷ termErr tᴹ
-                                   ∷ strErr " does not match."
-                                   ∷ [])
+--test : TC _
+--test = do let t₁ = pi (vArg (quoteTerm Set)) (abs "t" (quoteTerm Set))
+--              t₂ = pi (vArg (quoteTerm Set)) (abs "t" (quoteTerm Set))
+--          if (does (t₁ Term.≟ t₂))
+--            then debugPrint "meta" 5 [ strErr "yes" ]
+--            else debugPrint "meta" 5 [ strErr "no" ]
+--
+--unquoteDecl = test
 
---prodType : Telescope → Type
---prodType [] = quoteTerm ⊤
---prodType ((_ , arg _ x) ∷ xs) = def (quote _×_)
---                                    (hArg (quoteTerm 0ℓ)
---                                    ∷ hArg (quoteTerm 0ℓ)
---                                    ∷ vArg x
---                                    ∷ vArg (prodType xs)
---                                    ∷ [])
+parseCon : Name → Name → Mono → TC Telescope
+parseCon dataName conName M = do
+  t  ← getType conName
+  tᴹ ← toConDef M dataName
+  let d   = (removeStr t) Term.≟ (removeStr tᴹ)
+      tel = piToTel t
+  if (does d)
+    then return tel
+    else typeError (strErr "Given datatype constructor: "
+                   ∷ termErr t
+                   ∷ strErr " and the type of the corresponding constructor of the Mono definition "
+                   ∷ termErr tᴹ
+                   ∷ strErr " does not match."
+                   ∷ [])
+  where
+    mutual
+      removeStr : Term → Term
+      removeStr (var x args) = var x (removeStrArgs args)
+      removeStr (con c args) = con c (removeStrArgs args)
+      removeStr (def f args) = def f (removeStrArgs args)
+      removeStr (lam v (abs s x)) = lam v (abs "_" (removeStr x))
+      removeStr (pat-lam cs args) = pat-lam cs (removeStrArgs args)
+      removeStr (Π[ s ∶ arg i x ] y) = Π[ "_" ∶ arg i (removeStr x) ] removeStr y
+      removeStr t = t
+      --for termination check
+      removeStrArgs : List (Arg Term) → List (Arg Term)
+      removeStrArgs [] = []
+      removeStrArgs (x ∷ as) = removeStrArg x ∷ removeStrArgs as
+
+      removeStrArg : Arg Term → Arg Term
+      removeStrArg (arg i x) = arg i (removeStr x)
 
 -- fromList : ListN → μ (ListF ℕ)
 -- inj₁ _
 -- inj₂ (inj₁ _)
 -- inj₂ (inj₂ (inj₁ _))
 -- ...
-genFromClauses : Name → Type → List Name → Poly → Poly → TC Clauses
+genFromClauses : Name → Name → List Name → Poly → Poly → TC Clauses
 genFromClauses _ _ [] [] _ = return []
-genFromClauses funName typ (n ∷ ns) (M ∷ Ms) F = do
-  tel ← parseCon n M
+genFromClauses funName dataName (conName ∷ conNames) (M ∷ Ms) F = do
+  tel ← parseCon dataName conName M
   let len = length tel
-      term = prodTerm (recurse tel typ) len
+      term = prodTerm (recurse tel (def dataName [])) len
       cl = clause
              tel
-             [ vArg $ con n (pats tel) ]
+             [ vArg $ con conName (pats tel) ]
            $ con (quote μ.con)
                  [ vArg $ inj (length F ∸ length Ms) term ]
   --debugPrint "meta" 5 [ strErr (showClause cl) ]
-  cls ← genFromClauses funName typ ns Ms F
+  cls ← genFromClauses funName dataName conNames Ms F
   return (cl ∷ cls)
   where
     pats : Telescope → List (Arg Pattern)
@@ -242,7 +258,7 @@ genIso from to target F =
      qF ← quoteTC F
      case definition of λ where
        (data-type pars cs) → do
-         cls ← genFromClauses from (def target []) cs F F
+         cls ← genFromClauses from target cs F F
          --debugPrint "meta" 5 [ strErr (showClauses cls) ]
          declareDef (vArg from)
                   $ pi (vArg $ def target [])
@@ -252,8 +268,16 @@ genIso from to target F =
 
 unquoteDecl μfromList = genIso μfromList (quote tt) (quote ListN) (ListF ℕ)
 
-a : μ (ListF ℕ)
-a = μfromList (consN 0 (consN 1 nilN))
+--a : μ (ListF ℕ)
+--a = μfromList (consN 0 (consN 1 nilN))
+--
+--fromList′ : ListN → μ (ListF ℕ)
+--fromList′ nilN = con (inj₁ tt)
+--fromList′ (consN z xs) = con (inj₂ (inj₁ (z , (fromList′ xs))))
+--
+--iso : ∀ {xs} → μfromList xs ≡ fromList′ xs
+--iso {nilN} = _≡_.refl
+--iso {consN z xs} = {!!}
 
 module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name) (from : Name) (to : Name) where
 
@@ -281,7 +305,7 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name) (from : Name) (
   -- fun w x (...) y =
   -- fun w x (by₁ z₁ z₂) y = by₂ z₁ z₂
   -- is implicitly:
-  -- fun [ w : T₁ , x : T₂ , z₁ : T₃ , z₂ : T₄ , y : T₅ ]             --→ Telescope
+  -- fun [ w : T₁ , x : T₂ , z₁ : T₃ , z₂ : T₄ , y : T₅ ]    --→ Telescope
   --  ╭─ (var 4 , var 3 , ⟦ by₁ ⟧ [ var 2 , var 1 ] , var 0) --→ Pattern
   --  │  (⟦ by₂ ⟧ [ var 2 , var 1 ])                         --→ Term
   --  │
@@ -307,7 +331,7 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name) (from : Name) (
     --debugPrint "meta" 5 [ termErr term ]
     -- should be normalised from "fold (ListF ℕ) e f (fromList ?)"
     -- then traverse and search for a pattern normalised from
-    -- "fold (ListF ℕ) e f ?" and replace it with the realized fold
+    -- "fold (ListF ℕ) e f ? g h" and replace it with the realized fold
     -- Apparently, some meta fromList should be derived first.
 
       -- $ con n (vArg qF ∷ weakenArgs (lenᴹ + len₂) (vars len₁)
@@ -391,24 +415,29 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name) (from : Name) (
 
 --foldN : {X : Set} (z : X) (f : ℕ → X → X) → ListN → X
 --foldN {X} z f nilN = fold (ListF ℕ) {X} z f (μfromList nilN)
---foldN {X} z f (consN z₁ m) = fold (ListF ℕ) {X} z f (μfromList (consN z₁ m))
+--foldN {X} z f (consN z₁ m) = {! fold (ListF ℕ) {X} z f (μfromList (consN z₁ m)) !}
 
 unquoteDecl foldN = genFun (quote ListN) (quote fold) (ListF ℕ) (quote ϕ) (quote μfromList) (quote tt) foldN
+--
+--foldTyp : TC _
+--foldTyp = do t ← getDefinition (quote foldN)
+--             case t of λ where
+--               (function cs) → debugPrint "meta" 5 [ strErr (showClauses cs) ]
+--               _ → typeError [ strErr "" ]
+--
+--unquoteDecl = foldTyp
 
-foldTyp : TC _
-foldTyp = do t ← getDefinition (quote foldN)
-             case t of λ where
-               (function cs) → debugPrint "meta" 5 [ strErr (showClauses cs) ]
-               _ → typeError [ strErr "" ]
-
-unquoteDecl = foldTyp
-
-sum : ListN → ℕ
-sum = foldN 0 _+_
-
---genPat : Name → Poly → TC Term
---genPat n T = {!!}
-
+--sum : ListN → ℕ
+--sum = foldN 0 _+_
+--
+--sum' : ListN → ℕ
+--sum' nilN = 0
+--sum' (consN z xs) = z + sum' xs
+--
+--sumEq : ∀ xs → sum xs ≡ sum' xs
+--sumEq nilN = _≡_.refl
+--sumEq (consN z xs) with sumEq xs
+--...| r = {!!}
 
 --cls : Name → TC Clause
 --cls ν = do tel ← toTel (ListF ℕ)
