@@ -40,8 +40,6 @@ piToTel : Term → Telescope
 piToTel (pi (arg i x) (abs s y)) = (s , arg i x) ∷ piToTel y
 piToTel t = [] -- ignoring the last term in a pi chain
 
---foldMono : {X : Set} → Mono → X
-
 fromMonoGenArgs : {X : Set} → Mono → ℕ → (Mono → ℕ → X) → List (Arg X)
 fromMonoGenArgs ∅        n f = []
 fromMonoGenArgs I        n f = [ vArg (f I n) ]
@@ -56,15 +54,6 @@ fromMonoGenArgs (M ⊗ M') n f = let ms = fromMonoGenArgs M' n f
 ⟪_⟫ (K A)    s t = do a ← quoteTC A --?
                       return (pi (vArg a) (abs "_" t))
 ⟪_⟫ (M ⊗ M') s t = ⟪ M' ⟫ s t >>= ⟪ M ⟫ s
-
---monoType : Mono → TC Type
---monoType M = ⟪ M ⟫ (var 0 []) (var 0 [])
---
---polyTel : Poly → TC (List Type)
---polyTel []      = return []
---polyTel (M ∷ F) = do m  ← monoType M
---                     ms ← polyTel F
---                     return (m ∷ ms)
 
 -- the corresponding constructor type of a Mono
 toConDef : Mono → Name → TC Type
@@ -120,39 +109,10 @@ shiftTel zero = Trav.traverseTel
                   (zero Trav., [])
 shiftTel (suc n) = weakenFrom′ Trav.traverseTel 0 n
 
---shiftTel from zero (str , arg _ x) = do x ← TravTC.traverseTerm
---                                              (record TravTC.defaultActions {
---                                                        onVar = λ where
---                                                          Γ zero → typeError [ strErr "De Brujin index of the original type is malformed." ]
---                                                          Γ (suc n) → return n
---                                                      })
---                                              (zero TravTC., [])
---                                              x
---                                        return {!!}
---weakenTel : ℕ → ℕ → (String × Arg Term) → (String × Arg Term)
---weakenTel = λ a b → map² id (A.map (weakenFrom a b))
-
 -- ν is the name of the function to be translated, e.g. fold.
 -- F is the polynomial definition of the target datatype that should appears in the type of ν.
 -- The target datatype is assumed to be represented by μ : Poly → Set.
 -- ϕ is the transformation to be substituted for μ.
-
---data _∈_ : Mono → Poly → Set where
---  here  : {M : Mono} → {F : Poly} → M ∈ (M ∷ F)
---  there : {M' : Mono} → {M : Mono} → {F : Poly} → M ∈ F → M ∈ (M' ∷ F)
---
---getTerm : {M : Mono} {F : Poly} → M ∈ F → μ F → TC Term
---getTerm {M} {.(_ ∷ _)} (there M∈F) μF = {!!}
-
---test : TC _
---test = do let t₁ = pi (vArg (quoteTerm Set)) (abs "t" (quoteTerm Set))
---              t₂ = pi (vArg (quoteTerm Set)) (abs "t" (quoteTerm Set))
---          if (does (t₁ Term.≟ t₂))
---            then debugPrint "meta" 5 [ strErr "yes" ]
---            else debugPrint "meta" 5 [ strErr "no" ]
---
---unquoteDecl = test
-
 parseCon : Name → Name → Mono → TC Telescope
 parseCon dataName conName M = do
   t  ← getType conName
@@ -269,9 +229,6 @@ genIso from to target F =
 
 unquoteDecl μfromList = genIso μfromList (quote tt) (quote ListN) (ListF ℕ)
 
---a : μ (ListF ℕ)
---a = μfromList (consN 0 (consN 1 nilN))
---
 --fromList′ : ListN → μ (ListF ℕ)
 --fromList′ nilN = con (inj₁ tt)
 --fromList′ (consN z xs) = con (inj₂ (inj₁ (z , (fromList′ xs))))
@@ -310,13 +267,6 @@ S&R inner f x y =
              then (maybes $ S&Rs inner f args₁ args₂)
              else nothing
          (_ , _) → nothing
-         --(lam v t , xx) → {!!}
-         --(pat-lam cs args , xx) → {!!}
-         --(pi a b , xx) → {!!}
-         --(sort s , xx) → {!!}
-         --(lit l , xx) → {!!}
-         --(meta x x₁ , xx) → {!!}
-         --(unknown , unknown) → {!!}
 
 {-# TERMINATING #-}
 S&Rrec : Term → (Term → Term) → Term → Term → Maybe Term
@@ -333,25 +283,6 @@ S&Rrec inner f term pat = S&R inner f term pat
 
     S&Rargs : List (Arg Term) → List (Arg Term)
     S&Rargs args = Arg.map-Args fromMaybeId args
-
---S&Rrec inner f term@(var x args) pat = S&R inner f term pat
---                                   <∣> just (var x $
---                                               A.map-Args
---                                                 (λ t → fromMaybe t $ S&Rrec inner f t pat)
---                                                 args)
---S&Rrec inner f term@(con c args) pat = S&R inner f term pat
---                                   <∣> just (con c $
---                                               A.map-Args
---                                                 (λ t → fromMaybe t $ S&Rrec inner f t pat)
---                                                 args)
---S&Rrec inner f (def f₁ args) pat = {!!}
---S&Rrec inner f (lam v t) pat = {!!}
---S&Rrec inner f (pat-lam cs args) pat = {!!}
---S&Rrec inner f (pi a b) pat = {!!}
---S&Rrec inner f (sort s) pat = {!!}
---S&Rrec inner f (lit l) pat = {!!}
---S&Rrec inner f (meta x x₁) pat = {!!}
---S&Rrec inner f unknown pat = {!!}
 
 module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name)
          (from : Name) (to : Name) (fun₁ : Name) where
@@ -395,7 +326,6 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name)
     let len₁ = length tel₁
         lenᴹ = length typsᴹ
         len₂ = length tel₂
-        lenTotal = len₁ + lenᴹ + len₂
     ty ← getType fun₀ >>= normalise
     debugPrint "meta" 5 [ termErr ty ]
     let term x len by =
@@ -424,8 +354,8 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name)
               r' ← case r of λ where
                      (lam x (abs _ t)) → return t
                      _ → typeError [ strErr "not lambda" ]
-              debugPrint "meta" 5 [ strErr $ "Unreplaced Term: " <> (showTerm t') ]
-              debugPrint "meta" 5 [ strErr $ "Pattern Term: " <> (showTerm r) ]
+              --debugPrint "meta" 5 [ strErr $ "Unreplaced Term: " <> (showTerm t') ]
+              --debugPrint "meta" 5 [ strErr $ "Pattern Term: " <> (showTerm r) ]
               res ← maybe′ return
                   (typeError [ strErr "Failed to parse recursive definition." ])
                   (S&Rrec (var 0 []) recResult t' r')
@@ -437,17 +367,13 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name)
                         })
                         (0 Trav., [])
                         res
-              debugPrint "meta" 5 [ strErr $ "Fixed Replaced Term: " <> (showTerm res') ]
+              --debugPrint "meta" 5 [ strErr $ "Fixed Replaced Term: " <> (showTerm res') ]
               return res')
-    debugPrint "meta" 5 [ strErr ("Replaced Term: " <> showTerm t) ]
+    --debugPrint "meta" 5 [ strErr ("Replaced Term: " <> showTerm t) ]
     -- should be normalised from "fold (ListF ℕ) e f (fromList ?)"
     -- then traversed and searched for a pattern normalised from
     -- "λ x → fold (ListF ℕ) e f x" and replaced by the realized fold
     -- Apparently, some meta fromList should be derived first.
-
-      -- $ con n (vArg qF ∷ weakenArgs (lenᴹ + len₂) (vars len₁)
-      --           ++ [ conTerm n ]
-      --           ++ vars len₂)
     cls ← genClauses tel₁ tel₂ G ns
     return $ clause tel'
                     pat
