@@ -9,15 +9,15 @@ import Data.Nat.GeneralisedArithmetic as G using (fold)
 open import Data.Nat.Show
 open import Data.Bool using (if_then_else_; true; false)
 open import Data.String using (String) renaming (_++_ to _<>_)
-open import Data.Product using (Σ; Σ-syntax; ∃; ∃-syntax; _×_; _,_; proj₁; proj₂) renaming (map to map²)
+open import Data.Product using (Σ; Σ-syntax; ∃; ∃-syntax; _×_; _,_; proj₁; proj₂; curry; uncurry) renaming (map to map²)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Empty
 open import Data.Unit using (⊤; tt)
-open import Data.Maybe using (Maybe; maybe′; just; nothing; fromMaybe)
-open import Data.List using (List; []; _∷_; _++_; map; length; break; [_]; concat; zip; foldr; lookup)
+open import Data.Maybe as M using (Maybe; maybe′; just; nothing; fromMaybe; _<∣>_; when; boolToMaybe)
+open import Data.List using (List; []; _∷_; _++_; map; length; break; [_]; concat; zip; zipWith; foldr; lookup; reverse)
 open import Data.Fin using (Fin; fromℕ; fromℕ<; fromℕ<″)
 open import Category.Monad
-open import Relation.Binary.PropositionalEquality using (_≡_)
+open import Relation.Binary.PropositionalEquality using (_≡_; cong)
 open import Relation.Nullary --using (Dec; does)
 open import Relation.Nullary.Decidable using (True)
 
@@ -25,7 +25,8 @@ open import Reflection
 open import Agda.Builtin.Reflection
 open import Reflection.TypeChecking.Monad.Syntax
 import Reflection.Name as Name
-import Reflection.Argument as A
+import Reflection.Argument as Arg
+import Reflection.Abstraction as Abs
 open import Reflection.Term as Term
 import Reflection.Traversal {id} (record { pure = id ; _⊛_ = id }) as Trav
 import Reflection.Traversal {TC} (record { pure = return
@@ -101,10 +102,10 @@ replaceμ ν = Trav.traverseTerm
 
 breakAt : Type → Telescope → Telescope × Telescope
 breakAt target tel = break eq tel
-  where eq : (a : String × Arg Type) → Dec (A.unArg (proj₂ a) ≡ target)
+  where eq : (a : String × Arg Type) → Dec (Arg.unArg (proj₂ a) ≡ target)
         eq (_ , (arg _ x)) = x Term.≟ target
 
-weakenArgPats = A.map-Args ∘ weakenFrom′ Trav.traversePattern 0
+weakenArgPats = Arg.map-Args ∘ weakenFrom′ Trav.traversePattern 0
 -- Modify the telescope after the occurence of the target datatype.
 -- Since the occurence is now replaced with a pattern of a constructor and arguments,
 -- the De Brujin index could be weakened, but more importantly, it could
@@ -279,7 +280,81 @@ unquoteDecl μfromList = genIso μfromList (quote tt) (quote ListN) (ListF ℕ)
 --iso {nilN} = _≡_.refl
 --iso {consN z xs} = {!!}
 
-module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name) (from : Name) (to : Name) where
+maybes : {A : Set} → List (Maybe A) → Maybe A
+maybes [] = nothing
+maybes (x ∷ xs) = x <∣> maybes xs
+
+-- Only one kind of difference is acceptable.
+S&Rs : Term → (Term → Term) → List (Arg Term) → List (Arg Term) → List (Maybe Term)
+S&R : Term → (Term → Term) → Term → Term → Maybe Term
+
+{-# TERMINATING #-}
+S&Rs inner f [] [] = []
+S&Rs inner f (arg _ x ∷ xs) (arg _ y ∷ ys) = S&R inner f x y ∷ S&Rs inner f xs ys
+S&Rs inner f _ _ = []
+
+S&R inner f x y =
+  if (does $ y Term.≟ inner)
+    then just (f x)
+  else case (x , y) of λ where
+         (var m args₁ , var n args₂) →
+           if suc m == n
+             then maybes (S&Rs inner f args₁ args₂)
+             else nothing
+         (con c args₁ , con d args₂) →
+           if (does (c Name.≟ d))
+             then (maybes $ S&Rs inner f args₁ args₂)
+             else nothing
+         (def c args₁ , def d args₂) →
+           if (does (c Name.≟ d))
+             then (maybes $ S&Rs inner f args₁ args₂)
+             else nothing
+         (_ , _) → nothing
+         --(lam v t , xx) → {!!}
+         --(pat-lam cs args , xx) → {!!}
+         --(pi a b , xx) → {!!}
+         --(sort s , xx) → {!!}
+         --(lit l , xx) → {!!}
+         --(meta x x₁ , xx) → {!!}
+         --(unknown , unknown) → {!!}
+
+{-# TERMINATING #-}
+S&Rrec : Term → (Term → Term) → Term → Term → Maybe Term
+S&Rrec inner f term pat = S&R inner f term pat
+                      <∣> (case term of λ where
+                            (var x args) → just (var x $ S&Rargs args)
+                            (con c args) → just (con c $ S&Rargs args)
+                            (def f args) → just (def f $ S&Rargs args)
+                            (lam v t) → just (lam v (Abs.map fromMaybeId t))
+                            t → just t)
+  where
+    fromMaybeId : Term → Term
+    fromMaybeId t = fromMaybe t (S&Rrec inner f t pat)
+
+    S&Rargs : List (Arg Term) → List (Arg Term)
+    S&Rargs args = Arg.map-Args fromMaybeId args
+
+--S&Rrec inner f term@(var x args) pat = S&R inner f term pat
+--                                   <∣> just (var x $
+--                                               A.map-Args
+--                                                 (λ t → fromMaybe t $ S&Rrec inner f t pat)
+--                                                 args)
+--S&Rrec inner f term@(con c args) pat = S&R inner f term pat
+--                                   <∣> just (con c $
+--                                               A.map-Args
+--                                                 (λ t → fromMaybe t $ S&Rrec inner f t pat)
+--                                                 args)
+--S&Rrec inner f (def f₁ args) pat = {!!}
+--S&Rrec inner f (lam v t) pat = {!!}
+--S&Rrec inner f (pat-lam cs args) pat = {!!}
+--S&Rrec inner f (pi a b) pat = {!!}
+--S&Rrec inner f (sort s) pat = {!!}
+--S&Rrec inner f (lit l) pat = {!!}
+--S&Rrec inner f (meta x x₁) pat = {!!}
+--S&Rrec inner f unknown pat = {!!}
+
+module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name)
+         (from : Name) (to : Name) (fun₁ : Name) where
 
   genMonoTypes : Mono → TC (List Type)
   genMonoTypes ∅        = return []
@@ -323,32 +398,62 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name) (from : Name) (
         lenTotal = len₁ + lenᴹ + len₂
     ty ← getType fun₀ >>= normalise
     debugPrint "meta" 5 [ termErr ty ]
-    let term = --← normalise $
-             def fun₀ (vArg qF
-                      ∷ weakenArgs (lenᴹ + len₂) (vars tel₁)
-                      ++ [ vArg (def from [ conTerm n ]) ]
-                      ++ vars tel₂)
-    --debugPrint "meta" 5 [ termErr term ]
+    let term x len by =
+          def fun₀ (vArg qF
+                   ∷ weakenArgs (len + len₂ + by) (vars tel₁)
+                   --++ [ vArg (def from [ conTerm n ]) ]
+                   ++ [ vArg x ]
+                   ++ weakenArgs by (vars tel₂))
+        tel xs len = (tel₁ ++ xs ++ shiftTel len tel₂)
+        recPat : Term
+        recPat = term (var 0 []) lenᴹ 1
+        recResult : Term → Term
+        recResult x = def fun₁ (weakenArgs (lenᴹ + len₂) (vars tel₁)
+                               ++ [ vArg x ]
+                               ++ vars tel₂)
+        term' = term (def from [ conTerm n ]) lenᴹ 0
+    let tel' = (tel (map (_,_ "_" ∘ vArg) typsᴹ) lenᴹ)
+        pat = (weakenArgPats (lenᴹ + len₂) (pats tel₁)
+                ++ weakenArgPats len₂ [ conPat n ]
+                ++ (pats tel₂))
+    debugPrint "meta" 5 [ strErr $ "Telescope: " <> (showTel tel') ]
+    t ← inContext
+          (map proj₂ $ reverse tel')
+          (do t' ← normalise $ term (def from [ conTerm n ]) lenᴹ 0
+              r ← normalise (vLam "hole" recPat)
+              r' ← case r of λ where
+                     (lam x (abs _ t)) → return t
+                     _ → typeError [ strErr "not lambda" ]
+              debugPrint "meta" 5 [ strErr $ "Unreplaced Term: " <> (showTerm t') ]
+              debugPrint "meta" 5 [ strErr $ "Pattern Term: " <> (showTerm r) ]
+              res ← maybe′ return
+                  (typeError [ strErr "Failed to parse recursive definition." ])
+                  (S&Rrec (var 0 []) recResult t' r')
+              res' ← normalise $ Trav.traverseTerm
+                        (record Trav.defaultActions {
+                           onDef = λ _ x → if (does $ x Name.≟ from)
+                                             then (quote id)
+                                             else x
+                        })
+                        (0 Trav., [])
+                        res
+              debugPrint "meta" 5 [ strErr $ "Fixed Replaced Term: " <> (showTerm res') ]
+              return res')
+    debugPrint "meta" 5 [ strErr ("Replaced Term: " <> showTerm t) ]
     -- should be normalised from "fold (ListF ℕ) e f (fromList ?)"
-    -- then traverse and search for a pattern normalised from
-    -- "fold (ListF ℕ) e f ? g h" and replace it with the realized fold
+    -- then traversed and searched for a pattern normalised from
+    -- "λ x → fold (ListF ℕ) e f x" and replaced by the realized fold
     -- Apparently, some meta fromList should be derived first.
 
       -- $ con n (vArg qF ∷ weakenArgs (lenᴹ + len₂) (vars len₁)
       --           ++ [ conTerm n ]
       --           ++ vars len₂)
-    --debugPrint "meta" 5 [ strErr $ "RHS of the clause: " <> (showTerm term) ]
     cls ← genClauses tel₁ tel₂ G ns
-    return $ clause (tel₁
-                      ++ map (_,_ "_" ∘ vArg) typsᴹ
-                      ++ shiftTel lenᴹ tel₂)
-                    (weakenArgPats (lenᴹ + len₂) (pats tel₁)
-                      ++ weakenArgPats len₂ [ conPat n ]
-                      ++ (pats tel₂))
-                    term
+    return $ clause tel'
+                    pat
+                    t --(term (def from [ conTerm n ]) lenᴹ 0)
            ∷ cls
     where
-
       pats : Telescope → List (Arg Pattern)
       pats = foldr (λ { (_ , arg i _) xs → arg i (var (length xs)) ∷ xs}) []
 
@@ -374,33 +479,33 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name) (from : Name) (
   -- Then it calls genClauses,
   --   * it starts from the type before replacing μ,
   --   * parses it and splits it at the first occurence of μ.
-  genFun : Name → TC _
-  genFun fun₁ = do t ← genType
-                   declareDef (vArg fun₁) t
-                   debugPrint "meta" 5 (strErr "Type of f: " ∷ [ termErr t ])
-                   qF ← (quoteTC F) >>= normalise
-                   T  ← inferType (def fun₀ [ vArg qF ]) >>= normalise
-                   let tel = piToTel T
-                       tel₁ , xtel₂ = break (≟-μ qF) tel
-                   tel₂ ← case xtel₂ of λ where
-                     [] → typeError [ strErr "no datatype found in the definition." ]
-                     (_ ∷ xs) → return xs
-                   debugPrint "meta" 5
-                              [ case tel₁ of (λ where
-                                  [] → strErr "tel₁ is empty."
-                                  t  → strErr $ "tel₁: " <> showTel t) ]
-                   definition ← getDefinition data₀
-                   cs ← case definition of λ where
-                     (data-type _ cs) → return cs
-                     _ → typeError (strErr "Given name " ∷ nameErr data₀ ∷ [ strErr " is not a datatype."])
-                   cls ← genClauses tel₁ tel₂ F cs
-                   debugPrint "meta" 5 [ strErr $ "Clauses: " <> (showClauses cls) ]
-                   defineFun fun₁ cls
-                   return tt
+  genFun : TC _
+  genFun = do t ← genType
+              declareDef (vArg fun₁) t
+              debugPrint "meta" 5 (strErr "Type of f: " ∷ [ termErr t ])
+              qF ← quoteTC F >>= normalise
+              T  ← inferType (def fun₀ [ vArg qF ]) >>= normalise
+              let tel = piToTel T
+                  tel₁ , xtel₂ = break (≟-μ qF) tel
+              tel₂ ← case xtel₂ of λ where
+                [] → typeError [ strErr "no datatype found in the definition." ]
+                (_ ∷ xs) → return xs
+              debugPrint "meta" 5
+                         [ case tel₁ of (λ where
+                             [] → strErr "tel₁ is empty."
+                             t  → strErr $ "tel₁: " <> showTel t) ]
+              definition ← getDefinition data₀
+              cs ← case definition of λ where
+                (data-type _ cs) → return cs
+                _ → typeError (strErr "Given name " ∷ nameErr data₀ ∷ [ strErr " is not a datatype."])
+              cls ← genClauses tel₁ tel₂ F cs
+              debugPrint "meta" 5 [ strErr $ "Clauses: " <> (showClauses cls) ]
+              defineFun fun₁ cls
+              return tt
     where
-    -- The decidable equality should identify something like (μ (∅ ∷ (K ℕ ⊗ I) ∷ []))
+      -- The decidable equality should identify something like (μ (∅ ∷ (K ℕ ⊗ I) ∷ []))
       ≟-μ : (qF : Type) → (x : String × Arg Type)
-          → Dec (A.unArg (proj₂ x) ≡ def (quote μ) [ vArg qF ])
+          → Dec (Arg.unArg (proj₂ x) ≡ def (quote μ) [ vArg qF ])
       ≟-μ qF (_ , arg _ x) = x Term.≟ def (quote μ) [ vArg qF ]
 
 
@@ -413,132 +518,20 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name) (from : Name) (
 ϕ : Poly → Set
 ϕ _ = ListN
 
---foldN : {X : Set} (z : X) (f : ℕ → X → X) → ListN → X
---foldN {X} z f nilN = fold (ListF ℕ) {X} z f (μfromList nilN)
---foldN {X} z f (consN z₁ m) = {! fold (ListF ℕ) {X} z f (μfromList (consN z₁ m)) !}
-
+--application of lambda cannot be reflected.
 unquoteDecl foldN = genFun (quote ListN) (quote fold) (ListF ℕ) (quote ϕ) (quote μfromList) (quote tt) foldN
---
---foldTyp : TC _
---foldTyp = do t ← getDefinition (quote foldN)
---             case t of λ where
---               (function cs) → debugPrint "meta" 5 [ strErr (showClauses cs) ]
---               _ → typeError [ strErr "" ]
---
---unquoteDecl = foldTyp
 
---sum : ListN → ℕ
---sum = foldN 0 _+_
---
---sum' : ListN → ℕ
---sum' nilN = 0
---sum' (consN z xs) = z + sum' xs
---
---sumEq : ∀ xs → sum xs ≡ sum' xs
---sumEq nilN = _≡_.refl
---sumEq (consN z xs) with sumEq xs
---...| r = {!!}
+foldN' : {X : Set} (z : X) (f : ℕ → X → X) → ListN → X
+foldN' {X} z f nilN = fold (ListF ℕ) {X} z f (μfromList nilN)
+foldN' {X} z f (consN x m) = f x (foldN' z f m)
 
---cls : Name → TC Clause
---cls ν = do tel ← toTel (ListF ℕ)
---           --let tel = var 0 [] ∷ pi (vArg (quoteTerm ℕ)) (abs "_" (pi (vArg (var 2 [])) (abs "_" (var 3 [])))) ∷ []
---           --debugPrint "meta" 5 (map (strErr ∘ showVar) tel)--(strErr (show (length tel)) ∷ [])
---           return $ clause (("X" , (hArg (quoteTerm Set))) ∷ map (_,_ "_" ∘ vArg)
---                                                                 ( tel ++
---                                                                   quoteTerm ℕ
---                                                                 ∷ quoteTerm ListN
---                                                                 ∷ []))
---                           (hArg (var 4) ∷ map vArg (var 3 ∷ var 2 ∷ con (quote cons) (map vArg (var 1 ∷ var 0 ∷ [])) ∷ []))
---                           (var 2 (map vArg (var 1 [] ∷ def ν (map vArg (var 3 [] ∷ var 2 [] ∷ var 0 [] ∷ [])) ∷ [])))
+sum : ListN → ℕ
+sum = foldN 0 _+_
 
---∅ ∷ K ℕ ⊗ I ∷ []
---foldListN : {X : Set} → X → (ℕ → X → X) → ListN → X
---foldListN e f nil = e
---foldListN e f (cons z l) = f z (foldListN e f l)
+sum' : ListN → ℕ
+sum' nilN = 0
+sum' (consN z xs) = z + sum' xs
 
---macro
---  testM : Term → TC _
---  testM hole = do types ← toCons (ListF ℕ) (quote ListN)
---                  debugPrint "meta" 5 (map termErr types)
---                  unify hole (quoteTerm tt)
---
---printTyps = testM
-
-
--- assuming given datatype and constructors are generated from F
---genFoldDef : Poly → Poly → Name → Name → List Name → TC (List Clause)
---genFoldDef _ [] ν funName _              = return []
---genFoldDef _ M  ν funName []             = typeError (strErr "number of constructors doesn't match polynomial" ∷ [])
---genFoldDef F (M ∷ F') ν funName (ξ ∷ ξs) = do
---  cls   ← genFoldDef F F' ν funName ξs
---  typs  ← toTel F
---  typsᴹ ← varTyps M
---  let lenTotal = length typs + length typsᴹ
---      varN     = case lenTotal of λ { zero    → zero
---                                    ; (suc n) → n }
-  --debugPrint "meta" 5 (map termErr typs ++ strErr " " ∷ map termErr typsᴹ)
-  --debugPrint "meta" 5 ( strErr (show lenTotal)
-  --                    ∷ strErr " "
-  --                    ∷ strErr (show (length (foldPats F)))
-  --                    ∷ strErr " "
-  --                    ∷ strErr (show (length (varPats M)))
-  --                    ∷ strErr " "
-  --                    ∷ strErr (show (length varTerms))
-  --                    ∷ [])
-  --return (clause (("X" , (hArg (quoteTerm Set)))
-  --                ∷ map (_,_ "_" ∘ vArg) (typs ++ typsᴹ))
-  --               (hArg (var lenTotal)
-  --                ∷ A.map-Args (weakenPattern (length (varPats M))) (foldPats F)
-  --                ++ [ conPat ξ ])
-  --               (var (length F' + length typsᴹ) varTerms)
-  --                 ∷ cls)
-  --where
-  --  varTyps : Mono → TC (List Type)
-  --  varTyps ∅        = return []
-  --  varTyps I        = return [ def ν [] ]
-  --  varTyps (K A)    = do a ← quoteTC A
-  --                        return [ a ]
-  --  varTyps (M ⊗ M') = do ts  ← varTyps M
-  --                        ts' ← varTyps M'
-  --                        return (ts ++ ts')
-
-  --  foldPats : Poly → List (Arg Pattern)
-  --  foldPats []      = []
-  --  foldPats (_ ∷ F') = vArg (var (length F')) ∷ foldPats F'
-
-  --  varPats : Mono → List (Arg Pattern)
-  --  varPats M = fromMonoGenArgs M 0 λ _ → var
-
-  --  conPat : Name → Arg Pattern
-  --  conPat ν = vArg (con ν (varPats M))
-
-  --  varTerms : List (Arg Term)
-  --  varTerms = fromMonoGenArgs M 0 λ _ n → var n []
-
-  --  weakenPattern = weakenFrom′ T.traversePattern 0
-
-    --prf : (M : Mono) → conArgs M ≡ length (varPats M)
-
-    --prf I = refl
-    --prf (K x) = refl
-    --prf (M ⊗ M') = {!!}
-
---showVar : Term → String
---showVar (var x args) = "Var " <> (show x)
---showVar (pi (arg i t1) (abs s t2)) = "Pi " <> showVar t1 <> " → " <> showVar t2
---showVar T = " others"
-
---testAlg : Poly → Name → TC _
---testAlg F foldName = withNormalisation true
---                       do a   ← genFold F ListN
---                          --cls ← cls foldName
---                          cls ← genFoldDef F F (quote ListN) foldName (quote nil ∷ quote cons ∷ [])
---                          debugPrint "meta" 5 (termErr a ∷ [])
---                          declareDef (vArg foldName) a
---                          defineFun foldName (cls)
-
---unquoteDecl foldN = testAlg (ListF ℕ) foldN
-
---foldN : {X : Set} → Alg (ListF ℕ) X (ListN → X)
---foldN f g nil = f
---foldN f g (cons x xs) = g x (foldN f {!!} {!!})
+sumEq : ∀ xs → sum xs ≡ sum' xs
+sumEq nilN = _≡_.refl
+sumEq (consN z xs) = cong (_+_ z) (sumEq xs)
