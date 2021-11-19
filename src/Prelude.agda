@@ -1,8 +1,5 @@
 module Prelude where 
 
-open import Function.Base  public
-  using (_$_; _∘_; id; case_of_)
-
 open import Data.Nat       public
   hiding (_≟_; _⊔_)
 open import Data.Fin.Base       public
@@ -23,24 +20,23 @@ open import Reflection.Argument     public
 
 ------------------------------------------------------------------------------
 -- Built-in modules 
-open import Agda.Primitive          public
-open import Agda.Builtin.Unit       public
-  using (⊤; tt)
-open import Agda.Builtin.String     public
+open import Agda.Primitive                public
+open import Agda.Builtin.Unit             public
+open import Agda.Builtin.String           public
   using (String)
   renaming (primStringAppend to infixr 5 _<>_)
-open import Agda.Builtin.Reflection public
+open import Agda.Builtin.Reflection       public
   using (declareData; defineData)
-  -- declareData is newly added
 
+--
+open import Prelude.Function              public
 -- Data Types
-open import Prelude.Empty    public
-open import Prelude.Bool     public
-open import Prelude.Sigma    public
-open import Prelude.Sum      public
-
+open import Prelude.Empty                 public
+open import Prelude.Bool                  public
+open import Prelude.Sigma                 public
+open import Prelude.Sum                   public
 open import Prelude.PropositionalEquality public
 -- Type classes
-open import Prelude.Show     public
-open import Prelude.Equality public
-open import Prelude.Functor  public
+open import Prelude.Show                  public
+open import Prelude.Equality              public
+open import Prelude.Functor               public
