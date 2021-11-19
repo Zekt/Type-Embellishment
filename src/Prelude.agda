@@ -38,6 +38,8 @@ open import Category.Monad public
 
 open import Reflection     public
   hiding (_≟_)
+open import Reflection.Argument     public
+  using (unArg)
 
 open import Agda.Primitive          public
 open import Agda.Builtin.Reflection public

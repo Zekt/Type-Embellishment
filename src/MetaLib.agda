@@ -4,26 +4,21 @@ open import Prelude
 open import PolyUniverse
   hiding (foldr)
 
+open import Reflection.TypeChecking.Monad.Syntax
+  hiding (_<$>_)
+
 ------------------------------------------------------------------------------
 -- To be removed
 import Data.Nat.GeneralisedArithmetic as G using (fold)
 
-open import Reflection.TypeChecking.Monad.Syntax
-  hiding (_<$>_)
-
-open import Reflection.Argument
-  using (unArg)
 open import Reflection.Term
   hiding (_≟_)
-  
 import Reflection.Traversal {id} (record { pure = id ; _⊛_ = id }) as Trav
 import Reflection.Traversal {TC} (record { pure = return
                                          ; _⊛_ = λ A→Bᵀ Aᵀ → A→Bᵀ >>= λ A→B
                                                            → bindTC Aᵀ (return ∘ A→B) }) as TravTC
 open import Reflection.DeBruijn
-
 ------------------------------------------------------------------------------
--- 
 
 piToTel : Term → Telescope
 piToTel (pi (arg i x) (abs s y)) = (s , arg i x) ∷ piToTel y
