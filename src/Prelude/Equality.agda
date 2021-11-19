@@ -26,6 +26,9 @@ record Eq {a} (A : Set a) : Set a where
     _==_ : (x y : A) → Bool
 open Eq ⦃...⦄ public
 
+{-# DISPLAY Eq._≟_  _ = _≟_  #-}
+{-# DISPLAY Eq._==_ _ = _==_ #-}
+
 instance
   NatEq : Eq ℕ
   _≟_  {{ NatEq }} = ℕ._≟_

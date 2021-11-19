@@ -1,23 +1,29 @@
 {-# OPTIONS -v meta:5 #-}
 
 open import Prelude
+open import PolyUniverse
+  hiding (foldr)
 
+------------------------------------------------------------------------------
+-- To be removed
 import Data.Nat.GeneralisedArithmetic as G using (fold)
 
 open import Reflection.TypeChecking.Monad.Syntax
+  hiding (_<$>_)
 
-import Reflection.Argument as Arg
-import Reflection.Abstraction as Abs
+open import Reflection.Argument
+  using (unArg)
 open import Reflection.Term
   hiding (_≟_)
+  
 import Reflection.Traversal {id} (record { pure = id ; _⊛_ = id }) as Trav
 import Reflection.Traversal {TC} (record { pure = return
                                          ; _⊛_ = λ A→Bᵀ Aᵀ → A→Bᵀ >>= λ A→B
                                                            → bindTC Aᵀ (return ∘ A→B) }) as TravTC
 open import Reflection.DeBruijn
 
-open import PolyUniverse
-  hiding (foldr)
+------------------------------------------------------------------------------
+-- 
 
 piToTel : Term → Telescope
 piToTel (pi (arg i x) (abs s y)) = (s , arg i x) ∷ piToTel y
@@ -74,10 +80,11 @@ replaceμ ν = Trav.traverseTerm
 
 breakAt : Type → Telescope → Telescope × Telescope
 breakAt target tel = break eq tel
-  where eq : (a : String × Arg Type) → Dec (Arg.unArg (proj₂ a) ≡ target)
+  where eq : (a : String × Arg Type) → Dec (unArg (proj₂ a) ≡ target)
         eq (_ , (arg _ x)) = x ≟ target
 
-weakenArgPats = Arg.map-Args ∘ weakenFrom′ Trav.traversePattern 0
+weakenArgPats : (x : ℕ) → Args Pattern → Args Pattern
+weakenArgPats = map ∘ weakenFrom′ Trav.traversePattern 0
 -- Modify the telescope after the occurence of the target datatype.
 -- Since the occurence is now replaced with a pattern of a constructor and arguments,
 -- the De Brujin index could be weakened, but more importantly, it could
@@ -258,14 +265,14 @@ S&Rrec inner f term pat = S&R inner f term pat
                             (var x args) → just (var x $ S&Rargs args)
                             (con c args) → just (con c $ S&Rargs args)
                             (def f args) → just (def f $ S&Rargs args)
-                            (lam v t) → just (lam v (Abs.map fromMaybeId t))
+                            (lam v t) → just (lam v (map fromMaybeId t))
                             t → just t)
   where
     fromMaybeId : Term → Term
     fromMaybeId t = fromMaybe t (S&Rrec inner f t pat)
 
     S&Rargs : List (Arg Term) → List (Arg Term)
-    S&Rargs args = Arg.map-Args fromMaybeId args
+    S&Rargs args = map fromMaybeId args
 
 module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name)
          (from : Name) (to : Name) (fun₁ : Name) where
@@ -414,7 +421,7 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name)
     where
       -- The decidable equality should identify something like (μ (∅ ∷ (K ℕ ⊗ I) ∷ []))
       ≟-μ : (qF : Type) → (x : String × Arg Type)
-          → Dec (Arg.unArg (proj₂ x) ≡ def (quote μ) [ vArg qF ])
+          → Dec (unArg (proj₂ x) ≡ def (quote μ) [ vArg qF ])
       ≟-μ qF (_ , arg _ x) = x ≟ def (quote μ) [ vArg qF ]
 
 

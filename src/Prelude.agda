@@ -26,7 +26,7 @@ open import Data.String    public
 open import Data.Maybe     public
   using (Maybe; maybe′; just; nothing; fromMaybe; _<∣>_; when; boolToMaybe)
 open import Data.List      public
-  using (List; []; _∷_; _++_; map; length; break; [_]; concat; zip; zipWith; foldr; lookup; reverse)
+  using (List; []; _∷_; _++_; length; break; [_]; concat; zip; zipWith; foldr; lookup; reverse)
 
 open import Relation.Nullary public
   using (Dec; does; no; yes)
@@ -38,10 +38,12 @@ open import Category.Monad public
 
 open import Reflection     public
   hiding (_≟_)
-  
+
 open import Agda.Primitive          public
 open import Agda.Builtin.Reflection public
   using (declareData; defineData)
   -- declareData is newly added
   
+-- Type classes
+open import Prelude.Functor  public
 open import Prelude.Equality public
