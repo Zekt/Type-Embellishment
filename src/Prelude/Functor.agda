@@ -1,10 +1,9 @@
 module Prelude.Functor where
 
-open import Data.List as L
-  using (List)
-
 open import Agda.Primitive
 open import Agda.Builtin.Reflection
+open import Agda.Builtin.List
+  using (List; []; _∷_)
 
 private
   variable
@@ -31,7 +30,8 @@ open Functor {{...}} public
 
 instance
   ListFunctor : Functor {a} List
-  map ⦃ ListFunctor ⦄ = L.map
+  map ⦃ ListFunctor ⦄ f []       = []
+  map ⦃ ListFunctor ⦄ f (x ∷ xs) = f x ∷ map f xs
 
   TCFunctor : Functor {a} TC
   map ⦃ TCFunctor ⦄ f xs = bindTC xs λ x → returnTC (f x)
@@ -40,7 +40,8 @@ instance
   map ⦃ ArgFunctor ⦄ f (arg i x) = arg i (f x)
 
   ArgsFunctor : Functor {a} λ A → List (Arg A)
-  map ⦃ ArgsFunctor ⦄ f xs = L.map (map f) xs
+  map ⦃ ArgsFunctor ⦄ f []       = []
+  map ⦃ ArgsFunctor ⦄ f (x ∷ xs) = map f x ∷ map f xs
 
   AbsFunctor : Functor {a} Abs
   map ⦃ AbsFunctor ⦄ f (abs s x) = abs s (f x)
