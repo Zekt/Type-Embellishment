@@ -5,32 +5,14 @@
 --{-# OPTIONS -v tc.data.con.comp:6 #-}
 --{-# OPTIONS -v tc.conv.term:21 #-}
 
-open import Reflection
-open import Agda.Builtin.Reflection
+open import Prelude
+open import Tactic.MonoidSolver
+open import Data.Nat.Properties
+  using (+-0-monoid)
+  
 import Reflection.Name
 import Reflection.Term
-import Level as Level
---open import Reflection.Clause
-open import Tactic.MonoidSolver
-
-open import Data.Unit
-open import Data.Empty
-open import Data.Bool
-open import Data.Nat
-open import Data.Nat.Show
-open import Data.Nat.Properties
-open import Data.List
-open import Agda.Builtin.Sigma
-open import Data.Product using (_×_; proj₁; proj₂)
-open import Data.Bool
-open import Data.String renaming (_++_ to _⧺_)
-open import Function.Base
-open import Relation.Nullary
-import Data.Fin
-
-open import Relation.Binary.PropositionalEquality
-  using (_≡_;
- refl)
+open import Agda.Builtin.Reflection
 
 lemma : ∀ x y z → (x + y) + z ≡ x + (y + z)
 lemma x y z = solve +-0-monoid
@@ -197,7 +179,7 @@ macro
                          → debugPrint "meta" 2 (strErr "These are the clauses of function "
                                                   ∷ nameErr n
                                                   ∷ strErr " :\n"
-                                                  ∷ strErr (showClause b ⧺ "\n" ⧺ showClause s)
+                                                  ∷ strErr (showClause b <> "\n" <> showClause s)
                                                   ∷ [])
                        _ → return tt
                      unify hole (quoteTerm tt)
@@ -357,7 +339,7 @@ showCs [] = debugPrint "meta" 2 [ strErr "All constructors printed." ]
 showCs (x ∷ l) = getType x >>= λ c →
   debugPrint "meta" 2 (strErr "Constructor "
                          ∷ nameErr x
-                         ∷ strErr (" is defined as:\n" ⧺ (showTerm c))
+                         ∷ strErr (" is defined as:\n" <> (showTerm c))
                          ∷ []) >>
   showCs l
 
@@ -395,7 +377,7 @@ macro
     declareData (vArg newName) u t
     --let conNames = map (λ (s , t) → freshName s , t) (f newName)
     let conNames = f newName
-    cs ← getConNames (zip (map fst conNames) (map snd conNames))
+    cs ← getConNames (zip (map proj₁ conNames) (map proj₂ conNames))
     defineData newName cs
     getType newName >>= λ x →
       debugPrint "meta" 2 (strErr "The type of the declared datatype '"

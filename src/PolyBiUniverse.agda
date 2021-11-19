@@ -1,21 +1,8 @@
 {-# OPTIONS --allow-unsolved-metas #-}
 {-# OPTIONS -v meta:5 #-}
-open import Function
-open import Function.Base using (case_of_)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong₂)
-open import Data.Nat
-open import Data.Nat.Show
-open import Data.Bool
-open import Data.String using (String) renaming (_++_ to _<>_)
-open import Data.Product using (_×_; _,_; proj₁; proj₂; zip)
-open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to join)
-open import Data.Empty
-open import Data.Unit
-open import Data.Maybe using (Maybe; maybe′; just; nothing; fromMaybe)
-open import Data.List using (List; []; _∷_; _++_)
-open import Category.Monad
-open import Reflection
-open import Agda.Builtin.Reflection
+
+open import Prelude
+  hiding (length; map)
 
 --------
 -- A universe of sums of products

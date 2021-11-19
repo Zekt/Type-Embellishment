@@ -1,29 +1,11 @@
 {-# OPTIONS -v meta:5 #-}
-open import Level using (0ℓ)
 
-open import Function
-open import Function.Base using (case_of_)
-open import Data.Nat as N
-open import Agda.Builtin.Nat using (_==_)
+open import Prelude
+
 import Data.Nat.GeneralisedArithmetic as G using (fold)
-open import Data.Nat.Show
-open import Data.Bool using (if_then_else_; true; false)
-open import Data.String using (String) renaming (_++_ to _<>_)
-open import Data.Product using (Σ; Σ-syntax; ∃; ∃-syntax; _×_; _,_; proj₁; proj₂; curry; uncurry) renaming (map to map²)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Empty
-open import Data.Unit using (⊤; tt)
-open import Data.Maybe as M using (Maybe; maybe′; just; nothing; fromMaybe; _<∣>_; when; boolToMaybe)
-open import Data.List using (List; []; _∷_; _++_; map; length; break; [_]; concat; zip; zipWith; foldr; lookup; reverse)
-open import Data.Fin using (Fin; fromℕ; fromℕ<; fromℕ<″)
-open import Category.Monad
-open import Relation.Binary.PropositionalEquality using (_≡_; cong)
-open import Relation.Nullary --using (Dec; does)
-open import Relation.Nullary.Decidable using (True)
 
-open import Reflection
-open import Agda.Builtin.Reflection
 open import Reflection.TypeChecking.Monad.Syntax
+
 import Reflection.Name as Name
 import Reflection.Argument as Arg
 import Reflection.Abstraction as Abs
@@ -35,7 +17,7 @@ import Reflection.Traversal {TC} (record { pure = return
 open import Reflection.DeBruijn
 
 open import PolyUniverse
-  hiding (foldr)
+--  hiding (foldr)
 
 piToTel : Term → Telescope
 piToTel (pi (arg i x) (abs s y)) = (s , arg i x) ∷ piToTel y
