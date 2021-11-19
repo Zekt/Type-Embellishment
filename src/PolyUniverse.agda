@@ -2,7 +2,7 @@
 {-# OPTIONS -v meta:5 #-}
 
 open import Prelude
-  hiding (foldr)
+  hiding (foldr; [_])
 --------
 -- A universe of sums of products
 
@@ -32,8 +32,8 @@ fmapᴹ (K A)    f a          = a
 fmapᴹ (M ⊗ M') f (xs , xs') = fmapᴹ M f xs , fmapᴹ M' f xs'
 
 fmap : (F : Poly) {X Y : Set} → (X → Y) → ⟦ F ⟧ X → ⟦ F ⟧ Y
-fmap (M ∷ F) f (inj₁ xs) = inj₁ (fmapᴹ M f xs)
-fmap (M ∷ F) f (inj₂ xs) = inj₂ (fmap F f xs)
+fmap (M ∷ F) f (inl xs) = inl (fmapᴹ M f xs)
+fmap (M ∷ F) f (inr xs) = inr (fmap F f xs)
 
 data μ (F : Poly) : Set where
   con : ⟦ F ⟧ (μ F) → μ F
@@ -44,12 +44,12 @@ ListF : Set → Poly
 ListF A = ∅ ∷ (K A ⊗ I) ∷ []
 
 toList : {A : Set} → μ (ListF A) → List A
-toList (con (inj₁ tt))              = []
-toList (con (inj₂ (inj₁ (a , as)))) = a ∷ toList as
+toList (con (inl tt))              = []
+toList (con (inr (inl (a , as)))) = a ∷ toList as
 
 fromList : {A : Set} → List A → μ (ListF A)
-fromList []       = con (inj₁ tt)
-fromList (a ∷ as) = con (inj₂ (inj₁ (a , fromList as)))
+fromList []       = con (inl tt)
+fromList (a ∷ as) = con (inr (inl (a , fromList as)))
 
 conList : {A : Set} → ⟦ ListF A ⟧ (List A) → List A
 conList {A} = toList ∘ con ∘ fmap (ListF A) fromList
@@ -57,8 +57,8 @@ conList {A} = toList ∘ con ∘ fmap (ListF A) fromList
 
 
 conList' : {A : Set} → ⊤ ⊎ A × List A ⊎ ⊥ → List A
-conList' (inj₁ tt)              = conList (inj₁ tt)
-conList' (inj₂ (inj₁ (a , as))) = conList (inj₂ (inj₁ (a , as)))
+conList' (inl tt)             = conList (inl tt)
+conList' (inr (inl (a , as))) = conList (inr (inl (a , as)))
   -- make toList ∘ fromList = id definitionally (in effect)?
   --   check Allais et al's 'New equations for neutral terms' (DTP 2013)
   -- making toList and fromList meet may be problematic (e.g., when involving if_then_else_)
@@ -78,8 +78,8 @@ module _ (F : Poly) {X : Set} (f : ⟦ F ⟧ X → X) where
     iteration (con ds) = f (mapIter F ds)
 
     mapIter : (G : Poly) (ds : ⟦ G ⟧ (μ F)) → ⟦ G ⟧ X
-    mapIter (M ∷ F) (inj₁ ds) = inj₁ (mapIterᴹ M ds)
-    mapIter (M ∷ F) (inj₂ ds) = inj₂ (mapIter F ds)
+    mapIter (M ∷ F) (inl ds) = inl (mapIterᴹ M ds)
+    mapIter (M ∷ F) (inr ds) = inr (mapIter F ds)
 
     mapIterᴹ : (M : Mono) (ds : ⟦ M ⟧ᴹ (μ F)) → ⟦ M ⟧ᴹ X
     mapIterᴹ ∅        _          = tt
@@ -117,7 +117,7 @@ fromAlgᴹ (M ⊗ M') alg (xs , xs') = fromAlgᴹ M' (fromAlgᴹ M alg xs) xs'
 
 toAlg : (F : Poly) {X Y : Set} → ((⟦ F ⟧ X → X) → Y) → Alg F X Y
 toAlg []      f = f λ ()
-toAlg (M ∷ F) f alg = toAlg F λ g → f (join (fromAlgᴹ M alg) g)
+toAlg (M ∷ F) f alg = toAlg F λ g → f [ fromAlgᴹ M alg , g ]
 
 toAlgL : {X Y : Set} → ((⊤ ⊎ (ℕ × X) ⊎ ⊥ → X) → Y) → X → (ℕ → X → X) → Y
 toAlgL alg e f = toAlg (ListF ℕ) alg e f
@@ -149,8 +149,8 @@ iterationL alg ns = iteration (ListF ℕ) alg (fromList ns)
 -- iterationL' alg (n ∷ ns) = alg (inj₂ (inj₁ (n , iteration (ListF ℕ) alg (fromList ns))))
 
 iterationL' : {X : Set} → (⊤ ⊎ (ℕ × X) ⊎ ⊥ → X) → List ℕ → X
-iterationL' alg []       = alg (inj₁ tt)
-iterationL' alg (n ∷ ns) = alg (inj₂ (inj₁ (n , iterationL' alg ns)))
+iterationL' alg []       = alg (inl tt)
+iterationL' alg (n ∷ ns) = alg (inr (inl (n , iterationL' alg ns)))
 
 --test : {X : Set} → Alg (ListF ℕ) X (List ℕ → X)
 --test e f [] = fold (ListF ℕ) e f (con (inj₂ (inj₁ (0 , (con (inj₁ tt))))))

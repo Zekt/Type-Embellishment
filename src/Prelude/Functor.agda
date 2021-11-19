@@ -5,11 +5,7 @@ open import Agda.Builtin.Reflection
 open import Agda.Builtin.List
   using (List; []; _∷_)
 
-private
-  variable
-    a b : Level
-
-record Functor (F : Set a → Set b) : Set (lsuc a ⊔ b) where 
+record Functor {a b} (F : Set a → Set b) : Set (lsuc a ⊔ b) where 
   infixl 4 _<$>_ _<$_
   field
     map : {A B : Set a}
@@ -29,6 +25,9 @@ open Functor {{...}} public
 {-# DISPLAY Functor._<$_  _ = _<$_  #-}
 
 instance
+  private variable
+      a : Level
+      
   ListFunctor : Functor {a} List
   map ⦃ ListFunctor ⦄ f []       = []
   map ⦃ ListFunctor ⦄ f (x ∷ xs) = f x ∷ map f xs

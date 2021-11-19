@@ -16,7 +16,7 @@ open import Reflection.Term
 import Reflection.Traversal {id} (record { pure = id ; _⊛_ = id }) as Trav
 import Reflection.Traversal {TC} (record { pure = return
                                          ; _⊛_ = λ A→Bᵀ Aᵀ → A→Bᵀ >>= λ A→B
-                                                           → bindTC Aᵀ (return ∘ A→B) }) as TravTC
+                                                           → Aᵀ >>= (return ∘ A→B) }) as TravTC
 open import Reflection.DeBruijn
 ------------------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ replaceμ ν = Trav.traverseTerm
 
 breakAt : Type → Telescope → Telescope × Telescope
 breakAt target tel = break eq tel
-  where eq : (a : String × Arg Type) → Dec (unArg (proj₂ a) ≡ target)
+  where eq : (a : String × Arg Type) → Dec (unArg (snd a) ≡ target)
         eq (_ , (arg _ x)) = x ≟ target
 
 weakenArgPats : (x : ℕ) → Args Pattern → Args Pattern
@@ -146,7 +146,7 @@ genFromClauses funName dataName (conName ∷ conNames) (M ∷ Ms) F = do
              [ vArg $ con conName (pats tel) ]
            $ con (quote μ.con)
                  [ vArg $ inj (length F ∸ length Ms) term ]
-  --debugPrint "meta" 5 [ strErr (showClause cl) ]
+  --debugPrint "meta" 5 [ strErr (show cl) ]
   cls ← genFromClauses funName dataName conNames Ms F
   return (cl ∷ cls)
   where
@@ -179,21 +179,17 @@ genFromClauses funName dataName (conName ∷ conNames) (M ∷ Ms) F = do
     recurse tel _ t = t
 
     prodTerm : (Term → Term) → ℕ → Term
-    prodTerm f = proj₂ ∘
-                 G.fold (0 , quoteTerm tt)
-                        λ { (zero  , t) →
-                               suc zero , f (var 0 [])
-                          ; (suc n , t) →
-                               suc (suc n)
-                             , con (quote _,_)
-                                   (vArg (f (var (suc n) []))
-                                   ∷ [ vArg t ])
-                          }
+    prodTerm f = snd ∘
+                 G.fold (0 , quoteTerm tt) λ where
+                   (zero  , t) → suc zero , f (var 0 [])
+                   (suc n , t) → suc (suc n)
+                               , con (quote _,_)
+                                 (vArg (f (var (suc n) [])) ∷ [ vArg t ])
 
     inj : ℕ → Term → Term
     inj zero t = t
-    inj (suc zero) t = con (quote inj₁) [ vArg t ]
-    inj (suc n)    t = con (quote inj₂) [ vArg (inj n t) ]
+    inj (suc zero) t = con (quote inl) [ vArg t ]
+    inj (suc n)    t = con (quote inr) [ vArg (inj n t) ]
 genFromClauses _ _ _ _ _ = typeError [ strErr "Number of constructors does not match the given Poly definition." ]
 
 genIso : (from : Name) → (to : Name)
@@ -205,7 +201,7 @@ genIso from to target F =
      case definition of λ where
        (data-type pars cs) → do
          cls ← genFromClauses from target cs F F
-         --debugPrint "meta" 5 [ strErr (showClauses cls) ]
+         --debugPrint "meta" 5 [ strErr (show cls) ]
          declareDef (vArg from)
                   $ pi (vArg $ def target [])
                        (abs "_" $ def (quote μ) [ vArg qF ])
@@ -331,16 +327,16 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name)
         pat = (weakenArgPats (lenᴹ + len₂) (pats tel₁)
                 ++ weakenArgPats len₂ [ conPat n ]
                 ++ (pats tel₂))
-    debugPrint "meta" 5 [ strErr $ "Telescope: " <> (showTel tel') ]
+    debugPrint "meta" 5 [ strErr $ "Telescope: " <> (show tel') ]
     t ← inContext
-          (map proj₂ $ reverse tel')
+          (map snd $ reverse tel')
           (do t' ← normalise $ term (def from [ conTerm n ]) lenᴹ 0
               r ← normalise (vLam "hole" recPat)
               r' ← case r of λ where
                      (lam x (abs _ t)) → return t
                      _ → typeError [ strErr "not lambda" ]
-              --debugPrint "meta" 5 [ strErr $ "Unreplaced Term: " <> (showTerm t') ]
-              --debugPrint "meta" 5 [ strErr $ "Pattern Term: " <> (showTerm r) ]
+              --debugPrint "meta" 5 [ strErr $ "Unreplaced Term: " <> (show t') ]
+              --debugPrint "meta" 5 [ strErr $ "Pattern Term: " <> (show r) ]
               res ← maybe′ return
                   (typeError [ strErr "Failed to parse recursive definition." ])
                   (S&Rrec (var 0 []) recResult t' r')
@@ -352,9 +348,9 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name)
                         })
                         (0 Trav., [])
                         res
-              --debugPrint "meta" 5 [ strErr $ "Fixed Replaced Term: " <> (showTerm res') ]
+              --debugPrint "meta" 5 [ strErr $ "Fixed Replaced Term: " <> (show res') ]
               return res')
-    --debugPrint "meta" 5 [ strErr ("Replaced Term: " <> showTerm t) ]
+    --debugPrint "meta" 5 [ strErr ("Replaced Term: " <> show t) ]
     -- should be normalised from "fold (ListF ℕ) e f (fromList ?)"
     -- then traversed and searched for a pattern normalised from
     -- "λ x → fold (ListF ℕ) e f x" and replaced by the realized fold
@@ -404,19 +400,19 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name)
               debugPrint "meta" 5
                          [ case tel₁ of (λ where
                              [] → strErr "tel₁ is empty."
-                             t  → strErr $ "tel₁: " <> showTel t) ]
+                             t  → strErr $ "tel₁: " <> show t) ]
               definition ← getDefinition data₀
               cs ← case definition of λ where
                 (data-type _ cs) → return cs
                 _ → typeError (strErr "Given name " ∷ nameErr data₀ ∷ [ strErr " is not a datatype."])
               cls ← genClauses tel₁ tel₂ F cs
-              debugPrint "meta" 5 [ strErr $ "Clauses: " <> (showClauses cls) ]
+              debugPrint "meta" 5 [ strErr $ "Clauses: " <> (show cls) ]
               defineFun fun₁ cls
               return tt
     where
       -- The decidable equality should identify something like (μ (∅ ∷ (K ℕ ⊗ I) ∷ []))
       ≟-μ : (qF : Type) → (x : String × Arg Type)
-          → Dec (unArg (proj₂ x) ≡ def (quote μ) [ vArg qF ])
+          → Dec (unArg (snd x) ≡ def (quote μ) [ vArg qF ])
       ≟-μ qF (_ , arg _ x) = x ≟ def (quote μ) [ vArg qF ]
 
 
