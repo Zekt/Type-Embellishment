@@ -17,7 +17,7 @@ import Reflection.Traversal {TC} (record { pure = return
 open import Reflection.DeBruijn
 
 open import PolyUniverse
---  hiding (foldr)
+  hiding (foldr)
 
 piToTel : Term → Telescope
 piToTel (pi (arg i x) (abs s y)) = (s , arg i x) ∷ piToTel y
