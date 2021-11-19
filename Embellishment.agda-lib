@@ -1,0 +1,8 @@
+name: Embellishment
+include: 
+  src
+depend: 
+  standard-library
+
+flags:
+  --auto-inline
