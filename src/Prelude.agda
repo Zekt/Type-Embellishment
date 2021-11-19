@@ -1,6 +1,5 @@
 module Prelude where 
 
-
 open import Function       public
 open import Function.Base  public
   using (case_of_)       
@@ -17,7 +16,7 @@ open import Data.Unit      public
 open import Data.Bool      public
   using (Bool; true; false; if_then_else_; _∨_; _∧_)
 open import Data.Nat       public
-  hiding (_≟_)
+  hiding (_≟_; _⊔_)
 open import Data.Nat.Show  public
 open import Data.Fin       public
   using (Fin; fromℕ; fromℕ<; fromℕ<″)
@@ -37,10 +36,12 @@ open import Relation.Binary.PropositionalEquality public
 
 open import Category.Monad public
 
-
-open import Agda.Builtin.Nat public
-  using (_==_)
+open import Reflection     public
+  hiding (_≟_)
+  
+open import Agda.Primitive          public
 open import Agda.Builtin.Reflection public
   using (declareData; defineData)
   -- declareData is newly added
-open import Reflection     public
+  
+open import Prelude.Equality public

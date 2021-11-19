@@ -6,10 +6,10 @@ import Data.Nat.GeneralisedArithmetic as G using (fold)
 
 open import Reflection.TypeChecking.Monad.Syntax
 
-import Reflection.Name as Name
 import Reflection.Argument as Arg
 import Reflection.Abstraction as Abs
-open import Reflection.Term as Term
+open import Reflection.Term
+  hiding (_≟_)
 import Reflection.Traversal {id} (record { pure = id ; _⊛_ = id }) as Trav
 import Reflection.Traversal {TC} (record { pure = return
                                          ; _⊛_ = λ A→Bᵀ Aᵀ → A→Bᵀ >>= λ A→B
@@ -67,7 +67,7 @@ genFold F T = quoteTC ({X : Set} → Alg F X (T → X))
 replaceμ : Name → Term → Term
 replaceμ ν = Trav.traverseTerm
                (record Trav.defaultActions
-                  {onDef = λ _ name → if does (name Name.≟ quote μ)
+                  {onDef = λ _ name → if (name == quote μ)
                                         then ν
                                         else name})
                (zero Trav., [])
@@ -75,7 +75,7 @@ replaceμ ν = Trav.traverseTerm
 breakAt : Type → Telescope → Telescope × Telescope
 breakAt target tel = break eq tel
   where eq : (a : String × Arg Type) → Dec (Arg.unArg (proj₂ a) ≡ target)
-        eq (_ , (arg _ x)) = x Term.≟ target
+        eq (_ , (arg _ x)) = x ≟ target
 
 weakenArgPats = Arg.map-Args ∘ weakenFrom′ Trav.traversePattern 0
 -- Modify the telescope after the occurence of the target datatype.
@@ -100,7 +100,7 @@ parseCon : Name → Name → Mono → TC Telescope
 parseCon dataName conName M = do
   t  ← getType conName
   tᴹ ← toConDef M dataName
-  let d   = (removeStr t) Term.≟ (removeStr tᴹ)
+  let d   = (removeStr t) ≟ (removeStr tᴹ)
       tel = piToTel t
   if (does d)
     then return tel
@@ -170,7 +170,7 @@ genFromClauses funName dataName (conName ∷ conNames) (M ∷ Ms) F = do
     recurse : Telescope → Type → Term → Term
     recurse tel target t@(var x args) =
       case lookupCxt tel x of λ where
-        (just (_ , arg _ typ)) → if does (typ Term.≟ target) then
+        (just (_ , arg _ typ)) → if typ == target then
                                    def funName [ vArg t ]
                                  else t
         nothing → t
@@ -234,7 +234,7 @@ S&Rs inner f (arg _ x ∷ xs) (arg _ y ∷ ys) = S&R inner f x y ∷ S&Rs inner 
 S&Rs inner f _ _ = []
 
 S&R inner f x y =
-  if (does $ y Term.≟ inner)
+  if (y == inner)
     then just (f x)
   else case (x , y) of λ where
          (var m args₁ , var n args₂) →
@@ -242,11 +242,11 @@ S&R inner f x y =
              then maybes (S&Rs inner f args₁ args₂)
              else nothing
          (con c args₁ , con d args₂) →
-           if (does (c Name.≟ d))
+           if (c == d)
              then (maybes $ S&Rs inner f args₁ args₂)
              else nothing
          (def c args₁ , def d args₂) →
-           if (does (c Name.≟ d))
+           if (c == d)
              then (maybes $ S&Rs inner f args₁ args₂)
              else nothing
          (_ , _) → nothing
@@ -344,7 +344,7 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name)
                   (S&Rrec (var 0 []) recResult t' r')
               res' ← normalise $ Trav.traverseTerm
                         (record Trav.defaultActions {
-                           onDef = λ _ x → if (does $ x Name.≟ from)
+                           onDef = λ _ x → if x == from
                                              then (quote id)
                                              else x
                         })
@@ -415,7 +415,7 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name)
       -- The decidable equality should identify something like (μ (∅ ∷ (K ℕ ⊗ I) ∷ []))
       ≟-μ : (qF : Type) → (x : String × Arg Type)
           → Dec (Arg.unArg (proj₂ x) ≡ def (quote μ) [ vArg qF ])
-      ≟-μ qF (_ , arg _ x) = x Term.≟ def (quote μ) [ vArg qF ]
+      ≟-μ qF (_ , arg _ x) = x ≟ def (quote μ) [ vArg qF ]
 
 
 --------
@@ -434,13 +434,6 @@ foldN' : {X : Set} (z : X) (f : ℕ → X → X) → ListN → X
 foldN' {X} z f nilN = fold (ListF ℕ) {X} z f (μfromList nilN)
 foldN' {X} z f (consN x m) = f x (foldN' z f m)
 
-sum : ListN → ℕ
-sum = foldN 0 _+_
-
-sum' : ListN → ℕ
-sum' nilN = 0
-sum' (consN z xs) = z + sum' xs
-
-sumEq : ∀ xs → sum xs ≡ sum' xs
-sumEq nilN = _≡_.refl
-sumEq (consN z xs) = cong (_+_ z) (sumEq xs)
+foldEq : ∀ {A} (z : A) f xs → foldN z f xs ≡ foldN' z f xs
+foldEq z f nilN         = refl
+foldEq z f (consN x xs) = cong (f x) (foldEq z f xs)
