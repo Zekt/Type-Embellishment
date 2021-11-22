@@ -1,6 +1,8 @@
 {-# OPTIONS --allow-unsolved-metas #-}
 {-# OPTIONS -v meta:5 #-}
 
+module Universe.PolyBiUniverse where
+
 open import Prelude
   hiding (length; map)
 

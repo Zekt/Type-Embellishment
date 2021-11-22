@@ -1,6 +1,8 @@
 {-# OPTIONS --allow-unsolved-metas #-}
 {-# OPTIONS -v meta:5 #-}
 
+module Universe.PolyUniverse where
+
 open import Prelude
   hiding (foldr; [_])
 --------
