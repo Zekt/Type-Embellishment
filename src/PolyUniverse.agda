@@ -155,10 +155,10 @@ iterationL' alg (n ∷ ns) = alg (inr (inl (n , iterationL' alg ns)))
 --test : {X : Set} → Alg (ListF ℕ) X (List ℕ → X)
 --test e f [] = fold (ListF ℕ) e f (con (inj₂ (inj₁ (0 , (con (inj₁ tt))))))
 
-foldr : {X : Set} → Alg (ListF ℕ) X (List ℕ → X)
-foldr e f as = toAlg (ListF ℕ) iterationL' e f as
-
-foldr' : {X : Set} → Alg (ListF ℕ) X (List ℕ → X)
-foldr' e f []       = {! fold (ListF ℕ) e f!} -- {! toAlg (ListF ℕ) iterationL' e f [] !}
-foldr' e f (a ∷ as) = {! fold (ListF ℕ) e f (fromList (a ∷ as))!}
+--foldr : {X : Set} → Alg (ListF ℕ) X (List ℕ → X)
+--foldr e f as = toAlg (ListF ℕ) iterationL' e f as
+--
+--foldr' : {X : Set} → Alg (ListF ℕ) X (List ℕ → X)
+--foldr' e f []       = {! fold (ListF ℕ) e f !} -- {! toAlg (ListF ℕ) iterationL' e f [] !}
+--foldr' e f (a ∷ as) = {! fold (ListF ℕ) e f (fromList (a ∷ as))!}
 --foldr' e f (a ∷ as) = {! toAlg (ListF ℕ) iterationL e f (a ∷ as)!}
