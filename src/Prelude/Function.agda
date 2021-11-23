@@ -4,7 +4,7 @@ open import Agda.Primitive
 
 private variable
   a b c : Level
-  A     : Set a
+  A B   : Set a
 
 infixr 9 _∘_ -- _∘₂_
 --infixl 8 _ˢ_
@@ -14,6 +14,15 @@ infixr -20 _$_
 
 id : A → A
 id x = x
+
+const : A → (B → A)
+const a = λ _ → a
+
+
+flip : ∀ {A : Set a} {B : Set b} {C : A → B → Set c} →
+       ((x : A) (y : B) → C x y) → ((y : B) (x : A) → C x y)
+flip f = λ y x → f x y
+{-# INLINE flip #-}
 
 _∘_ : {B : A → Set b} {C : {x : A} → B x → Set c} →
       (∀ {x} (y : B x) → C y) → (g : (x : A) → B x) →

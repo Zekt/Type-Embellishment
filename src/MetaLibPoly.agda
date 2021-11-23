@@ -1,25 +1,21 @@
 {-# OPTIONS -v meta:5 #-}
 open import Level using (0ℓ)
 
+open import Prelude
+  hiding (_<$>_)
+
 import Data.Nat.GeneralisedArithmetic as G using (fold)
-open import Data.Maybe as M using (Maybe; maybe′; just; nothing; fromMaybe; _<∣>_; when; boolToMaybe)
 
-open import Universe.PolyUniverse
-open import Prelude hiding (_<$>_)
-
-open import Reflection
-open import Agda.Builtin.Reflection
 open import Reflection.TypeChecking.Monad.Syntax
-import Reflection.Name as Name
-import Reflection.Argument as Arg
-import Reflection.Abstraction as Abs
 open import Reflection.Term as Term
+  hiding (_≟_)
 open import Reflection.DeBruijn
-
-import Reflection.Traversal {id} (record { pure = id ; _⊛_ = id }) as Trav
-import Reflection.Traversal {TC} (record { pure = return
+import      Reflection.Traversal {id} (record { pure = id ; _⊛_ = id }) as Trav
+import      Reflection.Traversal {TC} (record { pure = return
                                          ; _⊛_ = λ A→Bᵀ Aᵀ → A→Bᵀ >>= λ A→B
                                          → bindTC Aᵀ (return ∘ A→B) }) as TravTC
+
+open import Universe.PolyUniverse
 
 piToTel : Term → Telescope
 piToTel (pi (arg i x) (abs s y)) = (s , arg i x) ∷ piToTel y
@@ -69,17 +65,18 @@ genFold F T = quoteTC ({X : Set} → Alg F X (T → X))
 replaceμ : Name → Term → Term
 replaceμ ν = Trav.traverseTerm
                (record Trav.defaultActions
-                  {onDef = λ _ name → if does (name Name.≟ quote μ)
+                  {onDef = λ _ name → if does (name ≟ quote μ)
                                         then ν
                                         else name})
                (zero Trav., [])
 
 breakAt : Type → Telescope → Telescope × Telescope
-breakAt target tel = break eq tel
-  where eq : (a : String × Arg Type) → Dec (Arg.unArg (snd a) ≡ target)
-        eq (_ , (arg _ x)) = x Term.≟ target
-
-weakenArgPats = Arg.map-Args ∘ weakenFrom′ Trav.traversePattern 0
+breakAt target tel = break eq tel -- break eq tel
+  where eq : (a : String × Arg Type) → Dec (unArg (snd a) ≡ target)
+        eq (_ , (arg _ x)) = x ≟ target
+        
+weakenArgPats : ℕ → List (Arg Pattern) → List (Arg Pattern)
+weakenArgPats = map ∘ weakenFrom′ Trav.traversePattern 0
 -- Modify the telescope after the occurence of the target datatype.
 -- Since the occurence is now replaced with a pattern of a constructor and arguments,
 -- the De Brujin index could be weakened, but more importantly, it could
@@ -102,7 +99,7 @@ parseCon : Name → Name → Mono → TC Telescope
 parseCon dataName conName M = do
   t  ← getType conName
   tᴹ ← toConDef M dataName
-  let d   = (removeStr t) Term.≟ (removeStr tᴹ)
+  let d   = (removeStr t) ≟ (removeStr tᴹ)
       tel = piToTel t
   if (does d)
     then return tel
@@ -172,7 +169,7 @@ genFromClauses funName dataName (conName ∷ conNames) (M ∷ Ms) F = do
     recurse : Telescope → Type → Term → Term
     recurse tel target t@(var x args) =
       case lookupCxt tel x of λ where
-        (just (_ , arg _ typ)) → if does (typ Term.≟ target) then
+        (just (_ , arg _ typ)) → if does (typ ≟ target) then
                                    def funName [ vArg t ]
                                  else t
         nothing → t
@@ -222,10 +219,6 @@ unquoteDecl μfromList = genIso μfromList (quote tt) (quote ListN) (ListF ℕ)
 --iso {nilN} = _≡_.refl
 --iso {consN z xs} = {!!}
 
-maybes : {A : Set} → List (Maybe A) → Maybe A
-maybes [] = nothing
-maybes (x ∷ xs) = x <∣> maybes xs
-
 -- Only one kind of difference is acceptable.
 S&Rs : Term → (Term → Term) → List (Arg Term) → List (Arg Term) → List (Maybe Term)
 S&R : Term → (Term → Term) → Term → Term → Maybe Term
@@ -236,7 +229,7 @@ S&Rs inner f (arg _ x ∷ xs) (arg _ y ∷ ys) = S&R inner f x y ∷ S&Rs inner 
 S&Rs inner f _ _ = []
 
 S&R inner f x y =
-  if (does $ y Term.≟ inner)
+  if (does $ y ≟ inner)
     then just (f x)
   else case (x , y) of λ where
          (var m args₁ , var n args₂) →
@@ -244,11 +237,11 @@ S&R inner f x y =
              then maybes (S&Rs inner f args₁ args₂)
              else nothing
          (con c args₁ , con d args₂) →
-           if (does (c Name.≟ d))
+           if (does (c ≟ d))
              then (maybes $ S&Rs inner f args₁ args₂)
              else nothing
          (def c args₁ , def d args₂) →
-           if (does (c Name.≟ d))
+           if (does (c ≟ d))
              then (maybes $ S&Rs inner f args₁ args₂)
              else nothing
          (_ , _) → nothing
@@ -260,14 +253,14 @@ S&Rrec inner f term pat = S&R inner f term pat
                             (var x args) → just (var x $ S&Rargs args)
                             (con c args) → just (con c $ S&Rargs args)
                             (def f args) → just (def f $ S&Rargs args)
-                            (lam v t) → just (lam v (Abs.map fromMaybeId t))
+                            (lam v t) → just (lam v (map fromMaybeId t))
                             t → just t)
   where
     fromMaybeId : Term → Term
     fromMaybeId t = fromMaybe t (S&Rrec inner f t pat)
 
     S&Rargs : List (Arg Term) → List (Arg Term)
-    S&Rargs args = Arg.map-Args fromMaybeId args
+    S&Rargs args = map fromMaybeId args
 
 module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name)
          (from : Name) (to : Name) (fun₁ : Name) where
@@ -331,7 +324,7 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name)
         pat = (weakenArgPats (lenᴹ + len₂) (pats tel₁)
                 ++ weakenArgPats len₂ [ conPat n ]
                 ++ (pats tel₂))
-    debugPrint "meta" 5 [ strErr $ "Telescope: " <> (showTel tel') ]
+    debugPrint "meta" 5 [ strErr $ "Telescope: " <> (show tel') ]
     t ← inContext
           (map snd $ reverse tel')
           (do t' ← normalise $ term (def from [ conTerm n ]) lenᴹ 0
@@ -346,7 +339,7 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name)
                   (S&Rrec (var 0 []) recResult t' r')
               res' ← normalise $ Trav.traverseTerm
                         (record Trav.defaultActions {
-                           onDef = λ _ x → if (does $ x Name.≟ from)
+                           onDef = λ _ x → if (does $ x ≟ from)
                                              then (quote id)
                                              else x
                         })
@@ -404,20 +397,20 @@ module _ (data₀ : Name) (fun₀ : Name) (F : Poly) (ϕ : Name)
               debugPrint "meta" 5
                          [ case tel₁ of (λ where
                              [] → strErr "tel₁ is empty."
-                             t  → strErr $ "tel₁: " <> showTel t) ]
+                             t  → strErr $ "tel₁: " <> show t) ]
               definition ← getDefinition data₀
               cs ← case definition of λ where
                 (data-type _ cs) → return cs
                 _ → typeError (strErr "Given name " ∷ nameErr data₀ ∷ [ strErr " is not a datatype."])
               cls ← genClauses tel₁ tel₂ F cs
-              debugPrint "meta" 5 [ strErr $ "Clauses: " <> (showClauses cls) ]
+              debugPrint "meta" 5 [ strErr $ "Clauses: " <> (show cls) ]
               defineFun fun₁ cls
               return tt
     where
       -- The decidable equality should identify something like (μ (∅ ∷ (K ℕ ⊗ I) ∷ []))
       ≟-μ : (qF : Type) → (x : String × Arg Type)
-          → Dec (Arg.unArg (snd x) ≡ def (quote μ) [ vArg qF ])
-      ≟-μ qF (_ , arg _ x) = x Term.≟ def (quote μ) [ vArg qF ]
+          → Dec (unArg (snd x) ≡ def (quote μ) [ vArg qF ])
+      ≟-μ qF (_ , arg _ x) = x ≟ def (quote μ) [ vArg qF ]
 
 
 --------
