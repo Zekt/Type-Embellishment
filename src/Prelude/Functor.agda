@@ -27,7 +27,7 @@ open Functor {{...}} public
 instance
   private variable
       a : Level
-      
+
   ListFunctor : Functor {a} List
   map ⦃ ListFunctor ⦄ f []       = []
   map ⦃ ListFunctor ⦄ f (x ∷ xs) = f x ∷ map f xs
