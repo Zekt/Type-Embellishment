@@ -10,15 +10,11 @@ open SetD
 data RecO {ℓ} {I J : Set ℓ} (e : I → J) : RecD I → RecD J → Set ℓ where
   ι : ∀ {i j} (eq : e i ≡ j) → RecO e (ι i) (ι j)
   π : ∀ {A D E} (O : (a : A) → RecO e (D a) (E a)) → RecO e (π A D) (π A E)
-  Δ : ∀ {A D E}  (a : A)  (O : RecO e (D a)  E   ) → RecO e (π A D)      E
-  ∇ : ∀ {A D E} (O : (a : A) → RecO e  D    (E a)) → RecO e      D  (π A E)
 
 eraseʳ : ∀ {ℓ} {I J : Set ℓ} {e : I → J} {D E} (O : RecO e D E) {X}
        → ⟦ D ⟧ʳ (λ j → X (e j)) → ⟦ E ⟧ʳ X
 eraseʳ (ι eq ) x  = subst _ eq x
 eraseʳ (π   O) xs = λ a → eraseʳ (O a) (xs a)
-eraseʳ (Δ a O) xs =       eraseʳ  O    (xs a)
-eraseʳ (∇   O) xs = λ a → eraseʳ (O a)  xs
 
 data ConO {ℓ} {I J : Set ℓ} (e : I → J) : ConD I → ConD J → Set ℓ where
   ι : ∀ {i j} (eq : e i ≡ j) → ConO e (ι i) (ι j)
