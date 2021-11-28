@@ -5,6 +5,7 @@ module Generics.Prelude where
 open import Agda.Primitive        public
 open import Agda.Builtin.Sigma    public
 open import Agda.Builtin.Equality public
+open import Agda.Builtin.Nat      public
 
 record Unit {ℓ} : Set ℓ where
   constructor tt
@@ -37,3 +38,7 @@ cong f refl = refl
 
 subst : ∀ {ℓ ℓ'} {A : Set ℓ} (P : A → Set ℓ') {x y : A} → x ≡ y → P x → P y
 subst P refl p = p
+
+_^_ : ∀ {ℓ} → Set ℓ → Nat → Set ℓ
+A ^ zero  = Unit
+A ^ suc n = Σ A λ _ → A ^ n

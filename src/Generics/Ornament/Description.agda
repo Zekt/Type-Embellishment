@@ -6,73 +6,113 @@ open import Generics.Prelude
 open import Generics.Description
 open import Generics.Ornament
 
-data RecOD {ℓ} {I J : Set ℓ} (e : I → J) : RecD J → Set (lsuc ℓ) where
-  ι : ∀ (i : I) {j} (eq : e i ≡ j) → RecOD e (ι j)
-  π : ∀ {A E} (OD : (a : A) → RecOD e (E a)) → RecOD e (π A E)
+private
+  variable
+    ℓ ℓ' ℓ'' ℓ₀ ℓ₁ ℓ₂ ℓ₃ ℓⁱ ℓʲ ℓᵃ : Level
+    ℓf ℓg ℓh ℓk : Level → Level
+    I : Set ℓⁱ
+    J : Set ℓʲ
+    A : Set ℓᵃ
 
-⌊_⌋ʳ : ∀ {ℓ} {I J : Set ℓ} {e : I → J} {E} → RecOD e E → RecD I
+data RecOD (e : I → J) : RecD J ℓf → Setω where
+  ι : ∀ i {j} (eq : e i ≡ j) → RecOD e (ι j)
+  π : {E : A → RecD J ℓf} (OD : (a : A) → RecOD e (E a)) → RecOD e (π A E)
+
+⌊_⌋ʳ : {e : I → J} {E : RecD J ℓf} → RecOD e E → RecD I ℓf
 ⌊ ι i eq ⌋ʳ = ι i
 ⌊ π OD   ⌋ʳ = π _ λ a → ⌊ OD a ⌋ʳ
 
-⌈_⌉ʳ : ∀ {ℓ} {I J : Set ℓ} {e : I → J} {E} (OD : RecOD e E) → RecO e ⌊ OD ⌋ʳ E
+⌈_⌉ʳ : {e : I → J} {E : RecD J ℓf} (OD : RecOD e E) → RecO e ⌊ OD ⌋ʳ E
 ⌈ ι i eq ⌉ʳ = ι eq
 ⌈ π OD   ⌉ʳ = π λ a → ⌈ OD a ⌉ʳ
 
-data ConOD {ℓ} {I J : Set ℓ} (e : I → J) : ConD J → Set (lsuc ℓ) where
-  ι : ∀ (i : I) {j} (eq : e i ≡ j) → ConOD e (ι j)
-  ρ : ∀ {S E} (OD : RecOD e S) (OD' : ConOD e E) → ConOD e (ρ S E)
-  σ : ∀ {A E}           (OD : (a : A) → ConOD e (E a)) → ConOD e (σ A E)
-  Δ : ∀ {A : Set ℓ} {E} (OD : (a : A) → ConOD e  E   ) → ConOD e      E
-  ∇ : ∀ {A E}  (a : A)  (OD :           ConOD e (E a)) → ConOD e (σ A E)
+data ConOD {I : Set ℓⁱ} {J : Set ℓʲ}
+            (e : I → J) : ConD J ℓf → (Level → Level) → Setω where
+  ι : ∀ i {j} (eq : e i ≡ j) → ConOD e (ι j) (λ _ → ℓⁱ)
+  ρ : {S : RecD J ℓf} {E : ConD J ℓg}
+      (OD : RecOD e S) (OD' : ConOD e E ℓh) → ConOD e (ρ S E) (λ ℓ → ℓf ℓ ⊔ ℓh ℓ)
+  σ : {A : Set ℓᵃ} {E : A → ConD J ℓf}
+      (OD : (a : A) → ConOD e (E a) ℓg) → ConOD e (σ A E) (λ ℓ → ℓᵃ ⊔ ℓg ℓ)
+  Δ : (A : Set ℓᵃ) {E : ConD J ℓf}
+      (OD : (a : A) → ConOD e E ℓg) → ConOD e E (λ ℓ → ℓᵃ ⊔ ℓg ℓ)
+  ∇ : {E : A → ConD J ℓf} (a : A) (OD : ConOD e (E a) ℓg) → ConOD e (σ A E) ℓg
 
-⌊_⌋ᶜ : ∀ {ℓ} {I J : Set ℓ} {e : I → J} {E} → ConOD e E → ConD I
+⌊_⌋ᶜ : {e : I → J} {E : ConD J ℓf} → ConOD e E ℓg → ConD I ℓg
 ⌊ ι i eq   ⌋ᶜ = ι i
 ⌊ ρ OD OD' ⌋ᶜ = ρ ⌊ OD ⌋ʳ ⌊ OD' ⌋ᶜ
 ⌊ σ    OD  ⌋ᶜ = σ _ λ a → ⌊ OD a ⌋ᶜ
-⌊ Δ    OD  ⌋ᶜ = σ _ λ a → ⌊ OD a ⌋ᶜ
+⌊ Δ A  OD  ⌋ᶜ = σ A λ a → ⌊ OD a ⌋ᶜ
 ⌊ ∇ a  OD  ⌋ᶜ = ⌊ OD ⌋ᶜ
 
-⌈_⌉ᶜ : ∀ {ℓ} {I J : Set ℓ} {e : I → J} {E} (OD : ConOD e E) → ConO e ⌊ OD ⌋ᶜ E
+⌈_⌉ᶜ : {e : I → J} {E : ConD J ℓf} (OD : ConOD e E ℓg) → ConO e ⌊ OD ⌋ᶜ E
 ⌈ ι i eq   ⌉ᶜ = ι eq
 ⌈ ρ OD OD' ⌉ᶜ = ρ ⌈ OD ⌉ʳ ⌈ OD' ⌉ᶜ
 ⌈ σ    OD  ⌉ᶜ = σ λ a → ⌈ OD a ⌉ᶜ
-⌈ Δ    OD  ⌉ᶜ = Δ λ a → ⌈ OD a ⌉ᶜ
+⌈ Δ A  OD  ⌉ᶜ = Δ λ a → ⌈ OD a ⌉ᶜ
 ⌈ ∇ a  OD  ⌉ᶜ = ∇ a ⌈ OD ⌉ᶜ
 
-data ConODs {ℓ} {I J : Set ℓ} (e : I → J) : ConDs J → Set (lsuc ℓ) where
-  ∅   : ConODs e ∅
-  _◁_ : ∀ {E Es} (OD : ConOD e E) (ODs : ConODs e (E ◁ Es)) → ConODs e (E ◁ Es)
-  ◂_  : ∀ {E Es}                  (ODs : ConODs e      Es ) → ConODs e (E ◁ Es)
+data ConODs (e : I → J) : ConDs J ℓf → (Level → Level) → Setω where
+  ∅   : ConODs e ∅ (λ _ → lzero)
+  _◁_ : {E : ConD J ℓf} {Es : ConDs J ℓg}
+        (OD : ConOD e E ℓh) (ODs : ConODs e (E ◁ Es) ℓk)
+      → ConODs e (E ◁ Es) (λ ℓ → ℓh ℓ ⊔ ℓk ℓ)
+  ◂_  : {E : ConD J ℓf} {Es : ConDs J ℓg}
+        (ODs : ConODs e Es ℓh) → ConODs e (E ◁ Es) ℓh
 
 infixr 4 _◁_
 infix  4 ◂_
 
-⌊_⌋ᶜˢ : ∀ {ℓ} {I J : Set ℓ} {e : I → J} {E} → ConODs e E → ConDs I
+⌊_⌋ᶜˢ : {e : I → J} {Es : ConDs J ℓf} → ConODs e Es ℓg → ConDs I ℓg
 ⌊ ∅        ⌋ᶜˢ = ∅
 ⌊ OD ◁ ODs ⌋ᶜˢ = ⌊ OD ⌋ᶜ ◁ ⌊ ODs ⌋ᶜˢ
 ⌊    ◂ ODs ⌋ᶜˢ = ⌊ ODs ⌋ᶜˢ
 
-⌈_⌉ᶜˢ : ∀ {ℓ} {I J : Set ℓ} {e : I → J} {E} (OD : ConODs e E) → ConOs e ⌊ OD ⌋ᶜˢ E
+⌈_⌉ᶜˢ : {e : I → J} {Es : ConDs J ℓf} (ODs : ConODs e Es ℓg) → ConOs e ⌊ ODs ⌋ᶜˢ Es
 ⌈ ∅        ⌉ᶜˢ = ∅
 ⌈ OD ◁ ODs ⌉ᶜˢ = ⌈ OD ⌉ᶜ ◁ ⌈ ODs ⌉ᶜˢ
 ⌈    ◂ ODs ⌉ᶜˢ =         ◂ ⌈ ODs ⌉ᶜˢ
 
-record SetOD {ℓᵖ ℓⁱ} (E : SetD {ℓᵖ} {ℓⁱ}) : Set (lsuc (ℓᵖ ⊔ ℓⁱ)) where
+record LMDataOD (E : LMDataD) : Setω where
   field
-    Param : Tel ℓᵖ
-    param : ⟦ Param ⟧ᵗ → ⟦ SetD.Param E ⟧ᵗ
-    Index : ⟦ Param ⟧ᵗ → Tel ℓⁱ
-    index : (p : ⟦ Param ⟧ᵗ) → ⟦ Index p ⟧ᵗ → ⟦ SetD.Index E (param p) ⟧ᵗ
-    Orn   : (p : ⟦ Param ⟧ᵗ) → ConODs (index p) (SetD.Desc E (param p))
+    {plevel} : Level
+    {ilevel} : Level
+    {flevel} : Level → Level
+    level : Level
+    level-fixed-point : flevel level ≡ level
+    Param : Tel plevel
+    param : ⟦ Param ⟧ᵗ → ⟦ LMDataD.Param E ⟧ᵗ
+    Index : ⟦ Param ⟧ᵗ → Tel ilevel
+    index : (p : ⟦ Param ⟧ᵗ) → ⟦ Index p ⟧ᵗ → ⟦ LMDataD.Index E (param p) ⟧ᵗ
+    OrnDesc : (p : ⟦ Param ⟧ᵗ) → ConODs (index p) (LMDataD.Desc E (param p)) flevel
 
-⌊_⌋ˢ : ∀ {ℓᵖ ℓⁱ} {E : SetD {ℓᵖ} {ℓⁱ}} → SetOD E → SetD
-⌊ OD ⌋ˢ = record
-  { Param = SetOD.Param OD
-  ; Index = SetOD.Index OD
-  ; Desc  = λ p → ⌊ SetOD.Orn OD p ⌋ᶜˢ }
+⌊_⌋ᵈᵐ : ∀ {E} → LMDataOD E → LMDataD
+⌊ OD ⌋ᵈᵐ = record
+  { level = LMDataOD.level OD
+  ; level-fixed-point = LMDataOD.level-fixed-point OD
+  ; Param = LMDataOD.Param OD
+  ; Index = LMDataOD.Index OD
+  ; Desc  = λ p → ⌊ LMDataOD.OrnDesc OD p ⌋ᶜˢ
+  }
 
-⌈_⌉ˢ : ∀ {ℓᵖ} {ℓⁱ} {E} (OD : SetOD {ℓᵖ} {ℓⁱ} E) → SetO ⌊ OD ⌋ˢ E
-⌈ OD ⌉ˢ = record
-  { param = SetOD.param OD
-  ; index = SetOD.index OD
-  ; Orn   = λ p → ⌈ SetOD.Orn OD p ⌉ᶜˢ }
+⌈_⌉ᵈᵐ : ∀ {E} (OD : LMDataOD E) → LMDataO ⌊ OD ⌋ᵈᵐ E
+⌈ OD ⌉ᵈᵐ = record
+  { param = LMDataOD.param OD
+  ; index = LMDataOD.index OD
+  ; Orn   = λ p → ⌈ LMDataOD.OrnDesc OD p ⌉ᶜˢ
+  }
+
+record DataOD (E : DataD) : Setω where
+  constructor dataOD
+  field
+    #level : Nat
+  Levels : Set
+  Levels = Level ^ #level
+  field
+    levels : Levels → DataD.Levels E
+    OrnDesc : (ℓs : Levels) → LMDataOD (DataD.Desc E (levels ℓs))
+
+⌊_⌋ᵈ : ∀ {E} → DataOD E → DataD
+⌊ OD ⌋ᵈ = dataD (DataOD.#level OD) λ ℓs → ⌊ DataOD.OrnDesc OD ℓs ⌋ᵈᵐ
+
+⌈_⌉ᵈ : ∀ {E} (OD : DataOD E) → DataO ⌊ OD ⌋ᵈ E
+⌈ OD ⌉ᵈ = dataO (DataOD.levels OD) λ ℓs → ⌈ DataOD.OrnDesc OD ℓs ⌉ᵈᵐ
