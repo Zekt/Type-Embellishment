@@ -6,29 +6,50 @@ open import Agda.Builtin.List
 open import Agda.Primitive
 
 open import Reflection
-open import Function.Base using (case_of_)
-open import Data.Maybe using (Maybe)
+open import Function.Base
+open import Data.Maybe using (Maybe; nothing; just; maybe′)
 
-open import InductionUniverse
+open import Universe.InductiveUniverse
+open import Telescope
+open import Utils
 
 open import Data.Vec
+open import Data.List
+open import Data.List.NonEmpty as NE
+open import Data.Nat
 
-mutual
-  _Tel++_ : ∀ {A B ℓ} → Tel A ℓ → Tel B ℓ → Tel _ ℓ
-  t1 Tel++ nil       = t1
-  t1 Tel++ snoc t2 a = snoc (t1 Tel++ t2) λ { (fst₁ , snd₁) → a ({!!} , {!!})}
+data FinList : {A : Set} {m : ℕ} → (n : ℕ) → Vec A m → Set where
+  same : ∀ {n} {A : Set} {v : Vec A n} → FinList n v
+  succ : ∀ {n} {A : Set} {v : Vec A n} → FinList (suc n) v
 
-  splitTel : ∀ {ℓ} {t1 : Tel _ ℓ} {t2 : Tel _ ℓ} {A} → ⟦ _Tel++_ t1 t2 ⟧ᵗ A → Σ {!!} ⟦ t2 ⟧ᵗ
-  splitTel {t1 = t1} {t2 = nil} t = {!!} , tt
-  splitTel {t1 = t1} {t2 = snoc t2 A} t = {!!} , {!!} , {!!}
+lookupTel : ∀ {ℓ} → (tel : Tel₀ ℓ) → ℕ → Maybe (⟦ tel ⟧ᵗ⁰ → Set ℓ)
+lookupTel nil n = nothing
+lookupTel (snoc tel A) zero = just λ x → A (tt , fst x)
+lookupTel (snoc tel A) (suc n) = maybe′ (λ f → just (f ∘ fst)) nothing (lookupTel tel n)
 
-piToTel : Type → TC (Tel _ _)
-piToTel (pi (arg i x) (abs s y)) = do x' ← unquoteTC x
-                                      ys' ← piToTel y
-                                      case ys' of λ where
-                                        nil → return (snoc nil x')
-                                        (snoc _ z) → return (snoc {!!} z)
-piToTel t        = return nil
+piToTel : ∀ {ℓ} → Tel₀ ℓ → Type → TC (Tel₀ ℓ)
+piToTel tel (pi (arg i x) (abs s y)) = do
+  x' ← unquoteTC x
+  let newtel = maybe′ (λ f → snoc tel λ {(tt , ⟦tel⟧) → f ⟦tel⟧})
+                      {!!}
+                      (lookupTel tel {!!})
+  return (snoc (snoc nil (const x')) λ { (_ , _ , x') →
+                                           case y of {!!}})
+--  xs' ← piToTel x
+--  ys' ← piToTel y
+--  case ys' of λ where
+--    nil → return {!!}
+--    (snoc ztel _) → return (snoc ztel {!!})
+piToTel tel t        = do t ← unquoteTC t
+                          return (snoc nil λ _ → t)
+
+{-# TERMINATING #-}
+typesToTel : List Type → Type → TC (Tel₀ _)
+typesToTel cxt t with NE.fromList cxt
+... | nothing = {!!}
+... | just cxt' with snocView cxt'
+...   | xs ∷ʳ′ x = do telTel ← typesToTel xs x
+                      return (snoc telTel λ { (tt , b) → {!!}})
 
 parseParam : Type → Nat → TC (Σ (Tel₀ _) λ P → Tel ⟦ P ⟧ᵗ⁰ _)
 parseParam typ n = {!!}

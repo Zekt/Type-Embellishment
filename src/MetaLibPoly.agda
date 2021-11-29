@@ -4,7 +4,9 @@ open import Level using (0ℓ)
 open import Prelude
   hiding (_<$>_)
 
-import Data.Nat.GeneralisedArithmetic as G using (fold)
+open import Universe.PolyUniverse
+open import Prelude hiding (_<$>_)
+open import Utils
 
 open import Reflection.TypeChecking.Monad.Syntax
 open import Reflection.Term as Term
@@ -150,22 +152,6 @@ genFromClauses funName dataName (conName ∷ conNames) (M ∷ Ms) F = do
     pats : Telescope → List (Arg Pattern)
     pats = foldr (λ { (_ , arg i _) xs → arg i (var (length xs)) ∷ xs}) []
 
-    -- lookup from last
-    lookupCxt : ∀ {A : Set} → List A → ℕ → Maybe A
-    lookupCxt xs n with n <? length xs
-    ... | no  _ = nothing
-    ... | yes p = just $ lookup xs (fromℕ< (reverse< p))
-      where
-        <≤ : ∀ {a b} → a < b → a ≤ b
-        <≤ (s≤s z≤n) = z≤n
-        <≤ (s≤s (s≤s a<b)) = s≤s (<≤ (s≤s a<b))
-
-        reverse< : ∀ {a b : ℕ} → (a < b) → (b ∸ (a + 1)) < b
-        reverse< {zero} {suc zero} a<b = s≤s z≤n
-        reverse< {zero} {suc (suc b)} a<b = s≤s (reverse< (s≤s z≤n))
-        reverse< {suc a} {suc (suc b)} (s≤s a<b) = s≤s (<≤ (reverse< a<b))
-
-
     recurse : Telescope → Type → Term → Term
     recurse tel target t@(var x args) =
       case lookupCxt tel x of λ where
@@ -177,7 +163,7 @@ genFromClauses funName dataName (conName ∷ conNames) (M ∷ Ms) F = do
 
     prodTerm : (Term → Term) → ℕ → Term
     prodTerm f = snd ∘
-                 G.fold (0 , quoteTerm tt)
+                 fold (0 , quoteTerm tt)
                         λ { (zero  , t) →
                                suc zero , f (var 0 [])
                           ; (suc n , t) →
