@@ -49,34 +49,33 @@ infixr 4 _◁_
 ⟦ ∅      ⟧ᶜˢ X i = Empty
 ⟦ D ◁ Ds ⟧ᶜˢ X i = Sum (⟦ D ⟧ᶜ X i) (⟦ Ds ⟧ᶜˢ X i)
 
-record LMDataD : Setω where
+record DataD : Setω where
   field
     {plevel} : Level
     {ilevel} : Level
     {flevel} : Level → Level
     level : Level
-    level-fixed-point : flevel level ≡ level
+    level-fixed-point : level ⊔ flevel level ≡ level
     Param : Tel plevel
     Index : ⟦ Param ⟧ᵗ → Tel ilevel
     Desc  : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ flevel
 
-⟦_⟧ᵈᵐ : (D : LMDataD) (p : ⟦ LMDataD.Param D ⟧ᵗ)
-      → let I = ⟦ LMDataD.Index D p ⟧ᵗ in (I → Set ℓ) → (I → Set (LMDataD.flevel D ℓ))
-⟦ D ⟧ᵈᵐ p = ⟦ LMDataD.Desc D p ⟧ᶜˢ
+⟦_⟧ᵈ : (D : DataD) (p : ⟦ DataD.Param D ⟧ᵗ)
+     → let I = ⟦ DataD.Index D p ⟧ᵗ in (I → Set ℓ) → (I → Set (DataD.flevel D ℓ))
+⟦ D ⟧ᵈ p = ⟦ DataD.Desc D p ⟧ᶜˢ
 
-record DataD : Setω where
-  constructor dataD
+record UPDataD : Setω where
   field
-    #level : Nat
+    #levels : Nat
   Levels : Set
-  Levels = Level ^ #level
+  Levels = Level ^ #levels
   field
-    Desc : Levels → LMDataD
+    Desc : Levels → DataD
 
-⟦_⟧ᵈ : (D : DataD) (ℓs : DataD.Levels D) → let Dᵐ = DataD.Desc D ℓs in
-       (p : ⟦ LMDataD.Param Dᵐ ⟧ᵗ)
-     → let I = ⟦ LMDataD.Index Dᵐ p ⟧ᵗ in (I → Set ℓ) → (I → Set (LMDataD.flevel Dᵐ ℓ))
-⟦ D ⟧ᵈ ℓs = ⟦ DataD.Desc D ℓs ⟧ᵈᵐ
+⟦_⟧ᵘᵖᵈ : (D : UPDataD) (ℓs : UPDataD.Levels D) → let Dᵐ = UPDataD.Desc D ℓs in
+         (p : ⟦ DataD.Param Dᵐ ⟧ᵗ)
+       → let I = ⟦ DataD.Index Dᵐ p ⟧ᵗ in (I → Set ℓ) → (I → Set (DataD.flevel Dᵐ ℓ))
+⟦ D ⟧ᵘᵖᵈ ℓs = ⟦ UPDataD.Desc D ℓs ⟧ᵈ
 
 fmapʳ : {I : Set ℓⁱ} (D : RecD I ℓf) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → ⟦ D ⟧ʳ X → ⟦ D ⟧ʳ Y
@@ -94,13 +93,13 @@ fmapᶜˢ : {I : Set ℓ} (Ds : ConDs I ℓf) {X : I → Set ℓˣ} {Y : I → S
 fmapᶜˢ (D ◁ Ds) f (inl xs) = inl (fmapᶜ  D  f xs)
 fmapᶜˢ (D ◁ Ds) f (inr xs) = inr (fmapᶜˢ Ds f xs)
 
-fmapᵈᵐ : (D : LMDataD) (p : ⟦ LMDataD.Param D ⟧ᵗ) → let I = ⟦ LMDataD.Index D p ⟧ᵗ in
-         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
-       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈᵐ p X i → ⟦ D ⟧ᵈᵐ p Y i
-fmapᵈᵐ D p = fmapᶜˢ (LMDataD.Desc D p)
-
-fmapᵈ : (D : DataD) (ℓs : DataD.Levels D) → let Dᵐ = DataD.Desc D ℓs in
-        (p : ⟦ LMDataD.Param Dᵐ ⟧ᵗ) → let I = ⟦ LMDataD.Index Dᵐ p ⟧ᵗ in
+fmapᵈ : (D : DataD) (p : ⟦ DataD.Param D ⟧ᵗ) → let I = ⟦ DataD.Index D p ⟧ᵗ in
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
-      → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈ ℓs p X i → ⟦ D ⟧ᵈ ℓs p Y i
-fmapᵈ D ℓs = fmapᵈᵐ (DataD.Desc D ℓs)
+      → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈ p X i → ⟦ D ⟧ᵈ p Y i
+fmapᵈ D p = fmapᶜˢ (DataD.Desc D p)
+
+fmapᵘᵖᵈ : (D : UPDataD) (ℓs : UPDataD.Levels D) → let Dᵐ = UPDataD.Desc D ℓs in
+          (p : ⟦ DataD.Param Dᵐ ⟧ᵗ) → let I = ⟦ DataD.Index Dᵐ p ⟧ᵗ in
+          {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
+        → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵘᵖᵈ ℓs p X i → ⟦ D ⟧ᵘᵖᵈ ℓs p Y i
+fmapᵘᵖᵈ D ℓs = fmapᵈ (UPDataD.Desc D ℓs)

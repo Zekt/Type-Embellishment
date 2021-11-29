@@ -7,7 +7,7 @@ open import Generics.Description
 
 private
   variable
-    ℓ ℓ' ℓⁱ ℓʲ ℓᵃ : Level
+    ℓ ℓⁱ ℓʲ ℓᵃ  : Level
     ℓf ℓg ℓh ℓk : Level → Level
     I : Set ℓⁱ
     J : Set ℓʲ
@@ -58,33 +58,33 @@ eraseᶜˢ (O ◁ Os) (inl xs) = inl (eraseᶜ  O  xs)
 eraseᶜˢ (O ◁ Os) (inr xs) =      eraseᶜˢ Os xs
 eraseᶜˢ (  ◂ Os)      xs  = inr (eraseᶜˢ Os xs)
 
-open LMDataD
+open DataD
 
-record LMDataO (D E : LMDataD) : Setω where
+record DataO (D E : DataD) : Setω where
   field
     param : ⟦ Param D ⟧ᵗ → ⟦ Param E ⟧ᵗ
     index : (p : ⟦ Param D ⟧ᵗ) → ⟦ Index D p ⟧ᵗ → ⟦ Index E (param p) ⟧ᵗ
     Orn   : (p : ⟦ Param D ⟧ᵗ) → ConOs (index p) (Desc D p) (Desc E (param p))
 
-eraseᵈᵐ : {D E : LMDataD} (O : LMDataO D E) (p : ⟦ Param D ⟧ᵗ)
-        → let q = LMDataO.param O p; index = LMDataO.index O p in
-          {X : ⟦ Index E q ⟧ᵗ → Set ℓ} {i : ⟦ Index D p ⟧ᵗ}
-        → ⟦ D ⟧ᵈᵐ p (λ i' → X (index i')) i → ⟦ E ⟧ᵈᵐ q X (index i)
-eraseᵈᵐ O p = eraseᶜˢ (LMDataO.Orn O p)
+eraseᵈ : {D E : DataD} (O : DataO D E) (p : ⟦ Param D ⟧ᵗ)
+       → let q = DataO.param O p; index = DataO.index O p in
+         {X : ⟦ Index E q ⟧ᵗ → Set ℓ} {i : ⟦ Index D p ⟧ᵗ}
+       → ⟦ D ⟧ᵈ p (λ i' → X (index i')) i → ⟦ E ⟧ᵈ q X (index i)
+eraseᵈ O p = eraseᶜˢ (DataO.Orn O p)
 
-record DataO (D E : DataD) : Setω where
-  constructor dataO
+record UPDataO (D E : UPDataD) : Setω where
   field
-    levels : DataD.Levels D → DataD.Levels E
-    Orn    : (ℓs : DataD.Levels D) → LMDataO (DataD.Desc D ℓs) (DataD.Desc E (levels ℓs))
+    levels : UPDataD.Levels D → UPDataD.Levels E
+    Orn    : (ℓs : UPDataD.Levels D)
+           → DataO (UPDataD.Desc D ℓs) (UPDataD.Desc E (levels ℓs))
 
-eraseᵈ : {D E : DataD} (O : DataO D E) (ℓs : DataD.Levels D)
-       → let ℓs' = DataO.levels O ℓs
-             Dᵐ  = DataD.Desc D ℓs
-             Eᵐ  = DataD.Desc E ℓs'
-             Oᵐ  = DataO.Orn O ℓs in
-         (p : ⟦ Param Dᵐ ⟧ᵗ)
-       → let q = LMDataO.param Oᵐ p; index = LMDataO.index Oᵐ p in
-         {X : ⟦ Index Eᵐ q ⟧ᵗ → Set ℓ} {i : ⟦ Index Dᵐ p ⟧ᵗ}
-       → ⟦ D ⟧ᵈ ℓs p (λ i' → X (index i')) i → ⟦ E ⟧ᵈ ℓs' q X (index i)
-eraseᵈ O ℓs p = eraseᶜˢ (LMDataO.Orn (DataO.Orn O ℓs) p)
+eraseᵘᵖᵈ : {D E : UPDataD} (O : UPDataO D E) (ℓs : UPDataD.Levels D)
+         → let ℓs' = UPDataO.levels O ℓs
+               Dᵐ  = UPDataD.Desc D ℓs
+               Eᵐ  = UPDataD.Desc E ℓs'
+               Oᵐ  = UPDataO.Orn O ℓs in
+           (p : ⟦ Param Dᵐ ⟧ᵗ)
+         → let q = DataO.param Oᵐ p; index = DataO.index Oᵐ p in
+           {X : ⟦ Index Eᵐ q ⟧ᵗ → Set ℓ} {i : ⟦ Index Dᵐ p ⟧ᵗ}
+         → ⟦ D ⟧ᵘᵖᵈ ℓs p (λ i' → X (index i')) i → ⟦ E ⟧ᵘᵖᵈ ℓs' q X (index i)
+eraseᵘᵖᵈ O ℓs p = eraseᶜˢ (DataO.Orn (UPDataO.Orn O ℓs) p)

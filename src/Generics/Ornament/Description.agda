@@ -8,7 +8,7 @@ open import Generics.Ornament
 
 private
   variable
-    ℓ ℓ' ℓ'' ℓ₀ ℓ₁ ℓ₂ ℓ₃ ℓⁱ ℓʲ ℓᵃ : Level
+    ℓ ℓⁱ ℓʲ ℓᵃ  : Level
     ℓf ℓg ℓh ℓk : Level → Level
     I : Set ℓⁱ
     J : Set ℓʲ
@@ -27,7 +27,7 @@ data RecOD (e : I → J) : RecD J ℓf → Setω where
 ⌈ π OD   ⌉ʳ = π λ a → ⌈ OD a ⌉ʳ
 
 data ConOD {I : Set ℓⁱ} {J : Set ℓʲ}
-            (e : I → J) : ConD J ℓf → (Level → Level) → Setω where
+           (e : I → J) : ConD J ℓf → (Level → Level) → Setω where
   ι : ∀ i {j} (eq : e i ≡ j) → ConOD e (ι j) (λ _ → ℓⁱ)
   ρ : {S : RecD J ℓf} {E : ConD J ℓg}
       (OD : RecOD e S) (OD' : ConOD e E ℓh) → ConOD e (ρ S E) (λ ℓ → ℓf ℓ ⊔ ℓh ℓ)
@@ -72,47 +72,50 @@ infix  4 ◂_
 ⌈ OD ◁ ODs ⌉ᶜˢ = ⌈ OD ⌉ᶜ ◁ ⌈ ODs ⌉ᶜˢ
 ⌈    ◂ ODs ⌉ᶜˢ =         ◂ ⌈ ODs ⌉ᶜˢ
 
-record LMDataOD (E : LMDataD) : Setω where
+record DataOD (E : DataD) : Setω where
   field
     {plevel} : Level
     {ilevel} : Level
     {flevel} : Level → Level
     level : Level
-    level-fixed-point : flevel level ≡ level
+    level-fixed-point : level ⊔ flevel level ≡ level
     Param : Tel plevel
-    param : ⟦ Param ⟧ᵗ → ⟦ LMDataD.Param E ⟧ᵗ
+    param : ⟦ Param ⟧ᵗ → ⟦ DataD.Param E ⟧ᵗ
     Index : ⟦ Param ⟧ᵗ → Tel ilevel
-    index : (p : ⟦ Param ⟧ᵗ) → ⟦ Index p ⟧ᵗ → ⟦ LMDataD.Index E (param p) ⟧ᵗ
-    OrnDesc : (p : ⟦ Param ⟧ᵗ) → ConODs (index p) (LMDataD.Desc E (param p)) flevel
-
-⌊_⌋ᵈᵐ : ∀ {E} → LMDataOD E → LMDataD
-⌊ OD ⌋ᵈᵐ = record
-  { level = LMDataOD.level OD
-  ; level-fixed-point = LMDataOD.level-fixed-point OD
-  ; Param = LMDataOD.Param OD
-  ; Index = LMDataOD.Index OD
-  ; Desc  = λ p → ⌊ LMDataOD.OrnDesc OD p ⌋ᶜˢ
-  }
-
-⌈_⌉ᵈᵐ : ∀ {E} (OD : LMDataOD E) → LMDataO ⌊ OD ⌋ᵈᵐ E
-⌈ OD ⌉ᵈᵐ = record
-  { param = LMDataOD.param OD
-  ; index = LMDataOD.index OD
-  ; Orn   = λ p → ⌈ LMDataOD.OrnDesc OD p ⌉ᶜˢ
-  }
-
-record DataOD (E : DataD) : Setω where
-  constructor dataOD
-  field
-    #level : Nat
-  Levels : Set
-  Levels = Level ^ #level
-  field
-    levels : Levels → DataD.Levels E
-    OrnDesc : (ℓs : Levels) → LMDataOD (DataD.Desc E (levels ℓs))
+    index : (p : ⟦ Param ⟧ᵗ) → ⟦ Index p ⟧ᵗ → ⟦ DataD.Index E (param p) ⟧ᵗ
+    OrnDesc : (p : ⟦ Param ⟧ᵗ) → ConODs (index p) (DataD.Desc E (param p)) flevel
 
 ⌊_⌋ᵈ : ∀ {E} → DataOD E → DataD
-⌊ OD ⌋ᵈ = dataD (DataOD.#level OD) λ ℓs → ⌊ DataOD.OrnDesc OD ℓs ⌋ᵈᵐ
+⌊ OD ⌋ᵈ = record
+  { level = DataOD.level OD
+  ; level-fixed-point = DataOD.level-fixed-point OD
+  ; Param = DataOD.Param OD
+  ; Index = DataOD.Index OD
+  ; Desc  = λ p → ⌊ DataOD.OrnDesc OD p ⌋ᶜˢ
+  }
 
 ⌈_⌉ᵈ : ∀ {E} (OD : DataOD E) → DataO ⌊ OD ⌋ᵈ E
-⌈ OD ⌉ᵈ = dataO (DataOD.levels OD) λ ℓs → ⌈ DataOD.OrnDesc OD ℓs ⌉ᵈᵐ
+⌈ OD ⌉ᵈ = record
+  { param = DataOD.param OD
+  ; index = DataOD.index OD
+  ; Orn   = λ p → ⌈ DataOD.OrnDesc OD p ⌉ᶜˢ
+  }
+
+record UPDataOD (E : UPDataD) : Setω where
+  field
+    #levels : Nat
+  Levels : Set
+  Levels = Level ^ #levels
+  field
+    levels : Levels → UPDataD.Levels E
+    OrnDesc : (ℓs : Levels) → DataOD (UPDataD.Desc E (levels ℓs))
+
+⌊_⌋ᵘᵖᵈ : ∀ {E} → UPDataOD E → UPDataD
+⌊ OD ⌋ᵘᵖᵈ = record
+  { #levels = UPDataOD.#levels OD
+  ; Desc   = λ ℓs → ⌊ UPDataOD.OrnDesc OD ℓs ⌋ᵈ }
+
+⌈_⌉ᵘᵖᵈ : ∀ {E} (OD : UPDataOD E) → UPDataO ⌊ OD ⌋ᵘᵖᵈ E
+⌈ OD ⌉ᵘᵖᵈ = record
+  { levels = UPDataOD.levels OD
+  ; Orn    = λ ℓs → ⌈ UPDataOD.OrnDesc OD ℓs ⌉ᵈ }
