@@ -21,33 +21,22 @@ mutual
 
 infixl 4 _▷_
 
-data RecD (I : Set ℓⁱ) : (Level → Level) → Setω where
-  ι : (i : I) → RecD I (λ ℓ → ℓ)
-  π : (A : Set ℓᵃ) (D : A → RecD I ℓf) → RecD I (λ ℓ → ℓᵃ ⊔ ℓf ℓ)
+module _ (I : Set ℓⁱ) where
 
-⟦_⟧ʳ : {I : Set ℓⁱ} → RecD I ℓf → (I → Set ℓ) → Set (ℓf ℓ)
-⟦ ι i   ⟧ʳ X = X i
-⟦ π A D ⟧ʳ X = (a : A) → ⟦ D a ⟧ʳ X
+  data RecD : (Level → Level) → Setω where
+    ι : (i : I) → RecD (λ ℓ → ℓ)
+    π : (A : Set ℓᵃ) (D : A → RecD ℓf) → RecD (λ ℓ → ℓᵃ ⊔ ℓf ℓ)
 
-data ConD (I : Set ℓⁱ) : (Level → Level) → Setω where
-  ι : (i : I) → ConD I (λ _ → ℓⁱ)
-  ρ : (D : RecD I ℓf) (E : ConD I ℓg) → ConD I (λ ℓ → ℓf ℓ ⊔ ℓg ℓ)
-  σ : (A : Set ℓᵃ) (D : A → ConD I ℓf) → ConD I (λ ℓ → ℓᵃ ⊔ ℓf ℓ)
+  data ConD : (Level → Level) → Setω where
+    ι : (i : I) → ConD (λ _ → ℓⁱ)
+    ρ : (D : RecD ℓf) (E : ConD ℓg) → ConD (λ ℓ → ℓf ℓ ⊔ ℓg ℓ)
+    σ : (A : Set ℓᵃ) (D : A → ConD ℓf) → ConD (λ ℓ → ℓᵃ ⊔ ℓf ℓ)
 
-⟦_⟧ᶜ : {I : Set ℓⁱ} → ConD I ℓf → (I → Set ℓ) → (I → Set (ℓf ℓ))
-⟦ ι i   ⟧ᶜ X j = i ≡ j
-⟦ ρ D E ⟧ᶜ X j = Σ (⟦ D ⟧ʳ X) λ _ → ⟦ E ⟧ᶜ X j
-⟦ σ A D ⟧ᶜ X j = Σ A λ a → ⟦ D a ⟧ᶜ X j
+  data ConDs : (Level → Level) → Setω where
+    ∅   : ConDs (λ _ → lzero)
+    _◁_ : (D : ConD ℓf) (Ds : ConDs ℓg) → ConDs (λ ℓ → ℓf ℓ ⊔ ℓg ℓ)
 
-data ConDs (I : Set ℓⁱ) : (Level → Level) → Setω where
-  ∅   : ConDs I (λ _ → lzero)
-  _◁_ : (D : ConD I ℓf) (Ds : ConDs I ℓg) → ConDs I (λ ℓ → ℓf ℓ ⊔ ℓg ℓ)
-
-infixr 4 _◁_
-
-⟦_⟧ᶜˢ : {I : Set ℓⁱ} → ConDs I ℓf → (I → Set ℓ) → (I → Set (ℓf ℓ))
-⟦ ∅      ⟧ᶜˢ X i = Empty
-⟦ D ◁ Ds ⟧ᶜˢ X i = Sum (⟦ D ⟧ᶜ X i) (⟦ Ds ⟧ᶜˢ X i)
+  infixr 4 _◁_
 
 record DataD : Setω where
   field
@@ -55,14 +44,10 @@ record DataD : Setω where
     {ilevel} : Level
     {flevel} : Level → Level
     level : Level
-    level-fixed-point : level ⊔ flevel level ≡ level
+    level-pre-fixed-point : flevel level ⊔ level ≡ level
     Param : Tel plevel
     Index : ⟦ Param ⟧ᵗ → Tel ilevel
     Desc  : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ flevel
-
-⟦_⟧ᵈ : (D : DataD) (p : ⟦ DataD.Param D ⟧ᵗ)
-     → let I = ⟦ DataD.Index D p ⟧ᵗ in (I → Set ℓ) → (I → Set (DataD.flevel D ℓ))
-⟦ D ⟧ᵈ p = ⟦ DataD.Desc D p ⟧ᶜˢ
 
 record UPDataD : Setω where
   field
@@ -71,6 +56,25 @@ record UPDataD : Setω where
   Levels = Level ^ #levels
   field
     Desc : Levels → DataD
+
+module _ {I : Set ℓⁱ} where
+
+  ⟦_⟧ʳ : RecD I ℓf → (I → Set ℓ) → Set (ℓf ℓ)
+  ⟦ ι i   ⟧ʳ X = X i
+  ⟦ π A D ⟧ʳ X = (a : A) → ⟦ D a ⟧ʳ X
+
+  ⟦_⟧ᶜ : ConD I ℓf → (I → Set ℓ) → (I → Set (ℓf ℓ))
+  ⟦ ι i   ⟧ᶜ X j = i ≡ j
+  ⟦ ρ D E ⟧ᶜ X j = Σ (⟦ D ⟧ʳ X) λ _ → ⟦ E ⟧ᶜ X j
+  ⟦ σ A D ⟧ᶜ X j = Σ A λ a → ⟦ D a ⟧ᶜ X j
+
+  ⟦_⟧ᶜˢ : ConDs I ℓf → (I → Set ℓ) → (I → Set (ℓf ℓ))
+  ⟦ ∅      ⟧ᶜˢ X i = Empty
+  ⟦ D ◁ Ds ⟧ᶜˢ X i = Sum (⟦ D ⟧ᶜ X i) (⟦ Ds ⟧ᶜˢ X i)
+
+⟦_⟧ᵈ : (D : DataD) (p : ⟦ DataD.Param D ⟧ᵗ)
+     → let I = ⟦ DataD.Index D p ⟧ᵗ in (I → Set ℓ) → (I → Set (DataD.flevel D ℓ))
+⟦ D ⟧ᵈ p = ⟦ DataD.Desc D p ⟧ᶜˢ
 
 ⟦_⟧ᵘᵖᵈ : (D : UPDataD) (ℓs : UPDataD.Levels D) → let Dᵐ = UPDataD.Desc D ℓs in
          (p : ⟦ DataD.Param Dᵐ ⟧ᵗ)
@@ -99,7 +103,7 @@ fmapᵈ : (D : DataD) (p : ⟦ DataD.Param D ⟧ᵗ) → let I = ⟦ DataD.Index
 fmapᵈ D p = fmapᶜˢ (DataD.Desc D p)
 
 fmapᵘᵖᵈ : (D : UPDataD) (ℓs : UPDataD.Levels D) → let Dᵐ = UPDataD.Desc D ℓs in
-          (p : ⟦ DataD.Param Dᵐ ⟧ᵗ) → let I = ⟦ DataD.Index Dᵐ p ⟧ᵗ in
-          {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
-        → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵘᵖᵈ ℓs p X i → ⟦ D ⟧ᵘᵖᵈ ℓs p Y i
+        (p : ⟦ DataD.Param Dᵐ ⟧ᵗ) → let I = ⟦ DataD.Index Dᵐ p ⟧ᵗ in
+        {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
+      → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵘᵖᵈ ℓs p X i → ⟦ D ⟧ᵘᵖᵈ ℓs p Y i
 fmapᵘᵖᵈ D ℓs = fmapᵈ (UPDataD.Desc D ℓs)

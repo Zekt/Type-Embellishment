@@ -78,7 +78,7 @@ record DataOD (E : DataD) : Setω where
     {ilevel} : Level
     {flevel} : Level → Level
     level : Level
-    level-fixed-point : level ⊔ flevel level ≡ level
+    level-pre-fixed-point : flevel level ⊔ level ≡ level
     Param : Tel plevel
     param : ⟦ Param ⟧ᵗ → ⟦ DataD.Param E ⟧ᵗ
     Index : ⟦ Param ⟧ᵗ → Tel ilevel
@@ -88,7 +88,7 @@ record DataOD (E : DataD) : Setω where
 ⌊_⌋ᵈ : ∀ {E} → DataOD E → DataD
 ⌊ OD ⌋ᵈ = record
   { level = DataOD.level OD
-  ; level-fixed-point = DataOD.level-fixed-point OD
+  ; level-pre-fixed-point = DataOD.level-pre-fixed-point OD
   ; Param = DataOD.Param OD
   ; Index = DataOD.Index OD
   ; Desc  = λ p → ⌊ DataOD.OrnDesc OD p ⌋ᶜˢ
@@ -107,13 +107,13 @@ record UPDataOD (E : UPDataD) : Setω where
   Levels : Set
   Levels = Level ^ #levels
   field
-    levels : Levels → UPDataD.Levels E
+    levels  : Levels → UPDataD.Levels E
     OrnDesc : (ℓs : Levels) → DataOD (UPDataD.Desc E (levels ℓs))
 
 ⌊_⌋ᵘᵖᵈ : ∀ {E} → UPDataOD E → UPDataD
 ⌊ OD ⌋ᵘᵖᵈ = record
   { #levels = UPDataOD.#levels OD
-  ; Desc   = λ ℓs → ⌊ UPDataOD.OrnDesc OD ℓs ⌋ᵈ }
+  ; Desc    = λ ℓs → ⌊ UPDataOD.OrnDesc OD ℓs ⌋ᵈ }
 
 ⌈_⌉ᵘᵖᵈ : ∀ {E} (OD : UPDataOD E) → UPDataO ⌊ OD ⌋ᵘᵖᵈ E
 ⌈ OD ⌉ᵘᵖᵈ = record
