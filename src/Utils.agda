@@ -1,15 +1,9 @@
 open import Prelude
-open import Data.Maybe
 open import Reflection
 open import Reflection.Term as Term
 open import Reflection.Name as Name
 open import Reflection.Argument as Arg
 open import Reflection.Abstraction as Abs
-
-maybes : {A : Set} → List (Maybe A) → Maybe A
-maybes [] = nothing
-maybes (x ∷ xs) = x <∣> maybes xs
-
 
 -- lookup from last
 lookupCxt : ∀ {A : Set} → List A → ℕ → Maybe A
