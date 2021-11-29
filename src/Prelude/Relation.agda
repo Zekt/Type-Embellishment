@@ -1,3 +1,4 @@
+{-# OPTIONS --safe #-}
 module Prelude.Relation where
 
 open import Prelude.Function

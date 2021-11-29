@@ -1,3 +1,4 @@
+{-# OPTIONS --safe #-}
 module Prelude.Bool where
 
 open import Agda.Builtin.Bool public

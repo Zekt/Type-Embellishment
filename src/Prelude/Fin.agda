@@ -1,3 +1,4 @@
+{-# OPTIONS --safe #-}
 module Prelude.Fin where
 
 open import Agda.Builtin.Nat using (zero; suc; _+_; _*_)

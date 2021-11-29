@@ -2,7 +2,7 @@
 
 module Generics.Description where
 
-open import Generics.Prelude
+open import Prelude renaming (⊤ to Unit; ⊥ to Empty; ℕ to Nat; _⊎_ to Sum)
 
 private
   variable

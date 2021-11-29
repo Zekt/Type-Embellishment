@@ -1,3 +1,4 @@
+{-# OPTIONS --safe #-}
 module Prelude.PropositionalEquality where
 
 open import Agda.Primitive

@@ -1,3 +1,4 @@
+{-# OPTIONS --safe #-}
 module Prelude.Maybe where
 
 open import Agda.Builtin.Unit

@@ -1,7 +1,8 @@
+{-# OPTIONS --safe #-}
 module Prelude where 
 
 open import Data.Nat       public
-  hiding (_≟_; _⊔_)
+  hiding (_≟_; _⊔_; _^_)
   
 open import Data.Fin.Base       public
   using (Fin; fromℕ; fromℕ<; fromℕ<″)
@@ -44,3 +45,5 @@ open import Prelude.PropositionalEquality public
 open import Prelude.Show                  public
 open import Prelude.Equality              public
 open import Prelude.Functor               public
+
+open import Prelude.Level                 public

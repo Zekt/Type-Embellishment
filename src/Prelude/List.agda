@@ -1,3 +1,4 @@
+{-# OPTIONS --safe #-}
 module Prelude.List where
 
 open import Agda.Primitive

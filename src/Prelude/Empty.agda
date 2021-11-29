@@ -1,3 +1,4 @@
+{-# OPTIONS --safe #-}
 module Prelude.Empty where
 
 data ⊥ : Set where
