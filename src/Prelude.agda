@@ -1,16 +1,13 @@
 {-# OPTIONS --safe #-}
 module Prelude where 
 
-open import Data.Nat       public
-  hiding (_≟_; _⊔_; _^_)
+--open import Data.Nat       public
+--  hiding (_≟_; _⊔_; _^_)
   
 open import Data.Fin.Base       public
   using (Fin; fromℕ; fromℕ<; fromℕ<″)
-open import Data.List.Base public
-  using (List; []; _∷_; _++_; length; break; [_]; concat; zip; zipWith; foldr; lookup; reverse)
- 
-open import Relation.Nullary public
-  using (Dec; does; no; yes)
+--open import Data.List.Base public
+--  using (List; []; _∷_; _++_; length; break; [_]; concat; zip; zipWith; foldr; lookup; reverse)
 
 -- Reflection related
 open import Reflection     public
@@ -33,12 +30,18 @@ open import Prelude.Function              public
 -- Data Types
 open import Prelude.Empty                 public
 open import Prelude.Bool                  public
+open import Prelude.Nat public
+  hiding (_==_)
 open import Prelude.Maybe                 public
+  hiding (map)
+open import Prelude.List                  public
   hiding (map)
 open import Prelude.Sigma                 public
 open import Prelude.Sum                   public
 --open import Prelude.List                  public
 --  hiding (map)
+
+open import Prelude.Relation              public
 open import Prelude.PropositionalEquality public
 
 -- Type classes

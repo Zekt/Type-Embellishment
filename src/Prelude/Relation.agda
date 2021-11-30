@@ -5,40 +5,45 @@ open import Prelude.Function
 open import Prelude.Empty
 open import Prelude.Bool
 
-------------------------------------------------------------------------
--- Negation.
+open import Relation.Nullary           public
+  using (Reflects; does; Dec; _because_; ofʸ; ofⁿ)
+open import Relation.Nullary.Negation  public
+  using (¬-reflects; ¬?)
 
-infix 3 ¬_
-infix 2 _because_
+-- ------------------------------------------------------------------------
+-- -- Negation.
 
-¬_ : ∀ {ℓ} → Set ℓ → Set ℓ
-¬ P = P → ⊥
+-- infix 3 ¬_
+-- infix 2 _because_
 
-------------------------------------------------------------------------
--- `Reflects` idiom.
+-- ¬_ : ∀ {ℓ} → Set ℓ → Set ℓ
+-- ¬ P = P → ⊥
 
--- The truth value of P is reflected by a boolean value.
+-- ------------------------------------------------------------------------
+-- -- `Reflects` idiom.
 
-data Reflects {p} (P : Set p) : Bool → Set p where
-  ofʸ : ( p :   P) → Reflects P true
-  ofⁿ : (¬p : ¬ P) → Reflects P false
+-- -- The truth value of P is reflected by a boolean value.
 
-record Dec {p} (P : Set p) : Set p where
-  constructor _because_
-  field
-    does  : Bool
-    proof : Reflects P does
+-- data Reflects {p} (P : Set p) : Bool → Set p where
+--   ofʸ : ( p :   P) → Reflects P true
+--   ofⁿ : (¬p : ¬ P) → Reflects P false
 
-open Dec public
+-- record Dec {p} (P : Set p) : Set p where
+--   constructor _because_
+--   field
+--     does  : Bool
+--     proof : Reflects P does
+
+-- open Dec public
 
 pattern yes p =  true because ofʸ  p
 pattern no ¬p = false because ofⁿ ¬p
 
-¬-reflects : ∀ {b ℓ} {P : Set ℓ} → Reflects P b → Reflects (¬ P) (not b)
-¬-reflects (ofʸ  p) = ofⁿ (_$ p)
-¬-reflects (ofⁿ ¬p) = ofʸ ¬p
+-- ¬-reflects : ∀ {b ℓ} {P : Set ℓ} → Reflects P b → Reflects (¬ P) (not b)
+-- ¬-reflects (ofʸ  p) = ofⁿ (_$ p)
+-- ¬-reflects (ofⁿ ¬p) = ofʸ ¬p
 
-¬? : ∀ {ℓ} {P : Set ℓ}
-  → Dec P → Dec (¬ P)
-does  (¬? p?) = not (does p?)
-proof (¬? p?) = ¬-reflects (proof p?)
+-- ¬? : ∀ {ℓ} {P : Set ℓ}
+--   → Dec P → Dec (¬ P)
+-- does  (¬? p?) = not (does p?)
+-- proof (¬? p?) = ¬-reflects (proof p?)
