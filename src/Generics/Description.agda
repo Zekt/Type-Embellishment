@@ -1,17 +1,16 @@
-{-# OPTIONS --safe #-}
-
 module Generics.Description where
 
 open import Prelude renaming (⊤ to Unit; ⊥ to Empty; ℕ to Nat; _⊎_ to Sum)
 
 private
   variable
-    ℓ ℓ' ℓᵃ ℓⁱ ℓˣ ℓʸ : Level
+    ℓ ℓ' ℓᵃ ℓⁱ ℓʳ ℓˣ ℓʸ : Level
     ℓf ℓg : Level → Level
 
 mutual
 
-  data Tel : Level → Setω where
+  {-# NO_UNIVERSE_CHECK #-}
+  data Tel : Level → Set where
     ∅   : Tel lzero
     _▷_ : (T : Tel ℓ) (A : ⟦ T ⟧ᵗ → Set ℓ') → Tel (ℓ ⊔ ℓ')
 
@@ -23,22 +22,26 @@ infixl 4 _▷_
 
 module _ (I : Set ℓⁱ) where
 
-  data RecD : (Level → Level) → Setω where
-    ι : (i : I) → RecD (λ ℓ → ℓ)
-    π : (A : Set ℓᵃ) (D : A → RecD ℓf) → RecD (λ ℓ → ℓᵃ ⊔ ℓf ℓ)
+  {-# NO_UNIVERSE_CHECK #-}
+  data RecD : Level → Set where
+    ι : (i : I) → RecD lzero
+    π : (A : Set ℓ) (D : A → RecD ℓ') → RecD (ℓ ⊔ ℓ')
 
-  data ConD : (Level → Level) → Setω where
-    ι : (i : I) → ConD (λ _ → ℓⁱ)
-    ρ : (D : RecD ℓf) (E : ConD ℓg) → ConD (λ ℓ → ℓf ℓ ⊔ ℓg ℓ)
+  {-# NO_UNIVERSE_CHECK #-}
+  data ConD : (Level → Level) → Set where
+    ι : (i : I) → ConD (λ _ → lzero)
+    ρ : (D : RecD ℓʳ) (E : ConD ℓf) → ConD (λ ℓ → ℓ ⊔ ℓʳ ⊔ ℓf ℓ)
     σ : (A : Set ℓᵃ) (D : A → ConD ℓf) → ConD (λ ℓ → ℓᵃ ⊔ ℓf ℓ)
 
-  data ConDs : (Level → Level) → Setω where
+  {-# NO_UNIVERSE_CHECK #-}
+  data ConDs : (Level → Level) → Set where
     ∅   : ConDs (λ _ → lzero)
-    _◁_ : (D : ConD ℓf) (Ds : ConDs ℓg) → ConDs (λ ℓ → ℓf ℓ ⊔ ℓg ℓ)
+    _◁_ : (D : ConD ℓf) (Ds : ConDs ℓg) → ConDs (λ ℓ → ℓⁱ ⊔ ℓf ℓ ⊔ ℓg ℓ)
 
   infixr 4 _◁_
 
-record DataD : Setω where
+{-# NO_UNIVERSE_CHECK #-}
+record DataD : Set where
   field
     {plevel} : Level
     {ilevel} : Level
@@ -49,7 +52,8 @@ record DataD : Setω where
     Index : ⟦ Param ⟧ᵗ → Tel ilevel
     Desc  : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ flevel
 
-record UPDataD : Setω where
+{-# NO_UNIVERSE_CHECK #-}
+record UPDataD : Set where
   field
     #levels : Nat
   Levels : Set
@@ -59,11 +63,11 @@ record UPDataD : Setω where
 
 module _ {I : Set ℓⁱ} where
 
-  ⟦_⟧ʳ : RecD I ℓf → (I → Set ℓ) → Set (ℓf ℓ)
+  ⟦_⟧ʳ : RecD I ℓʳ → (I → Set ℓ) → Set (ℓʳ ⊔ ℓ)
   ⟦ ι i   ⟧ʳ X = X i
   ⟦ π A D ⟧ʳ X = (a : A) → ⟦ D a ⟧ʳ X
 
-  ⟦_⟧ᶜ : ConD I ℓf → (I → Set ℓ) → (I → Set (ℓf ℓ))
+  ⟦_⟧ᶜ : ConD I ℓf → (I → Set ℓ) → (I → Set (ℓⁱ ⊔ ℓf ℓ))
   ⟦ ι i   ⟧ᶜ X j = i ≡ j
   ⟦ ρ D E ⟧ᶜ X j = Σ (⟦ D ⟧ʳ X) λ _ → ⟦ E ⟧ᶜ X j
   ⟦ σ A D ⟧ᶜ X j = Σ A λ a → ⟦ D a ⟧ᶜ X j
@@ -81,7 +85,7 @@ module _ {I : Set ℓⁱ} where
        → let I = ⟦ DataD.Index Dᵐ p ⟧ᵗ in (I → Set ℓ) → (I → Set (DataD.flevel Dᵐ ℓ))
 ⟦ D ⟧ᵘᵖᵈ ℓs = ⟦ UPDataD.Desc D ℓs ⟧ᵈ
 
-fmapʳ : {I : Set ℓⁱ} (D : RecD I ℓf) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
+fmapʳ : {I : Set ℓⁱ} (D : RecD I ℓʳ) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → ⟦ D ⟧ʳ X → ⟦ D ⟧ʳ Y
 fmapʳ (ι i  ) f x  = f x
 fmapʳ (π A D) f xs = λ a → fmapʳ (D a) f (xs a)
