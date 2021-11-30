@@ -2,15 +2,24 @@
 
 module Generics.Safe.Description where
 
-open import Prelude renaming (⊤ to Unit; ⊥ to Empty; ℕ to Nat; _⊎_ to Sum)
+open import Prelude renaming (⊤ to Unit; ⊥ to Empty; _⊎_ to Sum)
 
-_⊔'_ : (Level → Level) → (Level → Level) → (Level → Level)
-(ℓf ⊔' ℓg) ℓ = ℓf ℓ ⊔ ℓg ℓ
+-- _⊔'_ : (Level → Level) → (Level → Level) → (Level → Level)
+-- (ℓf ⊔' ℓg) ℓ = ℓf ℓ ⊔ ℓg ℓ
+
+lcond : ℕ → Level → Level
+lcond  zero   _ = lzero
+lcond (suc n) ℓ = ℓ ⊔ lcond n ℓ
+
+lconds : List ℕ → Level → Level
+lconds []       _ = lzero
+lconds (n ∷ ns) ℓ = lcond n ℓ ⊔ lconds ns ℓ
 
 private
   variable
     ℓ ℓ' ℓᵃ ℓⁱ ℓʳ ℓˣ ℓʸ : Level
-    ℓρ ℓρ' ℓ◁ : Level → Level
+    cρ c◁ : ℕ
+    cρs : List ℕ
 
 mutual
 
@@ -30,14 +39,14 @@ module _ (I : Set ℓⁱ) where
     ι : (i : I) → RecD lzero
     π : (A : Set ℓ) (D : A → RecD ℓ') → RecD (ℓ ⊔ ℓ')
 
-  data ConD : Level → (Level → Level) → Setω where
-    ι : (i : I) → ConD lzero (const lzero)
-    ρ : (D : RecD ℓʳ) (E : ConD ℓ ℓρ) → ConD (ℓʳ ⊔ ℓ) (id ⊔' ℓρ)
-    σ : (A : Set ℓᵃ) (D : A → ConD ℓ ℓρ) → ConD (ℓᵃ ⊔ ℓ) ℓρ
+  data ConD : Level → ℕ → Setω where
+    ι : (i : I) → ConD lzero zero
+    ρ : (D : RecD ℓʳ) (E : ConD ℓ cρ) → ConD (ℓʳ ⊔ ℓ) (suc cρ)
+    σ : (A : Set ℓᵃ) (D : A → ConD ℓ cρ) → ConD (ℓᵃ ⊔ ℓ) cρ
 
-  data ConDs : Level → (Level → Level) → (Level → Level) → Setω where
-    ∅   : ConDs lzero (const lzero) (const lzero)
-    _◁_ : (D : ConD ℓ ℓρ) (Ds : ConDs ℓ' ℓρ' ℓ◁) → ConDs (ℓ ⊔ ℓ') (ℓρ ⊔' ℓρ') (id ⊔' ℓ◁)
+  data ConDs : Level → List ℕ → ℕ → Setω where
+    ∅   : ConDs lzero [] 0
+    _◁_ : (D : ConD ℓ cρ) (Ds : ConDs ℓ' cρs c◁) → ConDs (ℓ ⊔ ℓ') (cρ ∷ cρs) (suc c◁)
 
   infixr 4 _◁_
 
@@ -46,20 +55,20 @@ record DataD : Setω where
     {plevel} : Level
     {ilevel} : Level
     {alevel} : Level
-    {rlevel} : Level → Level
-    {clevel} : Level → Level
+    {recCounts} : List ℕ
+    {conCount} : ℕ
   flevel : Level → Level
-  flevel ℓ = alevel ⊔ rlevel ℓ ⊔ clevel ilevel
+  flevel ℓ = alevel ⊔ lconds recCounts ℓ ⊔ lcond conCount ilevel
   field
     level : Level
     level-pre-fixed-point : flevel level ⊔ level ≡ level
     Param : Tel plevel
     Index : ⟦ Param ⟧ᵗ → Tel ilevel
-    Desc  : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ alevel rlevel clevel
+    Desc  : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ alevel recCounts conCount
 
 record UPDataD : Setω where
   field
-    #levels : Nat
+    #levels : ℕ
   Levels : Set
   Levels = Level ^ #levels
   field
@@ -71,12 +80,12 @@ module _ {I : Set ℓⁱ} where
   ⟦ ι i   ⟧ʳ X = X i
   ⟦ π A D ⟧ʳ X = (a : A) → ⟦ D a ⟧ʳ X
 
-  ⟦_⟧ᶜ : ConD I ℓᵃ ℓρ → (I → Set ℓ) → (I → Set (ℓᵃ ⊔ ℓρ ℓ ⊔ ℓⁱ))
+  ⟦_⟧ᶜ : ConD I ℓᵃ cρ → (I → Set ℓ) → (I → Set (ℓᵃ ⊔ lcond cρ ℓ ⊔ ℓⁱ))
   ⟦ ι i   ⟧ᶜ X j = i ≡ j
   ⟦ ρ D E ⟧ᶜ X j = Σ (⟦ D ⟧ʳ X) λ _ → ⟦ E ⟧ᶜ X j
   ⟦ σ A D ⟧ᶜ X j = Σ A λ a → ⟦ D a ⟧ᶜ X j
 
-  ⟦_⟧ᶜˢ : ConDs I ℓᵃ ℓρ ℓ◁ → (I → Set ℓ) → (I → Set (ℓᵃ ⊔ ℓρ ℓ ⊔ ℓ◁ ℓⁱ))
+  ⟦_⟧ᶜˢ : ConDs I ℓᵃ cρs c◁ → (I → Set ℓ) → (I → Set (ℓᵃ ⊔ lconds cρs ℓ ⊔ lcond c◁ ℓⁱ))
   ⟦ ∅      ⟧ᶜˢ X i = Empty
   ⟦ D ◁ Ds ⟧ᶜˢ X i = Sum (⟦ D ⟧ᶜ X i) (⟦ Ds ⟧ᶜˢ X i)
 
@@ -94,13 +103,13 @@ fmapʳ : {I : Set ℓⁱ} (D : RecD I ℓᵃ) {X : I → Set ℓˣ} {Y : I → S
 fmapʳ (ι i  ) f x  = f x
 fmapʳ (π A D) f xs = λ a → fmapʳ (D a) f (xs a)
 
-fmapᶜ : {I : Set ℓⁱ} (D : ConD I ℓᵃ ℓρ) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
+fmapᶜ : {I : Set ℓⁱ} (D : ConD I ℓᵃ cρ) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᶜ X i → ⟦ D ⟧ᶜ Y i
 fmapᶜ (ι i  ) f eq       = eq
 fmapᶜ (ρ D E) f (x , xs) = fmapʳ D f x , fmapᶜ E f xs
 fmapᶜ (σ A D) f (a , xs) = a , fmapᶜ (D a) f xs
 
-fmapᶜˢ : {I : Set ℓ} (Ds : ConDs I ℓᵃ ℓρ ℓ◁) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
+fmapᶜˢ : {I : Set ℓ} (Ds : ConDs I ℓᵃ cρs c◁) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
        → ({i : I} → X i → Y i) → {i : I} → ⟦ Ds ⟧ᶜˢ X i → ⟦ Ds ⟧ᶜˢ Y i
 fmapᶜˢ (D ◁ Ds) f (inl xs) = inl (fmapᶜ  D  f xs)
 fmapᶜˢ (D ◁ Ds) f (inr xs) = inr (fmapᶜˢ Ds f xs)
