@@ -7,7 +7,13 @@ open import Agda.Builtin.Equality public
 private variable
   a b c : Level
   A B C : Set a
-  
+
+sym : {x y : A} → x ≡ y → y ≡ x
+sym refl = refl
+
+trans : {x y z : A} → x ≡ y → y ≡ z → x ≡ z
+trans refl eq = eq
+
 cong : ∀ (f : A → B) {x y} → x ≡ y → f x ≡ f y
 cong f refl = refl
 
