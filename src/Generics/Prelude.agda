@@ -39,6 +39,6 @@ cong f refl = refl
 subst : ∀ {ℓ ℓ'} {A : Set ℓ} (P : A → Set ℓ') {x y : A} → x ≡ y → P x → P y
 subst P refl p = p
 
-_^_ : ∀ {ℓ} → Set ℓ → Nat → Set ℓ
+_^_ : Set → Nat → Set
 A ^ zero  = Unit
 A ^ suc n = Σ A λ _ → A ^ n
