@@ -4,9 +4,6 @@ module Generics.Safe.Description where
 
 open import Prelude renaming (⊤ to Unit; ⊥ to Empty; _⊎_ to Sum)
 
--- _⊔'_ : (Level → Level) → (Level → Level) → (Level → Level)
--- (ℓf ⊔' ℓg) ℓ = ℓf ℓ ⊔ ℓg ℓ
-
 lcond : ℕ → Level → Level
 lcond  zero   _ = lzero
 lcond (suc n) ℓ = ℓ ⊔ lcond n ℓ
@@ -18,7 +15,7 @@ lconds (n ∷ ns) ℓ = lcond n ℓ ⊔ lconds ns ℓ
 private
   variable
     ℓ ℓ' ℓᵃ ℓⁱ ℓʳ ℓˣ ℓʸ : Level
-    cρ c◁ : ℕ
+    cρ  : ℕ
     cρs : List ℕ
 
 mutual
@@ -44,9 +41,9 @@ module _ (I : Set ℓⁱ) where
     ρ : (D : RecD ℓʳ) (E : ConD ℓ cρ) → ConD (ℓʳ ⊔ ℓ) (suc cρ)
     σ : (A : Set ℓᵃ) (D : A → ConD ℓ cρ) → ConD (ℓᵃ ⊔ ℓ) cρ
 
-  data ConDs : Level → List ℕ → ℕ → Setω where
-    ∅   : ConDs lzero [] 0
-    _◁_ : (D : ConD ℓ cρ) (Ds : ConDs ℓ' cρs c◁) → ConDs (ℓ ⊔ ℓ') (cρ ∷ cρs) (suc c◁)
+  data ConDs : Level → List ℕ → Setω where
+    ∅   : ConDs lzero []
+    _◁_ : (D : ConD ℓ cρ) (Ds : ConDs ℓ' cρs) → ConDs (ℓ ⊔ ℓ') (cρ ∷ cρs)
 
   infixr 4 _◁_
 
@@ -56,15 +53,14 @@ record DataD : Setω where
     {ilevel} : Level
     {alevel} : Level
     {recCounts} : List ℕ
-    {conCount} : ℕ
   flevel : Level → Level
-  flevel ℓ = alevel ⊔ lconds recCounts ℓ ⊔ lcond conCount ilevel
+  flevel ℓ = alevel ⊔ lconds recCounts ℓ ⊔ lcond (length recCounts) ilevel
   field
     level : Level
     level-pre-fixed-point : flevel level ⊔ level ≡ level
     Param : Tel plevel
     Index : ⟦ Param ⟧ᵗ → Tel ilevel
-    Desc  : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ alevel recCounts conCount
+    Desc  : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ alevel recCounts
 
 record UPDataD : Setω where
   field
@@ -85,7 +81,8 @@ module _ {I : Set ℓⁱ} where
   ⟦ ρ D E ⟧ᶜ X j = Σ (⟦ D ⟧ʳ X) λ _ → ⟦ E ⟧ᶜ X j
   ⟦ σ A D ⟧ᶜ X j = Σ A λ a → ⟦ D a ⟧ᶜ X j
 
-  ⟦_⟧ᶜˢ : ConDs I ℓᵃ cρs c◁ → (I → Set ℓ) → (I → Set (ℓᵃ ⊔ lconds cρs ℓ ⊔ lcond c◁ ℓⁱ))
+  ⟦_⟧ᶜˢ : ConDs I ℓᵃ cρs
+        → (I → Set ℓ) → (I → Set (ℓᵃ ⊔ lconds cρs ℓ ⊔ lcond (length cρs) ℓⁱ))
   ⟦ ∅      ⟧ᶜˢ X i = Empty
   ⟦ D ◁ Ds ⟧ᶜˢ X i = Sum (⟦ D ⟧ᶜ X i) (⟦ Ds ⟧ᶜˢ X i)
 
@@ -109,7 +106,7 @@ fmapᶜ (ι i  ) f eq       = eq
 fmapᶜ (ρ D E) f (x , xs) = fmapʳ D f x , fmapᶜ E f xs
 fmapᶜ (σ A D) f (a , xs) = a , fmapᶜ (D a) f xs
 
-fmapᶜˢ : {I : Set ℓ} (Ds : ConDs I ℓᵃ cρs c◁) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
+fmapᶜˢ : {I : Set ℓ} (Ds : ConDs I ℓᵃ cρs) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
        → ({i : I} → X i → Y i) → {i : I} → ⟦ Ds ⟧ᶜˢ X i → ⟦ Ds ⟧ᶜˢ Y i
 fmapᶜˢ (D ◁ Ds) f (inl xs) = inl (fmapᶜ  D  f xs)
 fmapᶜˢ (D ◁ Ds) f (inr xs) = inr (fmapᶜˢ Ds f xs)
