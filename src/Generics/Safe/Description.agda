@@ -2,7 +2,7 @@
 
 module Generics.Safe.Description where
 
-open import Prelude renaming (⊤ to Unit; ⊥ to Empty; _⊎_ to Sum)
+open import Prelude
 
 lcond : ℕ → Level → Level
 lcond  zero   _ = lzero
@@ -11,6 +11,25 @@ lcond (suc n) ℓ = ℓ ⊔ lcond n ℓ
 lconds : List ℕ → Level → Level
 lconds []       _ = lzero
 lconds (n ∷ ns) ℓ = lcond n ℓ ⊔ lconds ns ℓ
+
+lcond-preserves-⊔ : (n : ℕ) (ℓ ℓ' : Level) → lcond n (ℓ ⊔ ℓ') ≡ lcond n ℓ ⊔ lcond n ℓ'
+lcond-preserves-⊔  zero   ℓ ℓ' = refl
+lcond-preserves-⊔ (suc n) ℓ ℓ' = cong ((ℓ ⊔ ℓ') ⊔_) (lcond-preserves-⊔ n ℓ ℓ')
+
+lcond-upper-bound : (n : ℕ) (ℓ : Level) → lcond n ℓ ⊔ ℓ ≡ ℓ
+lcond-upper-bound  zero   ℓ = refl
+lcond-upper-bound (suc n) ℓ = lcond-upper-bound n ℓ
+
+lconds-preserves-⊔ : (ns : List ℕ) (ℓ ℓ' : Level)
+                   → lconds ns (ℓ ⊔ ℓ') ≡ lconds ns ℓ ⊔ lconds ns ℓ'
+lconds-preserves-⊔ []       ℓ ℓ' = refl
+lconds-preserves-⊔ (n ∷ ns) ℓ ℓ' = cong₂ _⊔_ (lcond-preserves-⊔ n  ℓ ℓ')
+                                            (lconds-preserves-⊔ ns ℓ ℓ')
+
+lconds-upper-bound : (ns : List ℕ) (ℓ : Level) → lconds ns ℓ ⊔ ℓ ≡ ℓ
+lconds-upper-bound []       ℓ = refl
+lconds-upper-bound (n ∷ ns) ℓ = cong₂ _⊔_ (lcond-upper-bound n  ℓ)
+                                         (lconds-upper-bound ns ℓ)
 
 private
   variable
@@ -25,7 +44,7 @@ mutual
     _▷_ : (T : Tel ℓ) (A : ⟦ T ⟧ᵗ → Set ℓ') → Tel (ℓ ⊔ ℓ')
 
   ⟦_⟧ᵗ : Tel ℓ → Set ℓ
-  ⟦ ∅     ⟧ᵗ = Unit
+  ⟦ ∅     ⟧ᵗ = ⊤
   ⟦ T ▷ A ⟧ᵗ = Σ ⟦ T ⟧ᵗ A
 
 infixl 4 _▷_
@@ -83,8 +102,8 @@ module _ {I : Set ℓⁱ} where
 
   ⟦_⟧ᶜˢ : ConDs I ℓᵃ cρs
         → (I → Set ℓ) → (I → Set (ℓᵃ ⊔ lconds cρs ℓ ⊔ lcond (length cρs) ℓⁱ))
-  ⟦ ∅      ⟧ᶜˢ X i = Empty
-  ⟦ D ◁ Ds ⟧ᶜˢ X i = Sum (⟦ D ⟧ᶜ X i) (⟦ Ds ⟧ᶜˢ X i)
+  ⟦ ∅      ⟧ᶜˢ X i = ⊥
+  ⟦ D ◁ Ds ⟧ᶜˢ X i = ⟦ D ⟧ᶜ X i ⊎ ⟦ Ds ⟧ᶜˢ X i
 
 ⟦_⟧ᵈ : (D : DataD) (p : ⟦ DataD.Param D ⟧ᵗ)
      → let I = ⟦ DataD.Index D p ⟧ᵗ in (I → Set ℓ) → (I → Set (DataD.flevel D ℓ))
