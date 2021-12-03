@@ -17,20 +17,6 @@ lookupTel {tel = _▷_ {ℓ} tel A} zero (⟦tel⟧ , A') =
 lookupTel {tel = _▷_ {ℓ' = ℓ'} tel A} (suc n) (⟦tel⟧ , A') =
   maybe′ (just ∘ Lift ℓ') nothing (lookupTel n ⟦tel⟧)
 
---preappend : {ℓ ℓ' : Level} → (T : Tel ℓ) → Type
---          → TC (⟦ T ⟧ᵗ → Set ℓ')
---preappend {.lzero} ∅ t = unquoteTC t >>= return ∘ const
---preappend {.(ℓ ⊔ ℓ')} (_▷_ {ℓ} {ℓ'} tel A) t = {!!}
--- (unquoteTC t >>= λ t' → return λ {tt → t'})
---             --do t' ← unquoteTC t
---             --   return λ {tt → t'}
-
---append : {ℓ ℓ' : Level} → (T : Tel ℓ) → Type → TC (Tel (ℓ ⊔ ℓ'))
---append tel [t] = {!!}
---append ∅ [t] = do t' ← unquoteTC [t]
---                  return (∅ ▷ λ {tt → t'})
---append (tel ▷ A) [t] = {!!}
-
 test : Name → TC _
 test funName = do
   let lam = lam visible (abs "z" (def (quote _+_) (vArg (var 0 []) ∷ vArg (quoteTerm 1) ∷ [])))
@@ -51,8 +37,8 @@ unquoteDecl patFun = test patFun
 module _ {ℓ ℓ' : Level} (tel : Tel ℓ) (A : ⟦ tel ⟧ᵗ → Set ℓ') where
   namedA : Name → TC _
   namedA funName = do
-    typeOfA ← quoteTC (⟦ tel ⟧ᵗ → Set ℓ') >>= normalise
-    bodyOfA ← quoteTC A >>= normalise
+    typeOfA ← quoteTC (⟦ tel ⟧ᵗ → Set ℓ')
+    bodyOfA ← quoteTC A
     declareDef (vArg funName) typeOfA
     defineFun funName [ clause [] [] bodyOfA ]
 
@@ -94,63 +80,20 @@ telToCxt : {ℓ : Level} → (tel : Tel ℓ)
 telToCxt ∅ = return []
 telToCxt (_▷_ {ℓ} {ℓ'} tel A) = do
   tel' ← telToCxt tel
-  funA ← freshName "funA"
+  funA ← freshName ""
   namedA tel A funA
   t ← lamTerm (lengthᵗ tel) funA >>=
       normalise                  >>=
       removeAbs (Prelude.suc $ lengthᵗ tel)
-  dprint [ strErr $ showTerm t ]
+  --dprint [ strErr $ showTerm t ]
   return (vArg t ∷ tel')
-  --typeOfFunA ← getType funA
-  --tTyp ← inferType t
-  --inContext tel' $ do
-  --  t ← quoteTC (A ⟦tel⟧)
-  --  debugPrint "meta" 5 [ termErr t ]
-  --  cxt ← getContext
-  --  debugPrint "meta" 5 [ strErr $ showTerms cxt ]
-    --if (0 <ᵇ (length tel'))
-    --  then
-    --    (unify m (var 0 []))
-    --  else
-    --    (return tt)
-    --    (extendContext (vArg t) (unify m (var 0 [])))
-    --extendContext (vArg t) $ do
-    --  var0 ← unquoteTC (var 0 [])
 
-data Rel (A : Set) : List A → List A → Set where
+{--
+pointwise : Tel _
+pointwise = ∅ ▷ (λ _ → Set) ▷ (λ _ → Set)
+              ▷ (λ p → let ((_ , A) , B) = p in A → B → Set)
+              ▷ (λ p → let (((_ , A) , B) , R) = p in List A)
+              ▷ λ p → let ((((_ , A) , B) , R) , _) = p in List B
 
-pt : Type
-pt = pi (vArg (quoteTerm Set))
-        (abs "_" (pi (vArg (def (quote List)
-                                [ vArg (var 0 []) ]))
-                     (abs "_" (def (quote List)
-                                   [ vArg (var 1 []) ]))))
-
-telt : Tel (lsuc lzero)
-telt = ∅ ▷ (λ _ → Set)
-         ▷ (λ { (_ , s) → List s})
-         ▷ λ {((_ , s) , l) → List s}
-
-telt' = ∅ ▷ (λ _ → Set) ▷ (λ { (_ , s) → List s})
-
-A' : ⟦ telt' ⟧ᵗ → Set
-A' = λ {((_ , s) , l) → List s}
-
---A'' : λ { (_ , s) → List s}
-
-testTerm : TC _
-testTerm = do funName ← freshName "funA"
-              namedA telt' A' funName
-              t ← lamTerm (lengthᵗ telt') funName
-              -- t = λ z z₁ → Metalib.Inductive.funA ((tt , z₁) , z)
-              -- t = λ z z₁ → List z
-              --t' ← checkType t (quoteTerm (Set → ⊤ → Set))
-              funNameType ← getType funName
-              funNameTypeType ← inferType funNameType
-              dprint [ termErr funNameType ]
-              return tt
-
-
---unquoteDecl = testTerm
-
-unquoteDecl = telToCxt telt >> return tt
+unquoteDecl = telToCxt pointwise >> return tt
+--}
