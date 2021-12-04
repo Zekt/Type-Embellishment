@@ -6,16 +6,16 @@ open import Reflection     public
   hiding (_≟_; showTel; showClauses)
 open import Reflection.Argument     public
   using (unArg)
-open import Agda.Builtin.Reflection public
-  using (declareData; defineData; clause; pat-lam; visible; var)
+
 ------------------------------------------------------------------------------
 -- Built-in modules 
+open import Agda.Builtin.Reflection       public
+  using (declareData; defineData; clause; pat-lam; visible; var)
+
 open import Agda.Builtin.Unit             public
 open import Agda.Builtin.String           public
   using (String)
   renaming (primStringAppend to infixr 5 _<>_)
-open import Agda.Builtin.Reflection       public
-  using (declareData; defineData)
 
 --
 open import Prelude.Level                 public

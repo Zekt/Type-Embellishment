@@ -1,11 +1,9 @@
 {-# OPTIONS -v meta:5 #-}
 
-open import Agda.Builtin.Reflection
-open import Prelude
-
-open import Generics.Description
-
 module Metalib.Inductive where
+
+open import Prelude
+open import Generics.Description
 
 dprint = debugPrint "meta" 5
 
