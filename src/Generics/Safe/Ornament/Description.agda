@@ -8,7 +8,6 @@ open import Generics.Safe.Ornament
 
 private
   variable
-    ℓ ℓ' ℓ₀ ℓ₁ ℓ₂ ℓ₃ ℓᵃ ℓⁱ ℓʲ ℓʳ : Level
     cρ cρ' : ℕ
     cρs cρs' : List ℕ
     A : Set ℓᵃ

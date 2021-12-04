@@ -7,7 +7,6 @@ open import Generics.Safe.Description
 
 private
   variable
-    ℓ ℓ' ℓ₀ ℓ₁ ℓ₂ ℓ₃ ℓⁱ ℓʲ ℓᵃ ℓʳ ℓˣ : Level
     cρ cρ' : ℕ
     cρs cρs' : List ℕ
     A : Set ℓᵃ

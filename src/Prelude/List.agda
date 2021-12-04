@@ -100,3 +100,13 @@ lookup : (xs : List A) → ℕ → Maybe A
 lookup (x ∷ xs) zero    = just x
 lookup (x ∷ xs) (suc i) = lookup xs i
 lookup []       _       = nothing
+
+data SnocView {A : Set ℓ} : List A → Set ℓ where
+  []    : SnocView []
+  _∷ʳ_ : (xs : List A) (x : A) → SnocView (xs ++ [ x ])
+
+snocView : (xs : List A) → SnocView xs
+snocView []               = []
+snocView (x ∷ xs)         with snocView xs
+... | []      = [] ∷ʳ x
+... | ys ∷ʳ y = (x ∷ ys) ∷ʳ y

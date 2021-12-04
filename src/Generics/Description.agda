@@ -31,7 +31,6 @@ lconds-upper-bound (n ∷ ns) ℓ = cong₂ _⊔_ (lcond-upper-bound n  ℓ)
 
 private
   variable
-    ℓ ℓ' ℓᵃ ℓⁱ ℓʳ ℓˣ ℓʸ : Level
     cρ  : ℕ
     cρs : List ℕ
 

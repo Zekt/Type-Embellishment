@@ -1,8 +1,7 @@
 {-# OPTIONS -v meta:5 #-}
-open import Level
-open import Prelude
-open import Reflection
+
 open import Agda.Builtin.Reflection
+open import Prelude
 
 open import Generics.Description
 
@@ -46,7 +45,7 @@ varTuple' : ℕ → ℕ → Term
 varTuple' m zero    = var m []
 varTuple' m (suc n) = con (quote _,_)
                           (vArg (varTuple' m n) ∷
-                           vArg (var (m ∸ (Prelude.suc n)) [])   ∷
+                           vArg (var (m ∸ (suc n)) [])   ∷
                            [])
 
 varTuple : ℕ → Term
@@ -68,7 +67,7 @@ lamTerm m = lamTerm' m m
 
 lengthᵗ : {ℓ : Level} → Tel ℓ → ℕ
 lengthᵗ ∅ = 0
-lengthᵗ (tel ▷ A) = Prelude.suc (lengthᵗ tel)
+lengthᵗ (tel ▷ A) = suc (lengthᵗ tel)
 
 removeAbs : ℕ → Term → TC Term
 removeAbs (suc n) (lam _ (abs _ x)) = removeAbs n x
@@ -84,7 +83,7 @@ telToCxt (_▷_ {ℓ} {ℓ'} tel A) = do
   namedA tel A funA
   t ← lamTerm (lengthᵗ tel) funA >>=
       normalise                  >>=
-      removeAbs (Prelude.suc $ lengthᵗ tel)
+      removeAbs (suc $ lengthᵗ tel)
   --dprint [ strErr $ showTerm t ]
   return (vArg t ∷ tel')
 
