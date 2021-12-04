@@ -24,7 +24,7 @@ open import Prelude.Function              public
 -- Data Types
 open import Prelude.Empty                 public
 open import Prelude.Bool                  public
-open import Prelude.Nat public
+open import Prelude.Nat                   public
   hiding (_==_)
 open import Prelude.Maybe                 public
   hiding (map)
@@ -32,8 +32,6 @@ open import Prelude.List                  public
   hiding (map)
 open import Prelude.Sigma                 public
 open import Prelude.Sum                   public
---open import Prelude.List                  public
---  hiding (map)
 
 open import Prelude.Relation              public
 open import Prelude.PropositionalEquality public
