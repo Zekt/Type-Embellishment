@@ -52,18 +52,19 @@ module _ (I : Set ℓⁱ) where
   {-# NO_UNIVERSE_CHECK #-}
   data RecD : Level → Set where
     ι : (i : I) → RecD lzero
-    π : (A : Set ℓ) (D : A → RecD ℓ') → RecD (ℓ ⊔ ℓ')
+    π : (A : Set ℓʳ) (D : A → RecD ℓʳ') → RecD (ℓʳ ⊔ ℓʳ')
 
   {-# NO_UNIVERSE_CHECK #-}
-  data ConD : Level → ℕ → Set where
-    ι : (i : I) → ConD lzero zero
-    ρ : (D : RecD ℓʳ) (E : ConD ℓ cρ) → ConD (ℓʳ ⊔ ℓ) (suc cρ)
-    σ : (A : Set ℓᵃ) (D : A → ConD ℓ cρ) → ConD (ℓᵃ ⊔ ℓ) cρ
+  data ConD : Level → Level → ℕ → Set where
+    ι : (i : I) → ConD lzero lzero zero
+    ρ : (D : RecD ℓʳ) (E : ConD ℓʳ' ℓᵃ' cρ) → ConD (ℓʳ ⊔ ℓʳ') ℓᵃ' (suc cρ)
+    σ : (A : Set ℓᵃ) (D : A → ConD ℓʳ' ℓᵃ' cρ) → ConD ℓʳ' (ℓᵃ ⊔ ℓᵃ') cρ
 
   {-# NO_UNIVERSE_CHECK #-}
-  data ConDs : Level → List ℕ → Set where
-    ∅   : ConDs lzero []
-    _◁_ : (D : ConD ℓ cρ) (Ds : ConDs ℓ' cρs) → ConDs (ℓ ⊔ ℓ') (cρ ∷ cρs)
+  data ConDs : Level → Level → List ℕ → Set where
+    ∅   : ConDs lzero lzero []
+    _◁_ : (D : ConD ℓʳ ℓᵃ cρ) (Ds : ConDs ℓʳ' ℓᵃ' cρs)
+        → ConDs (ℓʳ ⊔ ℓʳ') (ℓᵃ ⊔ ℓᵃ') (cρ ∷ cρs)
 
   infixr 4 _◁_
 
@@ -72,16 +73,17 @@ record DataD : Set where
   field
     {plevel} : Level
     {ilevel} : Level
+    {rlevel} : Level
     {alevel} : Level
     {recCounts} : List ℕ
   flevel : Level → Level
-  flevel ℓ = alevel ⊔ lconds recCounts ℓ ⊔ lcond (length recCounts) ilevel
+  flevel ℓ = rlevel ⊔ alevel ⊔ lconds recCounts ℓ ⊔ lcond (length recCounts) ilevel
   field
     level : Level
     level-pre-fixed-point : flevel level ⊔ level ≡ level
     Param : Tel plevel
     Index : ⟦ Param ⟧ᵗ → Tel ilevel
-    Desc  : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ alevel recCounts
+    Desc  : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ rlevel alevel recCounts
 
 {-# NO_UNIVERSE_CHECK #-}
 record UPDataD : Set where
@@ -94,17 +96,17 @@ record UPDataD : Set where
 
 module _ {I : Set ℓⁱ} where
 
-  ⟦_⟧ʳ : RecD I ℓᵃ → (I → Set ℓ) → Set (ℓᵃ ⊔ ℓ)
+  ⟦_⟧ʳ : RecD I ℓʳ → (I → Set ℓ) → Set (ℓʳ ⊔ ℓ)
   ⟦ ι i   ⟧ʳ X = X i
   ⟦ π A D ⟧ʳ X = (a : A) → ⟦ D a ⟧ʳ X
 
-  ⟦_⟧ᶜ : ConD I ℓᵃ cρ → (I → Set ℓ) → (I → Set (ℓᵃ ⊔ lcond cρ ℓ ⊔ ℓⁱ))
+  ⟦_⟧ᶜ : ConD I ℓʳ ℓᵃ cρ → (I → Set ℓ) → (I → Set (ℓʳ ⊔ ℓᵃ ⊔ lcond cρ ℓ ⊔ ℓⁱ))
   ⟦ ι i   ⟧ᶜ X j = i ≡ j
   ⟦ ρ D E ⟧ᶜ X j = Σ (⟦ D ⟧ʳ X) λ _ → ⟦ E ⟧ᶜ X j
   ⟦ σ A D ⟧ᶜ X j = Σ A λ a → ⟦ D a ⟧ᶜ X j
 
-  ⟦_⟧ᶜˢ : ConDs I ℓᵃ cρs
-        → (I → Set ℓ) → (I → Set (ℓᵃ ⊔ lconds cρs ℓ ⊔ lcond (length cρs) ℓⁱ))
+  ⟦_⟧ᶜˢ : ConDs I ℓʳ ℓᵃ cρs
+        → (I → Set ℓ) → (I → Set (ℓʳ ⊔ ℓᵃ ⊔ lconds cρs ℓ ⊔ lcond (length cρs) ℓⁱ))
   ⟦ ∅      ⟧ᶜˢ X i = ⊥
   ⟦ D ◁ Ds ⟧ᶜˢ X i = ⟦ D ⟧ᶜ X i ⊎ ⟦ Ds ⟧ᶜˢ X i
 
@@ -117,18 +119,18 @@ module _ {I : Set ℓⁱ} where
        → let I = ⟦ DataD.Index Dᵐ p ⟧ᵗ in (I → Set ℓ) → (I → Set (DataD.flevel Dᵐ ℓ))
 ⟦ D ⟧ᵘᵖᵈ ℓs = ⟦ UPDataD.Desc D ℓs ⟧ᵈ
 
-fmapʳ : {I : Set ℓⁱ} (D : RecD I ℓᵃ) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
+fmapʳ : {I : Set ℓⁱ} (D : RecD I ℓʳ) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → ⟦ D ⟧ʳ X → ⟦ D ⟧ʳ Y
 fmapʳ (ι i  ) f x  = f x
 fmapʳ (π A D) f xs = λ a → fmapʳ (D a) f (xs a)
 
-fmapᶜ : {I : Set ℓⁱ} (D : ConD I ℓᵃ cρ) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
+fmapᶜ : {I : Set ℓⁱ} (D : ConD I ℓʳ ℓᵃ cρ) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᶜ X i → ⟦ D ⟧ᶜ Y i
 fmapᶜ (ι i  ) f eq       = eq
 fmapᶜ (ρ D E) f (x , xs) = fmapʳ D f x , fmapᶜ E f xs
 fmapᶜ (σ A D) f (a , xs) = a , fmapᶜ (D a) f xs
 
-fmapᶜˢ : {I : Set ℓ} (Ds : ConDs I ℓᵃ cρs) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
+fmapᶜˢ : {I : Set ℓ} (Ds : ConDs I ℓʳ ℓᵃ cρs) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
        → ({i : I} → X i → Y i) → {i : I} → ⟦ Ds ⟧ᶜˢ X i → ⟦ Ds ⟧ᶜˢ Y i
 fmapᶜˢ (D ◁ Ds) f (inl xs) = inl (fmapᶜ  D  f xs)
 fmapᶜˢ (D ◁ Ds) f (inr xs) = inr (fmapᶜˢ Ds f xs)

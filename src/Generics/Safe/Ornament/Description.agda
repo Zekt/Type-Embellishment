@@ -18,23 +18,23 @@ module _ (I : Set ℓⁱ) {J : Set ℓʲ} (e : I → J) where
     ι : ∀ i {j} (eq : e i ≡ j) → RecOD (ι j)
     π : {E : A → RecD J ℓʳ} (OD : (a : A) → RecOD (E a)) → RecOD (π A E)
 
-  data ConOD : ConD J ℓᵃ cρ → Level → Setω where
+  data ConOD : ConD J ℓʳ ℓᵃ cρ → Level → Setω where
     ι : ∀ i {j} (eq : e i ≡ j) → ConOD (ι j) lzero
-    ρ : {S : RecD J ℓʳ} {E : ConD J ℓ cρ}
-        (OD : RecOD S) (OD' : ConOD E ℓ') → ConOD (ρ S E) (ℓʳ ⊔ ℓ')
-    σ : {A : Set ℓᵃ} {E : A → ConD J ℓ cρ}
-        (OD : (a : A) → ConOD (E a) ℓ') → ConOD (σ A E) (ℓᵃ ⊔ ℓ')
-    Δ : (A : Set ℓᵃ) {E : ConD J ℓ cρ}
-        (OD : (a : A) → ConOD E ℓ') → ConOD E (ℓᵃ ⊔ ℓ')
-    ∇ : {E : A → ConD J ℓ cρ} (a : A) (OD : ConOD (E a) ℓ') → ConOD (σ A E) ℓ'
+    ρ : {S : RecD J ℓʳ} {E : ConD J ℓʳ' ℓᵃ cρ}
+        (OD : RecOD S) (OD' : ConOD E ℓᵃ') → ConOD (ρ S E) ℓᵃ'
+    σ : {A : Set ℓᵃ} {E : A → ConD J ℓʳ ℓᵃ' cρ}
+        (OD : (a : A) → ConOD (E a) ℓᵃ'') → ConOD (σ A E) (ℓᵃ ⊔ ℓᵃ'')
+    Δ : (A : Set ℓᵃ) {E : ConD J ℓʳ ℓᵃ' cρ}
+        (OD : (a : A) → ConOD E ℓᵃ'') → ConOD E (ℓᵃ ⊔ ℓᵃ'')
+    ∇ : {E : A → ConD J ℓʳ ℓᵃ cρ} (a : A) (OD : ConOD (E a) ℓᵃ') → ConOD (σ A E) ℓᵃ'
 
-  data ConODs : ConDs J ℓᵃ cρs → Level → List ℕ → Setω where
-    ∅   : ConODs ∅ lzero []
-    _◁_ : {E : ConD J ℓ₀ cρ} {Es : ConDs J ℓ₁ cρs}
-          (OD : ConOD E ℓ₂) (ODs : ConODs (E ◁ Es) ℓ₃ cρs')
-        → ConODs (E ◁ Es) (ℓ₂ ⊔ ℓ₃) (cρ ∷ cρs')
-    ◂_  : {E : ConD J ℓ₀ cρ} {Es : ConDs J ℓ₁ cρs}
-          (ODs : ConODs Es ℓ₂ cρs') → ConODs (E ◁ Es) ℓ₂ cρs'
+  data ConODs : ConDs J ℓʳ ℓᵃ cρs → Level → Level → List ℕ → Setω where
+    ∅   : ConODs ∅ lzero lzero []
+    _◁_ : {E : ConD J ℓʳ ℓᵃ cρ} {Es : ConDs J ℓʳ' ℓᵃ' cρs}
+          (OD : ConOD E ℓᵃ'') (ODs : ConODs (E ◁ Es) ℓʳ''' ℓᵃ''' cρs')
+        → ConODs (E ◁ Es) (ℓʳ ⊔ ℓʳ''') (ℓᵃ'' ⊔ ℓᵃ''') (cρ ∷ cρs')
+    ◂_  : {E : ConD J ℓʳ ℓᵃ cρ} {Es : ConDs J ℓʳ' ℓᵃ' cρs}
+          (ODs : ConODs Es ℓʳ'' ℓᵃ'' cρs') → ConODs (E ◁ Es) ℓʳ'' ℓᵃ'' cρs'
 
   infixr 4 _◁_
   infix  4 ◂_
@@ -43,10 +43,11 @@ record DataOD (E : DataD) : Setω where
   field
     {plevel} : Level
     {ilevel} : Level
+    {rlevel} : Level
     {alevel} : Level
     {recCounts} : List ℕ
   flevel : Level → Level
-  flevel ℓ = alevel ⊔ lconds recCounts ℓ ⊔ lcond (length recCounts) ilevel
+  flevel ℓ = rlevel ⊔ alevel ⊔ lconds recCounts ℓ ⊔ lcond (length recCounts) ilevel
   field
     level : Level
     level-pre-fixed-point : flevel level ⊔ level ≡ level
@@ -55,7 +56,7 @@ record DataOD (E : DataD) : Setω where
     Index : ⟦ Param ⟧ᵗ → Tel ilevel
     index : (p : ⟦ Param ⟧ᵗ) → ⟦ Index p ⟧ᵗ → ⟦ DataD.Index E (param p) ⟧ᵗ
     OrnDesc : (p : ⟦ Param ⟧ᵗ)
-            → ConODs ⟦ Index p ⟧ᵗ (index p) (DataD.Desc E (param p)) alevel recCounts
+            → ConODs ⟦ Index p ⟧ᵗ (index p) (DataD.Desc E (param p)) rlevel alevel recCounts
 
 record UPDataOD (E : UPDataD) : Setω where
   field
@@ -76,26 +77,26 @@ module _ {ℓⁱ ℓʲ} {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
   ⌈ ι i eq ⌉ʳ = ι eq
   ⌈ π OD   ⌉ʳ = π λ a → ⌈ OD a ⌉ʳ
 
-  ⌊_⌋ᶜ : {E : ConD J ℓ cρ} → ConOD I e E ℓ' → ConD I ℓ' cρ
+  ⌊_⌋ᶜ : {E : ConD J ℓʳ ℓᵃ cρ} → ConOD I e E ℓᵃ' → ConD I ℓʳ ℓᵃ' cρ
   ⌊ ι i eq   ⌋ᶜ = ι i
   ⌊ ρ OD OD' ⌋ᶜ = ρ ⌊ OD ⌋ʳ ⌊ OD' ⌋ᶜ
   ⌊ σ    OD  ⌋ᶜ = σ _ λ a → ⌊ OD a ⌋ᶜ
   ⌊ Δ A  OD  ⌋ᶜ = σ A λ a → ⌊ OD a ⌋ᶜ
   ⌊ ∇ a  OD  ⌋ᶜ = ⌊ OD ⌋ᶜ
 
-  ⌈_⌉ᶜ : {E : ConD J ℓ cρ} (OD : ConOD I e E ℓ') → ConO e ⌊ OD ⌋ᶜ E
+  ⌈_⌉ᶜ : {E : ConD J ℓʳ ℓᵃ cρ} (OD : ConOD I e E ℓᵃ') → ConO e ⌊ OD ⌋ᶜ E
   ⌈ ι i eq   ⌉ᶜ = ι eq
   ⌈ ρ OD OD' ⌉ᶜ = ρ ⌈ OD ⌉ʳ ⌈ OD' ⌉ᶜ
   ⌈ σ    OD  ⌉ᶜ = σ λ a → ⌈ OD a ⌉ᶜ
   ⌈ Δ A  OD  ⌉ᶜ = Δ λ a → ⌈ OD a ⌉ᶜ
   ⌈ ∇ a  OD  ⌉ᶜ = ∇ a ⌈ OD ⌉ᶜ
 
-  ⌊_⌋ᶜˢ : {Es : ConDs J ℓ cρs} → ConODs I e Es ℓ' cρs' → ConDs I ℓ' cρs'
+  ⌊_⌋ᶜˢ : {Es : ConDs J ℓʳ ℓᵃ cρs} → ConODs I e Es ℓʳ' ℓᵃ' cρs' → ConDs I ℓʳ' ℓᵃ' cρs'
   ⌊ ∅        ⌋ᶜˢ = ∅
   ⌊ OD ◁ ODs ⌋ᶜˢ = ⌊ OD ⌋ᶜ ◁ ⌊ ODs ⌋ᶜˢ
   ⌊    ◂ ODs ⌋ᶜˢ = ⌊ ODs ⌋ᶜˢ
 
-  ⌈_⌉ᶜˢ : {Es : ConDs J ℓ cρs} (ODs : ConODs I e Es ℓ' cρs') → ConOs e ⌊ ODs ⌋ᶜˢ Es
+  ⌈_⌉ᶜˢ : {Es : ConDs J ℓʳ ℓᵃ cρs} (ODs : ConODs I e Es ℓʳ' ℓᵃ' cρs') → ConOs e ⌊ ODs ⌋ᶜˢ Es
   ⌈ ∅        ⌉ᶜˢ = ∅
   ⌈ OD ◁ ODs ⌉ᶜˢ = ⌈ OD ⌉ᶜ ◁ ⌈ ODs ⌉ᶜˢ
   ⌈    ◂ ODs ⌉ᶜˢ =         ◂ ⌈ ODs ⌉ᶜˢ

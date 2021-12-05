@@ -18,23 +18,23 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} (e : I → J) where
     π : {D : A → RecD I ℓʳ} {E : A → RecD J ℓʳ}
         (O : (a : A) → RecO (D a) (E a)) → RecO (π A D) (π A E)
 
-  data ConO : ConD I ℓ cρ → ConD J ℓ' cρ' → Setω where
+  data ConO : ConD I ℓʳ ℓᵃ cρ → ConD J ℓʳ' ℓᵃ' cρ' → Setω where
     ι : ∀ {i j} (eq : e i ≡ j) → ConO (ι i) (ι j)
-    ρ : {R : RecD I ℓʳ} {S : RecD J ℓʳ} {D : ConD I ℓ cρ} {E : ConD J ℓ' cρ'}
+    ρ : {R : RecD I ℓʳ} {S : RecD J ℓʳ} {D : ConD I ℓʳ' ℓᵃ cρ} {E : ConD J ℓʳ' ℓᵃ' cρ'}
         (O : RecO R S) (O' : ConO D E) → ConO (ρ R D) (ρ S E)
-    σ : {D : A → ConD I ℓ cρ} {E : A → ConD J ℓ' cρ'}
+    σ : {D : A → ConD I ℓʳ ℓᵃ cρ} {E : A → ConD J ℓʳ ℓᵃ' cρ'}
         (O : (a : A) → ConO (D a) (E a)) → ConO (σ A D) (σ A E)
-    Δ : {D : A → ConD I ℓ cρ} {E : ConD J ℓ' cρ'}
+    Δ : {D : A → ConD I ℓʳ ℓᵃ cρ} {E : ConD J ℓʳ ℓᵃ' cρ'}
         (O : (a : A) → ConO (D a)  E   ) → ConO (σ A D)      E
-    ∇ : {D : ConD I ℓ cρ} {E : A → ConD J ℓ' cρ'}
+    ∇ : {D : ConD I ℓʳ ℓᵃ cρ} {E : A → ConD J ℓʳ ℓᵃ' cρ'}
         (a : A)   (O : ConO  D    (E a)) → ConO      D  (σ A E)
 
-  data ConOs : ConDs I ℓ cρs → ConDs J ℓ' cρs' → Setω where
+  data ConOs : ConDs I ℓʳ ℓᵃ cρs → ConDs J ℓʳ' ℓᵃ' cρs' → Setω where
     ∅   : ConOs ∅ ∅
-    _◁_ : {D : ConD I ℓ₀ cρ} {E : ConD J ℓ₁ cρ'}
-          {Ds : ConDs I ℓ₂ cρs} {Es : ConDs J ℓ₃ cρs'}
+    _◁_ : {D : ConD I ℓʳ ℓᵃ cρ} {E : ConD J ℓʳ' ℓᵃ' cρ'}
+          {Ds : ConDs I ℓʳ'' ℓᵃ'' cρs} {Es : ConDs J ℓʳ''' ℓᵃ''' cρs'}
           (O : ConO D E) (Os : ConOs Ds (E ◁ Es)) → ConOs (D ◁ Ds) (E ◁ Es)
-    ◂_  : {E : ConD J ℓ₀ cρ} {Ds : ConDs I ℓ₁ cρs} {Es : ConDs J ℓ₂ cρs'}
+    ◂_  : {E : ConD J ℓʳ ℓᵃ cρ} {Ds : ConDs I ℓʳ' ℓᵃ' cρs} {Es : ConDs J ℓʳ'' ℓᵃ'' cρs'}
                          (Os : ConOs Ds      Es ) → ConOs      Ds  (E ◁ Es)
 
   infixr 4 _◁_
@@ -47,7 +47,7 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
   eraseʳ (ι eq) x  = subst _ eq x
   eraseʳ (π  O) xs = λ a → eraseʳ (O a) (xs a)
 
-  eraseᶜ : {D : ConD I ℓ cρ} {E : ConD J ℓ' cρ'} (O : ConO e D E)
+  eraseᶜ : {D : ConD I ℓʳ ℓᵃ cρ} {E : ConD J ℓʳ' ℓᵃ' cρ'} (O : ConO e D E)
            {X : J → Set ℓˣ} {i : I} → ⟦ D ⟧ᶜ (λ i' → X (e i')) i → ⟦ E ⟧ᶜ X (e i)
   eraseᶜ (ι eq  ) eq'      = trans (sym eq) (cong _ eq')
   eraseᶜ (ρ O O') (x , xs) = eraseʳ O x , eraseᶜ O' xs
@@ -55,7 +55,7 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
   eraseᶜ (Δ   O ) (a , xs) =     eraseᶜ (O a) xs
   eraseᶜ (∇ a O )      xs  = a , eraseᶜ  O    xs
 
-  eraseᶜˢ : {Ds : ConDs I ℓ cρs} {Es : ConDs J ℓ' cρs'} (Os : ConOs e Ds Es)
+  eraseᶜˢ : {Ds : ConDs I ℓʳ ℓᵃ cρs} {Es : ConDs J ℓʳ' ℓᵃ' cρs'} (Os : ConOs e Ds Es)
             {X : J → Set ℓˣ} {i : I} → ⟦ Ds ⟧ᶜˢ (λ i' → X (e i')) i → ⟦ Es ⟧ᶜˢ X (e i)
   eraseᶜˢ (O ◁ Os) (inl xs) = inl (eraseᶜ  O  xs)
   eraseᶜˢ (O ◁ Os) (inr xs) =      eraseᶜˢ Os xs
