@@ -26,6 +26,12 @@ instance
   _==_ ⦃ EqQuantity ⦄ quantity-0 quantity-0 = true
   _==_ ⦃ EqQuantity ⦄ quantity-ω quantity-ω = true
   _==_ ⦃ EqQuantity ⦄ _          _          = false
+  
+  EqName : Eq Name
+  _==_ {{EqName}} = primQNameEquality
+
+  EqMeta : Eq Meta
+  _==_ ⦃ EqMeta ⦄ = primMetaEquality
 
   EqModality : Eq Modality
   _==_ ⦃ EqModality ⦄ (modality r q) (modality r₁ q₁)

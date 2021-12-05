@@ -87,6 +87,9 @@ product = foldr _*_ 1
 length : List A → ℕ
 length = foldr (const suc) 0
 
+elem : ⦃ Eq A ⦄ → A → List A → Bool
+elem x = any (x ==_) 
+
 span : (A → Bool) → List A → List A × List A
 span p []       = [] , []
 span p (x ∷ xs) with p x
@@ -95,6 +98,11 @@ span p (x ∷ xs) with p x
 
 break : (A → Bool) → List A → (List A × List A)
 break p = span (not ∘ p)
+
+intersperse : A → List A → List A
+intersperse x []       = []
+intersperse x [ y ]    = [ y ]
+intersperse x (y ∷ ys) = y ∷ x ∷ intersperse x ys 
 
 ------------------------------------------------------------------------
 -- Operations for reversing lists

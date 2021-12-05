@@ -2,8 +2,6 @@
 module Utils.Reflection.Core where
 
 open import Prelude
---open import Container.Traversable
---open import Control.Monad.Zero
 
 open import Agda.Builtin.Reflection as Builtin
 open Builtin public
@@ -16,97 +14,52 @@ open Builtin public
 
 private variable
   A B : Set _
+
+-- Types
   
---- Names ---
-
-instance
-  ShowName : Show Name
-  show {{ShowName}} x = primShowQName x
-
-instance
-  EqName : Eq Name
-  _==_ {{EqName}} = primQNameEquality
-
--- data LessName (x y : Name) : Set where
---   less-name : primQNameLess x y ≡ true → LessName x y
-
--- private
---   cmpName : ∀ x y → Comparison LessName x y
---   cmpName x y with inspect (primQNameLess x y)
---   ... | true  with≡ eq = less (less-name eq)
---   ... | false with≡ _  with inspect (primQNameLess y x)
---   ...   | true with≡ eq = greater (less-name eq)
---   ...   | false with≡ _ = equal unsafeEqual
-
--- instance
---   OrdName : Ord Name
---   OrdName = defaultOrd cmpName
-
---   OrdLawsName : Ord/Laws Name
---   Ord/Laws.super OrdLawsName    = it
---   less-antirefl {{OrdLawsName}} (less-name eq) = unsafeNotEqual eq
---   less-trans    {{OrdLawsName}} (less-name _)  (less-name _)   = less-name unsafeEqual
-
--- --- Meta variables ---
-
-instance
-  ShowMeta : Show Meta
-  show {{ShowMeta}} = primShowMeta
-
-instance
-  EqMeta : Eq Meta
-  _==_ {{EqMeta}} = primMetaEquality
-
--- data LessMeta (x y : Meta) : Set where
---   less-meta : primMetaLess x y ≡ true → LessMeta x y
-
--- private
---   cmpMeta : ∀ x y → Comparison LessMeta x y
---   cmpMeta x y with inspect (primMetaLess x y)
---   ... | true  with≡ eq = less (less-meta eq)
---   ... | false with≡ _  with inspect (primMetaLess y x)
---   ...   | true with≡ eq = greater (less-meta eq)
---   ...   | false with≡ _ = equal unsafeEqual
-
--- instance
---   OrdMeta : Ord Meta
---   OrdMeta = defaultOrd cmpMeta
-
---   OrdLawsMeta : Ord/Laws Meta
---   Ord/Laws.super OrdLawsMeta = it
---   less-antirefl {{OrdLawsMeta}} (less-meta eq) = unsafeNotEqual eq
---   less-trans    {{OrdLawsMeta}} (less-meta _)  (less-meta _)   = less-meta unsafeEqual
-
---- Literals ---
-
-instance
-  ShowLiteral : Show Literal
-  show {{ShowLiteral}} (nat n)    = show n
-  show {{ShowLiteral}} (word64 n) = show n
-  show {{ShowLiteral}} (float x)  = show x
-  show {{ShowLiteral}} (char c)   = show c
-  show {{ShowLiteral}} (string s) = show s
-  show {{ShowLiteral}} (name x)   = show x
-  show {{ShowLiteral}} (meta x)   = show x
-
---- Terms ---
-
-Clauses = List Clause
+Clauses   = List Clause
 Telescope = List (String × Arg Type)
 
 Args : Set ℓ → Set ℓ
 Args A = List (Arg A)
 
+Tactic = Term → TC ⊤
+
+--- Terms ---
+
+pattern `Set₀ = agda-sort (lit 0)
+pattern `Set₁ = agda-sort (lit 1)
+pattern `Set₂ = agda-sort (lit 2)
+
+pattern `Set! = agda-sort unknown
 
 pattern default-modality = modality relevant quantity-ω
-
-pattern vLam x = lam visible x
-pattern hLam x = lam hidden x
-pattern iLam x = lam instance′ x
 
 pattern vArg x = arg (arg-info visible default-modality) x
 pattern hArg x = arg (arg-info hidden default-modality) x
 pattern iArg x = arg (arg-info instance′ default-modality) x
+
+pattern var₀ x         = var x []
+pattern var₁ x a       = var x (vArg a ∷ [])
+pattern var₂ x a b     = var x (vArg a ∷ vArg b ∷ [])
+pattern var₃ x a b c   = var x (vArg a ∷ vArg b ∷ vArg c ∷ [])
+pattern var₄ x a b c d = var x (vArg a ∷ vArg b ∷ vArg c ∷ vArg d ∷ [])
+
+pattern con₀ c         = con c []
+pattern con₁ c x       = con c (vArg x ∷ [])
+pattern con₂ c x y     = con c (vArg x ∷ vArg y ∷ [])
+pattern con₃ c x y z   = con c (vArg x ∷ vArg y ∷ vArg z ∷ [])
+pattern con₄ c x y z u = con c (vArg x ∷ vArg y ∷ vArg z ∷ vArg u ∷ [])
+
+pattern def₀ f         = def f []
+pattern def₁ f x       = def f (vArg x ∷ [])
+pattern def₂ f x y     = def f (vArg x ∷ vArg y ∷ [])
+pattern def₃ f x y z   = def f (vArg x ∷ vArg y ∷ vArg z ∷ [])
+pattern def₄ f x y z u = def f (vArg x ∷ vArg y ∷ vArg z ∷ vArg u ∷ [])
+
+pattern vLam x = lam visible x
+pattern hLam x = lam hidden x
+pattern iLam x = lam instance′ x
 
 unArg : Arg A → A
 unArg (arg _ x) = x
@@ -138,18 +91,12 @@ instance
   fmap ⦃ ArgsFunctor ⦄ f []       = []
   fmap ⦃ ArgsFunctor ⦄ f (x ∷ xs) = fmap f x ∷ fmap f xs
 
---   TraversableArg : Traversable {a = ℓ} Arg
---   traverse {{TraversableArg}} f (arg i x) = ⦇ (arg i) (f x) ⦈
-
 unAbs : Abs A → A
 unAbs (abs _ x) = x
 
 instance
   FunctorAbs : Functor Abs
   fmap {{FunctorAbs}} f (abs s x) = abs s (f x)
-
---   TraversableAbs : Traversable {a = ℓ} Abs
---   traverse {{TraversableAbs}} f (abs s x) = ⦇ (abs s) (f x) ⦈
 
 absurd-lam : Term
 absurd-lam = pat-lam (absurd-clause (("()" , vArg unknown) ∷ []) (vArg (absurd 0) ∷ []) ∷ []) []
@@ -176,7 +123,6 @@ instance
   AlternativeTC : Alternative TC
   _<|>_ ⦃ AlternativeTC ⦄ = catchTC
 
-Tactic = Term → TC ⊤
 
 give : Term → Tactic
 give v = λ hole → unify hole v
@@ -198,37 +144,6 @@ blockOnMeta! x = commitTC >>= λ _ → blockOnMeta x
 
 inferNormalisedType : Term → TC Type
 inferNormalisedType t = withNormalisation true (inferType t)
-
---- Convenient wrappers ---
-
--- -- Zero for non-datatypes
--- getParameters : Name → TC Nat
--- getParameters d =
---   caseM getDefinition d of λ
---   { (data-type n _) → pure n
---   ; _ → pure 0 }
-
--- getConstructors : Name → TC (List Name)
--- getConstructors d =
---   caseM getDefinition d of λ
---   { (data-type _ cs) → pure cs
---   ; (record-type c _) → pure (c ∷ [])
---   ; _ → typeError (strErr "Cannot get constructors of non-data or record type" ∷ nameErr d ∷ [])
---   }
-
--- getClauses : Name → TC (List Clause)
--- getClauses d =
---   caseM getDefinition d of λ
---   { (function cs) → pure cs
---   ; _ → typeError (strErr "Cannot get constructors of non-function type" ∷ nameErr d ∷ [])
---   }
-
--- -- Get the constructor of a record type (or single-constructor data type)
--- recordConstructor : Name → TC Name
--- recordConstructor r =
---   caseM getConstructors r of λ
---   { (c ∷ []) → pure c
---   ; _ → typeError $ strErr "Cannot get constructor of non-record type" ∷ nameErr r ∷ [] }
 
 -- Injectivity of constructors
 
