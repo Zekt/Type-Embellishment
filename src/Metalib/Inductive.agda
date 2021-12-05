@@ -19,7 +19,7 @@ lookupTel {tel = _▷_ {ℓ' = ℓ'} tel A} (suc n) (⟦tel⟧ , A') =
 
 test : Name → TC _
 test funName = do
-  let lam = lam visible (abs "z" (def (quote _+_) (vArg (var 0 []) ∷ vArg (quoteTerm 1) ∷ [])))
+  let lam = vLam (abs "z" (def (quote _+_) (vArg (var 0 []) ∷ vArg (quoteTerm 1) ∷ [])))
   let patlam = pat-lam [ clause [ ("z" , vArg (quoteTerm ℕ)) ]
                                 [ vArg (var 0) ]
                                 (def (quote _+_) (vArg (var 0 []) ∷ vArg (quoteTerm 1) ∷ []))
@@ -34,7 +34,7 @@ test funName = do
 
 unquoteDecl patFun = test patFun
 
-module _ {ℓ ℓ' : Level} (tel : Tel ℓ) (A : ⟦ tel ⟧ᵗ → Set ℓ') where
+module _ (tel : Tel ℓ) (A : ⟦ tel ⟧ᵗ → Set ℓ') where
   namedA : Name → TC _
   namedA funName = do
     typeOfA ← quoteTC (⟦ tel ⟧ᵗ → Set ℓ')
@@ -53,7 +53,7 @@ varTuple : ℕ → Term
 varTuple m = varTuple' m m
 
 lamTerm' : ℕ → ℕ → Name → TC Term
-lamTerm' m zero    funName = return $ lam visible $ abs "_" (def funName [ vArg (varTuple m) ])
+lamTerm' m zero    funName = return $ vLam $ abs "_" (def funName [ vArg (varTuple m) ])
 lamTerm' m (suc n) funName = do lamTerm' ← lamTerm' m n funName
                                 return (lam visible (abs "_" lamTerm'))
 
