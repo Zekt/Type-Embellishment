@@ -3,7 +3,10 @@
 module Metalib.Inductive where
 
 open import Prelude
+open import Utils.Reflection
+
 open import Generics.Description
+
 
 dprint = debugPrint "meta" 5
 

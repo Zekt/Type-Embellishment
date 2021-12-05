@@ -2,16 +2,15 @@
 module Prelude.Show where
 
 ------------------------------------------------------------------------------
-open import Reflection.Show
-------------------------------------------------------------------------------
 
 open import Agda.Builtin.String 
 open import Agda.Builtin.Sigma 
 open import Agda.Builtin.Bool
 open import Agda.Builtin.Char
+open import Agda.Builtin.Float
+open import Agda.Builtin.Word
 open import Agda.Builtin.List
 open import Agda.Builtin.Nat using (Nat)
-open import Agda.Builtin.Reflection
 
 record Show {a} (A : Set a) : Set a where
   field
@@ -28,15 +27,21 @@ instance
   ShowNat : Show Nat
   show {{ ShowNat }} = primShowNat
 
-  ShowTerm : Show Term
-  show {{ ShowTerm }} = showTerm
+  ShowFloat : Show Float
+  show {{ ShowFloat }} = primShowFloat
+  
+  ShowWord64 : Show Word64
+  show {{ ShowWord64 }} x = primShowNat (primWord64ToNat x)
 
-  ShowTerms : Show (List (Arg Term))
-  show {{ ShowTerms }} = showTerms
+--  ShowTerm : Show Term
+--  show {{ ShowTerm }} = showTerm
 
-  ShowTel : Show (List (Σ String λ _ → Arg Type))
-  show {{ ShowTel }} = showTel
+--  ShowTerms : Show (List (Arg Term))
+--  show {{ ShowTerms }} = showTerms
 
-  ShowClauses : Show _
-  show {{ ShowClauses }} = showClauses
+--  ShowTel : Show (List (Σ String λ _ → Arg Type))
+--  show {{ ShowTel }} = showTel
+
+--  ShowClauses : Show _
+--  show {{ ShowClauses }} = showClauses
   

@@ -5,9 +5,10 @@ open import Agda.Builtin.Unit
   using (⊤; tt)
 open import Agda.Builtin.List
   using (List; []; _∷_)
+open import Agda.Builtin.Bool
 
 open import Prelude.Function
-open import Prelude.Bool
+open import Prelude.Functor
 
 private variable
   A B C : Set _
@@ -15,9 +16,11 @@ private variable
 open import Agda.Builtin.Maybe public
   using (Maybe; just; nothing)
 
-map : (A → B) → Maybe A → Maybe B
-map f (just x) = just (f x)
-map f nothing  = nothing
+instance
+  MaybeFuntor : Functor Maybe
+  fmap ⦃ MaybeFuntor ⦄ f (just x) = just (f x)
+  fmap ⦃ MaybeFuntor ⦄ f nothing  = nothing
+  
 -- A dependent eliminator.
 
 maybe : ∀ {a b} {A : Set a} {B : Maybe A → Set b} →
@@ -40,7 +43,7 @@ boolToMaybe true  = just tt
 boolToMaybe false = nothing
 
 when : Bool → A → Maybe A
-when b c = map (λ _ → c) (boolToMaybe b)
+when b c = (λ _ → c) <$> (boolToMaybe b)
 
 -- Alternative: <∣>
 

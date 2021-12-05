@@ -1,4 +1,3 @@
-open import Level
 open import Prelude
 open import Generics.Description
 
