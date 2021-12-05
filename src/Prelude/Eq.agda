@@ -35,11 +35,3 @@ instance
   EqString : Eq String
   _==_ ⦃ EqString ⦄ = primStringEquality
 
-  EqList : ∀ {a} {A : Set a} ⦃ _ : Eq A ⦄
-    → Eq (List A)
-  _==_ ⦃ EqList ⦄ []       []       = true
-  _==_ ⦃ EqList ⦄ (x ∷ xs) (y ∷ ys) with x == y
-  ... | false = false
-  ... | true  = xs == ys
-  _==_ ⦃ EqList ⦄ _        _ = false
-
