@@ -1,11 +1,19 @@
 {-# OPTIONS --safe #-}
 module Prelude.Bool where
 
+open import Prelude.Eq
+
 open import Agda.Builtin.Bool public
 
 infixr 6 _∧_
 infixr 5 _∨_ _xor_
 
+instance
+  EqBool : Eq Bool
+  _==_ ⦃ EqBool ⦄ true  true  = true
+  _==_ ⦃ EqBool ⦄ false false = true
+  _==_ ⦃ EqBool ⦄ _     _     = false
+  
 not : Bool → Bool
 not true  = false
 not false = true

@@ -9,7 +9,7 @@ private
   variable
     cρ cρ' : ℕ
     cρs cρs' : List ℕ
-    A : Set ℓᵃ
+    A : Set _
 
 module _ {I : Set ℓⁱ} {J : Set ℓʲ} (e : I → J) where
 

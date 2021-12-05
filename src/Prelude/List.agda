@@ -6,12 +6,12 @@ open import Agda.Builtin.Nat using (zero; suc; _+_; _*_)
   renaming (Nat to ℕ)
 
 open import Prelude.Function
+open import Prelude.Eq
+open import Prelude.Functor
+
 open import Prelude.Sigma
 open import Prelude.Bool
-open import Prelude.Fin
 open import Prelude.Maybe
-  hiding (map)
-open import Prelude.Relation
 
 private variable
   ℓ     : Level
@@ -24,9 +24,18 @@ infixr 5 _++_
 
 pattern [_] x = x ∷ []
 
-map : (A → B) → List A → List B
-map f []       = []
-map f (x ∷ xs) = f x ∷ map f xs
+instance
+  ListFunctor : Functor List
+  fmap ⦃ ListFunctor ⦄ f []       = []
+  fmap ⦃ ListFunctor ⦄ f (x ∷ xs) = f x ∷ fmap f xs
+
+  EqList : ∀ {a} {A : Set a} ⦃ _ : Eq A ⦄
+    → Eq (List A)
+  _==_ ⦃ EqList ⦄ []       []       = true
+  _==_ ⦃ EqList ⦄ (x ∷ xs) (y ∷ ys) with x == y
+  ... | false = false
+  ... | true  = xs == ys
+  _==_ ⦃ EqList ⦄ _        _ = false
 
 _++_ : List A → List A → List A
 []       ++ ys = ys
@@ -51,7 +60,7 @@ concat : List (List A) → List A
 concat = foldr _++_ []
 
 concatMap : (A → List B) → List A → List B
-concatMap f = concat ∘ map f
+concatMap f = concat ∘ fmap f
 
 null : List A → Bool
 null []       = true
@@ -64,10 +73,10 @@ or : List Bool → Bool
 or = foldr _∨_ false
 
 any : (A → Bool) → List A → Bool
-any p = or ∘ map p
+any p = or ∘ fmap p
 
 all : (A → Bool) → List A → Bool
-all p = and ∘ map p
+all p = and ∘ fmap p
 
 sum : List ℕ → ℕ
 sum = foldr _+_ 0
@@ -78,14 +87,22 @@ product = foldr _*_ 1
 length : List A → ℕ
 length = foldr (const suc) 0
 
-span : {P : A → Set ℓ} → ((x : A) → Dec (P x)) → List A → (List A × List A)
-span P? []       = ([] , [])
-span P? (x ∷ xs) with does (P? x)
-... | true  = bimap (x ∷_) id (span P? xs)
-... | false = ([] , x ∷ xs)
+elem : ⦃ Eq A ⦄ → A → List A → Bool
+elem x = any (x ==_) 
 
-break : {P : A → Set ℓ} → ((x : A) → Dec (P x)) → List A → (List A × List A)
-break P? = span λ x → ¬? (P? x)
+span : (A → Bool) → List A → List A × List A
+span p []       = [] , []
+span p (x ∷ xs) with p x
+... | true  = bimap (x ∷_) id (span p xs)
+... | false = [] , x ∷ xs
+
+break : (A → Bool) → List A → (List A × List A)
+break p = span (not ∘ p)
+
+intersperse : A → List A → List A
+intersperse x []       = []
+intersperse x [ y ]    = [ y ]
+intersperse x (y ∷ ys) = y ∷ x ∷ intersperse x ys 
 
 ------------------------------------------------------------------------
 -- Operations for reversing lists
