@@ -1,49 +1,28 @@
 {-# OPTIONS --safe #-}
 module Prelude.Relation where
+  
+open import Prelude.Relation.Dec                    public
+open import Prelude.Relation.PropositionalEquality  public
 
 open import Prelude.Function
-open import Prelude.Empty
 open import Prelude.Bool
 
-open import Relation.Nullary           public
-  using (Reflects; does; Dec; _because_; ofʸ; ofⁿ)
-open import Relation.Nullary.Negation  public
-  using (¬-reflects; ¬?)
+private variable
+  A B C : Set _
 
--- ------------------------------------------------------------------------
--- -- Negation.
+¬-reflects : ∀ {b ℓ} {P : Set ℓ} → Reflects P b → Reflects (¬ P) (not b)
+¬-reflects (ofʸ  p) = ofⁿ (_$ p)
+¬-reflects (ofⁿ ¬p) = ofʸ ¬p
 
--- infix 3 ¬_
--- infix 2 _because_
+¬? : ∀ {ℓ} {P : Set ℓ}
+  → Dec P → Dec (¬ P)
+does  (¬? p?) = not (does p?)
+proof (¬? p?) = ¬-reflects (proof p?)
 
--- ¬_ : ∀ {ℓ} → Set ℓ → Set ℓ
--- ¬ P = P → ⊥
-
--- ------------------------------------------------------------------------
--- -- `Reflects` idiom.
-
--- -- The truth value of P is reflected by a boolean value.
-
--- data Reflects {p} (P : Set p) : Bool → Set p where
---   ofʸ : ( p :   P) → Reflects P true
---   ofⁿ : (¬p : ¬ P) → Reflects P false
-
--- record Dec {p} (P : Set p) : Set p where
---   constructor _because_
---   field
---     does  : Bool
---     proof : Reflects P does
-
--- open Dec public
-
-pattern yes p =  true because ofʸ  p
-pattern no ¬p = false because ofⁿ ¬p
-
--- ¬-reflects : ∀ {b ℓ} {P : Set ℓ} → Reflects P b → Reflects (¬ P) (not b)
--- ¬-reflects (ofʸ  p) = ofⁿ (_$ p)
--- ¬-reflects (ofⁿ ¬p) = ofʸ ¬p
-
--- ¬? : ∀ {ℓ} {P : Set ℓ}
---   → Dec P → Dec (¬ P)
--- does  (¬? p?) = not (does p?)
--- proof (¬? p?) = ¬-reflects (proof p?)
+decEq₂ : {f : A → B → C}
+  → (∀ {x y z w} → f x y ≡ f z w → x ≡ z)
+  → (∀ {x y z w} → f x y ≡ f z w → y ≡ w)
+  → ∀ {x y z w} → Dec (x ≡ y) → Dec (z ≡ w) → Dec (f x z ≡ f y w)
+decEq₂ f-inj₁ f-inj₂ (no neq)    _         = no λ eq → neq (f-inj₁ eq)
+decEq₂ f-inj₁ f-inj₂  _         (no neq)   = no λ eq → neq (f-inj₂ eq)
+decEq₂ f-inj₁ f-inj₂ (yes refl) (yes refl) = yes refl

@@ -8,10 +8,11 @@ open import Agda.Primitive                public
 open import Agda.Builtin.Nat
   renaming (Nat to ℕ)
 open import Agda.Builtin.Sigma
-open import Agda.Builtin.Unit renaming (⊤ to Unit)
+open import Agda.Builtin.Unit
+open import Agda.Builtin.Equality
 
 variable
-  ℓ ℓ₀ ℓ₁ ℓ₂ ℓ₃ ℓ′ ℓ' ℓᵃ ℓᵃ' ℓᵃ'' ℓᵃ''' ℓⁱ ℓʲ ℓʳ ℓʳ' ℓʳ'' ℓʳ''' ℓˣ ℓʸ : Level
+  ℓ ℓ' ℓ′ ℓⁱ ℓʲ ℓˣ ℓʸ : Level
 
 -- Lifting.
 
@@ -27,5 +28,8 @@ open Lift public
 0ℓ = lzero
 
 _^_ : Set → ℕ → Set
-A ^ zero  = Unit
+A ^ zero  = ⊤
 A ^ suc n = Σ A λ _ → A ^ n
+
+rewriteLevel : ∀ {ℓ ℓ'} → ℓ ≡ ℓ' → Set ℓ → Set ℓ'
+rewriteLevel refl X = X
