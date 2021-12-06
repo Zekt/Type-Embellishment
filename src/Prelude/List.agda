@@ -8,6 +8,7 @@ open import Agda.Builtin.Nat using (zero; suc; _+_; _*_)
 open import Prelude.Function
 open import Prelude.Eq
 open import Prelude.Functor
+open import Prelude.Relation.PropositionalEquality
 
 open import Prelude.Sigma
 open import Prelude.Bool
