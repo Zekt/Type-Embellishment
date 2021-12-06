@@ -41,10 +41,11 @@ cxtToTel = unquoteTC ∘ cxtToTel'
     
 --data Rel (A : Set) : List A → List A → Set
 rel : Tel' _
-rel = Set    ◁ λ A →
-      List A ◁ λ _ →
-      List A ◁ λ _ →
-      ∅
+rel = [ A ∶ Set ] [ _ ∶ List A ] [ _ ∶ List A ] ∅
+--rel = Set    ◁ λ A →
+--      List A ◁ λ _ →
+--      List A ◁ λ _ →
+--      ∅
 
 rel' : Context
 rel' = vArg `Set₀ ∷
@@ -59,11 +60,14 @@ _ : Trel' ≡ rel
 _ = refl
 
 pointwise : Tel' _
-pointwise = Set           ◁ λ A →
+pointwise = [ A ∶ Set ] [ B ∶ Set ] [ R ∶ (A → B → Set) ] [ _ ∶ List A ] [ _ ∶ List B ] ∅
+{-
+            Set           ◁ λ A →
             Set           ◁ λ B →
             (A → B → Set) ◁ λ _ →
             List A        ◁ λ _ →
             List B        ◁ λ _ →
             ∅
+-}
 
 unquoteDecl = telToCxt pointwise >> return tt

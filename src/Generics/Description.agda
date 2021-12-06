@@ -231,18 +231,25 @@ data Tel' : Level → Set where
 ⟦ ∅     ⟧ᵗ' = ⊤
 ⟦ A ◁ T ⟧ᵗ' = Σ A λ a → ⟦ T a ⟧ᵗ'
 
-append' : ∀ {ℓ ℓ'} → (T : Tel' ℓ) → (⟦ T ⟧ᵗ' → Tel' ℓ') → Tel' (ℓ ⊔ ℓ')
+-- de Bruijn's notation 
+
+◁-syntax : (A : Set ℓ) (T : A → Tel' ℓ') → Tel' (ℓ ⊔ ℓ')
+◁-syntax = _◁_
+
+syntax ◁-syntax A (λ x → T) = [ x ∶ A ] T
+
+append' : (T : Tel' ℓ) → (⟦ T ⟧ᵗ' → Tel' ℓ') → Tel' (ℓ ⊔ ℓ')
 append' ∅       T' = T' tt
 append' (A ◁ T) T' = A ◁ λ a → append' (T a) λ t → T' (a , t)
 
-snoc' : ∀ {ℓ ℓ'} → (T : Tel' ℓ) → (⟦ T ⟧ᵗ' → Set ℓ') → Tel' (ℓ ⊔ ℓ')
+snoc' : (T : Tel' ℓ) → (⟦ T ⟧ᵗ' → Set ℓ') → Tel' (ℓ ⊔ ℓ')
 snoc' ∅       B = B tt ◁ λ _ → ∅
 snoc' (A ◁ T) B = A ◁ λ a → snoc' (T a) λ t → B (a , t)
 
-Curried : ∀ {ℓ ℓ'} → (T : Tel' ℓ) → (⟦ T ⟧ᵗ' → Set ℓ') → Set (ℓ ⊔ ℓ')
+Curried : (T : Tel' ℓ) → (⟦ T ⟧ᵗ' → Set ℓ') → Set (ℓ ⊔ ℓ')
 Curried ∅ X = X tt
 Curried (A ◁ T) X = (a : A) → Curried (T a) λ t → X (a , t)
 
-curry : ∀ {ℓ ℓ'} (T : Tel' ℓ) (X : ⟦ T ⟧ᵗ' → Set ℓ') → ((t : ⟦ T ⟧ᵗ') → X t) → Curried T X
+curry : (T : Tel' ℓ) (X : ⟦ T ⟧ᵗ' → Set ℓ') → ((t : ⟦ T ⟧ᵗ') → X t) → Curried T X
 curry ∅       X f = f tt
 curry (A ◁ T) X f = λ a → curry (T a) (λ t → X (a , t)) (λ t → f (a , t))
