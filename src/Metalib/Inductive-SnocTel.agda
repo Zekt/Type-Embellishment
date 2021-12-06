@@ -51,12 +51,12 @@ varTuple' m (suc n) = con (quote _,_)
 varTuple : ℕ → Term
 varTuple m = varTuple' m m
 
-lamTerm' : ℕ → ℕ → Name → TC Term
-lamTerm' m zero    funName = return $ lam visible $ abs "_" (def funName [ vArg (varTuple m) ])
-lamTerm' m (suc n) funName = do lamTerm' ← lamTerm' m n funName
-                                return (lam visible (abs "_" lamTerm'))
+lamTerm' : ℕ → ℕ → Name → Term
+lamTerm' m zero    funName = lam visible $ abs "_" (def funName [ vArg (varTuple m) ])
+lamTerm' m (suc n) funName = let lamTerm' = lamTerm' m n funName
+                              in (lam visible (abs "_" lamTerm'))
 
-lamTerm : ℕ → Name → TC Term
+lamTerm : ℕ → Name → Term
 lamTerm m = lamTerm' m m
 
 -- λ {(_ , s) → List s}
@@ -81,8 +81,7 @@ telToCxt (_▷_ {ℓ} {ℓ'} tel A) = do
   tel' ← telToCxt tel
   funA ← freshName ""
   namedA tel A funA
-  t ← lamTerm (lengthᵗ tel) funA >>=
-      normalise                  >>=
+  t ← normalise (lamTerm (lengthᵗ tel) funA) >>=
       removeAbs (suc $ lengthᵗ tel)
   --dprint [ strErr $ showTerm t ]
   return (vArg t ∷ tel')
