@@ -31,7 +31,12 @@ pattern `Set₀ = agda-sort (lit 0)
 pattern `Set₁ = agda-sort (lit 1)
 pattern `Set₂ = agda-sort (lit 2)
 
+`Set = agda-sort ∘ lit
+
 pattern `Set! = agda-sort unknown
+
+`List : Name
+`List = quote List
 
 pattern default-modality = modality relevant quantity-ω
 
@@ -135,7 +140,7 @@ define f a cs = declareDef f a >> defineFun (unArg f) cs
 
 define! : Type → Clauses → TC Name
 define! a cs = do
-  f ← freshName ""
+  f ← freshName "_"
   define (vArg f) a cs
   return f
 

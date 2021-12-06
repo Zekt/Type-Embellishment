@@ -16,9 +16,6 @@ t `◁ u = con (quote Tel'._◁_) (t ∷ u ∷ [])
 `∅ : Term
 `∅ = quoteTerm Tel'.∅
 
-`List : Name
-`List = quote List
-
 -- 
 telToCxt : Tel' ℓ → TC Context
 telToCxt ∅       = return []
@@ -26,37 +23,36 @@ telToCxt (A ◁ T) = do
   `A ← quoteTC A
   dprint [ strErr $ show `A ]
   extendContext (vArg `A) do
-    x  ← unquoteTC {A = A} (var₀ 0)
-    `Γ ← telToCxt (T x)
-    return (vArg `A ∷ `Γ)
+    `Γ ← telToCxt ∘ T =<< unquoteTC (var₀ 0)
+    return $ vArg `A ∷ `Γ
 
 cxtToTel' : Context → Term
 cxtToTel' []        = `∅
 cxtToTel' (`A ∷ `Γ) =
-  let T = cxtToTel' `Γ
-  in `A `◁ vArg (`λ T)
+  let `T = cxtToTel' `Γ
+  in `A `◁ vArg (`λ `T)
 
 cxtToTel : Context → TC (Tel' ℓ)
 cxtToTel = unquoteTC ∘ cxtToTel'
     
 --data Rel (A : Set) : List A → List A → Set
-rel : Tel' _
-rel = [ A ∶ Set ] [ _ ∶ List A ] [ _ ∶ List A ] ∅
+T-rel : Tel' _
+T-rel = [ A ∶ Set ] [ _ ∶ List A ] [ _ ∶ List A ] ∅
 --rel = Set    ◁ λ A →
 --      List A ◁ λ _ →
 --      List A ◁ λ _ →
 --      ∅
 
-rel' : Context
-rel' = vArg `Set₀ ∷
+`T-rel : Context
+`T-rel = vArg `Set₀ ∷
        vArg (def₁ `List (var₀ 0)) ∷
        vArg (def₁ `List (var₀ 1)) ∷
        []
 
-Trel' : Tel' _
-Trel' = evalT (cxtToTel rel')
+T-rel' : Tel' _
+T-rel' = evalT (cxtToTel `T-rel)
 
-_ : Trel' ≡ rel
+_ : T-rel' ≡ T-rel
 _ = refl
 
 pointwise : Tel' _
@@ -70,4 +66,5 @@ pointwise = [ A ∶ Set ] [ B ∶ Set ] [ R ∶ (A → B → Set) ] [ _ ∶ List
             ∅
 -}
 
-unquoteDecl = telToCxt pointwise >> return tt
+Γ-pointwise : Context
+Γ-pointwise = evalT (telToCxt pointwise)
