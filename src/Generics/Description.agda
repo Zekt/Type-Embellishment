@@ -1,6 +1,6 @@
-module Generics.Description where
-
 open import Prelude
+
+module Generics.Description where
 
 lcond : ℕ → Level → Level
 lcond  zero   _ = lzero

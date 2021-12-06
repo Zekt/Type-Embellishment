@@ -11,7 +11,7 @@ open import Agda.Builtin.Sigma
 open import Agda.Builtin.Unit renaming (⊤ to Unit)
 
 variable
-  ℓ ℓ₀ ℓ₁ ℓ₂ ℓ₃ ℓ′ ℓ' ℓᵃ ℓⁱ ℓʳ ℓˣ ℓʸ ℓʲ : Level
+  ℓ ℓ₀ ℓ₁ ℓ₂ ℓ₃ ℓ′ ℓ' ℓᵃ ℓⁱ ℓʲ ℓʳ ℓˣ ℓʸ ℓᵗ : Level
   
 -- Lifting.
 

@@ -18,6 +18,7 @@ private variable
   
 Clauses   = List Clause
 Telescope = List (String × Arg Type)
+Context   = List (Arg Type)
 
 Args : Set ℓ → Set ℓ
 Args A = List (Arg A)
@@ -126,8 +127,14 @@ instance
 give : Term → Tactic
 give v = λ hole → unify hole v
 
-define : Arg Name → Type → List Clause → TC ⊤
+define : Arg Name → Type → Clauses → TC ⊤
 define f a cs = declareDef f a >> defineFun (unArg f) cs
+
+define! : Type → Clauses → TC Name
+define! a cs = do
+  f ← freshName ""
+  define (vArg f) a cs
+  return f
 
 newMeta : Type → TC Term
 newMeta = checkType unknown
@@ -143,4 +150,3 @@ blockOnMeta! x = commitTC >>= λ _ → blockOnMeta x
 
 inferNormalisedType : Term → TC Type
 inferNormalisedType t = withNormalisation true (inferType t)
-

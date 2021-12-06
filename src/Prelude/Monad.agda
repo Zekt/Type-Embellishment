@@ -2,6 +2,8 @@
 
 module Prelude.Monad where
 
+open import Agda.Builtin.Bool
+
 open import Prelude.Level
 open import Prelude.Function
 
@@ -30,6 +32,12 @@ record Monad (M : ∀ {ℓ} → Set ℓ → Set ℓ) : Setω where
   join = _=<<_ id
 
   caseM_of_ = _>>=_
+
+  ifM_then_else_ : M Bool → M A → M A → M A
+  ifM mb then mx else my = caseM mb of λ where
+    true  → mx
+    false → my
+
 open Monad ⦃...⦄ public
 
 {-# DISPLAY Monad._>>=_  _ = _>>=_  #-}

@@ -1,6 +1,8 @@
 {-# OPTIONS --safe #-}
 module Prelude.Bool where
 
+open import Agda.Builtin.Unit
+open import Prelude.Empty
 open import Prelude.Eq
 
 open import Agda.Builtin.Bool public
@@ -36,3 +38,7 @@ if_then_else_ : ∀ {a} {A : Set a}
   → Bool → A → A → A
 if true  then t else f = t
 if false then t else f = f
+
+T : Bool → Set
+T false = ⊥
+T true  = ⊤

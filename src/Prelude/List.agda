@@ -7,6 +7,7 @@ open import Agda.Builtin.Nat using (zero; suc; _+_; _*_)
 
 open import Prelude.Function
 open import Prelude.Eq
+open import Prelude.Show
 open import Prelude.Functor
 
 open import Prelude.Sigma
@@ -24,19 +25,12 @@ infixr 5 _++_
 
 pattern [_] x = x ∷ []
 
+
 instance
-  ListFunctor : Functor List
-  fmap ⦃ ListFunctor ⦄ f []       = []
-  fmap ⦃ ListFunctor ⦄ f (x ∷ xs) = f x ∷ fmap f xs
-
-  EqList : ∀ {a} {A : Set a} ⦃ _ : Eq A ⦄
-    → Eq (List A)
-  _==_ ⦃ EqList ⦄ []       []       = true
-  _==_ ⦃ EqList ⦄ (x ∷ xs) (y ∷ ys) with x == y
-  ... | false = false
-  ... | true  = xs == ys
-  _==_ ⦃ EqList ⦄ _        _ = false
-
+  FunctorList : Functor List
+  fmap ⦃ FunctorList ⦄ f []       = []
+  fmap ⦃ FunctorList ⦄ f (x ∷ xs) = f x ∷ fmap f xs
+  
 _++_ : List A → List A → List A
 []       ++ ys = ys
 (x ∷ xs) ++ ys = x ∷ (xs ++ ys)
@@ -118,6 +112,12 @@ lookup (x ∷ xs) zero    = just x
 lookup (x ∷ xs) (suc i) = lookup xs i
 lookup []       _       = nothing
 
+infixl 9 _‼_
+_‼_ : List A → ℕ → Maybe A
+_‼_ = lookup
+
+------------------------------------------------------------------------------
+-- View for snoc list
 data SnocView {A : Set ℓ} : List A → Set ℓ where
   []    : SnocView []
   _∷ʳ_ : (xs : List A) (x : A) → SnocView (xs ++ [ x ])
@@ -127,3 +127,18 @@ snocView []               = []
 snocView (x ∷ xs)         with snocView xs
 ... | []      = [] ∷ʳ x
 ... | ys ∷ʳ y = (x ∷ ys) ∷ʳ y
+
+instance
+  open import Agda.Builtin.String
+    using (primStringAppend)
+  ShowList : ⦃ Show A ⦄ → Show (List A)
+  show ⦃ ShowList ⦄ =
+    foldr (λ x xs → primStringAppend (show x) (primStringAppend " ∷ " xs)) "[]"
+
+  EqList : ∀ {a} {A : Set a} ⦃ _ : Eq A ⦄
+    → Eq (List A)
+  _==_ ⦃ EqList ⦄ []       []       = true
+  _==_ ⦃ EqList ⦄ (x ∷ xs) (y ∷ ys) with x == y
+  ... | false = false
+  ... | true  = xs == ys
+  _==_ ⦃ EqList ⦄ _        _ = false

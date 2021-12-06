@@ -2,6 +2,9 @@
 
 module Prelude.Applicative where
 
+open import Agda.Builtin.Unit
+open import Agda.Builtin.Bool
+
 open import Prelude.Level
 open import Prelude.Function
 
@@ -22,6 +25,14 @@ record Applicative (F : ∀ {a} → Set a → Set a) : Setω where
 
   _*>_ : {A B : Set ℓ} → F A → F B → F B
   a *> b = ⦇ (const id) a b ⦈
+
+  when : Bool → F ⊤ → F ⊤
+  when false _ = pure tt
+  when true  m = m
+
+  unless : Bool → F ⊤ → F ⊤
+  unless true  _ = pure tt
+  unless false m = m
 open Applicative ⦃...⦄ public
 
 {-# DISPLAY Applicative.pure  _ = pure  #-}

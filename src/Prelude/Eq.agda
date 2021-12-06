@@ -12,9 +12,14 @@ open import Agda.Builtin.String
 open import Agda.Builtin.List
 
 record Eq {a} (A : Set a) : Set a where
-  infix 4 _==_
+  infix 4 _==_ _/=_
   field
     _==_ : (x y : A) → Bool
+
+  _/=_ : A → A → Bool
+  x /= y with x == y
+  ... | false = true
+  ... | true  = false
 open Eq ⦃...⦄ public
 
 {-# DISPLAY Eq._==_ _ = _==_ #-}
