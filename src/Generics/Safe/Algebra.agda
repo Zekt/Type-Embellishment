@@ -7,28 +7,27 @@ open import Generics.Safe.Description
 
 private
   variable
-    cρ : ℕ
-    cρs : List ℕ
+    cb : ConB
+    cbs : ConBs
 
-Algᶜ : {I : Set ℓⁱ} (D : ConD I ℓᵃ cρ) → (I → Set ℓ)
-     → Set (ℓⁱ ⊔ ℓᵃ ⊔ ℓ ⊔ lcond cρ ℓ)
+Algᶜ : {I : Set ℓⁱ} (D : ConD I cb) → (I → Set ℓ)
+     → Set (ℓ ⊔ ℓⁱ ⊔ max-π cb ⊔ max-σ cb ⊔ hasRec? ℓ cb)
 Algᶜ D X = ∀ {i} → ⟦ D ⟧ᶜ X i → X i
 
-Algᶜˢ : {I : Set ℓⁱ} (Ds : ConDs I ℓᵃ cρs) → (I → Set ℓ)
-      → Set (ℓⁱ ⊔ ℓᵃ ⊔ ℓ ⊔ lcond (length cρs) ℓⁱ ⊔ lconds cρs ℓ)
+Algᶜˢ : {I : Set ℓⁱ} (Ds : ConDs I cbs) → (I → Set ℓ)
+      → Set (ℓ ⊔ ℓⁱ ⊔ maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔
+             hasCon? ℓⁱ cbs ⊔ maxMap (hasRec? ℓ) cbs)
 Algᶜˢ D X = ∀ {i} → ⟦ D ⟧ᶜˢ X i → X i
 
 Carrierᵈ : (D : DataD) (ℓ : Level) → Set (DataD.plevel D ⊔ DataD.ilevel D ⊔ lsuc ℓ)
 Carrierᵈ D ℓ = (p : ⟦ DataD.Param D ⟧ᵗ) → ⟦ DataD.Index D p ⟧ᵗ → Set ℓ
 
 Algᵈ : (D : DataD) → Carrierᵈ D ℓ
-     → Set (ℓ ⊔ DataD.plevel D ⊔ DataD.ilevel D ⊔ DataD.alevel D
-              ⊔ lcond (length (DataD.recCounts D)) (DataD.ilevel D)
-              ⊔ lconds (DataD.recCounts D) ℓ)
+     → Set (ℓ ⊔ DataD.plevel D ⊔ DataD.ilevel D ⊔ DataD.flevel D ℓ)
 Algᵈ D X = ∀ {p i} → ⟦ D ⟧ᵈ p (X p) i → X p i
 
-Carrierᵘᵖᵈ : (D : UPDataD) (ℓ : Level) → Setω
-Carrierᵘᵖᵈ D ℓ = (ℓs : UPDataD.Levels D) → Carrierᵈ (UPDataD.Desc D ℓs) ℓ
+Carrierᵘᵖᵈ : (D : UPDataD) → (UPDataD.Levels D → Level) → Setω
+Carrierᵘᵖᵈ D ℓf = (ℓs : UPDataD.Levels D) → Carrierᵈ (UPDataD.Desc D ℓs) (ℓf ℓs)
 
-Algᵘᵖᵈ : (D : UPDataD) → Carrierᵘᵖᵈ D ℓ → Setω
-Algᵘᵖᵈ D X = ∀ {ℓs p i} → ⟦ D ⟧ᵘᵖᵈ ℓs p (X ℓs p) i → X ℓs p i
+Algᵘᵖᵈ : (D : UPDataD) {ℓf : UPDataD.Levels D → Level} → Carrierᵘᵖᵈ D ℓf → Setω
+Algᵘᵖᵈ D {ℓf} X = ∀ {ℓs p i} → ⟦ D ⟧ᵘᵖᵈ ℓs p (X ℓs p) i → X ℓs p i

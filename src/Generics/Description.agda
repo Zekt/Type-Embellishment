@@ -1,6 +1,7 @@
-open import Prelude
-
 module Generics.Description where
+
+open import Prelude hiding (curry)
+open import Prelude.List as List
 
 lcond : ℕ → Level → Level
 lcond  zero   _ = lzero
@@ -47,23 +48,100 @@ mutual
 
 infixl 4 _▷_
 
+RecB : Set
+RecB = List Level
+
+ConB : Set
+ConB = List (Level ⊎ RecB)
+
+ConBs : Set
+ConBs = List ConB
+
+max-ℓ : List Level → Level
+max-ℓ = foldr _⊔_ lzero
+
+maxMap : {A : Set} → (A → Level) → List A → Level
+maxMap f = max-ℓ ∘ List.map f
+
+ρ-level : Level ⊎ RecB → Level
+ρ-level (inl _ ) = lzero
+ρ-level (inr rb) = max-ℓ rb
+
+has-ρ? : Level → Level ⊎ RecB → Level
+has-ρ? ℓ (inl _) = lzero
+has-ρ? ℓ (inr _) = ℓ
+
+σ-level : Level ⊎ RecB → Level
+σ-level (inl ℓ) = ℓ
+σ-level (inr _) = lzero
+
+max-π : ConB → Level
+max-π = maxMap ρ-level
+
+max-σ : ConB → Level
+max-σ = maxMap σ-level
+
+hasRec? : Level → ConB → Level
+hasRec? ℓ = maxMap (has-ρ? ℓ)
+
+hasCon? : Level → ConBs → Level
+hasCon? ℓ = maxMap (λ _ → ℓ)
+
+maxMap-dist-⊔ : {A : Set} (f g : A → Level) (as : List A)
+              → maxMap (λ a → f a ⊔ g a) as ≡ maxMap f as ⊔ maxMap g as
+maxMap-dist-⊔ f g []       = refl
+maxMap-dist-⊔ f g (a ∷ as) = cong (f a ⊔ g a ⊔_) (maxMap-dist-⊔ f g as)
+
+maxMap-bound : {A : Set} (f : A → Level) (ℓ : Level)
+             → (∀ a → f a ⊔ ℓ ≡ ℓ) → ∀ as → maxMap f as ⊔ ℓ ≡ ℓ
+maxMap-bound f ℓ eq []       = refl
+maxMap-bound f ℓ eq (a ∷ as) = cong₂ _⊔_ (eq a) (maxMap-bound f ℓ eq as)
+
+hasRec?-bound : ∀ ℓ cb → hasRec? ℓ cb ⊔ ℓ ≡ ℓ
+hasRec?-bound ℓ []            = refl
+hasRec?-bound ℓ (inl ℓ' ∷ cb) = hasRec?-bound ℓ cb
+hasRec?-bound ℓ (inr rb ∷ cb) = hasRec?-bound ℓ cb
+
+hasRec?-dist-⊔ : ∀ ℓ ℓ' cb → hasRec? (ℓ ⊔ ℓ') cb ≡ hasRec? ℓ cb ⊔ hasRec? ℓ' cb
+hasRec?-dist-⊔ ℓ ℓ' []             = refl
+hasRec?-dist-⊔ ℓ ℓ' (inl ℓ'' ∷ cb) = hasRec?-dist-⊔ ℓ ℓ' cb
+hasRec?-dist-⊔ ℓ ℓ' (inr rb  ∷ cb) = cong (ℓ ⊔ ℓ' ⊔_) (hasRec?-dist-⊔ ℓ ℓ' cb)
+
+hasCon?-bound : ∀ ℓ cbs → hasCon? ℓ cbs ⊔ ℓ ≡ ℓ
+hasCon?-bound ℓ []        = refl
+hasCon?-bound ℓ (_ ∷ cbs) = hasCon?-bound ℓ cbs
+
+hasCon?-dist-⊔ : ∀ ℓ ℓ' cbs → hasCon? (ℓ ⊔ ℓ') cbs ≡ hasCon? ℓ cbs ⊔ hasCon? ℓ' cbs
+hasCon?-dist-⊔ ℓ ℓ' []        = refl
+hasCon?-dist-⊔ ℓ ℓ' (_ ∷ cbs) = cong (ℓ ⊔ ℓ' ⊔_) (hasCon?-dist-⊔ ℓ ℓ' cbs)
+
+maxMap-hasRec?≤hasCon? : ∀ ℓ cbs → maxMap (hasRec? ℓ) cbs ⊔ hasCon? ℓ cbs ≡ hasCon? ℓ cbs
+maxMap-hasRec?≤hasCon? ℓ []         = refl
+maxMap-hasRec?≤hasCon? ℓ (cb ∷ cbs) = cong₂ _⊔_ (hasRec?-bound ℓ cb)
+                                                (maxMap-hasRec?≤hasCon? ℓ cbs)
+
+private variable
+    rb  : RecB
+    cb  : ConB
+    cbs : ConBs
+
 module _ (I : Set ℓⁱ) where
 
   {-# NO_UNIVERSE_CHECK #-}
-  data RecD : Level → Set where
-    ι : (i : I) → RecD lzero
-    π : (A : Set ℓ) (D : A → RecD ℓ') → RecD (ℓ ⊔ ℓ')
+  data RecD : RecB → Set where
+    ι : (i : I) → RecD []
+    π : (A : Set ℓ) (D : A → RecD rb) → RecD (ℓ ∷ rb)
 
   {-# NO_UNIVERSE_CHECK #-}
-  data ConD : Level → ℕ → Set where
-    ι : (i : I) → ConD lzero zero
-    ρ : (D : RecD ℓʳ) (E : ConD ℓ cρ) → ConD (ℓʳ ⊔ ℓ) (suc cρ)
-    σ : (A : Set ℓᵃ) (D : A → ConD ℓ cρ) → ConD (ℓᵃ ⊔ ℓ) cρ
+  data ConD : ConB → Set where
+    ι : (i : I) → ConD []
+    σ : (A : Set ℓ) (D : A → ConD cb) → ConD (inl ℓ  ∷ cb)
+    ρ : (D : RecD rb) (E : ConD cb)   → ConD (inr rb ∷ cb)
 
   {-# NO_UNIVERSE_CHECK #-}
-  data ConDs : Level → List ℕ → Set where
-    ∅   : ConDs lzero []
-    _◁_ : (D : ConD ℓ cρ) (Ds : ConDs ℓ' cρs) → ConDs (ℓ ⊔ ℓ') (cρ ∷ cρs)
+  data ConDs : ConBs → Set where
+    ∅   : ConDs []
+    _◁_ : (D : ConD cb) (Ds : ConDs cbs) → ConDs (cb ∷ cbs)
 
   infixr 4 _◁_
 
@@ -72,16 +150,16 @@ record DataD : Set where
   field
     {plevel} : Level
     {ilevel} : Level
-    {alevel} : Level
-    {recCounts} : List ℕ
+    {struct} : ConBs
   flevel : Level → Level
-  flevel ℓ = alevel ⊔ lconds recCounts ℓ ⊔ lcond (length recCounts) ilevel
+  flevel ℓ = maxMap max-π struct ⊔ maxMap max-σ struct ⊔
+             maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
     level : Level
     level-pre-fixed-point : flevel level ⊔ level ≡ level
     Param : Tel plevel
     Index : ⟦ Param ⟧ᵗ → Tel ilevel
-    Desc  : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ alevel recCounts
+    Desc  : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ struct
 
 {-# NO_UNIVERSE_CHECK #-}
 record UPDataD : Set where
@@ -94,17 +172,17 @@ record UPDataD : Set where
 
 module _ {I : Set ℓⁱ} where
 
-  ⟦_⟧ʳ : RecD I ℓᵃ → (I → Set ℓ) → Set (ℓᵃ ⊔ ℓ)
+  ⟦_⟧ʳ : RecD I rb → (I → Set ℓ) → Set (max-ℓ rb ⊔ ℓ)
   ⟦ ι i   ⟧ʳ X = X i
   ⟦ π A D ⟧ʳ X = (a : A) → ⟦ D a ⟧ʳ X
 
-  ⟦_⟧ᶜ : ConD I ℓᵃ cρ → (I → Set ℓ) → (I → Set (ℓᵃ ⊔ lcond cρ ℓ ⊔ ℓⁱ))
+  ⟦_⟧ᶜ : ConD I cb → (I → Set ℓ) → (I → Set (max-π cb ⊔ max-σ cb ⊔ hasRec? ℓ cb ⊔ ℓⁱ))
   ⟦ ι i   ⟧ᶜ X j = i ≡ j
-  ⟦ ρ D E ⟧ᶜ X j = Σ (⟦ D ⟧ʳ X) λ _ → ⟦ E ⟧ᶜ X j
   ⟦ σ A D ⟧ᶜ X j = Σ A λ a → ⟦ D a ⟧ᶜ X j
+  ⟦ ρ D E ⟧ᶜ X j = Σ (⟦ D ⟧ʳ X) λ _ → ⟦ E ⟧ᶜ X j
 
-  ⟦_⟧ᶜˢ : ConDs I ℓᵃ cρs
-        → (I → Set ℓ) → (I → Set (ℓᵃ ⊔ lconds cρs ℓ ⊔ lcond (length cρs) ℓⁱ))
+  ⟦_⟧ᶜˢ : ConDs I cbs → (I → Set ℓ) → (I → Set (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔
+                                                maxMap (hasRec? ℓ) cbs ⊔ hasCon? ℓⁱ cbs))
   ⟦ ∅      ⟧ᶜˢ X i = ⊥
   ⟦ D ◁ Ds ⟧ᶜˢ X i = ⟦ D ⟧ᶜ X i ⊎ ⟦ Ds ⟧ᶜˢ X i
 
@@ -117,18 +195,18 @@ module _ {I : Set ℓⁱ} where
        → let I = ⟦ DataD.Index Dᵐ p ⟧ᵗ in (I → Set ℓ) → (I → Set (DataD.flevel Dᵐ ℓ))
 ⟦ D ⟧ᵘᵖᵈ ℓs = ⟦ UPDataD.Desc D ℓs ⟧ᵈ
 
-fmapʳ : {I : Set ℓⁱ} (D : RecD I ℓᵃ) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
+fmapʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → ⟦ D ⟧ʳ X → ⟦ D ⟧ʳ Y
 fmapʳ (ι i  ) f x  = f x
 fmapʳ (π A D) f xs = λ a → fmapʳ (D a) f (xs a)
 
-fmapᶜ : {I : Set ℓⁱ} (D : ConD I ℓᵃ cρ) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
+fmapᶜ : {I : Set ℓⁱ} (D : ConD I cb) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᶜ X i → ⟦ D ⟧ᶜ Y i
 fmapᶜ (ι i  ) f eq       = eq
-fmapᶜ (ρ D E) f (x , xs) = fmapʳ D f x , fmapᶜ E f xs
 fmapᶜ (σ A D) f (a , xs) = a , fmapᶜ (D a) f xs
+fmapᶜ (ρ D E) f (x , xs) = fmapʳ D f x , fmapᶜ E f xs
 
-fmapᶜˢ : {I : Set ℓ} (Ds : ConDs I ℓᵃ cρs) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
+fmapᶜˢ : {I : Set ℓ} (Ds : ConDs I cbs) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
        → ({i : I} → X i → Y i) → {i : I} → ⟦ Ds ⟧ᶜˢ X i → ⟦ Ds ⟧ᶜˢ Y i
 fmapᶜˢ (D ◁ Ds) f (inl xs) = inl (fmapᶜ  D  f xs)
 fmapᶜˢ (D ◁ Ds) f (inr xs) = inr (fmapᶜˢ Ds f xs)
@@ -143,3 +221,28 @@ fmapᵘᵖᵈ : (D : UPDataD) (ℓs : UPDataD.Levels D) → let Dᵐ = UPDataD.D
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵘᵖᵈ ℓs p X i → ⟦ D ⟧ᵘᵖᵈ ℓs p Y i
 fmapᵘᵖᵈ D ℓs = fmapᵈ (UPDataD.Desc D ℓs)
+
+{-# NO_UNIVERSE_CHECK #-}
+data Tel' : Level → Set where
+  ∅   : Tel' lzero
+  _◁_ : ∀ {ℓ ℓ'} (A : Set ℓ) (T : A → Tel' ℓ') → Tel' (ℓ ⊔ ℓ')
+
+⟦_⟧ᵗ' : ∀ {ℓ} → Tel' ℓ → Set ℓ
+⟦ ∅     ⟧ᵗ' = ⊤
+⟦ A ◁ T ⟧ᵗ' = Σ A λ a → ⟦ T a ⟧ᵗ'
+
+append' : ∀ {ℓ ℓ'} → (T : Tel' ℓ) → (⟦ T ⟧ᵗ' → Tel' ℓ') → Tel' (ℓ ⊔ ℓ')
+append' ∅       T' = T' tt
+append' (A ◁ T) T' = A ◁ λ a → append' (T a) λ t → T' (a , t)
+
+snoc' : ∀ {ℓ ℓ'} → (T : Tel' ℓ) → (⟦ T ⟧ᵗ' → Set ℓ') → Tel' (ℓ ⊔ ℓ')
+snoc' ∅       B = B tt ◁ λ _ → ∅
+snoc' (A ◁ T) B = A ◁ λ a → snoc' (T a) λ t → B (a , t)
+
+Curried : ∀ {ℓ ℓ'} → (T : Tel' ℓ) → (⟦ T ⟧ᵗ' → Set ℓ') → Set (ℓ ⊔ ℓ')
+Curried ∅ X = X tt
+Curried (A ◁ T) X = (a : A) → Curried (T a) λ t → X (a , t)
+
+curry : ∀ {ℓ ℓ'} (T : Tel' ℓ) (X : ⟦ T ⟧ᵗ' → Set ℓ') → ((t : ⟦ T ⟧ᵗ') → X t) → Curried T X
+curry ∅       X f = f tt
+curry (A ◁ T) X f = λ a → curry (T a) (λ t → X (a , t)) (λ t → f (a , t))

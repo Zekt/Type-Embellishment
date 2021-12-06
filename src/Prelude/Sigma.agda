@@ -26,3 +26,13 @@ bimap : ∀ {ℓ} {P : A → Set ℓ} {ℓ′} {Q : B → Set ℓ′} →
       (f : A → B) → (∀ {x} → P x → Q (f x)) →
       Σ A P → Σ B Q
 bimap f g (x , y) = (f x , g y)
+
+curry : ∀ {ℓᵃ} {A : Set ℓᵃ} {ℓᵇ} {B : A → Set ℓᵇ} {ℓᶜ} {C : Σ A B → Set ℓᶜ} →
+        ((p : Σ A B) → C p) →
+        ((x : A) → (y : B x) → C (x , y))
+curry f x y = f (x , y)
+
+uncurry : ∀ {ℓᵃ} {A : Set ℓᵃ} {ℓᵇ} {B : A → Set ℓᵇ} {ℓᶜ} {C : Σ A B → Set ℓᶜ} →
+          ((x : A) → (y : B x) → C (x , y)) →
+          ((p : Σ A B) → C p)
+uncurry f (x , y) = f x y
