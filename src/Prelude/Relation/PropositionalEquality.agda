@@ -23,3 +23,27 @@ cong₂ f refl refl = refl
 
 subst : (P : A → Set b) {x y : A} → x ≡ y → P x → P y
 subst P refl p = p
+
+module ≡-Reasoning {A : Set a} where
+
+  infix  3 _∎
+  infixr 2 _≡⟨⟩_ step-≡ step-≡˘
+  infix  1 begin_
+
+  begin_ : ∀{x y : A} → x ≡ y → x ≡ y
+  begin_ x≡y = x≡y
+
+  _≡⟨⟩_ : ∀ (x {y} : A) → x ≡ y → x ≡ y
+  _ ≡⟨⟩ x≡y = x≡y
+
+  step-≡ : ∀ (x {y z} : A) → y ≡ z → x ≡ y → x ≡ z
+  step-≡ _ y≡z x≡y = trans x≡y y≡z
+
+  step-≡˘ : ∀ (x {y z} : A) → y ≡ z → y ≡ x → x ≡ z
+  step-≡˘ _ y≡z y≡x = trans (sym y≡x) y≡z
+
+  _∎ : ∀ (x : A) → x ≡ x
+  _∎ _ = refl
+
+  syntax step-≡  x y≡z x≡y = x ≡⟨  x≡y ⟩ y≡z
+  syntax step-≡˘ x y≡z y≡x = x ≡˘⟨ y≡x ⟩ y≡z

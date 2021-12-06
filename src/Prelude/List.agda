@@ -16,7 +16,7 @@ open import Prelude.Maybe
 private variable
   ℓ     : Level
   A B C : Set _
-  
+
 open import Agda.Builtin.List public
   using (List; []; _∷_)
 
@@ -36,6 +36,21 @@ instance
   ... | false = false
   ... | true  = xs == ys
   _==_ ⦃ EqList ⦄ _        _ = false
+
+map : {A B : Set} → (A → B) → List A → List B
+map = fmap
+
+map-cong : {A B : Set} (f g : A → B) → (∀ x → f x ≡ g x) → (xs : List A) → map f xs ≡ map g xs
+map-cong f g eq []       = refl
+map-cong f g eq (x ∷ xs) = cong₂ _∷_ (eq x) (map-cong f g eq xs)
+
+map-id : {A : Set} (xs : List A) → map id xs ≡ xs
+map-id []       = refl
+map-id (x ∷ xs) = cong (x ∷_) (map-id xs)
+
+map-comp : {A B C : Set} (f : B → C) (g : A → B) → (xs : List A) → map (f ∘ g) xs ≡ map f (map g xs)
+map-comp f g []       = refl
+map-comp f g (x ∷ xs) = cong (f (g x) ∷_) (map-comp f g xs)
 
 _++_ : List A → List A → List A
 []       ++ ys = ys
@@ -88,7 +103,7 @@ length : List A → ℕ
 length = foldr (const suc) 0
 
 elem : ⦃ Eq A ⦄ → A → List A → Bool
-elem x = any (x ==_) 
+elem x = any (x ==_)
 
 span : (A → Bool) → List A → List A × List A
 span p []       = [] , []
@@ -102,7 +117,7 @@ break p = span (not ∘ p)
 intersperse : A → List A → List A
 intersperse x []       = []
 intersperse x [ y ]    = [ y ]
-intersperse x (y ∷ ys) = y ∷ x ∷ intersperse x ys 
+intersperse x (y ∷ ys) = y ∷ x ∷ intersperse x ys
 
 ------------------------------------------------------------------------
 -- Operations for reversing lists
