@@ -61,6 +61,9 @@ pattern vLam x = lam visible x
 pattern hLam x = lam hidden x
 pattern iLam x = lam instance′ x
 
+`λ : Term → Term
+`λ b = vLam (abs "_" b)
+
 unArg : Arg A → A
 unArg (arg _ x) = x
 
@@ -150,3 +153,15 @@ blockOnMeta! x = commitTC >>= λ _ → blockOnMeta x
 
 inferNormalisedType : Term → TC Type
 inferNormalisedType t = withNormalisation true (inferType t)
+
+evalTC : ∀ {a} {A : Set a} → TC A → Tactic
+evalTC {A = A} c hole = do
+  v  ← c
+  `v ← quoteTC v
+  `A ← quoteTC A
+  checkedHole ← checkType hole `A
+  unify checkedHole `v
+
+macro
+  evalT : ∀ {a} {A : Set a} → TC A → Tactic
+  evalT = evalTC
