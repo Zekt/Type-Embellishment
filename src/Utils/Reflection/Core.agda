@@ -144,6 +144,9 @@ define! a cs = do
   define (vArg f) a cs
   return f
 
+quoteTC! : A → TC Term
+quoteTC! a = quoteTC a >>= normalise
+
 newMeta : Type → TC Term
 newMeta = checkType unknown
 
