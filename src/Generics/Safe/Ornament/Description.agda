@@ -14,6 +14,9 @@ private variable
 
 module _ (I : Set ℓⁱ) {J : Set ℓʲ} (e : I → J) where
 
+  infixr 5 _∷_
+  infix  5 ∺_
+
   data RecOD : RecD J rb → Setω where
     ι : ∀ i {j} (eq : e i ≡ j) → RecOD (ι j)
     π : {E : A → RecD J rb} (OD : (a : A) → RecOD (E a)) → RecOD (π A E)
@@ -29,15 +32,12 @@ module _ (I : Set ℓⁱ) {J : Set ℓʲ} (e : I → J) where
         (OD : RecOD S) (OD' : ConOD E cb') → ConOD (ρ S E) (inr rb ∷ cb')
 
   data ConODs : ConDs J cbs → ConBs → Setω where
-    ∅   : ConODs ∅ []
-    _◁_ : {E : ConD J cb} {Es : ConDs J cbs}
-          (OD : ConOD E cb') (ODs : ConODs (E ◁ Es) cbs')
-        → ConODs (E ◁ Es) (cb' ∷ cbs')
-    ◂_  : {E : ConD J cb} {Es : ConDs J cbs}
-          (ODs : ConODs Es cbs') → ConODs (E ◁ Es) cbs'
-
-  infixr 4 _◁_
-  infix  4 ◂_
+    []  : ConODs [] []
+    _∷_ : {E : ConD J cb} {Es : ConDs J cbs}
+          (OD : ConOD E cb') (ODs : ConODs (E ∷ Es) cbs')
+        → ConODs (E ∷ Es) (cb' ∷ cbs')
+    ∺_  : {E : ConD J cb} {Es : ConDs J cbs}
+          (ODs : ConODs Es cbs') → ConODs (E ∷ Es) cbs'
 
 record DataOD (E : DataD) : Setω where
   field
@@ -91,14 +91,14 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
   ⌈ ∇ a  OD  ⌉ᶜ = ∇ a ⌈ OD ⌉ᶜ
 
   ⌊_⌋ᶜˢ : {Es : ConDs J cbs} → ConODs I e Es cbs' → ConDs I cbs'
-  ⌊ ∅        ⌋ᶜˢ = ∅
-  ⌊ OD ◁ ODs ⌋ᶜˢ = ⌊ OD ⌋ᶜ ◁ ⌊ ODs ⌋ᶜˢ
-  ⌊    ◂ ODs ⌋ᶜˢ = ⌊ ODs ⌋ᶜˢ
+  ⌊ []       ⌋ᶜˢ = []
+  ⌊ OD ∷ ODs ⌋ᶜˢ = ⌊ OD ⌋ᶜ ∷ ⌊ ODs ⌋ᶜˢ
+  ⌊    ∺ ODs ⌋ᶜˢ = ⌊ ODs ⌋ᶜˢ
 
   ⌈_⌉ᶜˢ : {Es : ConDs J cbs} (ODs : ConODs I e Es cbs') → ConOs e ⌊ ODs ⌋ᶜˢ Es
-  ⌈ ∅        ⌉ᶜˢ = ∅
-  ⌈ OD ◁ ODs ⌉ᶜˢ = ⌈ OD ⌉ᶜ ◁ ⌈ ODs ⌉ᶜˢ
-  ⌈    ◂ ODs ⌉ᶜˢ =         ◂ ⌈ ODs ⌉ᶜˢ
+  ⌈ []       ⌉ᶜˢ = []
+  ⌈ OD ∷ ODs ⌉ᶜˢ = ⌈ OD ⌉ᶜ ∷ ⌈ ODs ⌉ᶜˢ
+  ⌈    ∺ ODs ⌉ᶜˢ =         ∺ ⌈ ODs ⌉ᶜˢ
 
 ⌊_⌋ᵈ : ∀ {E} → DataOD E → DataD
 ⌊ OD ⌋ᵈ = record
@@ -125,3 +125,22 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 ⌈ OD ⌉ᵘᵖᵈ = record
   { levels = UPDataOD.levels OD
   ; Orn    = λ ℓs → ⌈ UPDataOD.OrnDesc OD ℓs ⌉ᵈ }
+
+module ODFunctor {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J}
+  {K : Set ℓᵏ} (f : I → K) (e' : K → J) (coh : ∀ i → e' (f i) ≡ e i) where
+
+  imapʳ : {D : RecD J rb} → RecOD I e D → RecOD K e' D
+  imapʳ (ι i eq) = ι (f i) (trans (coh i) eq)
+  imapʳ (π OD  ) = π λ a → imapʳ (OD a)
+
+  imapᶜ : {D : ConD J cb} → ConOD I e D cb' → ConOD K e' D cb'
+  imapᶜ (ι i eq  ) = ι (f i) (trans (coh i) eq)
+  imapᶜ (σ    OD ) = σ λ a → imapᶜ (OD a)
+  imapᶜ (Δ A  OD ) = Δ A λ a → imapᶜ (OD a)
+  imapᶜ (∇ a  OD ) = ∇ a (imapᶜ OD)
+  imapᶜ (ρ OD OD') = ρ (imapʳ OD) (imapᶜ OD')
+
+  imapᶜˢ : {D : ConDs J cbs} → ConODs I e D cbs' → ConODs K e' D cbs'
+  imapᶜˢ []         = []
+  imapᶜˢ (OD ∷ ODs) = imapᶜ OD ∷ imapᶜˢ ODs
+  imapᶜˢ (   ∺ ODs) =          ∺ imapᶜˢ ODs

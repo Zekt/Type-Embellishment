@@ -7,6 +7,7 @@ open import Prelude.List as List
 open import Generics.Safe.Description
 open import Generics.Safe.Algebra
 open import Generics.Safe.Ornament.Description
+open Generics.Safe.Ornament.Description.ODFunctor
 
 private variable
   rb : RecB
@@ -32,9 +33,9 @@ algODᶜ (ρ D E) X f = Δ (⟦ D ⟧ʳ X) λ xs →
 
 algODᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) (X : I → Set ℓ)
         → Algᶜˢ D X → ConODs (Σ I X) fst D (List.map (algConB ℓ) cbs)
-algODᶜˢ ∅        X f = ∅
-algODᶜˢ (D ◁ Ds) X f = algODᶜ  D  X (λ xs → f (inl xs))
-                   ◁ ◂ algODᶜˢ Ds X (λ xs → f (inr xs))
+algODᶜˢ []       X f = []
+algODᶜˢ (D ∷ Ds) X f = algODᶜ  D  X (λ xs → f (inl xs))
+                   ∷ ∺ algODᶜˢ Ds X (λ xs → f (inr xs))
 
 algODᵈ : (D : DataD) (X : Carrierᵈ D ℓ) → Algᵈ D X → DataOD D
 algODᵈ {ℓ} D X f = record
@@ -43,9 +44,10 @@ algODᵈ {ℓ} D X f = record
                                 (DataD.level-pre-fixed-point D)
   ; Param = DataD.Param D
   ; param = id
-  ; Index = λ p → DataD.Index D p ▷ X p
-  ; index = λ _ → fst
-  ; OrnDesc = λ p → algODᶜˢ (DataD.Desc D p) (X p) f
+  ; Index = λ p → snoc (DataD.Index D p) (X p)
+  ; index = λ _ → fst ∘ snoc-proj
+  ; OrnDesc = λ p → imapᶜˢ snoc-inj (fst ∘ snoc-proj) (λ p → cong fst (snoc-proj-inj p))
+                      (algODᶜˢ (DataD.Desc D p) (X p) f)
   }
   where
     algConB-lemma₀ : (g : ConB → Level) → (∀ cb → g (algConB ℓ cb) ≡ g cb) →
@@ -68,8 +70,7 @@ algODᵈ {ℓ} D X f = record
     algConB-lemma₁ (inl ℓ' ∷ cb) = algConB-lemma₁ cb
     algConB-lemma₁ (inr rb ∷ cb) = cong (max-ℓ rb ⊔_) (algConB-lemma₁ cb)
 
-    algConB-lemma₂ : ∀ cb → max-σ (algConB ℓ cb)
-                          ≡ max-π cb ⊔ max-σ cb ⊔ hasRec? ℓ cb
+    algConB-lemma₂ : ∀ cb → max-σ (algConB ℓ cb) ≡ max-π cb ⊔ max-σ cb ⊔ hasRec? ℓ cb
     algConB-lemma₂ []            = refl
     algConB-lemma₂ (inl ℓ' ∷ cb) = cong (ℓ' ⊔_) (algConB-lemma₂ cb)
     algConB-lemma₂ (inr rb ∷ cb) = cong (ℓ ⊔ max-ℓ rb ⊔_) (algConB-lemma₂ cb)

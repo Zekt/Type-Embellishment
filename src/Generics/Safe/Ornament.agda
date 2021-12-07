@@ -13,6 +13,9 @@ private variable
 
 module _ {I : Set ℓⁱ} {J : Set ℓʲ} (e : I → J) where
 
+  infixr 5 _∷_
+  infix  5 ∺_
+
   data RecO : RecD I rb → RecD J rb' → Setω where
     ι : ∀ {i j} (eq : e i ≡ j) → RecO (ι i) (ι j)
     π : {D : A → RecD I rb} {E : A → RecD J rb}
@@ -30,15 +33,12 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} (e : I → J) where
         (O : RecO R S) (O' : ConO D E) → ConO (ρ R D) (ρ S E)
 
   data ConOs : ConDs I cbs → ConDs J cbs' → Setω where
-    ∅   : ConOs ∅ ∅
-    _◁_ : {D : ConD I cb} {E : ConD J cb'}
+    []  : ConOs [] []
+    _∷_ : {D : ConD I cb} {E : ConD J cb'}
           {Ds : ConDs I cbs} {Es : ConDs J cbs'}
-          (O : ConO D E) (Os : ConOs Ds (E ◁ Es)) → ConOs (D ◁ Ds) (E ◁ Es)
-    ◂_  : {E : ConD J cb} {Ds : ConDs I cbs} {Es : ConDs J cbs'}
-                         (Os : ConOs Ds      Es ) → ConOs      Ds  (E ◁ Es)
-
-  infixr 4 _◁_
-  infix  4 ◂_
+          (O : ConO D E) (Os : ConOs Ds (E ∷ Es)) → ConOs (D ∷ Ds) (E ∷ Es)
+    ∺_  : {E : ConD J cb} {Ds : ConDs I cbs} {Es : ConDs J cbs'}
+                         (Os : ConOs Ds      Es ) → ConOs      Ds  (E ∷ Es)
 
 module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 
@@ -57,9 +57,9 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 
   eraseᶜˢ : {Ds : ConDs I cbs} {Es : ConDs J cbs'} (Os : ConOs e Ds Es)
             {X : J → Set ℓˣ} {i : I} → ⟦ Ds ⟧ᶜˢ (λ i' → X (e i')) i → ⟦ Es ⟧ᶜˢ X (e i)
-  eraseᶜˢ (O ◁ Os) (inl xs) = inl (eraseᶜ  O  xs)
-  eraseᶜˢ (O ◁ Os) (inr xs) =      eraseᶜˢ Os xs
-  eraseᶜˢ (  ◂ Os)      xs  = inr (eraseᶜˢ Os xs)
+  eraseᶜˢ (O ∷ Os) (inl xs) = inl (eraseᶜ  O  xs)
+  eraseᶜˢ (O ∷ Os) (inr xs) =      eraseᶜˢ Os xs
+  eraseᶜˢ (  ∺ Os)      xs  = inr (eraseᶜˢ Os xs)
 
 record DataO (D E : DataD) : Setω where
   field

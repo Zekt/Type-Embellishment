@@ -10,16 +10,34 @@ data Tel : Level → Set where
   []  : Tel lzero
   _∷_ : (A : Set ℓ) (T : A → Tel ℓ') → Tel (ℓ ⊔ ℓ')
 
-⟦_⟧ᵗ : Tel ℓ → Set ℓ
-⟦ []    ⟧ᵗ = ⊤
-⟦ A ∷ T ⟧ᵗ = Σ A λ a → ⟦ T a ⟧ᵗ
-
 -- de Bruijn's notation
 
 ∷-syntax : (A : Set ℓ) (T : A → Tel ℓ') → Tel (ℓ ⊔ ℓ')
 ∷-syntax = _∷_
 
 syntax ∷-syntax A (λ x → T) = [ x ∶ A ] T
+
+⟦_⟧ᵗ : Tel ℓ → Set ℓ
+⟦ []    ⟧ᵗ = ⊤
+⟦ A ∷ T ⟧ᵗ = Σ A λ a → ⟦ T a ⟧ᵗ
+
+snoc : ∀ {ℓ ℓ'} → (T : Tel ℓ) → (⟦ T ⟧ᵗ → Set ℓ') → Tel (ℓ ⊔ ℓ')
+snoc []      B = B tt ∷ λ _ → []
+snoc (A ∷ T) B = A ∷ λ a → snoc (T a) λ t → B (a , t)
+
+snoc-inj : ∀ {ℓ ℓ'} {T : Tel ℓ} {A : ⟦ T ⟧ᵗ → Set ℓ'} → Σ ⟦ T ⟧ᵗ A → ⟦ snoc T A ⟧ᵗ
+snoc-inj {T = []   } (_       , a) = a , tt
+snoc-inj {T = B ∷ T} ((b , t) , a) = b , snoc-inj {T = T b} (t , a)
+
+snoc-proj : ∀ {ℓ ℓ'} {T : Tel ℓ} {A : ⟦ T ⟧ᵗ → Set ℓ'} → ⟦ snoc T A ⟧ᵗ → Σ ⟦ T ⟧ᵗ A
+snoc-proj {T = []   } (a , _) = tt , a
+snoc-proj {T = B ∷ T} (b , t) = let (t' , a) = snoc-proj {T = T b} t in ((b , t') , a)
+
+snoc-proj-inj : ∀ {ℓ ℓ'} {T : Tel ℓ} {A : ⟦ T ⟧ᵗ → Set ℓ'}
+                (p : Σ ⟦ T ⟧ᵗ A) → snoc-proj (snoc-inj p) ≡ p
+snoc-proj-inj {T = []   } (_       , a) = refl
+snoc-proj-inj {T = B ∷ T} ((b , t) , a) = cong (λ p → let (t , a) = p in (b , t) , a)
+                                               (snoc-proj-inj {T = T b} (t , a))
 
 RecB : Set
 RecB = List Level
@@ -192,3 +210,18 @@ fmapᵘᵖᵈ : (D : UPDataD) (ℓs : UPDataD.Levels D) → let Dᵐ = UPDataD.D
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵘᵖᵈ ℓs p X i → ⟦ D ⟧ᵘᵖᵈ ℓs p Y i
 fmapᵘᵖᵈ D ℓs = fmapᵈ (UPDataD.Desc D ℓs)
+
+module DFunctor {I : Set ℓⁱ} {J : Set ℓʲ} (f : I → J) where
+
+  imapʳ : RecD I rb → RecD J rb
+  imapʳ (ι i  ) = ι (f i)
+  imapʳ (π A D) = π A λ a → imapʳ (D a)
+
+  imapᶜ : ConD I cb → ConD J cb
+  imapᶜ (ι i  ) = ι (f i)
+  imapᶜ (σ A D) = σ A λ a → imapᶜ (D a)
+  imapᶜ (ρ D E) = ρ (imapʳ D) (imapᶜ E)
+
+  imapᶜˢ : ConDs I cbs → ConDs J cbs
+  imapᶜˢ []       = []
+  imapᶜˢ (D ∷ Ds) = imapᶜ D ∷ imapᶜˢ Ds
