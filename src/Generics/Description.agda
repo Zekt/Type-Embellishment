@@ -1,52 +1,25 @@
 module Generics.Description where
 
-open import Prelude hiding (curry)
+open import Prelude
 open import Prelude.List as List
 
-lcond : ℕ → Level → Level
-lcond  zero   _ = lzero
-lcond (suc n) ℓ = ℓ ⊔ lcond n ℓ
+infixr 5 _∷_
 
-lconds : List ℕ → Level → Level
-lconds []       _ = lzero
-lconds (n ∷ ns) ℓ = lcond n ℓ ⊔ lconds ns ℓ
+{-# NO_UNIVERSE_CHECK #-}
+data Tel : Level → Set where
+  []  : Tel lzero
+  _∷_ : (A : Set ℓ) (T : A → Tel ℓ') → Tel (ℓ ⊔ ℓ')
 
-lcond-preserves-⊔ : (n : ℕ) (ℓ ℓ' : Level) → lcond n (ℓ ⊔ ℓ') ≡ lcond n ℓ ⊔ lcond n ℓ'
-lcond-preserves-⊔  zero   ℓ ℓ' = refl
-lcond-preserves-⊔ (suc n) ℓ ℓ' = cong ((ℓ ⊔ ℓ') ⊔_) (lcond-preserves-⊔ n ℓ ℓ')
+⟦_⟧ᵗ : Tel ℓ → Set ℓ
+⟦ []    ⟧ᵗ = ⊤
+⟦ A ∷ T ⟧ᵗ = Σ A λ a → ⟦ T a ⟧ᵗ
 
-lcond-upper-bound : (n : ℕ) (ℓ : Level) → lcond n ℓ ⊔ ℓ ≡ ℓ
-lcond-upper-bound  zero   ℓ = refl
-lcond-upper-bound (suc n) ℓ = lcond-upper-bound n ℓ
+-- de Bruijn's notation
 
-lconds-preserves-⊔ : (ns : List ℕ) (ℓ ℓ' : Level)
-                   → lconds ns (ℓ ⊔ ℓ') ≡ lconds ns ℓ ⊔ lconds ns ℓ'
-lconds-preserves-⊔ []       ℓ ℓ' = refl
-lconds-preserves-⊔ (n ∷ ns) ℓ ℓ' = cong₂ _⊔_ (lcond-preserves-⊔ n  ℓ ℓ')
-                                            (lconds-preserves-⊔ ns ℓ ℓ')
+∷-syntax : (A : Set ℓ) (T : A → Tel ℓ') → Tel (ℓ ⊔ ℓ')
+∷-syntax = _∷_
 
-lconds-upper-bound : (ns : List ℕ) (ℓ : Level) → lconds ns ℓ ⊔ ℓ ≡ ℓ
-lconds-upper-bound []       ℓ = refl
-lconds-upper-bound (n ∷ ns) ℓ = cong₂ _⊔_ (lcond-upper-bound n  ℓ)
-                                         (lconds-upper-bound ns ℓ)
-
-private
-  variable
-    cρ  : ℕ
-    cρs : List ℕ
-
-mutual
-
-  {-# NO_UNIVERSE_CHECK #-}
-  data Tel : Level → Set where
-    ∅   : Tel lzero
-    _▷_ : (T : Tel ℓ) (A : ⟦ T ⟧ᵗ → Set ℓ') → Tel (ℓ ⊔ ℓ')
-
-  ⟦_⟧ᵗ : Tel ℓ → Set ℓ
-  ⟦ ∅     ⟧ᵗ = ⊤
-  ⟦ T ▷ A ⟧ᵗ = Σ ⟦ T ⟧ᵗ A
-
-infixl 4 _▷_
+syntax ∷-syntax A (λ x → T) = [ x ∶ A ] T
 
 RecB : Set
 RecB = List Level
@@ -140,10 +113,8 @@ module _ (I : Set ℓⁱ) where
 
   {-# NO_UNIVERSE_CHECK #-}
   data ConDs : ConBs → Set where
-    ∅   : ConDs []
-    _◁_ : (D : ConD cb) (Ds : ConDs cbs) → ConDs (cb ∷ cbs)
-
-  infixr 4 _◁_
+    []  : ConDs []
+    _∷_ : (D : ConD cb) (Ds : ConDs cbs) → ConDs (cb ∷ cbs)
 
 {-# NO_UNIVERSE_CHECK #-}
 record DataD : Set where
@@ -183,8 +154,8 @@ module _ {I : Set ℓⁱ} where
 
   ⟦_⟧ᶜˢ : ConDs I cbs → (I → Set ℓ) → (I → Set (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔
                                                 maxMap (hasRec? ℓ) cbs ⊔ hasCon? ℓⁱ cbs))
-  ⟦ ∅      ⟧ᶜˢ X i = ⊥
-  ⟦ D ◁ Ds ⟧ᶜˢ X i = ⟦ D ⟧ᶜ X i ⊎ ⟦ Ds ⟧ᶜˢ X i
+  ⟦ []     ⟧ᶜˢ X i = ⊥
+  ⟦ D ∷ Ds ⟧ᶜˢ X i = ⟦ D ⟧ᶜ X i ⊎ ⟦ Ds ⟧ᶜˢ X i
 
 ⟦_⟧ᵈ : (D : DataD) (p : ⟦ DataD.Param D ⟧ᵗ)
      → let I = ⟦ DataD.Index D p ⟧ᵗ in (I → Set ℓ) → (I → Set (DataD.flevel D ℓ))
@@ -208,8 +179,8 @@ fmapᶜ (ρ D E) f (x , xs) = fmapʳ D f x , fmapᶜ E f xs
 
 fmapᶜˢ : {I : Set ℓ} (Ds : ConDs I cbs) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
        → ({i : I} → X i → Y i) → {i : I} → ⟦ Ds ⟧ᶜˢ X i → ⟦ Ds ⟧ᶜˢ Y i
-fmapᶜˢ (D ◁ Ds) f (inl xs) = inl (fmapᶜ  D  f xs)
-fmapᶜˢ (D ◁ Ds) f (inr xs) = inr (fmapᶜˢ Ds f xs)
+fmapᶜˢ (D ∷ Ds) f (inl xs) = inl (fmapᶜ  D  f xs)
+fmapᶜˢ (D ∷ Ds) f (inr xs) = inr (fmapᶜˢ Ds f xs)
 
 fmapᵈ : (D : DataD) (p : ⟦ DataD.Param D ⟧ᵗ) → let I = ⟦ DataD.Index D p ⟧ᵗ in
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
@@ -221,35 +192,3 @@ fmapᵘᵖᵈ : (D : UPDataD) (ℓs : UPDataD.Levels D) → let Dᵐ = UPDataD.D
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵘᵖᵈ ℓs p X i → ⟦ D ⟧ᵘᵖᵈ ℓs p Y i
 fmapᵘᵖᵈ D ℓs = fmapᵈ (UPDataD.Desc D ℓs)
-
-{-# NO_UNIVERSE_CHECK #-}
-data Tel' : Level → Set where
-  ∅   : Tel' lzero
-  _◁_ : ∀ {ℓ ℓ'} (A : Set ℓ) (T : A → Tel' ℓ') → Tel' (ℓ ⊔ ℓ')
-
-⟦_⟧ᵗ' : ∀ {ℓ} → Tel' ℓ → Set ℓ
-⟦ ∅     ⟧ᵗ' = ⊤
-⟦ A ◁ T ⟧ᵗ' = Σ A λ a → ⟦ T a ⟧ᵗ'
-
--- de Bruijn's notation 
-
-◁-syntax : (A : Set ℓ) (T : A → Tel' ℓ') → Tel' (ℓ ⊔ ℓ')
-◁-syntax = _◁_
-
-syntax ◁-syntax A (λ x → T) = [ x ∶ A ] T
-
-append' : (T : Tel' ℓ) → (⟦ T ⟧ᵗ' → Tel' ℓ') → Tel' (ℓ ⊔ ℓ')
-append' ∅       T' = T' tt
-append' (A ◁ T) T' = A ◁ λ a → append' (T a) λ t → T' (a , t)
-
-snoc' : (T : Tel' ℓ) → (⟦ T ⟧ᵗ' → Set ℓ') → Tel' (ℓ ⊔ ℓ')
-snoc' ∅       B = B tt ◁ λ _ → ∅
-snoc' (A ◁ T) B = A ◁ λ a → snoc' (T a) λ t → B (a , t)
-
-Curried : (T : Tel' ℓ) → (⟦ T ⟧ᵗ' → Set ℓ') → Set (ℓ ⊔ ℓ')
-Curried ∅ X = X tt
-Curried (A ◁ T) X = (a : A) → Curried (T a) λ t → X (a , t)
-
-curry : (T : Tel' ℓ) (X : ⟦ T ⟧ᵗ' → Set ℓ') → ((t : ⟦ T ⟧ᵗ') → X t) → Curried T X
-curry ∅       X f = f tt
-curry (A ◁ T) X f = λ a → curry (T a) (λ t → X (a , t)) (λ t → f (a , t))
