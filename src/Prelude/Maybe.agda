@@ -10,6 +10,7 @@ open import Agda.Builtin.Bool
 open import Prelude.Function
 open import Prelude.Functor
 open import Prelude.Eq
+open import Prelude.Relation.PropositionalEquality
 
 private variable
   A B C : Set _
@@ -22,6 +23,14 @@ instance
   fmap ⦃ FunctorMaybe ⦄ f (just x) = just (f x)
   fmap ⦃ FunctorMaybe ⦄ f nothing  = nothing
 
+instance
+  FunctorLawMaybe : FunctorLaw Maybe
+  FunctorLawMaybe = record
+    { fmap-cong = λ { f g eq (just x) → cong just $ eq x ; f g eq nothing → refl }
+    ; fmap-id   = λ { (just x) → refl ; nothing → refl }
+    ; fmap-comp = λ { f g (just x) → refl ; f g nothing → refl} 
+    }
+    
 -- A dependent eliminator.
 
 maybe : ∀ {a b} {A : Set a} {B : Maybe A → Set b} →
