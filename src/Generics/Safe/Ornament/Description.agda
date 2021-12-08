@@ -14,6 +14,9 @@ private variable
 
 module _ (I : Set ℓⁱ) {J : Set ℓʲ} (e : I → J) where
 
+  infixr 5 _∷_
+  infix  5 ∺_
+
   data RecOD : RecD J rb → Setω where
     ι : ∀ i {j} (eq : e i ≡ j) → RecOD (ι j)
     π : {E : A → RecD J rb} (OD : (a : A) → RecOD (E a)) → RecOD (π A E)
@@ -29,17 +32,14 @@ module _ (I : Set ℓⁱ) {J : Set ℓʲ} (e : I → J) where
         (OD : RecOD S) (OD' : ConOD E cb') → ConOD (ρ S E) (inr rb ∷ cb')
 
   data ConODs : ConDs J cbs → ConBs → Setω where
-    ∅   : ConODs ∅ []
-    _◁_ : {E : ConD J cb} {Es : ConDs J cbs}
-          (OD : ConOD E cb') (ODs : ConODs (E ◁ Es) cbs')
-        → ConODs (E ◁ Es) (cb' ∷ cbs')
-    ◂_  : {E : ConD J cb} {Es : ConDs J cbs}
-          (ODs : ConODs Es cbs') → ConODs (E ◁ Es) cbs'
+    []  : ConODs [] []
+    _∷_ : {E : ConD J cb} {Es : ConDs J cbs}
+          (OD : ConOD E cb') (ODs : ConODs (E ∷ Es) cbs')
+        → ConODs (E ∷ Es) (cb' ∷ cbs')
+    ∺_  : {E : ConD J cb} {Es : ConDs J cbs}
+          (ODs : ConODs Es cbs') → ConODs (E ∷ Es) cbs'
 
-  infixr 4 _◁_
-  infix  4 ◂_
-
-record DataOD (E : DataD) : Setω where
+record PDataOD (E : PDataD) : Setω where
   field
     {plevel} : Level
     {ilevel} : Level
@@ -48,23 +48,23 @@ record DataOD (E : DataD) : Setω where
   flevel ℓ = maxMap max-π struct ⊔ maxMap max-σ struct ⊔
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
-    level : Level
+    level  : Level
     level-pre-fixed-point : flevel level ⊔ level ≡ level
-    Param : Tel plevel
-    param : ⟦ Param ⟧ᵗ → ⟦ DataD.Param E ⟧ᵗ
-    Index : ⟦ Param ⟧ᵗ → Tel ilevel
-    index : (p : ⟦ Param ⟧ᵗ) → ⟦ Index p ⟧ᵗ → ⟦ DataD.Index E (param p) ⟧ᵗ
-    OrnDesc : (p : ⟦ Param ⟧ᵗ)
-            → ConODs ⟦ Index p ⟧ᵗ (index p) (DataD.Desc E (param p)) struct
+    Param  : Tel plevel
+    param  : ⟦ Param ⟧ᵗ → ⟦ PDataD.Param E ⟧ᵗ
+    Index  : ⟦ Param ⟧ᵗ → Tel ilevel
+    index  : (p : ⟦ Param ⟧ᵗ) → ⟦ Index p ⟧ᵗ → ⟦ PDataD.Index E (param p) ⟧ᵗ
+    applyP : (p : ⟦ Param ⟧ᵗ)
+           → ConODs ⟦ Index p ⟧ᵗ (index p) (PDataD.applyP E (param p)) struct
 
-record UPDataOD (E : UPDataD) : Setω where
+record DataOD (E : DataD) : Setω where
   field
     #levels : ℕ
   Levels : Set
   Levels = Level ^ #levels
   field
-    levels  : Levels → UPDataD.Levels E
-    OrnDesc : (ℓs : Levels) → DataOD (UPDataD.Desc E (levels ℓs))
+    levels : Levels → DataD.Levels E
+    applyL : (ℓs : Levels) → PDataOD (DataD.applyL E (levels ℓs))
 
 module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 
@@ -91,37 +91,56 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
   ⌈ ∇ a  OD  ⌉ᶜ = ∇ a ⌈ OD ⌉ᶜ
 
   ⌊_⌋ᶜˢ : {Es : ConDs J cbs} → ConODs I e Es cbs' → ConDs I cbs'
-  ⌊ ∅        ⌋ᶜˢ = ∅
-  ⌊ OD ◁ ODs ⌋ᶜˢ = ⌊ OD ⌋ᶜ ◁ ⌊ ODs ⌋ᶜˢ
-  ⌊    ◂ ODs ⌋ᶜˢ = ⌊ ODs ⌋ᶜˢ
+  ⌊ []       ⌋ᶜˢ = []
+  ⌊ OD ∷ ODs ⌋ᶜˢ = ⌊ OD ⌋ᶜ ∷ ⌊ ODs ⌋ᶜˢ
+  ⌊    ∺ ODs ⌋ᶜˢ = ⌊ ODs ⌋ᶜˢ
 
   ⌈_⌉ᶜˢ : {Es : ConDs J cbs} (ODs : ConODs I e Es cbs') → ConOs e ⌊ ODs ⌋ᶜˢ Es
-  ⌈ ∅        ⌉ᶜˢ = ∅
-  ⌈ OD ◁ ODs ⌉ᶜˢ = ⌈ OD ⌉ᶜ ◁ ⌈ ODs ⌉ᶜˢ
-  ⌈    ◂ ODs ⌉ᶜˢ =         ◂ ⌈ ODs ⌉ᶜˢ
+  ⌈ []       ⌉ᶜˢ = []
+  ⌈ OD ∷ ODs ⌉ᶜˢ = ⌈ OD ⌉ᶜ ∷ ⌈ ODs ⌉ᶜˢ
+  ⌈    ∺ ODs ⌉ᶜˢ =         ∺ ⌈ ODs ⌉ᶜˢ
+
+⌊_⌋ᵖᵈ : ∀ {E} → PDataOD E → PDataD
+⌊ OD ⌋ᵖᵈ = record
+  { level = PDataOD.level OD
+  ; level-pre-fixed-point = PDataOD.level-pre-fixed-point OD
+  ; Param = PDataOD.Param OD
+  ; Index = PDataOD.Index OD
+  ; applyP = λ p → ⌊ PDataOD.applyP OD p ⌋ᶜˢ
+  }
+
+⌈_⌉ᵖᵈ : ∀ {E} (OD : PDataOD E) → PDataO ⌊ OD ⌋ᵖᵈ E
+⌈ OD ⌉ᵖᵈ = record
+  { param = PDataOD.param OD
+  ; index = PDataOD.index OD
+  ; applyP = λ p → ⌈ PDataOD.applyP OD p ⌉ᶜˢ
+  }
 
 ⌊_⌋ᵈ : ∀ {E} → DataOD E → DataD
 ⌊ OD ⌋ᵈ = record
-  { level = DataOD.level OD
-  ; level-pre-fixed-point = DataOD.level-pre-fixed-point OD
-  ; Param = DataOD.Param OD
-  ; Index = DataOD.Index OD
-  ; Desc  = λ p → ⌊ DataOD.OrnDesc OD p ⌋ᶜˢ
-  }
+  { #levels = DataOD.#levels OD
+  ; applyL = λ ℓs → ⌊ DataOD.applyL OD ℓs ⌋ᵖᵈ }
 
 ⌈_⌉ᵈ : ∀ {E} (OD : DataOD E) → DataO ⌊ OD ⌋ᵈ E
 ⌈ OD ⌉ᵈ = record
-  { param = DataOD.param OD
-  ; index = DataOD.index OD
-  ; Orn   = λ p → ⌈ DataOD.OrnDesc OD p ⌉ᶜˢ
-  }
+  { levels = DataOD.levels OD
+  ; applyL = λ ℓs → ⌈ DataOD.applyL OD ℓs ⌉ᵖᵈ }
 
-⌊_⌋ᵘᵖᵈ : ∀ {E} → UPDataOD E → UPDataD
-⌊ OD ⌋ᵘᵖᵈ = record
-  { #levels = UPDataOD.#levels OD
-  ; Desc    = λ ℓs → ⌊ UPDataOD.OrnDesc OD ℓs ⌋ᵈ }
+module ODFunctor {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J}
+  {K : Set ℓᵏ} (f : I → K) (e' : K → J) (coh : ∀ i → e' (f i) ≡ e i) where
 
-⌈_⌉ᵘᵖᵈ : ∀ {E} (OD : UPDataOD E) → UPDataO ⌊ OD ⌋ᵘᵖᵈ E
-⌈ OD ⌉ᵘᵖᵈ = record
-  { levels = UPDataOD.levels OD
-  ; Orn    = λ ℓs → ⌈ UPDataOD.OrnDesc OD ℓs ⌉ᵈ }
+  imapʳ : {D : RecD J rb} → RecOD I e D → RecOD K e' D
+  imapʳ (ι i eq) = ι (f i) (trans (coh i) eq)
+  imapʳ (π OD  ) = π λ a → imapʳ (OD a)
+
+  imapᶜ : {D : ConD J cb} → ConOD I e D cb' → ConOD K e' D cb'
+  imapᶜ (ι i eq  ) = ι (f i) (trans (coh i) eq)
+  imapᶜ (σ    OD ) = σ λ a → imapᶜ (OD a)
+  imapᶜ (Δ A  OD ) = Δ A λ a → imapᶜ (OD a)
+  imapᶜ (∇ a  OD ) = ∇ a (imapᶜ OD)
+  imapᶜ (ρ OD OD') = ρ (imapʳ OD) (imapᶜ OD')
+
+  imapᶜˢ : {D : ConDs J cbs} → ConODs I e D cbs' → ConODs K e' D cbs'
+  imapᶜˢ []         = []
+  imapᶜˢ (OD ∷ ODs) = imapᶜ OD ∷ imapᶜˢ ODs
+  imapᶜˢ (   ∺ ODs) =          ∺ imapᶜˢ ODs

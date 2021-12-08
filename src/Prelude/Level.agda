@@ -12,7 +12,7 @@ open import Agda.Builtin.Unit
 open import Agda.Builtin.Equality
 
 variable
-  ℓ ℓ' ℓ′ ℓⁱ ℓʲ ℓˣ ℓʸ : Level
+  ℓ ℓ' ℓ′ ℓⁱ ℓʲ ℓᵏ ℓˣ ℓʸ : Level
 
 -- Lifting.
 

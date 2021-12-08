@@ -7,7 +7,7 @@ open import Generics.Safe.Description
 
 private
   variable
-    cb : ConB
+    cb  : ConB
     cbs : ConBs
 
 Algᶜ : {I : Set ℓⁱ} (D : ConD I cb) → (I → Set ℓ)
@@ -19,15 +19,15 @@ Algᶜˢ : {I : Set ℓⁱ} (Ds : ConDs I cbs) → (I → Set ℓ)
              hasCon? ℓⁱ cbs ⊔ maxMap (hasRec? ℓ) cbs)
 Algᶜˢ D X = ∀ {i} → ⟦ D ⟧ᶜˢ X i → X i
 
-Carrierᵈ : (D : DataD) (ℓ : Level) → Set (DataD.plevel D ⊔ DataD.ilevel D ⊔ lsuc ℓ)
-Carrierᵈ D ℓ = (p : ⟦ DataD.Param D ⟧ᵗ) → ⟦ DataD.Index D p ⟧ᵗ → Set ℓ
+Carrierᵖᵈ : (D : PDataD) (ℓ : Level) → Set (PDataD.plevel D ⊔ PDataD.ilevel D ⊔ lsuc ℓ)
+Carrierᵖᵈ D ℓ = (p : ⟦ PDataD.Param D ⟧ᵗ) → ⟦ PDataD.Index D p ⟧ᵗ → Set ℓ
 
-Algᵈ : (D : DataD) → Carrierᵈ D ℓ
-     → Set (ℓ ⊔ DataD.plevel D ⊔ DataD.ilevel D ⊔ DataD.flevel D ℓ)
-Algᵈ D X = ∀ {p i} → ⟦ D ⟧ᵈ p (X p) i → X p i
+Algᵖᵈ : (D : PDataD) → Carrierᵖᵈ D ℓ
+      → Set (ℓ ⊔ PDataD.plevel D ⊔ PDataD.ilevel D ⊔ PDataD.flevel D ℓ)
+Algᵖᵈ D X = ∀ {p i} → ⟦ D ⟧ᵖᵈ p (X p) i → X p i
 
-Carrierᵘᵖᵈ : (D : UPDataD) → (UPDataD.Levels D → Level) → Setω
-Carrierᵘᵖᵈ D ℓf = (ℓs : UPDataD.Levels D) → Carrierᵈ (UPDataD.Desc D ℓs) (ℓf ℓs)
+Carrierᵈ : (D : DataD) → (DataD.Levels D → Level) → Setω
+Carrierᵈ D ℓf = (ℓs : DataD.Levels D) → Carrierᵖᵈ (DataD.applyL D ℓs) (ℓf ℓs)
 
-Algᵘᵖᵈ : (D : UPDataD) {ℓf : UPDataD.Levels D → Level} → Carrierᵘᵖᵈ D ℓf → Setω
-Algᵘᵖᵈ D {ℓf} X = ∀ {ℓs p i} → ⟦ D ⟧ᵘᵖᵈ ℓs p (X ℓs p) i → X ℓs p i
+Algᵈ : (D : DataD) {ℓf : DataD.Levels D → Level} → Carrierᵈ D ℓf → Setω
+Algᵈ D {ℓf} X = ∀ {ℓs p i} → ⟦ D ⟧ᵈ ℓs p (X ℓs p) i → X ℓs p i

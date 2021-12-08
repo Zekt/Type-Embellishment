@@ -5,17 +5,40 @@ module Generics.Safe.Description where
 open import Prelude
 open import Prelude.List as List
 
-mutual
+infixr 5 _∷_
 
-  data Tel : Level → Setω where
-    ∅   : Tel lzero
-    _▷_ : (T : Tel ℓ) (A : ⟦ T ⟧ᵗ → Set ℓ') → Tel (ℓ ⊔ ℓ')
+data Tel : Level → Setω where
+  []  : Tel lzero
+  _∷_ : (A : Set ℓ) (T : A → Tel ℓ') → Tel (ℓ ⊔ ℓ')
 
-  ⟦_⟧ᵗ : Tel ℓ → Set ℓ
-  ⟦ ∅     ⟧ᵗ = ⊤
-  ⟦ T ▷ A ⟧ᵗ = Σ ⟦ T ⟧ᵗ A
+-- de Bruijn's notation
 
-infixl 4 _▷_
+∷-syntax : (A : Set ℓ) (T : A → Tel ℓ') → Tel (ℓ ⊔ ℓ')
+∷-syntax = _∷_
+
+syntax ∷-syntax A (λ x → T) = [ x ∶ A ] T
+
+⟦_⟧ᵗ : Tel ℓ → Set ℓ
+⟦ []    ⟧ᵗ = ⊤
+⟦ A ∷ T ⟧ᵗ = Σ A λ a → ⟦ T a ⟧ᵗ
+
+snoc : ∀ {ℓ ℓ'} → (T : Tel ℓ) → (⟦ T ⟧ᵗ → Set ℓ') → Tel (ℓ ⊔ ℓ')
+snoc []      B = B tt ∷ λ _ → []
+snoc (A ∷ T) B = A ∷ λ a → snoc (T a) λ t → B (a , t)
+
+snoc-inj : ∀ {ℓ ℓ'} {T : Tel ℓ} {A : ⟦ T ⟧ᵗ → Set ℓ'} → Σ ⟦ T ⟧ᵗ A → ⟦ snoc T A ⟧ᵗ
+snoc-inj {T = []   } (_       , a) = a , tt
+snoc-inj {T = B ∷ T} ((b , t) , a) = b , snoc-inj {T = T b} (t , a)
+
+snoc-proj : ∀ {ℓ ℓ'} {T : Tel ℓ} {A : ⟦ T ⟧ᵗ → Set ℓ'} → ⟦ snoc T A ⟧ᵗ → Σ ⟦ T ⟧ᵗ A
+snoc-proj {T = []   } (a , _) = tt , a
+snoc-proj {T = B ∷ T} (b , t) = let (t' , a) = snoc-proj {T = T b} t in ((b , t') , a)
+
+snoc-proj-inj : ∀ {ℓ ℓ'} {T : Tel ℓ} {A : ⟦ T ⟧ᵗ → Set ℓ'}
+                (p : Σ ⟦ T ⟧ᵗ A) → snoc-proj (snoc-inj p) ≡ p
+snoc-proj-inj {T = []   } (_       , a) = refl
+snoc-proj-inj {T = B ∷ T} ((b , t) , a) = cong (λ p → let (t , a) = p in (b , t) , a)
+                                               (snoc-proj-inj {T = T b} (t , a))
 
 RecB : Set
 RecB = List Level
@@ -106,12 +129,10 @@ module _ (I : Set ℓⁱ) where
     ρ : (D : RecD rb) (E : ConD cb)   → ConD (inr rb ∷ cb)
 
   data ConDs : ConBs → Setω where
-    ∅   : ConDs []
-    _◁_ : (D : ConD cb) (Ds : ConDs cbs) → ConDs (cb ∷ cbs)
+    []  : ConDs []
+    _∷_ : (D : ConD cb) (Ds : ConDs cbs) → ConDs (cb ∷ cbs)
 
-  infixr 4 _◁_
-
-record DataD : Setω where
+record PDataD : Setω where
   field
     {plevel} : Level
     {ilevel} : Level
@@ -120,19 +141,19 @@ record DataD : Setω where
   flevel ℓ = maxMap max-π struct ⊔ maxMap max-σ struct ⊔
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
-    level : Level
+    level  : Level
     level-pre-fixed-point : flevel level ⊔ level ≡ level
-    Param : Tel plevel
-    Index : ⟦ Param ⟧ᵗ → Tel ilevel
-    Desc  : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ struct
+    Param  : Tel plevel
+    Index  : ⟦ Param ⟧ᵗ → Tel ilevel
+    applyP : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ struct
 
-record UPDataD : Setω where
+record DataD : Setω where
   field
     #levels : ℕ
   Levels : Set
   Levels = Level ^ #levels
   field
-    Desc : Levels → DataD
+    applyL : Levels → PDataD
 
 module _ {I : Set ℓⁱ} where
 
@@ -147,17 +168,17 @@ module _ {I : Set ℓⁱ} where
 
   ⟦_⟧ᶜˢ : ConDs I cbs → (I → Set ℓ) → (I → Set (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔
                                                 maxMap (hasRec? ℓ) cbs ⊔ hasCon? ℓⁱ cbs))
-  ⟦ ∅      ⟧ᶜˢ X i = ⊥
-  ⟦ D ◁ Ds ⟧ᶜˢ X i = ⟦ D ⟧ᶜ X i ⊎ ⟦ Ds ⟧ᶜˢ X i
+  ⟦ []     ⟧ᶜˢ X i = ⊥
+  ⟦ D ∷ Ds ⟧ᶜˢ X i = ⟦ D ⟧ᶜ X i ⊎ ⟦ Ds ⟧ᶜˢ X i
 
-⟦_⟧ᵈ : (D : DataD) (p : ⟦ DataD.Param D ⟧ᵗ)
-     → let I = ⟦ DataD.Index D p ⟧ᵗ in (I → Set ℓ) → (I → Set (DataD.flevel D ℓ))
-⟦ D ⟧ᵈ p = ⟦ DataD.Desc D p ⟧ᶜˢ
+⟦_⟧ᵖᵈ : (D : PDataD) (p : ⟦ PDataD.Param D ⟧ᵗ)
+     → let I = ⟦ PDataD.Index D p ⟧ᵗ in (I → Set ℓ) → (I → Set (PDataD.flevel D ℓ))
+⟦ D ⟧ᵖᵈ p = ⟦ PDataD.applyP D p ⟧ᶜˢ
 
-⟦_⟧ᵘᵖᵈ : (D : UPDataD) (ℓs : UPDataD.Levels D) → let Dᵐ = UPDataD.Desc D ℓs in
-         (p : ⟦ DataD.Param Dᵐ ⟧ᵗ)
-       → let I = ⟦ DataD.Index Dᵐ p ⟧ᵗ in (I → Set ℓ) → (I → Set (DataD.flevel Dᵐ ℓ))
-⟦ D ⟧ᵘᵖᵈ ℓs = ⟦ UPDataD.Desc D ℓs ⟧ᵈ
+⟦_⟧ᵈ : (D : DataD) (ℓs : DataD.Levels D) → let Dᵐ = DataD.applyL D ℓs in
+         (p : ⟦ PDataD.Param Dᵐ ⟧ᵗ)
+       → let I = ⟦ PDataD.Index Dᵐ p ⟧ᵗ in (I → Set ℓ) → (I → Set (PDataD.flevel Dᵐ ℓ))
+⟦ D ⟧ᵈ ℓs = ⟦ DataD.applyL D ℓs ⟧ᵖᵈ
 
 fmapʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → ⟦ D ⟧ʳ X → ⟦ D ⟧ʳ Y
@@ -172,16 +193,31 @@ fmapᶜ (ρ D E) f (x , xs) = fmapʳ D f x , fmapᶜ E f xs
 
 fmapᶜˢ : {I : Set ℓ} (Ds : ConDs I cbs) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
        → ({i : I} → X i → Y i) → {i : I} → ⟦ Ds ⟧ᶜˢ X i → ⟦ Ds ⟧ᶜˢ Y i
-fmapᶜˢ (D ◁ Ds) f (inl xs) = inl (fmapᶜ  D  f xs)
-fmapᶜˢ (D ◁ Ds) f (inr xs) = inr (fmapᶜˢ Ds f xs)
+fmapᶜˢ (D ∷ Ds) f (inl xs) = inl (fmapᶜ  D  f xs)
+fmapᶜˢ (D ∷ Ds) f (inr xs) = inr (fmapᶜˢ Ds f xs)
 
-fmapᵈ : (D : DataD) (p : ⟦ DataD.Param D ⟧ᵗ) → let I = ⟦ DataD.Index D p ⟧ᵗ in
+fmapᵖᵈ : (D : PDataD) (p : ⟦ PDataD.Param D ⟧ᵗ) → let I = ⟦ PDataD.Index D p ⟧ᵗ in
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
-      → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈ p X i → ⟦ D ⟧ᵈ p Y i
-fmapᵈ D p = fmapᶜˢ (DataD.Desc D p)
+      → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵖᵈ p X i → ⟦ D ⟧ᵖᵈ p Y i
+fmapᵖᵈ D p = fmapᶜˢ (PDataD.applyP D p)
 
-fmapᵘᵖᵈ : (D : UPDataD) (ℓs : UPDataD.Levels D) → let Dᵐ = UPDataD.Desc D ℓs in
-        (p : ⟦ DataD.Param Dᵐ ⟧ᵗ) → let I = ⟦ DataD.Index Dᵐ p ⟧ᵗ in
+fmapᵈ : (D : DataD) (ℓs : DataD.Levels D) → let Dᵐ = DataD.applyL D ℓs in
+        (p : ⟦ PDataD.Param Dᵐ ⟧ᵗ) → let I = ⟦ PDataD.Index Dᵐ p ⟧ᵗ in
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
-      → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵘᵖᵈ ℓs p X i → ⟦ D ⟧ᵘᵖᵈ ℓs p Y i
-fmapᵘᵖᵈ D ℓs = fmapᵈ (UPDataD.Desc D ℓs)
+      → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈ ℓs p X i → ⟦ D ⟧ᵈ ℓs p Y i
+fmapᵈ D ℓs = fmapᵖᵈ (DataD.applyL D ℓs)
+
+module DFunctor {I : Set ℓⁱ} {J : Set ℓʲ} (f : I → J) where
+
+  imapʳ : RecD I rb → RecD J rb
+  imapʳ (ι i  ) = ι (f i)
+  imapʳ (π A D) = π A λ a → imapʳ (D a)
+
+  imapᶜ : ConD I cb → ConD J cb
+  imapᶜ (ι i  ) = ι (f i)
+  imapᶜ (σ A D) = σ A λ a → imapᶜ (D a)
+  imapᶜ (ρ D E) = ρ (imapʳ D) (imapᶜ E)
+
+  imapᶜˢ : ConDs I cbs → ConDs J cbs
+  imapᶜˢ []       = []
+  imapᶜˢ (D ∷ Ds) = imapᶜ D ∷ imapᶜˢ Ds
