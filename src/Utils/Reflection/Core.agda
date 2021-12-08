@@ -66,7 +66,7 @@ pattern vLam x = lam visible x
 pattern hLam x = lam hidden x
 pattern iLam x = lam instance′ x
 
-`λ : Term → Term
+`λ_ : Term → Term
 `λ b = vLam (abs "_" b)
 
 unArg : Arg A → A
