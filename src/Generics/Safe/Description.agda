@@ -132,7 +132,7 @@ module _ (I : Set ℓⁱ) where
     []  : ConDs []
     _∷_ : (D : ConD cb) (Ds : ConDs cbs) → ConDs (cb ∷ cbs)
 
-record DataD : Setω where
+record PDataD : Setω where
   field
     {plevel} : Level
     {ilevel} : Level
@@ -141,19 +141,19 @@ record DataD : Setω where
   flevel ℓ = maxMap max-π struct ⊔ maxMap max-σ struct ⊔
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
-    level : Level
+    level  : Level
     level-pre-fixed-point : flevel level ⊔ level ≡ level
-    Param : Tel plevel
-    Index : ⟦ Param ⟧ᵗ → Tel ilevel
-    Desc  : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ struct
+    Param  : Tel plevel
+    Index  : ⟦ Param ⟧ᵗ → Tel ilevel
+    applyP : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ struct
 
-record UPDataD : Setω where
+record DataD : Setω where
   field
     #levels : ℕ
   Levels : Set
   Levels = Level ^ #levels
   field
-    Desc : Levels → DataD
+    applyL : Levels → PDataD
 
 module _ {I : Set ℓⁱ} where
 
@@ -171,14 +171,14 @@ module _ {I : Set ℓⁱ} where
   ⟦ []     ⟧ᶜˢ X i = ⊥
   ⟦ D ∷ Ds ⟧ᶜˢ X i = ⟦ D ⟧ᶜ X i ⊎ ⟦ Ds ⟧ᶜˢ X i
 
-⟦_⟧ᵈ : (D : DataD) (p : ⟦ DataD.Param D ⟧ᵗ)
-     → let I = ⟦ DataD.Index D p ⟧ᵗ in (I → Set ℓ) → (I → Set (DataD.flevel D ℓ))
-⟦ D ⟧ᵈ p = ⟦ DataD.Desc D p ⟧ᶜˢ
+⟦_⟧ᵖᵈ : (D : PDataD) (p : ⟦ PDataD.Param D ⟧ᵗ)
+     → let I = ⟦ PDataD.Index D p ⟧ᵗ in (I → Set ℓ) → (I → Set (PDataD.flevel D ℓ))
+⟦ D ⟧ᵖᵈ p = ⟦ PDataD.applyP D p ⟧ᶜˢ
 
-⟦_⟧ᵘᵖᵈ : (D : UPDataD) (ℓs : UPDataD.Levels D) → let Dᵐ = UPDataD.Desc D ℓs in
-         (p : ⟦ DataD.Param Dᵐ ⟧ᵗ)
-       → let I = ⟦ DataD.Index Dᵐ p ⟧ᵗ in (I → Set ℓ) → (I → Set (DataD.flevel Dᵐ ℓ))
-⟦ D ⟧ᵘᵖᵈ ℓs = ⟦ UPDataD.Desc D ℓs ⟧ᵈ
+⟦_⟧ᵈ : (D : DataD) (ℓs : DataD.Levels D) → let Dᵐ = DataD.applyL D ℓs in
+         (p : ⟦ PDataD.Param Dᵐ ⟧ᵗ)
+       → let I = ⟦ PDataD.Index Dᵐ p ⟧ᵗ in (I → Set ℓ) → (I → Set (PDataD.flevel Dᵐ ℓ))
+⟦ D ⟧ᵈ ℓs = ⟦ DataD.applyL D ℓs ⟧ᵖᵈ
 
 fmapʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → ⟦ D ⟧ʳ X → ⟦ D ⟧ʳ Y
@@ -196,16 +196,16 @@ fmapᶜˢ : {I : Set ℓ} (Ds : ConDs I cbs) {X : I → Set ℓˣ} {Y : I → Se
 fmapᶜˢ (D ∷ Ds) f (inl xs) = inl (fmapᶜ  D  f xs)
 fmapᶜˢ (D ∷ Ds) f (inr xs) = inr (fmapᶜˢ Ds f xs)
 
-fmapᵈ : (D : DataD) (p : ⟦ DataD.Param D ⟧ᵗ) → let I = ⟦ DataD.Index D p ⟧ᵗ in
+fmapᵖᵈ : (D : PDataD) (p : ⟦ PDataD.Param D ⟧ᵗ) → let I = ⟦ PDataD.Index D p ⟧ᵗ in
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
-      → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈ p X i → ⟦ D ⟧ᵈ p Y i
-fmapᵈ D p = fmapᶜˢ (DataD.Desc D p)
+      → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵖᵈ p X i → ⟦ D ⟧ᵖᵈ p Y i
+fmapᵖᵈ D p = fmapᶜˢ (PDataD.applyP D p)
 
-fmapᵘᵖᵈ : (D : UPDataD) (ℓs : UPDataD.Levels D) → let Dᵐ = UPDataD.Desc D ℓs in
-        (p : ⟦ DataD.Param Dᵐ ⟧ᵗ) → let I = ⟦ DataD.Index Dᵐ p ⟧ᵗ in
+fmapᵈ : (D : DataD) (ℓs : DataD.Levels D) → let Dᵐ = DataD.applyL D ℓs in
+        (p : ⟦ PDataD.Param Dᵐ ⟧ᵗ) → let I = ⟦ PDataD.Index Dᵐ p ⟧ᵗ in
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
-      → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵘᵖᵈ ℓs p X i → ⟦ D ⟧ᵘᵖᵈ ℓs p Y i
-fmapᵘᵖᵈ D ℓs = fmapᵈ (UPDataD.Desc D ℓs)
+      → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈ ℓs p X i → ⟦ D ⟧ᵈ ℓs p Y i
+fmapᵈ D ℓs = fmapᵖᵈ (DataD.applyL D ℓs)
 
 module DFunctor {I : Set ℓⁱ} {J : Set ℓʲ} (f : I → J) where
 

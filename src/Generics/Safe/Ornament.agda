@@ -61,33 +61,33 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
   eraseᶜˢ (O ∷ Os) (inr xs) =      eraseᶜˢ Os xs
   eraseᶜˢ (  ∺ Os)      xs  = inr (eraseᶜˢ Os xs)
 
+record PDataO (D E : PDataD) : Setω where
+  field
+    param  : ⟦ PDataD.Param D ⟧ᵗ → ⟦ PDataD.Param E ⟧ᵗ
+    index  : (p : ⟦ PDataD.Param D ⟧ᵗ)
+           → ⟦ PDataD.Index D p ⟧ᵗ → ⟦ PDataD.Index E (param p) ⟧ᵗ
+    applyP : (p : ⟦ PDataD.Param D ⟧ᵗ)
+           → ConOs (index p) (PDataD.applyP D p) (PDataD.applyP E (param p))
+
 record DataO (D E : DataD) : Setω where
   field
-    param : ⟦ DataD.Param D ⟧ᵗ → ⟦ DataD.Param E ⟧ᵗ
-    index : (p : ⟦ DataD.Param D ⟧ᵗ)
-          → ⟦ DataD.Index D p ⟧ᵗ → ⟦ DataD.Index E (param p) ⟧ᵗ
-    Orn   : (p : ⟦ DataD.Param D ⟧ᵗ)
-          → ConOs (index p) (DataD.Desc D p) (DataD.Desc E (param p))
+    levels : DataD.Levels D → DataD.Levels E
+    applyL : (ℓs : DataD.Levels D)
+           → PDataO (DataD.applyL D ℓs) (DataD.applyL E (levels ℓs))
 
-record UPDataO (D E : UPDataD) : Setω where
-  field
-    levels : UPDataD.Levels D → UPDataD.Levels E
-    Orn    : (ℓs : UPDataD.Levels D)
-           → DataO (UPDataD.Desc D ℓs) (UPDataD.Desc E (levels ℓs))
+eraseᵖᵈ : {D E : PDataD} (O : PDataO D E) (p : ⟦ PDataD.Param D ⟧ᵗ)
+        → let q = PDataO.param O p; index = PDataO.index O p in
+          {X : ⟦ PDataD.Index E q ⟧ᵗ → Set ℓ} {i : ⟦ PDataD.Index D p ⟧ᵗ}
+        → ⟦ D ⟧ᵖᵈ p (λ i' → X (index i')) i → ⟦ E ⟧ᵖᵈ q X (index i)
+eraseᵖᵈ O p = eraseᶜˢ (PDataO.applyP O p)
 
-eraseᵈ : {D E : DataD} (O : DataO D E) (p : ⟦ DataD.Param D ⟧ᵗ)
-       → let q = DataO.param O p; index = DataO.index O p in
-         {X : ⟦ DataD.Index E q ⟧ᵗ → Set ℓ} {i : ⟦ DataD.Index D p ⟧ᵗ}
-       → ⟦ D ⟧ᵈ p (λ i' → X (index i')) i → ⟦ E ⟧ᵈ q X (index i)
-eraseᵈ O p = eraseᶜˢ (DataO.Orn O p)
-
-eraseᵘᵖᵈ : {D E : UPDataD} (O : UPDataO D E) (ℓs : UPDataD.Levels D)
-         → let ℓs' = UPDataO.levels O ℓs
-               Dᵐ  = UPDataD.Desc D ℓs
-               Eᵐ  = UPDataD.Desc E ℓs'
-               Oᵐ  = UPDataO.Orn O ℓs in
-           (p : ⟦ DataD.Param Dᵐ ⟧ᵗ)
-         → let q = DataO.param Oᵐ p; index = DataO.index Oᵐ p in
-           {X : ⟦ DataD.Index Eᵐ q ⟧ᵗ → Set ℓ} {i : ⟦ DataD.Index Dᵐ p ⟧ᵗ}
-         → ⟦ D ⟧ᵘᵖᵈ ℓs p (λ i' → X (index i')) i → ⟦ E ⟧ᵘᵖᵈ ℓs' q X (index i)
-eraseᵘᵖᵈ O ℓs p = eraseᶜˢ (DataO.Orn (UPDataO.Orn O ℓs) p)
+eraseᵈ : {D E : DataD} (O : DataO D E) (ℓs : DataD.Levels D)
+       → let ℓs' = DataO.levels O ℓs
+             Dᵐ  = DataD.applyL D ℓs
+             Eᵐ  = DataD.applyL E ℓs'
+             Oᵐ  = DataO.applyL O ℓs in
+         (p : ⟦ PDataD.Param Dᵐ ⟧ᵗ)
+       → let q = PDataO.param Oᵐ p; index = PDataO.index Oᵐ p in
+         {X : ⟦ PDataD.Index Eᵐ q ⟧ᵗ → Set ℓ} {i : ⟦ PDataD.Index Dᵐ p ⟧ᵗ}
+       → ⟦ D ⟧ᵈ ℓs p (λ i' → X (index i')) i → ⟦ E ⟧ᵈ ℓs' q X (index i)
+eraseᵈ O ℓs p = eraseᶜˢ (PDataO.applyP (DataO.applyL O ℓs) p)

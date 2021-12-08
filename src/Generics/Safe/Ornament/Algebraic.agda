@@ -37,21 +37,21 @@ algODᶜˢ []       X f = []
 algODᶜˢ (D ∷ Ds) X f = algODᶜ  D  X (λ xs → f (inl xs))
                    ∷ ∺ algODᶜˢ Ds X (λ xs → f (inr xs))
 
-algODᵈ : (D : DataD) (X : Carrierᵈ D ℓ) → Algᵈ D X → DataOD D
-algODᵈ {ℓ} D X f = record
-  { level = DataD.level D ⊔ hasCon? ℓ (DataD.struct D)
-  ; level-pre-fixed-point = pfp (DataD.ilevel D) (DataD.level D) (DataD.struct D)
-                                (DataD.level-pre-fixed-point D)
-  ; Param = DataD.Param D
-  ; param = id
-  ; Index = λ p → snoc (DataD.Index D p) (X p)
-  ; index = λ _ → fst ∘ snoc-proj
-  ; OrnDesc = λ p → imapᶜˢ snoc-inj (fst ∘ snoc-proj) (λ p → cong fst (snoc-proj-inj p))
-                      (algODᶜˢ (DataD.Desc D p) (X p) f)
+algODᵖᵈ : (D : PDataD) (X : Carrierᵖᵈ D ℓ) → Algᵖᵈ D X → PDataOD D
+algODᵖᵈ {ℓ} D X f = record
+  { level  = PDataD.level D ⊔ hasCon? ℓ (PDataD.struct D)
+  ; level-pre-fixed-point = pfp (PDataD.ilevel D) (PDataD.level D) (PDataD.struct D)
+                                (PDataD.level-pre-fixed-point D)
+  ; Param  = PDataD.Param D
+  ; param  = id
+  ; Index  = λ p → snoc (PDataD.Index D p) (X p)
+  ; index  = λ _ → fst ∘ snoc-proj
+  ; applyP = λ p → imapᶜˢ snoc-inj (fst ∘ snoc-proj) (λ p → cong fst (snoc-proj-inj p))
+                      (algODᶜˢ (PDataD.applyP D p) (X p) f)
   }
   where
     algConB-lemma₀ : (g : ConB → Level) → (∀ cb → g (algConB ℓ cb) ≡ g cb) →
-                 ∀ cbs → maxMap g (List.map (algConB ℓ) cbs) ≡ maxMap g cbs
+                     ∀ cbs → maxMap g (List.map (algConB ℓ) cbs) ≡ maxMap g cbs
     algConB-lemma₀ g eq cbs =
       begin
         maxMap g (List.map (algConB ℓ) cbs)
@@ -89,54 +89,54 @@ algODᵈ {ℓ} D X f = record
     algConB-lemma₅ ℓ' []         = refl
     algConB-lemma₅ ℓ' (cb ∷ cbs) = cong (ℓ' ⊔_) (algConB-lemma₅ ℓ' cbs)
 
-    pfp : (ℓⁱ ℓᵈ : Level) (cbs : ConBs)
-         → maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔
-           maxMap (hasRec? ℓᵈ) cbs ⊔ hasCon? ℓⁱ cbs ⊔ ℓᵈ ≡ ℓᵈ
-         → maxMap max-π (List.map (algConB ℓ) cbs) ⊔
-           maxMap max-σ (List.map (algConB ℓ) cbs) ⊔
-           maxMap (hasRec? (ℓᵈ ⊔ hasCon? ℓ cbs)) (List.map (algConB ℓ) cbs) ⊔
-           hasCon? (ℓ ⊔ ℓⁱ) (List.map (algConB ℓ) cbs) ⊔
-           ℓᵈ ⊔ hasCon? ℓ cbs ≡ ℓᵈ ⊔ hasCon? ℓ cbs
-    pfp ℓⁱ ℓᵈ cbs pfp' =
+    pfp : (ℓⁱ ℓᵖᵈ : Level) (cbs : ConBs)
+        → maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔
+          maxMap (hasRec? ℓᵖᵈ) cbs ⊔ hasCon? ℓⁱ cbs ⊔ ℓᵖᵈ ≡ ℓᵖᵈ
+        → maxMap max-π (List.map (algConB ℓ) cbs) ⊔
+          maxMap max-σ (List.map (algConB ℓ) cbs) ⊔
+          maxMap (hasRec? (ℓᵖᵈ ⊔ hasCon? ℓ cbs)) (List.map (algConB ℓ) cbs) ⊔
+          hasCon? (ℓ ⊔ ℓⁱ) (List.map (algConB ℓ) cbs) ⊔
+          ℓᵖᵈ ⊔ hasCon? ℓ cbs ≡ ℓᵖᵈ ⊔ hasCon? ℓ cbs
+    pfp ℓⁱ ℓᵖᵈ cbs pfp' =
       begin
         maxMap max-π (List.map (algConB ℓ) cbs) ⊔
         maxMap max-σ (List.map (algConB ℓ) cbs) ⊔
-        maxMap (hasRec? (ℓᵈ ⊔ hasCon? ℓ cbs)) (List.map (algConB ℓ) cbs) ⊔
+        maxMap (hasRec? (ℓᵖᵈ ⊔ hasCon? ℓ cbs)) (List.map (algConB ℓ) cbs) ⊔
         hasCon? (ℓ ⊔ ℓⁱ) (List.map (algConB ℓ) cbs) ⊔
-        ℓᵈ ⊔ hasCon? ℓ cbs
+        ℓᵖᵈ ⊔ hasCon? ℓ cbs
           ≡⟨ -- eliminating algConB
-             cong (ℓᵈ ⊔ hasCon? ℓ cbs ⊔_) (cong₂ _⊔_ (cong₂ _⊔_ (cong₂ _⊔_
+             cong (ℓᵖᵈ ⊔ hasCon? ℓ cbs ⊔_) (cong₂ _⊔_ (cong₂ _⊔_ (cong₂ _⊔_
             (algConB-lemma₀ max-π algConB-lemma₁ cbs)
             (algConB-lemma₃ cbs))
-            (algConB-lemma₀ (hasRec? (ℓᵈ ⊔ hasCon? ℓ cbs))
-            (algConB-lemma₄ (ℓᵈ ⊔ hasCon? ℓ cbs)) cbs))
+            (algConB-lemma₀ (hasRec? (ℓᵖᵈ ⊔ hasCon? ℓ cbs))
+            (algConB-lemma₄ (ℓᵖᵈ ⊔ hasCon? ℓ cbs)) cbs))
             (algConB-lemma₅ (ℓ ⊔ ℓⁱ) cbs)) ⟩
         maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓ) cbs ⊔
-        maxMap (hasRec? (ℓᵈ ⊔ hasCon? ℓ cbs)) cbs ⊔
-        hasCon? (ℓ ⊔ ℓⁱ) cbs ⊔ ℓᵈ ⊔ hasCon? ℓ cbs
+        maxMap (hasRec? (ℓᵖᵈ ⊔ hasCon? ℓ cbs)) cbs ⊔
+        hasCon? (ℓ ⊔ ℓⁱ) cbs ⊔ ℓᵖᵈ ⊔ hasCon? ℓ cbs
           ≡⟨ -- distributing over _⊔_
              cong (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔
-                   maxMap (hasRec? ℓ) cbs ⊔ ℓᵈ ⊔ hasCon? ℓ cbs ⊔_) (cong₂ _⊔_
+                   maxMap (hasRec? ℓ) cbs ⊔ ℓᵖᵈ ⊔ hasCon? ℓ cbs ⊔_) (cong₂ _⊔_
             (trans (cong max-ℓ
-                      (map-cong (hasRec? (ℓᵈ ⊔ hasCon? ℓ cbs))
-                                (λ cb → hasRec? ℓᵈ cb ⊔ hasRec? (hasCon? ℓ cbs) cb)
-                                (hasRec?-dist-⊔ ℓᵈ (hasCon? ℓ cbs)) cbs))
-               (maxMap-dist-⊔ (hasRec? ℓᵈ) (hasRec? (hasCon? ℓ cbs)) cbs))
+                      (map-cong (hasRec? (ℓᵖᵈ ⊔ hasCon? ℓ cbs))
+                                (λ cb → hasRec? ℓᵖᵈ cb ⊔ hasRec? (hasCon? ℓ cbs) cb)
+                                (hasRec?-dist-⊔ ℓᵖᵈ (hasCon? ℓ cbs)) cbs))
+               (maxMap-dist-⊔ (hasRec? ℓᵖᵈ) (hasRec? (hasCon? ℓ cbs)) cbs))
             (hasCon?-dist-⊔ ℓ ℓⁱ cbs)) ⟩
         maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓ) cbs ⊔
-        maxMap (hasRec? ℓᵈ) cbs ⊔ maxMap (hasRec? (hasCon? ℓ cbs)) cbs ⊔
-        hasCon? ℓⁱ cbs ⊔ ℓᵈ ⊔ hasCon? ℓ cbs
+        maxMap (hasRec? ℓᵖᵈ) cbs ⊔ maxMap (hasRec? (hasCon? ℓ cbs)) cbs ⊔
+        hasCon? ℓⁱ cbs ⊔ ℓᵖᵈ ⊔ hasCon? ℓ cbs
           ≡⟨ -- original pre-fixed-point & level-conditionals
              cong₂ _⊔_ pfp' (cong₂ _⊔_
             (maxMap-hasRec?≤hasCon? ℓ cbs)
             (maxMap-bound (hasRec? (hasCon? ℓ cbs)) (hasCon? ℓ cbs)
                           (hasRec?-bound (hasCon? ℓ cbs)) cbs)) ⟩
-        ℓᵈ ⊔ hasCon? ℓ cbs
+        ℓᵖᵈ ⊔ hasCon? ℓ cbs
       ∎ where open ≡-Reasoning
 
-algODᵘᵖᵈ : (D : UPDataD) {ℓf : UPDataD.Levels D → Level} (X : Carrierᵘᵖᵈ D ℓf)
-         → Algᵘᵖᵈ D X → UPDataOD D
-algODᵘᵖᵈ D X f = record
-  { #levels = UPDataD.#levels D
+algODᵈ : (D : DataD) {ℓf : DataD.Levels D → Level} (X : Carrierᵈ D ℓf)
+       → Algᵈ D X → DataOD D
+algODᵈ D X f = record
+  { #levels = DataD.#levels D
   ; levels  = id
-  ; OrnDesc = λ ℓs → algODᵈ (UPDataD.Desc D ℓs) (X ℓs) f }
+  ; applyL  = λ ℓs → algODᵖᵈ (DataD.applyL D ℓs) (X ℓs) f }
