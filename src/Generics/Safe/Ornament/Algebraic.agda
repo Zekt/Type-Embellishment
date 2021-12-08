@@ -140,3 +140,6 @@ algODᵈ D X f = record
   { #levels = DataD.#levels D
   ; levels  = id
   ; applyL  = λ ℓs → algODᵖᵈ (DataD.applyL D ℓs) (X ℓs) f }
+
+algOD : (D : DataD) → Alg D → DataOD D
+algOD D alg = algODᵈ D (Alg.Carrier alg) (Alg.apply alg)
