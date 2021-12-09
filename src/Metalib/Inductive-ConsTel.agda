@@ -22,16 +22,13 @@ telToCxt : Tel' ℓ → TC Context
 telToCxt ∅       = return []
 telToCxt (A ◁ T) = do
   `A ← quoteTC! A
-  dprint [ strErr $ show `A ]
   extendContext (vArg `A) do
     `Γ ← telToCxt ∘ T =<< unquoteTC (var₀ 0)
     return $ vArg `A ∷ `Γ
 
 cxtToTel' : Context → Term
 cxtToTel' []        = `∅
-cxtToTel' (`A ∷ `Γ) =
-  let `T = cxtToTel' `Γ
-  in `A `◁ vArg (`λ `T)
+cxtToTel' (`A ∷ `Γ) = `A `◁ vArg (`λ cxtToTel' `Γ)
 
 cxtToTel : Context → TC (Tel' ℓ)
 cxtToTel = unquoteTC ∘ cxtToTel'

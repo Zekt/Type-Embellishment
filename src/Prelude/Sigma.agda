@@ -1,4 +1,4 @@
-{-# OPTIONS --safe #-}
+{-# OPTIONS --without-K --safe #-}
 module Prelude.Sigma where
 
 open import Agda.Builtin.Sigma public

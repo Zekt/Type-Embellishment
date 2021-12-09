@@ -1,4 +1,4 @@
-{-# OPTIONS --safe #-}
+{-# OPTIONS --without-K --safe #-}
 module Prelude.List where
 
 open import Agda.Primitive
@@ -26,25 +26,33 @@ infixr 5 _++_
 
 pattern [_] x = x ∷ []
 
+map : (A → B) → List A → List B
+map f []       = []
+map f (x ∷ xs) = f x ∷ map f xs
+
 instance
-  ListFunctor : Functor List
-  fmap ⦃ ListFunctor ⦄ f []       = []
-  fmap ⦃ ListFunctor ⦄ f (x ∷ xs) = f x ∷ fmap f xs
+  FunctorList : Functor List
+  fmap ⦃ FunctorList ⦄ = map
 
-map : {A B : Set} → (A → B) → List A → List B
-map = fmap
-
-map-cong : {A B : Set} (f g : A → B) → (∀ x → f x ≡ g x) → (xs : List A) → map f xs ≡ map g xs
+map-cong : (f g : A → B) → (∀ x → f x ≡ g x) → (xs : List A) → map f xs ≡ map g xs
 map-cong f g eq []       = refl
 map-cong f g eq (x ∷ xs) = cong₂ _∷_ (eq x) (map-cong f g eq xs)
 
-map-id : {A : Set} (xs : List A) → map id xs ≡ xs
+map-id : (xs : List A) → map id xs ≡ xs
 map-id []       = refl
 map-id (x ∷ xs) = cong (x ∷_) (map-id xs)
 
-map-comp : {A B C : Set} (f : B → C) (g : A → B) → (xs : List A) → map (f ∘ g) xs ≡ map f (map g xs)
+map-comp : (f : B → C) (g : A → B) → (xs : List A) → map (f ∘ g) xs ≡ map f (map g xs)
 map-comp f g []       = refl
 map-comp f g (x ∷ xs) = cong (f (g x) ∷_) (map-comp f g xs)
+
+instance
+  FunctorLawList : FunctorLaw List
+  FunctorLawList = record
+    { fmap-cong = map-cong
+    ; fmap-id   = map-id
+    ; fmap-comp = map-comp
+    }
 
 _++_ : List A → List A → List A
 []       ++ ys = ys
@@ -137,6 +145,11 @@ snocView (x ∷ xs)         with snocView xs
 ... | []      = [] ∷ʳ x
 ... | ys ∷ʳ y = (x ∷ ys) ∷ʳ y
 
+eq : ⦃ _ : Eq A ⦄ → List A → List A → Bool
+eq []       []       = true
+eq (x ∷ xs) (y ∷ ys) = if x == y then eq xs ys else false
+eq _        _        = false  
+
 instance
   open import Agda.Builtin.String
     using (primStringAppend)
@@ -146,8 +159,4 @@ instance
 
   EqList : ∀ {a} {A : Set a} ⦃ _ : Eq A ⦄
     → Eq (List A)
-  _==_ ⦃ EqList ⦄ []       []       = true
-  _==_ ⦃ EqList ⦄ (x ∷ xs) (y ∷ ys) with x == y
-  ... | false = false
-  ... | true  = xs == ys
-  _==_ ⦃ EqList ⦄ _        _ = false
+  _==_ ⦃ EqList ⦄ = eq
