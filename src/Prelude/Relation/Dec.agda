@@ -1,4 +1,4 @@
-{-# OPTIONS --safe #-}
+{-# OPTIONS --without-K --safe #-}
 module Prelude.Relation.Dec where
 
 open import Agda.Builtin.Bool

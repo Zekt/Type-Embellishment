@@ -1,4 +1,4 @@
-{-# OPTIONS --safe #-}
+{-# OPTIONS --without-K --safe #-}
 
 module Prelude.Functor where
 
@@ -10,7 +10,7 @@ open import Prelude.Relation.PropositionalEquality
 private variable
   A B C : Set _
 
-record Functor (F : ∀ {a} → Set a → Set a) : Setω where 
+record Functor (F : {a : Level} → Set a → Set a) : Setω where 
   infixl 4 _<$>_ _<$_
 
   field
@@ -29,7 +29,7 @@ open Functor {{...}} public
 {-# DISPLAY Functor._<$>_ _ = _<$>_ #-}
 {-# DISPLAY Functor._<$_  _ = _<$_  #-}
 
-record FunctorLaw (F : ∀ {a} → Set a → Set a) : Setω where
+record FunctorLaw (F : {a : Level} → Set a → Set a) : Setω where
   field
     overlap ⦃ super ⦄ : Functor F
 
@@ -44,5 +44,5 @@ record FunctorLaw (F : ∀ {a} → Set a → Set a) : Setω where
 open FunctorLaw ⦃ ... ⦄ public
 
 {-# DISPLAY FunctorLaw.fmap-cong _ = fmap-cong  #-}
---{-# DISPLAY FunctorLaw.fmap-id   _ = fmap-id    #-}
---{-# DISPLAY FunctorLaw.fmap-comp _ = fmap-comp  #-}
+{-# DISPLAY FunctorLaw.fmap-id   _ = fmap-id    #-}
+{-# DISPLAY FunctorLaw.fmap-comp _ = fmap-comp  #-}

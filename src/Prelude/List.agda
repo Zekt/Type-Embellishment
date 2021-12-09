@@ -1,4 +1,4 @@
-{-# OPTIONS --safe #-}
+{-# OPTIONS --without-K --safe #-}
 module Prelude.List where
 
 open import Agda.Primitive
@@ -53,7 +53,6 @@ instance
     ; fmap-id   = map-id
     ; fmap-comp = map-comp
     }
-  
 
 _++_ : List A → List A → List A
 []       ++ ys = ys
@@ -146,6 +145,11 @@ snocView (x ∷ xs)         with snocView xs
 ... | []      = [] ∷ʳ x
 ... | ys ∷ʳ y = (x ∷ ys) ∷ʳ y
 
+eq : ⦃ _ : Eq A ⦄ → List A → List A → Bool
+eq []       []       = true
+eq (x ∷ xs) (y ∷ ys) = if x == y then eq xs ys else false
+eq _        _        = false  
+
 instance
   open import Agda.Builtin.String
     using (primStringAppend)
@@ -155,8 +159,4 @@ instance
 
   EqList : ∀ {a} {A : Set a} ⦃ _ : Eq A ⦄
     → Eq (List A)
-  _==_ ⦃ EqList ⦄ []       []       = true
-  _==_ ⦃ EqList ⦄ (x ∷ xs) (y ∷ ys) with x == y
-  ... | false = false
-  ... | true  = xs == ys
-  _==_ ⦃ EqList ⦄ _        _ = false
+  _==_ ⦃ EqList ⦄ = eq

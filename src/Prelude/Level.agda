@@ -1,4 +1,4 @@
-{-# OPTIONS --safe #-}
+{-# OPTIONS --without-K --safe #-}
 
 module Prelude.Level where
 
@@ -33,3 +33,7 @@ A ^ suc n = Σ A λ _ → A ^ n
 
 rewriteLevel : ∀ {ℓ ℓ'} → ℓ ≡ ℓ' → Set ℓ → Set ℓ'
 rewriteLevel refl X = X
+
+infix 4 _⊑_ -- Type `\squb=` to get `⊑`
+_⊑_ : Level → Level → Set
+ℓ₁ ⊑ ℓ₂ = ℓ₁ ⊔ ℓ₂ ≡ ℓ₂

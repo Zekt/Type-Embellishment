@@ -1,4 +1,4 @@
-{-# OPTIONS --safe #-}
+{-# OPTIONS --without-K --safe #-}
 module Prelude.Sum where
 
 open import Agda.Primitive
