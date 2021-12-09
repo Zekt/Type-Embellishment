@@ -6,21 +6,20 @@ module Metalib.Inductive-ConsTel where
 
 open import Utils.Reflection
 open import Generics.Description
-  using (Tel'; _◁_; ∅)
 
 dprint = debugPrint "meta" 5
 
 -- Frequently used terms
 _`◁_ : Arg Term → Arg Term → Term
-t `◁ u = con (quote Tel'._◁_) (t ∷ u ∷ [])
+t `◁ u = con (quote Tel._∷_) (t ∷ u ∷ [])
 
 `∅ : Term
-`∅ = quoteTerm Tel'.∅
+`∅ = quoteTerm Tel.[]
 
 -- 
-telToCxt : Tel' ℓ → TC Context
-telToCxt ∅       = return []
-telToCxt (A ◁ T) = do
+telToCxt : Tel ℓ → TC Context
+telToCxt []      = return []
+telToCxt (A ∷ T) = do
   `A ← quoteTC! A
   extendContext (vArg `A) do
     `Γ ← telToCxt ∘ T =<< unquoteTC (var₀ 0)
@@ -30,5 +29,5 @@ cxtToTel' : Context → Term
 cxtToTel' []        = `∅
 cxtToTel' (`A ∷ `Γ) = `A `◁ vArg (`λ cxtToTel' `Γ)
 
-cxtToTel : Context → TC (Tel' ℓ)
+cxtToTel : Context → TC (Tel ℓ)
 cxtToTel = unquoteTC ∘ cxtToTel'
