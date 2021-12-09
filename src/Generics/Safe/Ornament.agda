@@ -11,6 +11,21 @@ private variable
   cb cb' : ConB
   cbs cbs' : ConBs
 
+data TelO : Tel ℓ → Tel ℓ' → Setω where
+  [] : TelO [] []
+  κ  : {T : A → Tel ℓ'} {U : A → Tel ℓ''}
+     → (O : ∀ a → TelO (T a) (U a)) → TelO (A ∷ T) (A ∷ U)
+  Δ  : {T : A → Tel ℓ'} {U : Tel ℓ''}
+     → (O : ∀ a → TelO (T a) U) → TelO (A ∷ T) U
+  ∇  : (a : A) {T : Tel ℓ'} {U : A → Tel ℓ''}
+     → (O : TelO T (U a)) → TelO T (A ∷ U)
+
+eraseᵗ : {T : Tel ℓ} {U : Tel ℓ'} → TelO T U → ⟦ T ⟧ᵗ → ⟦ U ⟧ᵗ
+eraseᵗ []      _       = tt
+eraseᵗ (κ   O) (a , t) = a , eraseᵗ (O a) t
+eraseᵗ (Δ   O) (a , t) =     eraseᵗ (O a) t
+eraseᵗ (∇ a O)      t  = a , eraseᵗ  O    t
+
 module _ {I : Set ℓⁱ} {J : Set ℓʲ} (e : I → J) where
 
   infixr 5 _∷_
@@ -63,11 +78,12 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 
 record PDataO (D E : PDataD) : Setω where
   field
-    param  : ⟦ PDataD.Param D ⟧ᵗ → ⟦ PDataD.Param E ⟧ᵗ
-    index  : (p : ⟦ PDataD.Param D ⟧ᵗ)
-           → ⟦ PDataD.Index D p ⟧ᵗ → ⟦ PDataD.Index E (param p) ⟧ᵗ
+    ParamO : TelO (PDataD.Param D) (PDataD.Param E)
+    IndexO : (p : ⟦ PDataD.Param D ⟧ᵗ)
+           → TelO (PDataD.Index D p) (PDataD.Index E (eraseᵗ ParamO p))
     applyP : (p : ⟦ PDataD.Param D ⟧ᵗ)
-           → ConOs (index p) (PDataD.applyP D p) (PDataD.applyP E (param p))
+           → ConOs (eraseᵗ (IndexO p))
+               (PDataD.applyP D p) (PDataD.applyP E (eraseᵗ ParamO p))
 
 record DataO (D E : DataD) : Setω where
   field
@@ -76,7 +92,7 @@ record DataO (D E : DataD) : Setω where
            → PDataO (DataD.applyL D ℓs) (DataD.applyL E (levels ℓs))
 
 eraseᵖᵈ : {D E : PDataD} (O : PDataO D E) {p : ⟦ PDataD.Param D ⟧ᵗ}
-        → let q = PDataO.param O p; index = PDataO.index O p in
+        → let q = eraseᵗ (PDataO.ParamO O) p; index = eraseᵗ (PDataO.IndexO O p) in
           {X : ⟦ PDataD.Index E q ⟧ᵗ → Set ℓ} {i : ⟦ PDataD.Index D p ⟧ᵗ}
         → ⟦ D ⟧ᵖᵈ p (λ i' → X (index i')) i → ⟦ E ⟧ᵖᵈ q X (index i)
 eraseᵖᵈ O {p} = eraseᶜˢ (PDataO.applyP O p)
@@ -87,7 +103,7 @@ eraseᵈ : {D E : DataD} (O : DataO D E) {ℓs : DataD.Levels D}
              Eᵖ  = DataD.applyL E ℓs'
              Oᵖ  = DataO.applyL O ℓs in
          {p : ⟦ PDataD.Param Dᵖ ⟧ᵗ}
-       → let q = PDataO.param Oᵖ p; index = PDataO.index Oᵖ p in
+       → let q = eraseᵗ (PDataO.ParamO Oᵖ) p; index = eraseᵗ (PDataO.IndexO Oᵖ p) in
          {X : ⟦ PDataD.Index Eᵖ q ⟧ᵗ → Set ℓ} {i : ⟦ PDataD.Index Dᵖ p ⟧ᵗ}
        → ⟦ D ⟧ᵈ ℓs p (λ i' → X (index i')) i → ⟦ E ⟧ᵈ ℓs' q X (index i)
 eraseᵈ O {ℓs} = eraseᵖᵈ (DataO.applyL O ℓs)

@@ -12,6 +12,27 @@ private variable
   cb cb' : ConB
   cbs cbs' : ConBs
 
+data TelOD : Tel ℓ' → Level → Setω where
+  [] : TelOD [] lzero
+  κ  : {A : Set ℓ} {U : A → Tel ℓ''}
+     → (OD : ∀ a → TelOD (U a) ℓ') → TelOD (A ∷ U) (ℓ ⊔ ℓ')
+  Δ  : (A : Set ℓ) {U : Tel ℓ''}
+     → (OD : A → TelOD U ℓ') → TelOD U (ℓ ⊔ ℓ')
+  ∇  : (a : A) {U : A → Tel ℓ''}
+     → (OD : TelOD (U a) ℓ') → TelOD (A ∷ U) ℓ'
+
+⌊_⌋ᵗ : {U : Tel ℓ'} → TelOD U ℓ → Tel ℓ
+⌊ []     ⌋ᵗ = []
+⌊ κ   OD ⌋ᵗ = _ ∷ λ a → ⌊ OD a ⌋ᵗ
+⌊ Δ A OD ⌋ᵗ = A ∷ λ a → ⌊ OD a ⌋ᵗ
+⌊ ∇ a OD ⌋ᵗ = ⌊ OD ⌋ᵗ
+
+⌈_⌉ᵗ : {U : Tel ℓ'} (OD : TelOD U ℓ) → TelO ⌊ OD ⌋ᵗ U
+⌈ []     ⌉ᵗ = []
+⌈ κ   OD ⌉ᵗ = κ λ a → ⌈ OD a ⌉ᵗ
+⌈ Δ A OD ⌉ᵗ = Δ λ a → ⌈ OD a ⌉ᵗ
+⌈ ∇ a OD ⌉ᵗ = ∇ a ⌈ OD ⌉ᵗ
+
 module _ (I : Set ℓⁱ) {J : Set ℓʲ} (e : I → J) where
 
   infixr 5 _∷_
@@ -48,14 +69,14 @@ record PDataOD (E : PDataD) : Setω where
   flevel ℓ = maxMap max-π struct ⊔ maxMap max-σ struct ⊔
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
-    level  : Level
+    level   : Level
     level-pre-fixed-point : flevel level ⊔ level ≡ level
-    Param  : Tel plevel
-    param  : ⟦ Param ⟧ᵗ → ⟦ PDataD.Param E ⟧ᵗ
-    Index  : ⟦ Param ⟧ᵗ → Tel ilevel
-    index  : (p : ⟦ Param ⟧ᵗ) → ⟦ Index p ⟧ᵗ → ⟦ PDataD.Index E (param p) ⟧ᵗ
-    applyP : (p : ⟦ Param ⟧ᵗ)
-           → ConODs ⟦ Index p ⟧ᵗ (index p) (PDataD.applyP E (param p)) struct
+    ParamOD : TelOD (PDataD.Param E) plevel
+    IndexOD : (p : ⟦ ⌊ ParamOD ⌋ᵗ ⟧ᵗ)
+            → TelOD (PDataD.Index E (eraseᵗ ⌈ ParamOD ⌉ᵗ p)) ilevel
+    applyP  : (p : ⟦ ⌊ ParamOD ⌋ᵗ ⟧ᵗ)
+            → ConODs ⟦ ⌊ IndexOD p ⌋ᵗ ⟧ᵗ (eraseᵗ ⌈ IndexOD p ⌉ᵗ)
+                (PDataD.applyP E (eraseᵗ ⌈ ParamOD ⌉ᵗ p)) struct
 
 record DataOD (E : DataD) : Setω where
   field
@@ -102,17 +123,17 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 
 ⌊_⌋ᵖᵈ : ∀ {E} → PDataOD E → PDataD
 ⌊ OD ⌋ᵖᵈ = record
-  { level = PDataOD.level OD
+  { level  = PDataOD.level OD
   ; level-pre-fixed-point = PDataOD.level-pre-fixed-point OD
-  ; Param = PDataOD.Param OD
-  ; Index = PDataOD.Index OD
+  ; Param  = ⌊ PDataOD.ParamOD OD ⌋ᵗ
+  ; Index  = λ p → ⌊ PDataOD.IndexOD OD p ⌋ᵗ
   ; applyP = λ p → ⌊ PDataOD.applyP OD p ⌋ᶜˢ
   }
 
 ⌈_⌉ᵖᵈ : ∀ {E} (OD : PDataOD E) → PDataO ⌊ OD ⌋ᵖᵈ E
 ⌈ OD ⌉ᵖᵈ = record
-  { param = PDataOD.param OD
-  ; index = PDataOD.index OD
+  { ParamO = ⌈ PDataOD.ParamOD OD ⌉ᵗ
+  ; IndexO = λ p → ⌈ PDataOD.IndexOD OD p ⌉ᵗ
   ; applyP = λ p → ⌈ PDataOD.applyP OD p ⌉ᶜˢ
   }
 
