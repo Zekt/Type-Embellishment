@@ -17,7 +17,10 @@ NatD = record
     ; Param  = []
     ; Index  = λ _ → []
     ; applyP = λ where
-      _ → ι tt ∷ ρ (ι tt) (ι tt) ∷ []
+      _ → ι tt 
+        -- ℕ
+        ∷ ρ (ι tt) (ι tt) ∷ []
+        -- ℕ → ℕ
     }}
   }
 
@@ -34,7 +37,12 @@ ListD = record
     ; Param = [ A ∶ Set ] []
     ; Index = λ _ → []
     ; applyP = λ where
-      (A , tt) → ι tt ∷ σ A (λ _ → ρ (ι tt) (ι tt)) ∷ []
+      (A , tt) →
+        ι tt
+        -- List A
+        ∷ Π[ _ ∶ A ] (ρ (ι tt) (ι tt))
+        -- (_ : A) → List A → List A
+        ∷ []
     }}
   }
 
@@ -52,7 +60,9 @@ VecD = record
     ; applyP                = λ where
       (A , tt) →
         ι (0 , tt)
-        ∷ σ A (λ _ → σ ℕ λ n → ρ (ι (n , tt)) (ι (suc n , tt)))
+        -- Vec A 0
+        ∷ Π[ _ ∶ A ] Π[ n ∶ ℕ ] (ρ (ι (n , tt)) (ι (suc n , tt)))
+        -- (x : A) → (n : ℕ) → Vec A n → Vec A (suc n)
         ∷ []
     } }
   }
@@ -68,12 +78,34 @@ VecD = record
   ; applyL  = λ where
     (ℓ , _) → record
       { level = ℓ
-      ; level-pre-fixed-point = {!!}
+      ; level-pre-fixed-point = refl
       ; Param = [ A ∶ Set ℓ ] []
       ; Index = λ {(A , _) → [ _ ∶ A ] [ _ ∶ List A ] []}
       ; applyP = λ { (A , _) →
-        σ {!A!} (λ x → σ {!List A!} λ xs → ι ({!!} , {!!} , tt))
-        ∷ σ {!!} (λ x → σ {!!} λ y → σ {!!} (λ xs → ρ (ι ({!!} , {!!} , tt)) (ι ({!!} , {!!} ∷ {!!} , tt))))
+        Π[ x ∶ A ] Π[ xs ∶ List A ] (ι (x , x ∷ xs , tt))
+        -- (x : A) → (xs : List A) → x ∈ x ∷ xs
+        ∷ Π[ x ∶ A ] Π[ y ∶ A ] Π[ xs ∶ List A ] (ρ (ι (x , xs , tt)) (ι (x , y ∷ xs , tt)))
+        -- (x : A) → (y : A) → (xs : List A) → x ∈ xs → x ∈ y ∷ xs
         ∷ []}
+      }
+  }
+
+data W (A : Set ℓ) (B : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
+  sup : (x : A) → ((t : B x) → W A B) → W A B
+
+WD : DataD
+WD = record
+  { #levels = 2
+  ; applyL  = λ where
+    (ℓ , ℓ' , tt) → record
+      { level = ℓ ⊔ ℓ'
+      ; level-pre-fixed-point = refl
+      ; Param = [ A ∶ Set ℓ ] [ B ∶ (A → Set ℓ') ] []
+      ; Index = λ _ → []
+      ; applyP = λ where
+        (A , B , _) →
+          Π[ x ∶ A ] ρ (Π[ _ ∶ B x ] ι _) (ι _)
+          -- (x : A) → ((_ : B x) → W A B) → W A B
+          ∷ []
       }
   }
