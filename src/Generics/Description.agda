@@ -1,7 +1,6 @@
-module Generics.Description where
-
 open import Prelude
-open import Prelude.List as List
+
+module Generics.Description where
 
 infixr 5 _∷_
 
@@ -21,6 +20,18 @@ syntax ∷-syntax A (λ x → T) = [ x ∶ A ] T
 ⟦ []    ⟧ᵗ = ⊤
 ⟦ A ∷ T ⟧ᵗ = Σ A λ a → ⟦ T a ⟧ᵗ
 
+Curried : ∀ {ℓ ℓ'} → (T : Tel ℓ) → (⟦ T ⟧ᵗ → Set ℓ') → Set (ℓ ⊔ ℓ')
+Curried []      X = X tt
+Curried (A ∷ T) X = (a : A) → Curried (T a) λ t → X (a , t)
+
+curryⁿ : (T : Tel ℓ) (X : ⟦ T ⟧ᵗ → Set ℓ') → ((t : ⟦ T ⟧ᵗ) → X t) → Curried T X
+curryⁿ []      X f = f tt
+curryⁿ (A ∷ T) X f = λ a → curryⁿ (T a) (λ t → X (a , t)) (λ t → f (a , t))
+
+uncurryⁿ : (T : Tel ℓ) (X : ⟦ T ⟧ᵗ → Set ℓ′) → Curried T X → (t : ⟦ T ⟧ᵗ) → X t
+uncurryⁿ []      X f tt      = f
+uncurryⁿ (A ∷ T) X f (x , t) = uncurryⁿ (T x) (λ t → X (x , t)) (f x) t
+
 RecB : Set
 RecB = List Level
 
@@ -34,7 +45,7 @@ max-ℓ : List Level → Level
 max-ℓ = foldr _⊔_ lzero
 
 maxMap : {A : Set} → (A → Level) → List A → Level
-maxMap f = max-ℓ ∘ List.map f
+maxMap f = max-ℓ ∘ map f
 
 ρ-level : Level ⊎ RecB → Level
 ρ-level (inl _ ) = lzero
@@ -134,6 +145,7 @@ record PDataD : Set where
     Param  : Tel plevel
     Index  : ⟦ Param ⟧ᵗ → Tel ilevel
     applyP : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ struct
+open PDataD
 
 {-# NO_UNIVERSE_CHECK #-}
 record DataD : Set where
@@ -143,6 +155,7 @@ record DataD : Set where
   Levels = Level ^ #levels
   field
     applyL : Levels → PDataD
+open DataD
 
 module _ {I : Set ℓⁱ} where
 
@@ -160,14 +173,14 @@ module _ {I : Set ℓⁱ} where
   ⟦ []     ⟧ᶜˢ X i = ⊥
   ⟦ D ∷ Ds ⟧ᶜˢ X i = ⟦ D ⟧ᶜ X i ⊎ ⟦ Ds ⟧ᶜˢ X i
 
-⟦_⟧ᵖᵈ : (D : PDataD) (p : ⟦ PDataD.Param D ⟧ᵗ)
-      → let I = ⟦ PDataD.Index D p ⟧ᵗ in (I → Set ℓ) → (I → Set (PDataD.flevel D ℓ))
+⟦_⟧ᵖᵈ : (D : PDataD) (p : ⟦ Param D ⟧ᵗ)
+      → let I = ⟦ Index D p ⟧ᵗ in (I → Set ℓ) → (I → Set (flevel D ℓ))
 ⟦ D ⟧ᵖᵈ p = ⟦ PDataD.applyP D p ⟧ᶜˢ
 
-⟦_⟧ᵈ : (D : DataD) (ℓs : DataD.Levels D) → let Dᵐ = DataD.applyL D ℓs in
-       (p : ⟦ PDataD.Param Dᵐ ⟧ᵗ)
-     → let I = ⟦ PDataD.Index Dᵐ p ⟧ᵗ in (I → Set ℓ) → (I → Set (PDataD.flevel Dᵐ ℓ))
-⟦ D ⟧ᵈ ℓs = ⟦ DataD.applyL D ℓs ⟧ᵖᵈ
+⟦_⟧ᵈ : (D : DataD) (ℓs : Levels D) → let Dᵐ = applyL D ℓs in
+       (p : ⟦ Param Dᵐ ⟧ᵗ)
+     → let I = ⟦ Index Dᵐ p ⟧ᵗ in (I → Set ℓ) → (I → Set (flevel Dᵐ ℓ))
+⟦ D ⟧ᵈ ℓs = ⟦ applyL D ℓs ⟧ᵖᵈ
 
 fmapʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → ⟦ D ⟧ʳ X → ⟦ D ⟧ʳ Y
@@ -185,16 +198,16 @@ fmapᶜˢ : {I : Set ℓ} (Ds : ConDs I cbs) {X : I → Set ℓˣ} {Y : I → Se
 fmapᶜˢ (D ∷ Ds) f (inl xs) = inl (fmapᶜ  D  f xs)
 fmapᶜˢ (D ∷ Ds) f (inr xs) = inr (fmapᶜˢ Ds f xs)
 
-fmapᵖᵈ : (D : PDataD) (p : ⟦ PDataD.Param D ⟧ᵗ) → let I = ⟦ PDataD.Index D p ⟧ᵗ in
+fmapᵖᵈ : (D : PDataD) (p : ⟦ Param D ⟧ᵗ) → let I = ⟦ Index D p ⟧ᵗ in
          {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
        → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵖᵈ p X i → ⟦ D ⟧ᵖᵈ p Y i
 fmapᵖᵈ D p = fmapᶜˢ (PDataD.applyP D p)
 
-fmapᵈ : (D : DataD) (ℓs : DataD.Levels D) → let Dᵐ = DataD.applyL D ℓs in
-        (p : ⟦ PDataD.Param Dᵐ ⟧ᵗ) → let I = ⟦ PDataD.Index Dᵐ p ⟧ᵗ in
+fmapᵈ : (D : DataD) (ℓs : Levels D) → let Dᵐ = applyL D ℓs in
+        (p : ⟦ Param Dᵐ ⟧ᵗ) → let I = ⟦ Index Dᵐ p ⟧ᵗ in
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈ ℓs p X i → ⟦ D ⟧ᵈ ℓs p Y i
-fmapᵈ D ℓs = fmapᵖᵈ (DataD.applyL D ℓs)
+fmapᵈ D ℓs = fmapᵖᵈ (applyL D ℓs)
 
 module DFunctor {I : Set ℓⁱ} {J : Set ℓʲ} (f : I → J) where
 
