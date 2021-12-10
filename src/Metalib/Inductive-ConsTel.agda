@@ -17,12 +17,12 @@ t `◁ u = con (quote Tel._∷_) (t ∷ u ∷ [])
 `∅ = quoteTerm Tel.[]
 
 -- 
+
+--
 telToCxt : Tel ℓ → TC Context
 telToCxt []      = return []
-telToCxt (A ∷ T) = do
-  `A ← quoteTC! A
-  extendContext (vArg `A) do
-    `Γ ← telToCxt ∘ T =<< unquoteTC (var₀ 0)
+telToCxt (A ∷ T) = extendContextT (arg-info visible default-modality) A λ `A x → do
+    `Γ ← telToCxt (T x)
     return $ vArg `A ∷ `Γ
 
 cxtToTel' : Context → Term

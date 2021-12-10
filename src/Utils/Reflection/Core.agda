@@ -173,3 +173,27 @@ evalTC {A = A} c hole = do
 macro
   evalT : ∀ {a} {A : Set a} → TC A → Tactic
   evalT = evalTC
+
+-- 
+-- Typed version of extendContext
+extendContextT : ArgInfo → (B : Set ℓ)
+  → (Type → B → TC A) → TC A
+extendContextT i B f = do
+  `B ← quoteTC B
+  extendContext (arg i `B) do
+    x ← unquoteTC {A = B} (var₀ 0)
+    f `B x
+
+getConType : Name → TC Type
+getConType n = do
+  data-cons _ ← getDefinition n
+    where _ → typeError [ strErr (primShowQName n <> " is not a constructor.") ]
+  `type ← inferType (con n [])
+  return `type
+
+getDataType : Name → TC (ℕ × Type)
+getDataType n = do
+  data-type pars cs  ← getDefinition n
+    where _ → typeError [ strErr (primShowQName n <> " is not a datatype.") ]
+  `type ← inferType (def n [])
+  return $ pars , `type

@@ -38,15 +38,12 @@ pointwise = [ A ∶ Set ] [ B ∶ Set ] [ R ∶ (A → B → Set) ] [ _ ∶ List
             ∅
 -}
 
+
 Γ-pointwise : Context
 Γ-pointwise = evalT (telToCxt pointwise) 
 
 pointwise′ : Tel _
-pointwise′ = Set ∷
-               (λ z →
-                  Set ∷
-                  (λ z₁ →
-                     (z → z₁ → Set) ∷ (λ z₂ → List z ∷ (λ z₃ → List z₁ ∷ (λ z₄ → [])))))
+pointwise′ = evalT (cxtToTel Γ-pointwise) 
 
 _ : pointwise′ ≡ pointwise
 _ = refl
