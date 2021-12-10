@@ -103,21 +103,21 @@ module _ (I : Set ℓⁱ) where
   {-# NO_UNIVERSE_CHECK #-}
   data RecD : RecB → Set where
     ι : (i : I) → RecD []
-    σ : (A : Set ℓ) (D : A → RecD rb) → RecD (ℓ ∷ rb)
-
+    π : (A : Set ℓ) (D : A → RecD rb) → RecD (ℓ ∷ rb)
+  syntax π A (λ x → R) = Π[ x ∶ A ] R
+  
   {-# NO_UNIVERSE_CHECK #-}
   data ConD : ConB → Set where
     ι : (i : I) → ConD []
     σ : (A : Set ℓ) (D : A → ConD cb) → ConD (inl ℓ  ∷ cb)
     ρ : (D : RecD rb) (E : ConD cb)   → ConD (inr rb ∷ cb)
+  syntax σ A (λ x → D) = Σ[ x ∶ A ] D
 
   {-# NO_UNIVERSE_CHECK #-}
   data ConDs : ConBs → Set where
     []  : ConDs []
     _∷_ : (D : ConD cb) (Ds : ConDs cbs) → ConDs (cb ∷ cbs)
 
-  syntax σ A (λ x → D) = Π[ x ∶ A ] D
---  syntax π A (λ x → R) = Π[ x ∶ A ] R
 
 {-# NO_UNIVERSE_CHECK #-}
 record PDataD : Set where
@@ -148,7 +148,7 @@ module _ {I : Set ℓⁱ} where
 
   ⟦_⟧ʳ : RecD I rb → (I → Set ℓ) → Set (max-ℓ rb ⊔ ℓ)
   ⟦ ι i   ⟧ʳ X = X i
-  ⟦ σ A D ⟧ʳ X = (a : A) → ⟦ D a ⟧ʳ X
+  ⟦ π A D ⟧ʳ X = (a : A) → ⟦ D a ⟧ʳ X
 
   ⟦_⟧ᶜ : ConD I cb → (I → Set ℓ) → (I → Set (max-π cb ⊔ max-σ cb ⊔ hasRec? ℓ cb ⊔ ℓⁱ))
   ⟦ ι i   ⟧ᶜ X j = i ≡ j
@@ -172,7 +172,7 @@ module _ {I : Set ℓⁱ} where
 fmapʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → ⟦ D ⟧ʳ X → ⟦ D ⟧ʳ Y
 fmapʳ (ι i  ) f x  = f x
-fmapʳ (σ A D) f xs = λ a → fmapʳ (D a) f (xs a)
+fmapʳ (π A D) f xs = λ a → fmapʳ (D a) f (xs a)
 
 fmapᶜ : {I : Set ℓⁱ} (D : ConD I cb) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᶜ X i → ⟦ D ⟧ᶜ Y i
@@ -200,7 +200,7 @@ module DFunctor {I : Set ℓⁱ} {J : Set ℓʲ} (f : I → J) where
 
   imapʳ : RecD I rb → RecD J rb
   imapʳ (ι i  ) = ι (f i)
-  imapʳ (σ A D) = σ A λ a → imapʳ (D a)
+  imapʳ (π A D) = π A λ a → imapʳ (D a)
 
   imapᶜ : ConD I cb → ConD J cb
   imapᶜ (ι i  ) = ι (f i)

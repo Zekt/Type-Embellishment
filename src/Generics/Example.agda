@@ -40,7 +40,7 @@ ListD = record
       (A , tt) →
         ι tt
         -- List A
-        ∷ Π[ _ ∶ A ] (ρ (ι tt) (ι tt))
+        ∷ Σ[ _ ∶ A ] (ρ (ι tt) (ι tt))
         -- (_ : A) → List A → List A
         ∷ []
     }}
@@ -61,7 +61,7 @@ VecD = record
       (A , tt) →
         ι (0 , tt)
         -- Vec A 0
-        ∷ Π[ _ ∶ A ] Π[ n ∶ ℕ ] (ρ (ι (n , tt)) (ι (suc n , tt)))
+        ∷ Σ[ _ ∶ A ] Σ[ n ∶ ℕ ] (ρ (ι (n , tt)) (ι (suc n , tt)))
         -- (x : A) → (n : ℕ) → Vec A n → Vec A (suc n)
         ∷ []
     } }
@@ -82,9 +82,9 @@ VecD = record
       ; Param = [ A ∶ Set ℓ ] []
       ; Index = λ {(A , _) → [ _ ∶ A ] [ _ ∶ List A ] []}
       ; applyP = λ { (A , _) →
-        Π[ x ∶ A ] Π[ xs ∶ List A ] (ι (x , x ∷ xs , tt))
+        Σ[ x ∶ A ] Σ[ xs ∶ List A ] (ι (x , x ∷ xs , tt))
         -- (x : A) → (xs : List A) → x ∈ x ∷ xs
-        ∷ Π[ x ∶ A ] Π[ y ∶ A ] Π[ xs ∶ List A ] (ρ (ι (x , xs , tt)) (ι (x , y ∷ xs , tt)))
+        ∷ Σ[ x ∶ A ] Σ[ y ∶ A ] Σ[ xs ∶ List A ] (ρ (ι (x , xs , tt)) (ι (x , y ∷ xs , tt)))
         -- (x : A) → (y : A) → (xs : List A) → x ∈ xs → x ∈ y ∷ xs
         ∷ []}
       }
@@ -104,7 +104,7 @@ WD = record
       ; Index = λ _ → []
       ; applyP = λ where
         (A , B , _) →
-          Π[ x ∶ A ] ρ (Π[ _ ∶ B x ] ι _) (ι _)
+          Σ[ x ∶ A ] ρ (Π[ t ∶ B x ] ι _) (ι _)
           -- (x : A) → ((_ : B x) → W A B) → W A B
           ∷ []
       }
