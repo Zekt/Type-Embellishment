@@ -7,12 +7,14 @@ open import Generics.Safe.Description
 
 private variable
   A : Set ℓ
-  rb rb' : RecB
-  cb cb' : ConB
+  rb  rb'  : RecB
+  cb  cb'  : ConB
   cbs cbs' : ConBs
 
 data TelO : Tel ℓ → Tel ℓ' → Setω where
-  [] : TelO [] []
+  ε  : {T : Tel ℓ} → TelO T T
+  ▷  : {T : Tel ℓ} {U : Tel ℓ'} {A : ⟦ T ⟧ᵗ → Set ℓ''}
+     → TelO T U → TelO (snocᵗ T A) U
   κ  : {T : A → Tel ℓ'} {U : A → Tel ℓ''}
      → (O : ∀ a → TelO (T a) (U a)) → TelO (A ∷ T) (A ∷ U)
   Δ  : {T : A → Tel ℓ'} {U : Tel ℓ''}
@@ -21,7 +23,8 @@ data TelO : Tel ℓ → Tel ℓ' → Setω where
      → (O : TelO T (U a)) → TelO T (A ∷ U)
 
 eraseᵗ : {T : Tel ℓ} {U : Tel ℓ'} → TelO T U → ⟦ T ⟧ᵗ → ⟦ U ⟧ᵗ
-eraseᵗ []      _       = tt
+eraseᵗ  ε           t  = t
+eraseᵗ (▷   O)      t  = eraseᵗ O (fst (snocᵗ-proj t))
 eraseᵗ (κ   O) (a , t) = a , eraseᵗ (O a) t
 eraseᵗ (Δ   O) (a , t) =     eraseᵗ (O a) t
 eraseᵗ (∇ a O)      t  = a , eraseᵗ  O    t
@@ -82,8 +85,8 @@ record PDataO (D E : PDataD) : Setω where
     IndexO : (p : ⟦ PDataD.Param D ⟧ᵗ)
            → TelO (PDataD.Index D p) (PDataD.Index E (eraseᵗ ParamO p))
     applyP : (p : ⟦ PDataD.Param D ⟧ᵗ)
-           → ConOs (eraseᵗ (IndexO p))
-               (PDataD.applyP D p) (PDataD.applyP E (eraseᵗ ParamO p))
+           → ConOs (eraseᵗ (IndexO p)) (PDataD.applyP D p)
+                                       (PDataD.applyP E (eraseᵗ ParamO p))
 
 record DataO (D E : DataD) : Setω where
   field
