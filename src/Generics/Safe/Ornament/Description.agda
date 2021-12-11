@@ -8,27 +8,33 @@ open import Generics.Safe.Ornament
 
 private variable
   A : Set ℓ
-  rb rb' : RecB
-  cb cb' : ConB
+  rb  rb'  : RecB
+  cb  cb'  : ConB
   cbs cbs' : ConBs
 
-data TelOD : Tel ℓ' → Level → Setω where
-  [] : TelOD [] lzero
-  κ  : {A : Set ℓ} {U : A → Tel ℓ''}
-     → (OD : ∀ a → TelOD (U a) ℓ') → TelOD (A ∷ U) (ℓ ⊔ ℓ')
-  Δ  : (A : Set ℓ) {U : Tel ℓ''}
-     → (OD : A → TelOD U ℓ') → TelOD U (ℓ ⊔ ℓ')
-  ∇  : (a : A) {U : A → Tel ℓ''}
-     → (OD : TelOD (U a) ℓ') → TelOD (A ∷ U) ℓ'
+mutual
 
-⌊_⌋ᵗ : {U : Tel ℓ'} → TelOD U ℓ → Tel ℓ
-⌊ []     ⌋ᵗ = []
-⌊ κ   OD ⌋ᵗ = _ ∷ λ a → ⌊ OD a ⌋ᵗ
-⌊ Δ A OD ⌋ᵗ = A ∷ λ a → ⌊ OD a ⌋ᵗ
-⌊ ∇ a OD ⌋ᵗ = ⌊ OD ⌋ᵗ
+  data TelOD : Tel ℓ → Level → Setω where
+    ε : {U : Tel ℓ} → TelOD U ℓ
+    ▷ : {U : Tel ℓ''} (OD : TelOD U ℓ)
+      → (⟦ ⌊ OD ⌋ᵗ ⟧ᵗ → Set ℓ') → TelOD U (ℓ ⊔ ℓ')
+    κ : {A : Set ℓ} {U : A → Tel ℓ''}
+      → (OD : ∀ a → TelOD (U a) ℓ') → TelOD (A ∷ U) (ℓ ⊔ ℓ')
+    Δ : (A : Set ℓ) {U : Tel ℓ''}
+      → (OD : A → TelOD U ℓ') → TelOD U (ℓ ⊔ ℓ')
+    ∇ : (a : A) {U : A → Tel ℓ''}
+      → (OD : TelOD (U a) ℓ') → TelOD (A ∷ U) ℓ'
+
+  ⌊_⌋ᵗ : {U : Tel ℓ'} → TelOD U ℓ → Tel ℓ
+  ⌊ ε {U = U} ⌋ᵗ = U
+  ⌊ ▷ OD A    ⌋ᵗ = snocᵗ ⌊ OD ⌋ᵗ A
+  ⌊ κ   OD    ⌋ᵗ = _ ∷ λ a → ⌊ OD a ⌋ᵗ
+  ⌊ Δ A OD    ⌋ᵗ = A ∷ λ a → ⌊ OD a ⌋ᵗ
+  ⌊ ∇ a OD    ⌋ᵗ = ⌊ OD ⌋ᵗ
 
 ⌈_⌉ᵗ : {U : Tel ℓ'} (OD : TelOD U ℓ) → TelO ⌊ OD ⌋ᵗ U
-⌈ []     ⌉ᵗ = []
+⌈ ε      ⌉ᵗ = ε
+⌈ ▷ OD A ⌉ᵗ = ▷ ⌈ OD ⌉ᵗ
 ⌈ κ   OD ⌉ᵗ = κ λ a → ⌈ OD a ⌉ᵗ
 ⌈ Δ A OD ⌉ᵗ = Δ λ a → ⌈ OD a ⌉ᵗ
 ⌈ ∇ a OD ⌉ᵗ = ∇ a ⌈ OD ⌉ᵗ
@@ -69,8 +75,8 @@ record PDataOD (E : PDataD) : Setω where
   flevel ℓ = maxMap max-π struct ⊔ maxMap max-σ struct ⊔
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
-    level   : Level
-    level-pre-fixed-point : flevel level ⊔ level ≡ level
+    dlevel  : Level
+    level-pre-fixed-point : let ℓ = dlevel ⊔ ilevel in flevel ℓ ⊔ ℓ ≡ ℓ
     ParamOD : TelOD (PDataD.Param E) plevel
     IndexOD : (p : ⟦ ⌊ ParamOD ⌋ᵗ ⟧ᵗ)
             → TelOD (PDataD.Index E (eraseᵗ ⌈ ParamOD ⌉ᵗ p)) ilevel
@@ -123,7 +129,7 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 
 ⌊_⌋ᵖᵈ : ∀ {E} → PDataOD E → PDataD
 ⌊ OD ⌋ᵖᵈ = record
-  { level  = PDataOD.level OD
+  { dlevel  = PDataOD.dlevel OD
   ; level-pre-fixed-point = PDataOD.level-pre-fixed-point OD
   ; Param  = ⌊ PDataOD.ParamOD OD ⌋ᵗ
   ; Index  = λ p → ⌊ PDataOD.IndexOD OD p ⌋ᵗ
