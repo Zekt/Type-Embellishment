@@ -24,8 +24,11 @@ open Lift public
 
 -- Synonyms
 
-0ℓ : Level
+0ℓ 1ℓ 2ℓ : Level
 0ℓ = lzero
+1ℓ = lsuc 0ℓ
+2ℓ = lsuc 1ℓ
+
 
 _^_ : Set → ℕ → Set
 A ^ zero  = ⊤

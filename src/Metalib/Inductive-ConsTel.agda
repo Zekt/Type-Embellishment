@@ -10,24 +10,23 @@ open import Generics.Description
 dprint = debugPrint "meta" 5
 
 -- Frequently used terms
-_`◁_ : Arg Term → Arg Term → Term
-t `◁ u = con (quote Tel._∷_) (t ∷ u ∷ [])
+_`∷_ : Arg Term → Term → Term
+t `∷ u = con (quote Tel._∷_) (t ∷ vArg u ∷ [])
 
-`∅ : Term
-`∅ = quoteTerm Tel.[]
+`[] : Term
+`[] = quoteTerm Tel.[]
 
 -- 
 
---
-telToCxt : Tel ℓ → TC Context
-telToCxt []      = return []
-telToCxt (A ∷ T) = extendContextT (arg-info visible default-modality) A λ `A x → do
-    `Γ ← telToCxt (T x)
-    return $ vArg `A ∷ `Γ
+toTelescope : Tel ℓ → TC Telescope
+toTelescope []      = return []
+toTelescope (A ∷ T) = do
+  lam v (abs s _) ← quoteTC T 
+    where _ → IMPOSSIBLE
+  extendContextT (visible-relevant-ω) A λ `A x → do
+    `Γ ← toTelescope (T x)
+    return $ (s , vArg `A) ∷ `Γ
 
-cxtToTel' : Context → Term
-cxtToTel' []        = `∅
-cxtToTel' (`A ∷ `Γ) = `A `◁ vArg (`λ cxtToTel' `Γ)
-
-cxtToTel : Context → TC (Tel ℓ)
-cxtToTel = unquoteTC ∘ cxtToTel'
+fromTelescope : Telescope → TC (Tel ℓ)
+fromTelescope = unquoteTC ∘ to`Tel
+  where to`Tel = foldr (λ { (s , `A) `T → `A `∷ (`λ s ↦ `T) }) `[]
