@@ -1,6 +1,7 @@
 {-# OPTIONS --without-K --safe #-}
 module Prelude.Relation where
   
+open import Prelude.Empty                           public
 open import Prelude.Relation.Dec                    public
 open import Prelude.Relation.PropositionalEquality  public
 
@@ -9,6 +10,10 @@ open import Prelude.Bool
 
 private variable
   A B C : Set _
+
+infix 4 _≢_
+_≢_ : A → A → Set _
+x ≢ y = x ≡ y → ⊥
 
 ¬-reflects : ∀ {b ℓ} {P : Set ℓ} → Reflects P b → Reflects (¬ P) (not b)
 ¬-reflects (ofʸ  p) = ofⁿ (_$ p)

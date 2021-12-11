@@ -205,7 +205,7 @@ macro
 extendContextT : ArgInfo → (B : Set ℓ)
   → (Type → B → TC A) → TC A
 extendContextT i B f = do
-  `B ← normalise =<< quoteTC B
+  `B ← quoteTC B
   extendContext (arg i `B) do
     x ← unquoteTC {A = B} (var₀ 0)
     f `B x
