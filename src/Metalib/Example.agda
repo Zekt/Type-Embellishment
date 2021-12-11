@@ -9,38 +9,26 @@ open import Metalib.Inductive-ConsTel
 
 data Rel (A : Set) : (xs ys : List A) → Set where
   
-T-rel : Tel _
-T-rel = [ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] []
-
 `T-rel : Telescope
 `T-rel = fst $ ⇑ evalT (getDefType (quote Rel))
 
-{-
-  ("A" , vArg `Set₀) ∷
-  ("xs" , vArg (def (quote List) (hArg (def₀ (quote lzero)) ∷ [ vArg (var₀ 0) ]))) ∷
-  "ys" , vArg (def (quote List) (hArg (def₀ (quote lzero)) ∷ [ vArg (var₀ 1) ])) ∷
-  []
--}
-
-T-rel' : Tel (lsuc lzero)
-T-rel' = evalT (fromTelescope `T-rel) 
-
-_ : T-rel' ≡ T-rel
+_ : evalT (fromTelescope `T-rel) ≡ [ B ∶ Set ] [ bs ∶ List B ] [ bs ∶ List B ] []
 _ = refl
 
-data Pointwise (A : Set) (B : Set) (R : A → B → Set) : (xs : List A) → (ys : List B) → Set where 
-
-pointwise : Tel _
-pointwise = [ A ∶ Set ] [ B ∶ Set ] [ R ∶ (A → B → Set) ] [ xs ∶ List A ] [ ys ∶ List B ] []
-
-Γ-pointwise : Telescope
-Γ-pointwise = fst $ ⇑ evalT (getDefType (quote Pointwise))
-
-pointwise' : Tel _
-pointwise' = evalT (fromTelescope Γ-pointwise) 
-
-_ : pointwise' ≡ pointwise
+_ : evalT (toTelescope $ [ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] []) ≡ `T-rel
 _ = refl
+
+data Pointwise (A : Set) (B : Set) (R : (z : A) → (z₁ : B) → Set) : (xs : List A) → (ys : List B) → Set where 
+
+T-pointwise : Telescope
+T-pointwise = fst $ ⇑ evalT (getDefType (quote Pointwise))
+
+_ : evalT (fromTelescope T-pointwise)
+  ≡ [ A ∶ Set ] [ B ∶ Set ] [ R ∶ (A → B → Set) ] [ as ∶ List A ] [ bs ∶ List B ] []
+_ = refl
+
+_ : evalT (toTelescope $ [ A ∶ Set ] [ B ∶ Set ] [ R ∶ (A → B → Set) ] [ xs ∶ List A ] [ ys ∶ List B ] []) ≡ T-pointwise
+_ = refl -- ?
 
 not-so-bad : Tel _
 not-so-bad = [ b ∶ if true then Bool else ⊥ ] [] 
