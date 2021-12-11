@@ -65,16 +65,16 @@ zipWith f _        _        = []
 zip : List A → List B → List (A × B)
 zip = zipWith (_,_)
 
-foldr : (A → B → B) → B → List A → B
-foldr c n []       = n
-foldr c n (x ∷ xs) = c x (foldr c n xs)
+foldr : B → (A → B → B) → List A → B
+foldr z c []       = z
+foldr z c (x ∷ xs) = c x (foldr z c xs)
 
-foldl : (A → B → A) → A → List B → A
-foldl c n []       = n
-foldl c n (x ∷ xs) = foldl c (c n x) xs
+foldl : A → (A → B → A) → List B → A
+foldl z c []       = z
+foldl z c (x ∷ xs) = foldl (c z x) c xs
 
 concat : List (List A) → List A
-concat = foldr _++_ []
+concat = foldr [] _++_
 
 concatMap : (A → List B) → List A → List B
 concatMap f = concat ∘ fmap f
@@ -84,10 +84,10 @@ null []       = true
 null (x ∷ xs) = false
 
 and : List Bool → Bool
-and = foldr _∧_ true
+and = foldr true _∧_
 
 or : List Bool → Bool
-or = foldr _∨_ false
+or = foldr false _∨_
 
 any : (A → Bool) → List A → Bool
 any p = or ∘ fmap p
@@ -96,13 +96,13 @@ all : (A → Bool) → List A → Bool
 all p = and ∘ fmap p
 
 sum : List ℕ → ℕ
-sum = foldr _+_ 0
+sum = foldr 0 _+_
 
 product : List ℕ → ℕ
-product = foldr _*_ 1
+product = foldr 1 _*_
 
 length : List A → ℕ
-length = foldr (const suc) 0
+length = foldr 0 (const suc)
 
 elem : ⦃ Eq A ⦄ → A → List A → Bool
 elem x = any (x ==_)
@@ -125,7 +125,7 @@ intersperse x (y ∷ ys) = y ∷ x ∷ intersperse x ys
 -- Operations for reversing lists
 
 reverseAcc : List A → List A → List A
-reverseAcc = foldl (flip _∷_)
+reverseAcc = λ x → foldl x (flip _∷_)
 
 reverse : List A → List A
 reverse = reverseAcc []

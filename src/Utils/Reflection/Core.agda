@@ -79,9 +79,16 @@ pattern vLam x = lam visible x
 pattern hLam x = lam hidden x
 pattern iLam x = lam instance′ x
 
-infixr 10 `λ_↦_
-`λ_↦_ : String → Term → Term
-`λ s ↦ b = vLam (abs s b)
+infixr 10 vλ_↦_ hλ_↦_ iλ_↦_
+
+vλ_↦_ : String → Term → Term
+vλ s ↦ b = vLam (abs s b)
+
+hλ_↦_ : String → Term → Term
+hλ s ↦ b = hLam (abs s b)
+
+iλ_↦_ : String → Term → Term
+iλ s ↦ b = iLam (abs s b)
 
 unArg : Arg A → A
 unArg (arg _ x) = x

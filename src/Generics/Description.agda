@@ -42,7 +42,7 @@ ConBs : Set
 ConBs = List ConB
 
 max-ℓ : List Level → Level
-max-ℓ = foldr _⊔_ lzero
+max-ℓ = foldr lzero _⊔_
 
 maxMap : {A : Set} → (A → Level) → List A → Level
 maxMap f = max-ℓ ∘ map f

@@ -28,5 +28,5 @@ toTelescope (A ∷ T) = do
     return $ (s , vArg `A) ∷ `Γ
 
 fromTelescope : Telescope → TC (Tel ℓ)
-fromTelescope = unquoteTC ∘ to`Tel
-  where to`Tel = foldr (λ { (s , `A) `T → `A `∷ (`λ s ↦ `T) }) `[]
+fromTelescope = unquoteTC ∘ foldr `[] λ where
+    (s , `A) `T → vArg (unArg `A) `∷ (vλ s ↦ `T)
