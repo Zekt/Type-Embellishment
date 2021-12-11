@@ -45,7 +45,7 @@ private
 
 mutual
 
-  showTerms : List (Arg Term) → String
+  showTerms : Args Term → String
   showTerms []             = ""
   showTerms (a@(arg i t) ∷ ts) = visibilityParen (getVisibility a) (showTerm t) <+> showTerms ts
 
@@ -99,11 +99,11 @@ mutual
   showClause (clause tel ps t)      = "[" <+> showTel tel <+> "]" <+> showPatterns ps <+> "→" <+> showTerm t
   showClause (absurd-clause tel ps) = "[" <+> showTel tel <+> "]" <+> showPatterns ps
 
-  showClauses : List Clause → String
+  showClauses : Clauses → String
   showClauses []       = ""
   showClauses (c ∷ cs) = showClause c <+> ";" <+> showClauses cs
 
-  showTel : List (String × Arg Type) → String
+  showTel : Telescope → String
   showTel [] = ""
   showTel ((x , a@(arg i t)) ∷ tel) =
     visibilityParen (getVisibility a) (x <+> ":" <+> showTerm t) <> showTel tel
@@ -111,6 +111,9 @@ mutual
 instance
   ShowTerm : Show Term
   show ⦃ ShowTerm ⦄ = showTerm
+
+  ShowTerms : Show (Args Term)
+  show ⦃ ShowTerms ⦄ = showTerms
   
   ShowSort : Show Sort
   show ⦃ ShowSort ⦄ = showSort
@@ -120,6 +123,9 @@ instance
 
   ShowClause : Show Clause
   show ⦃ ShowClause ⦄ = showClause
+
+  ShowTelescope : Show Telescope
+  show ⦃ ShowTelescope ⦄ = showTel
   
 showDefinition : Definition → String
 showDefinition (function cs)       = "function" <+> braces (showClauses cs)

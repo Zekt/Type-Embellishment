@@ -9,6 +9,7 @@ open import Agda.Builtin.Bool
 
 open import Prelude.Function
 open import Prelude.Functor
+open import Prelude.Coercion
 open import Prelude.Eq
 open import Prelude.Relation.PropositionalEquality
 
@@ -66,3 +67,6 @@ instance
   _==_ ⦃ EqMaybe ⦄ (just x) (just y) = x == y
   _==_ ⦃ EqMaybe ⦄ nothing  nothing  = true
   _==_ ⦃ EqMaybe ⦄ _        _        = false
+
+  toMaybe : Coercion' A (Maybe A)
+  ⇑_ ⦃ toMaybe ⦄ = just

@@ -1,5 +1,6 @@
 {-# OPTIONS --safe #-}
 open import Prelude
+  hiding ([_,_])
 
 module Utils.Reflection.Core where
 open import Agda.Builtin.Reflection as Builtin
@@ -15,7 +16,14 @@ private variable
   A B : Set _
 
 -- Types
-  
+{-  
+record Code (A : Set ℓ) : Set ℓ where
+  constructor _,_
+  field
+    val : A
+    code  : Term 
+open Code
+-}
 Clauses   = List Clause
 Telescope = List (String × Arg Type)
 Context   = List (Arg Type)
@@ -38,11 +46,16 @@ pattern `Set! = agda-sort unknown
 `List : Name
 `List = quote List
 
-pattern default-modality = modality relevant quantity-ω
+pattern relevant-ω         = modality relevant quantity-ω
+pattern relevant-erased    = modality relevant quantity-0
+pattern visible-relevant-ω = arg-info visible relevant-ω
+pattern hidden-relevant-ω  = arg-info hidden relevant-ω
+pattern visible-relevant-erased = arg-info visible relevant-erased
+pattern hidden-relevant-erased  = arg-info hidden relevant-erased
 
-pattern vArg x = arg (arg-info visible default-modality) x
-pattern hArg x = arg (arg-info hidden default-modality) x
-pattern iArg x = arg (arg-info instance′ default-modality) x
+pattern vArg x = arg (arg-info visible relevant-ω) x
+pattern hArg x = arg (arg-info hidden  relevant-ω) x
+pattern iArg x = arg (arg-info instance′ relevant-ω) x
 
 pattern var₀ x         = var x []
 pattern var₁ x a       = var x (vArg a ∷ [])
@@ -66,8 +79,9 @@ pattern vLam x = lam visible x
 pattern hLam x = lam hidden x
 pattern iLam x = lam instance′ x
 
-`λ_ : Term → Term
-`λ b = vLam (abs "_" b)
+infixr 10 `λ_↦_
+`λ_↦_ : String → Term → Term
+`λ s ↦ b = vLam (abs s b)
 
 unArg : Arg A → A
 unArg (arg _ x) = x
@@ -90,6 +104,19 @@ getQuantity (arg (arg-info _ (modality _ q)) _) = q
 isVisible : Arg A → Bool
 isVisible (arg (arg-info visible _) _) = true
 isVisible _ = false
+
+private
+  -- Assumption: The argument is a valid type.
+  tyToCxt : Type → Telescope × Type
+  tyToCxt (pi a (abs s b)) = let T , A = tyToCxt b in (s , a) ∷ T , A
+  tyToCxt t                = [] , t
+
+instance
+  TelescopeToContext : Coercion' Telescope Context
+  ⇑_ ⦃ TelescopeToContext ⦄ = map snd
+
+  TypeToTelescope : Coercion' Type (Telescope × Type)
+  ⇑_ ⦃ TypeToTelescope ⦄ = tyToCxt
 
 instance
   FunctorArg : Functor Arg
@@ -174,26 +201,19 @@ macro
   evalT : ∀ {a} {A : Set a} → TC A → Tactic
   evalT = evalTC
 
--- 
 -- Typed version of extendContext
 extendContextT : ArgInfo → (B : Set ℓ)
   → (Type → B → TC A) → TC A
 extendContextT i B f = do
-  `B ← quoteTC B
+  `B ← normalise =<< quoteTC B
   extendContext (arg i `B) do
     x ← unquoteTC {A = B} (var₀ 0)
     f `B x
 
-getConType : Name → TC Type
-getConType n = do
-  data-cons _ ← getDefinition n
-    where _ → typeError [ strErr (primShowQName n <> " is not a constructor.") ]
-  `type ← inferType (con n [])
-  return `type
+getDefType : Name → TC Type
+getDefType n = caseM getDefinition n of λ where
+    (data-cons d) → inferType $ con n []
+    _             → inferType $ def n []
 
-getDataType : Name → TC (ℕ × Type)
-getDataType n = do
-  data-type pars cs  ← getDefinition n
-    where _ → typeError [ strErr (primShowQName n <> " is not a datatype.") ]
-  `type ← inferType (def n [])
-  return $ pars , `type
+IMPOSSIBLE : TC A
+IMPOSSIBLE = typeError [ strErr "An impossible event happens." ]

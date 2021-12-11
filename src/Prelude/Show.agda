@@ -32,16 +32,3 @@ instance
   
   ShowWord64 : Show Word64
   show {{ ShowWord64 }} x = primShowNat (primWord64ToNat x)
-
---  ShowTerm : Show Term
---  show {{ ShowTerm }} = showTerm
-
---  ShowTerms : Show (List (Arg Term))
---  show {{ ShowTerms }} = showTerms
-
---  ShowTel : Show (List (Σ String λ _ → Arg Type))
---  show {{ ShowTel }} = showTel
-
---  ShowClauses : Show _
---  show {{ ShowClauses }} = showClauses
-  

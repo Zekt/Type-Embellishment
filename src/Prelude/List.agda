@@ -153,9 +153,6 @@ eq _        _        = false
 instance
   open import Agda.Builtin.String
     using (primStringAppend)
-  ShowList : ⦃ Show A ⦄ → Show (List A)
-  show ⦃ ShowList ⦄ =
-    foldr (λ x xs → primStringAppend (show x) (primStringAppend " ∷ " xs)) "[]"
 
   EqList : ∀ {a} {A : Set a} ⦃ _ : Eq A ⦄
     → Eq (List A)

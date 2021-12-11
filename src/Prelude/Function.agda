@@ -19,6 +19,11 @@ id x = x
 const : A → (B → A)
 const a = λ _ → a
 
+infix -10 idFun 
+idFun : (A : Set a) → A → A
+idFun A x = x
+
+syntax idFun A x = x of A
 
 flip : ∀ {A : Set a} {B : Set b} {C : A → B → Set c} →
        ((x : A) (y : B) → C x y) → ((y : B) (x : A) → C x y)
