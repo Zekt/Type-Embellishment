@@ -6,12 +6,13 @@ open import Prelude
 open import Prelude.List as List
 open import Generics.Safe.Description
 open import Generics.Safe.Algebra
+open import Generics.Safe.Ornament
 open import Generics.Safe.Ornament.Description
 open Generics.Safe.Ornament.Description.ODFunctor
 
 private variable
-  rb : RecB
-  cb : ConB
+  rb  : RecB
+  cb  : ConB
   cbs : ConBs
 
 algODʳ : {I : Set ℓⁱ} (D : RecD I rb)
@@ -39,12 +40,12 @@ algODᶜˢ (D ∷ Ds) X f = algODᶜ  D  X (λ xs → f (inl xs))
 
 algODᵖᵈ : (D : PDataD) (X : Carrierᵖᵈ D ℓ) → Algᵖᵈ D X → PDataOD D
 algODᵖᵈ {ℓ} D X f = record
-  { dlevel  = PDataD.dlevel D ⊔ ℓ
+  { dlevel  = PDataD.dlevel D
   ; level-pre-fixed-point = pfp (PDataD.ilevel D) (PDataD.dlevel D) (PDataD.struct D)
                                 (PDataD.level-pre-fixed-point D)
   ; ParamOD = ε
   ; IndexOD = λ p → ▷ ε (X p)
-  ; applyP  = λ p → imapᶜˢ snocᵗ-inj (fst ∘ snocᵗ-proj) (cong fst ∘ snocᵗ-proj-inj)
+  ; applyP  = λ p → imapODᶜˢ snocᵗ-inj (fst ∘ snocᵗ-proj) (cong fst ∘ snocᵗ-proj-inj)
                       (algODᶜˢ (PDataD.applyP D p) (X p) f)
   }
   where
@@ -72,21 +73,21 @@ algODᵖᵈ {ℓ} D X f = record
           hasCon? ℓⁱ cbs ⊔ ℓᵈ ⊔ ℓⁱ ≡ ℓᵈ ⊔ ℓⁱ
         → maxMap max-π (List.map (algConB ℓ) cbs) ⊔
           maxMap max-σ (List.map (algConB ℓ) cbs) ⊔
-          maxMap (hasRec? (ℓᵈ ⊔ ℓ ⊔ ℓⁱ)) (List.map (algConB ℓ) cbs) ⊔
-          hasCon? (ℓⁱ ⊔ ℓ) (List.map (algConB ℓ) cbs) ⊔ ℓᵈ ⊔ ℓ ⊔ ℓⁱ ≡ ℓᵈ ⊔ ℓ ⊔ ℓⁱ
+          maxMap (hasRec? (ℓᵈ ⊔ ℓⁱ ⊔ ℓ)) (List.map (algConB ℓ) cbs) ⊔
+          hasCon? (ℓⁱ ⊔ ℓ) (List.map (algConB ℓ) cbs) ⊔ ℓᵈ ⊔ ℓⁱ ⊔ ℓ ≡ ℓᵈ ⊔ ℓⁱ ⊔ ℓ
     pfp ℓⁱ ℓᵈ cbs pfp' =
       begin
         maxMap max-π (List.map (algConB ℓ) cbs) ⊔
         maxMap max-σ (List.map (algConB ℓ) cbs) ⊔
-        maxMap (hasRec? (ℓᵈ ⊔ ℓ ⊔ ℓⁱ)) (List.map (algConB ℓ) cbs) ⊔
-        hasCon? (ℓⁱ ⊔ ℓ) (List.map (algConB ℓ) cbs) ⊔ ℓᵈ ⊔ ℓ ⊔ ℓⁱ
+        maxMap (hasRec? (ℓᵈ ⊔ ℓⁱ ⊔ ℓ)) (List.map (algConB ℓ) cbs) ⊔
+        hasCon? (ℓⁱ ⊔ ℓ) (List.map (algConB ℓ) cbs) ⊔ ℓᵈ ⊔ ℓⁱ ⊔ ℓ
           ≡⟨ -- eliminating algConB; boundedness of level-conditionals
             (let cbs' = List.map (algConB ℓ) cbs
              in  cong₂ _⊔_ (cong₂ _⊔_ (cong₂ _⊔_
                 (algConB-lemma₁ cbs)
                 (algConB-lemma₃ cbs))
-                (maxMap-bound (hasRec? (ℓᵈ ⊔ ℓ ⊔ ℓⁱ)) _
-                              (hasRec?-bound (ℓᵈ ⊔ ℓ ⊔ ℓⁱ)) cbs'))
+                (maxMap-bound (hasRec? (ℓᵈ ⊔ ℓⁱ ⊔ ℓ)) _
+                              (hasRec?-bound (ℓᵈ ⊔ ℓⁱ ⊔ ℓ)) cbs'))
                 (hasCon?-bound (ℓⁱ ⊔ ℓ) cbs')) ⟩
         maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓ) cbs ⊔ ℓᵈ ⊔ ℓ ⊔ ℓⁱ
           ≡⟨ -- boundedness of level-conditionals
@@ -95,17 +96,57 @@ algODᵖᵈ {ℓ} D X f = record
             (sym (maxMap-bound (hasRec? (ℓᵈ ⊔ ℓⁱ)) _ (hasRec?-bound (ℓᵈ ⊔ ℓⁱ)) cbs)))
             (sym (hasCon?-bound ℓⁱ cbs))) ⟩
         maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? (ℓᵈ ⊔ ℓⁱ)) cbs ⊔
-        hasCon? ℓⁱ cbs ⊔ ℓᵈ ⊔ ℓ ⊔ ℓⁱ
+        hasCon? ℓⁱ cbs ⊔ ℓᵈ ⊔ ℓⁱ ⊔ ℓ
           ≡⟨ cong (ℓ ⊔_) pfp' ⟩
-        ℓᵈ ⊔ ℓ ⊔ ℓⁱ
+        ℓᵈ ⊔ ℓⁱ ⊔ ℓ
       ∎ where open ≡-Reasoning
 
 algODᵈ : (D : DataD) {ℓf : DataD.Levels D → Level} (X : Carrierᵈ D ℓf)
        → Algᵈ D X → DataOD D
 algODᵈ D X f = record
   { #levels = DataD.#levels D
-  ; levels  = id
+  ; LevelO  = ε
   ; applyL  = λ ℓs → algODᵖᵈ (DataD.applyL D ℓs) (X ℓs) f }
 
 algOD : (D : DataD) → Alg D → DataOD D
 algOD D alg = algODᵈ D (Alg.Carrier alg) (Alg.apply alg)
+
+algExpandʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓ}
+             {P : Σ I X → Set ℓ'} → (∀ ix → P ix)
+           → (xs : ⟦ D ⟧ʳ X) → ⟦ ⌊ algODʳ D X xs ⌋ʳ ⟧ʳ P
+algExpandʳ (ι i  ) Pt x  = Pt (i , x)
+algExpandʳ (π A D) Pt xs = λ a → algExpandʳ (D a) Pt (xs a)
+
+algExpandᶜ : {I : Set ℓⁱ} (D : ConD I cb) {X : Carrierᶜ D ℓ} (f : Algᶜ D X)
+             {P : Σ I X → Set ℓ'} → (∀ ix → P ix)
+           → ∀ {i} (xs : ⟦ D ⟧ᶜ X i) → ⟦ ⌊ algODᶜ D X f ⌋ᶜ ⟧ᶜ P (i , f xs)
+algExpandᶜ (ι i  ) f Pt refl       = refl
+algExpandᶜ (σ A D) f Pt (a , xs)   = a , algExpandᶜ (D a) (curry f a) Pt xs
+algExpandᶜ (ρ D E) f Pt (xs , xs') = xs , algExpandʳ D Pt xs ,
+                                     algExpandᶜ E (curry f xs) Pt xs'
+
+algExpandᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {X : Carrierᶜˢ D ℓ} (f : Algᶜˢ D X)
+              {P : Σ I X → Set ℓ'} → (∀ ix → P ix)
+            → ∀ {i} (xs : ⟦ D ⟧ᶜˢ X i) → ⟦ ⌊ algODᶜˢ D X f ⌋ᶜˢ ⟧ᶜˢ P (i , f xs)
+algExpandᶜˢ (D ∷ Ds) f Pt (inl xs) = inl (algExpandᶜ  D  (f ∘ inl) Pt xs)
+algExpandᶜˢ (D ∷ Ds) f Pt (inr xs) = inr (algExpandᶜˢ Ds (f ∘ inr) Pt xs)
+
+algExpandTypeᵖᵈ : (D : PDataD) {X : Carrierᵖᵈ D ℓ} (f : Algᵖᵈ D X) → Set _
+algExpandTypeᵖᵈ D {X} f = ∀ {p} {P : ⟦ snocᵗ (PDataD.Index D p) (X p) ⟧ᵗ
+                                   → Set (PDataD.dlevel D ⊔ PDataD.ilevel D)}
+                        → (∀ ix → P ix)
+                        → ∀ {i} (xs : ⟦ D ⟧ᵖᵈ p (X p) i)
+                        → ⟦ ⌊ algODᵖᵈ D X f ⌋ᵖᵈ ⟧ᵖᵈ p P (snocᵗ-inj (i , f xs))
+
+algExpandᵖᵈ : (D : PDataD) {X : Carrierᵖᵈ D ℓ} (f : Algᵖᵈ D X) → algExpandTypeᵖᵈ D f
+algExpandᵖᵈ D f {p} Pt xs =
+  imapOD-injᶜˢ (algODᶜˢ (PDataD.applyP D p) _ f)
+    (algExpandᶜˢ (PDataD.applyP D p) f (Pt ∘ snocᵗ-inj) xs)
+
+algExpandᵈ : (D : DataD) {ℓf : DataD.Levels D → Level} {X : Carrierᵈ D ℓf} (f : Algᵈ D X)
+           → ∀ {ℓs} → algExpandTypeᵖᵈ (DataD.applyL D ℓs) f
+algExpandᵈ D f {ℓs} = algExpandᵖᵈ (DataD.applyL D ℓs) f
+
+algExpand : (D : DataD) (alg : Alg D)
+          → ∀ {ℓs} → algExpandTypeᵖᵈ (DataD.applyL D ℓs) (Alg.apply alg)
+algExpand D alg = algExpandᵈ D (Alg.apply alg)

@@ -182,8 +182,8 @@ fmapᵖᵈ : (D : PDataD)  (p : ⟦ PDataD.Param D ⟧ᵗ) → let I = ⟦ PData
        → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵖᵈ p X i → ⟦ D ⟧ᵖᵈ p Y i
 fmapᵖᵈ D p = fmapᶜˢ (PDataD.applyP D p)
 
-fmapᵈ : (D : DataD) (ℓs : DataD.Levels D) → let Dᵐ = DataD.applyL D ℓs in
-        (p : ⟦ PDataD.Param Dᵐ ⟧ᵗ) → let I = ⟦ PDataD.Index Dᵐ p ⟧ᵗ in
+fmapᵈ : (D : DataD) (ℓs : DataD.Levels D) → let Dᵖ = DataD.applyL D ℓs in
+        (p : ⟦ PDataD.Param Dᵖ ⟧ᵗ) → let I = ⟦ PDataD.Index Dᵖ p ⟧ᵗ in
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈ ℓs p X i → ⟦ D ⟧ᵈ ℓs p Y i
 fmapᵈ D ℓs = fmapᵖᵈ (DataD.applyL D ℓs)

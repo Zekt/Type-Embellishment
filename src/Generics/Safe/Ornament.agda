@@ -7,9 +7,22 @@ open import Generics.Safe.Description
 
 private variable
   A : Set ℓ
+  m n : ℕ
   rb  rb'  : RecB
   cb  cb'  : ConB
   cbs cbs' : ConBs
+
+data #O (A : Set) : ℕ → ℕ → Set where
+  ε : #O A n n
+  κ :     (O : A → #O A m n) → #O A (suc m) (suc n)
+  Δ :     (O : A → #O A m n) → #O A (suc m)      n
+  ∇ : (a : A) (O : #O A m n) → #O A      m  (suc n)
+
+erase# : {A : Set} → #O A m n → A ^ m → A ^ n
+erase#  ε      as       = as
+erase# (κ   O) (a , as) = a , erase# (O a) as
+erase# (Δ   O) (a , as) =     erase# (O a) as
+erase# (∇ a O) as       = a , erase#  O    as
 
 data TelO : Tel ℓ → Tel ℓ' → Setω where
   ε  : {T : Tel ℓ} → TelO T T
@@ -90,9 +103,9 @@ record PDataO (D E : PDataD) : Setω where
 
 record DataO (D E : DataD) : Setω where
   field
-    levels : DataD.Levels D → DataD.Levels E
+    LevelO : #O Level (DataD.#levels D) (DataD.#levels E)
     applyL : (ℓs : DataD.Levels D)
-           → PDataO (DataD.applyL D ℓs) (DataD.applyL E (levels ℓs))
+           → PDataO (DataD.applyL D ℓs) (DataD.applyL E (erase# LevelO ℓs))
 
 eraseᵖᵈ : {D E : PDataD} (O : PDataO D E) {p : ⟦ PDataD.Param D ⟧ᵗ}
         → let q = eraseᵗ (PDataO.ParamO O) p; index = eraseᵗ (PDataO.IndexO O p) in
@@ -101,7 +114,7 @@ eraseᵖᵈ : {D E : PDataD} (O : PDataO D E) {p : ⟦ PDataD.Param D ⟧ᵗ}
 eraseᵖᵈ O {p} = eraseᶜˢ (PDataO.applyP O p)
 
 eraseᵈ : {D E : DataD} (O : DataO D E) {ℓs : DataD.Levels D}
-       → let ℓs' = DataO.levels O ℓs
+       → let ℓs' = erase# (DataO.LevelO O) ℓs
              Dᵖ  = DataD.applyL D ℓs
              Eᵖ  = DataD.applyL E ℓs'
              Oᵖ  = DataO.applyL O ℓs in
