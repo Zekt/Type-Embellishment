@@ -79,6 +79,15 @@ pattern vLam x = lam visible x
 pattern hLam x = lam hidden x
 pattern iLam x = lam instance′ x
 
+pattern Π[_∶_]_ s a ty  = pi a (abs s ty)
+pattern Π[_]_ a ty      = Π[ "" ∶ a ] ty
+pattern vΠ[_∶_]_ s a ty = Π[ s ∶ (vArg a) ] ty
+pattern hΠ[_∶_]_ s a ty = Π[ s ∶ (hArg a) ] ty
+pattern iΠ[_∶_]_ s a ty = Π[ s ∶ (iArg a) ] ty
+pattern vΠ[_]_ a ty     = Π[ vArg a ] ty
+pattern hΠ[_]_ a ty     = Π[ hArg a ] ty
+pattern iΠ[_]_ a ty     = Π[ iArg a ] ty
+
 infixr 20 `vλ_`→_ `hλ_`→_ `iλ_`→_
 
 `vλ_`→_ : String → Term → Term
