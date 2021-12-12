@@ -11,7 +11,7 @@ infixr 9 _∘_ -- _∘₂_
 --infixl 8 _ˢ_
 --infixl 0 _|>_
 infix  0 case_of_ case_return_of_
-infixr -20 _$_
+infixr -100 _$_
 
 id : A → A
 id x = x

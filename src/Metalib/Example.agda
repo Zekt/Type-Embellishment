@@ -1,27 +1,58 @@
+{-# OPTIONS -v meta:10  #-}
 open import Prelude
+  hiding ([_,_])
 
 module Metalib.Example where
 
 open import Utils.Reflection
 
 open import Generics.Description
-open import Metalib.Inductive-ConsTel 
+open import Generics.Example
+
+open import Metalib.Telescope
+
+------------------------------------------------------------------------------
+-- 
+`T-Nat : Telescope × Type
+`T-Nat = ⇑ getTelescopeT ℕ
+
+_ : evalT (fromTelescope $ fst `T-Nat) ≡ Tel.[]
+_ = refl
+
+_ : evalT(toTelescope $ []) ≡ fst `T-Nat
+_ = refl
+
+------------------------------------------------------------------------------
+-- Level-polymorphic telescope
+
+`T-List : Telescope × Type
+`T-List = ⇑ getTelescopeT List
+
+T-List : Tel 0ℓ
+T-List = {! evalT (fromTelescope $ fst `T-List) !}
+
+------------------------------------------------------------------------------
+-- 
 
 data Rel (A : Set) : (xs ys : List A) → Set where
   
-`T-rel : Telescope
-`T-rel = fst $ ⇑ evalT (getDefType (quote Rel))
+`T-rel : Telescope × Type
+`T-rel = ⇑ getTelescopeT Rel
 
-_ : evalT (fromTelescope `T-rel) ≡ [ B ∶ Set ] [ bs ∶ List B ] [ bs ∶ List B ] []
+_ : evalT (fromTelescope $ fst `T-rel) ≡ [ B ∶ Set ] [ bs ∶ List B ] [ bs ∶ List B ] []
 _ = refl
 
-_ : evalT (toTelescope $ [ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] []) ≡ `T-rel
+_ : evalT (toTelescope $ [ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] []) ≡ fst `T-rel
 _ = refl
+
+
+------------------------------------------------------------------------------
+-- 
 
 data Pointwise (A : Set) (B : Set) (R : A → B → Set) : (xs : List A) → (ys : List B) → Set where 
 
 T-pointwise : Telescope
-T-pointwise = fst $ ⇑ evalT (getDefType (quote Pointwise))
+T-pointwise = fst $ ⇑ getTelescopeT Pointwise 
 
 _ : evalT (fromTelescope T-pointwise)
   ≡ [ A ∶ Set ] [ B ∶ Set ] [ R ∶ (A → B → Set) ] [ as ∶ List A ] [ bs ∶ List B ] []
@@ -30,18 +61,28 @@ _ = refl
 _ : evalT (toTelescope $ [ A ∶ Set ] [ B ∶ Set ] [ R ∶ (A → B → Set) ] [ xs ∶ List A ] [ ys ∶ List B ] []) ≡ T-pointwise
 _ = refl
 
-not-so-bad : Tel _
-not-so-bad = [ b ∶ if true then Bool else ⊥ ] [] 
+-- Okay but unusual examples
+sort-is-not-normal : Tel _
+sort-is-not-normal = [ b ∶ if true then Bool else ⊥ ] [] 
 
-`not-so-bad : Telescope
-`not-so-bad = evalT (toTelescope not-so-bad)
+`sort-is-not-normal : Telescope
+`sort-is-not-normal = evalT (toTelescope sort-is-not-normal)
 
-_ : not-so-bad ≡ [ b ∶ Bool ] []
+_ : sort-is-not-normal ≡ [ b ∶ Bool ] []
 _ = refl
 
-_ : `not-so-bad ≢ evalT (toTelescope ([ b ∶ Bool ] []))
+_ : `sort-is-not-normal ≢ evalT (toTelescope ([ b ∶ Bool ] []))
 _ = λ { () }
 
-_ : Set
-_ = evalT (unquoteTC (quoteTerm (if true then Bool else ⊥)))
+ex₁ : Bool → Tel _
+ex₁ = λ b → []
 
+`ex₁ : Telescope
+`ex₁ =  evalT (toTelescope $ Bool ∷ ex₁) 
+
+-- Not really a telescope: 
+bad : Tel _
+bad = [ b ∶ Bool ] (case b of λ { true → [ n ∶ ℕ ] [] ; false → [] })
+
+_ : Telescope
+_ = {!evalT (toTelescope bad)!} -- when ?

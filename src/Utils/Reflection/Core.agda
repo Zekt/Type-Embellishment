@@ -79,16 +79,16 @@ pattern vLam x = lam visible x
 pattern hLam x = lam hidden x
 pattern iLam x = lam instance′ x
 
-infixr 10 vλ_↦_ hλ_↦_ iλ_↦_
+infixr 20 `vλ_`→_ `hλ_`→_ `iλ_`→_
 
-vλ_↦_ : String → Term → Term
-vλ s ↦ b = vLam (abs s b)
+`vλ_`→_ : String → Term → Term
+`vλ s `→ b = vLam (abs s b)
 
-hλ_↦_ : String → Term → Term
-hλ s ↦ b = hLam (abs s b)
+`hλ_`→_ : String → Term → Term
+`hλ s `→ b = hLam (abs s b)
 
-iλ_↦_ : String → Term → Term
-iλ s ↦ b = iLam (abs s b)
+`iλ_`→_ : String → Term → Term
+`iλ s `→ b = iLam (abs s b)
 
 unArg : Arg A → A
 unArg (arg _ x) = x
@@ -179,7 +179,10 @@ define! a cs = do
   return f
 
 quoteTC! : A → TC Term
-quoteTC! a = quoteTC a >>= normalise
+quoteTC! a = quoteTC a >>= reduce
+
+quoteTC!! : A → TC Term
+quoteTC!! a = quoteTC a >>= normalise
 
 newMeta : Type → TC Term
 newMeta = checkType unknown
@@ -222,5 +225,5 @@ getDefType n = caseM getDefinition n of λ where
     (data-cons d) → inferType $ con n []
     _             → inferType $ def n []
 
-IMPOSSIBLE : TC A
-IMPOSSIBLE = typeError [ strErr "An impossible event happens." ]
+IMPOSSIBLE : Term → TC A
+IMPOSSIBLE t = typeError $ termErr t ∷ [ strErr " should not occur." ]
