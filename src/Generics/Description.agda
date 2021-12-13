@@ -1,4 +1,4 @@
-open import Prelude
+open import Prelude hiding (_++_)
 
 module Generics.Description where
 
@@ -19,6 +19,10 @@ syntax ∷-syntax A (λ x → T) = [ x ∶ A ] T
 ⟦_⟧ᵗ : Tel ℓ → Set ℓ
 ⟦ []    ⟧ᵗ = ⊤
 ⟦ A ∷ T ⟧ᵗ = Σ A λ a → ⟦ T a ⟧ᵗ
+
+_++_ : (tel : Tel ℓ) → (⟦ tel ⟧ᵗ → Tel ℓ') → Tel (ℓ ⊔ ℓ')
+_++_ [] tel' = tel' tt
+_++_ (A ∷ tel) tel' = A ∷ λ a → (tel a) ++ λ ⟦tel⟧ → tel' (a , ⟦tel⟧)
 
 Curried : ∀ {ℓ ℓ'} → (T : Tel ℓ) → (⟦ T ⟧ᵗ → Set ℓ') → Set (ℓ ⊔ ℓ')
 Curried []      X = X tt

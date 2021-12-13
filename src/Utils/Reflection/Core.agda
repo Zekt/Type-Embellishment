@@ -1,6 +1,6 @@
 {-# OPTIONS --safe #-}
 open import Prelude
-  hiding ([_,_])
+  hiding ([_,_]; _++_)
 
 module Utils.Reflection.Core where
 open import Agda.Builtin.Reflection as Builtin
@@ -236,3 +236,8 @@ getDefType n = caseM getDefinition n of λ where
 
 IMPOSSIBLE : Term → TC A
 IMPOSSIBLE t = typeError $ termErr t ∷ [ strErr " should not occur." ]
+
+-- append pi types and discard the last term in t₁
+_++_ : Term → Term → Term
+_++_ (pi a (abs _ b)) t₂ = pi a (abs "" (b ++ t₂))
+_++_ _ t₂ = t₂
