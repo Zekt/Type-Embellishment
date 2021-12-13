@@ -10,6 +10,7 @@ open import Generics.Description
 open import Generics.Example
 
 open import Metalib.Telescope
+open import Metalib.Datatype
 
 ------------------------------------------------------------------------------
 -- 
@@ -86,3 +87,37 @@ bad = [ b ∶ Bool ] (case b of λ { true → [ n ∶ ℕ ] [] ; false → [] })
 
 _ : Telescope
 _ = {!evalT (toTelescope bad)!} -- when ?
+
+--fromData' : Name → List Name → DataD → TC (ℕ × Type × List Type)
+--fromData' n cs record { #levels = #levels ; Desc = Desc } = {!!}
+--
+--toData : Name → TC (DataD)
+--
+data Len (A : Set) : List A → List A → Set where
+  z : Len A [] []
+  s : ∀ {x y xs ys} → Len A xs ys → Len A (x ∷ xs) (y ∷ ys)
+
+LenD : PDataD
+LenD = record
+         { level = lzero
+         ; level-pre-fixed-point = refl
+         ; Param = Set lzero ∷ const []
+         ; Index = λ p → let (A , tt) = p
+                          in List A ∷ λ _ → List A ∷ const []
+         ; applyP = λ p → let (A , tt) = p
+                          in ι ([] , [] , tt) ∷
+                             (σ A λ x →
+                             σ A λ y →
+                             σ (List A) λ xs →
+                             σ (List A) λ ys →
+                             ρ (ι (xs , ys , tt))
+                             (ι (x ∷ xs , (y ∷ ys) , tt))) ∷ []
+         }
+
+defineLen : Name → List Name → TC _
+defineLen n cs = defineDataByDescription n cs LenD
+
+{--
+unquoteDecl data newLen constructor newz news =
+  defineLen newLen (newz ∷ news ∷ []) >> return tt
+--}

@@ -7,9 +7,9 @@ open import Generics.Description as Desc
 
 open import Metalib.Telescope as Tel
 
-CxtToPi : Level → Context → TC Term
-CxtToPi ℓ [] = quoteTC! (Set ℓ)
-CxtToPi ℓ (x ∷ cxt') = pi x ∘ abs "" <$> CxtToPi ℓ cxt'
+telescopeToType : Level → Telescope → TC Term
+telescopeToType ℓ [] = quoteTC! (Set ℓ)
+telescopeToType ℓ ((s , x) ∷ tel) = pi x ∘ abs s <$> telescopeToType ℓ tel
 
 idxToArgs : {tel : Tel ℓ} → ⟦ tel ⟧ᵗ → TC Context
 idxToArgs {tel = []} tt = return []
@@ -78,10 +78,8 @@ defineDataByDescription
          ; Param = Param
          ; Index = Index
          ; applyP = Desc } = do
-  parTel ← toTelescope Param
-  parType ← CxtToPi level (⇑ parTel)
-  dataTypeTel ← toTelescope (Param Desc.++ Index)
-  dataType ← CxtToPi level (⇑ dataTypeTel)
+  parType ← telescopeToType level =<< toTelescope Param
+  dataType ← telescopeToType level =<< toTelescope (Param Desc.++ Index)
   parLen ← Tel.length Param
   aux Param $ λ ⟦par⟧ → do
     conTypes ← ConDsToTypes dataName parLen 0 (Desc ⟦par⟧)
