@@ -14,9 +14,9 @@ open import Metalib.Telescope
 ------------------------------------------------------------------------------
 -- 
 `T-Nat : Telescope × Type
-`T-Nat = ⇑ getTelescopeT ℕ
+`T-Nat = getTelescopeT ℕ
 
-_ : evalT (fromTelescope $ fst `T-Nat) ≡ Tel.[]
+_ : evalT (fromTelescope $ fst `T-Nat) ≡ []
 _ = refl
 
 _ : evalT(toTelescope $ []) ≡ fst `T-Nat
@@ -26,10 +26,10 @@ _ = refl
 -- Level-polymorphic telescope
 
 `T-List : Telescope × Type
-`T-List = ⇑ getTelescopeT List
+`T-List = getTelescopeT List
 
 T-List : Tel 0ℓ
-T-List = {! evalT (fromTelescope $ fst `T-List) !}
+T-List = {! !}
 
 ------------------------------------------------------------------------------
 -- 
@@ -37,12 +37,12 @@ T-List = {! evalT (fromTelescope $ fst `T-List) !}
 data Rel (A : Set) : (xs ys : List A) → Set where
   
 `T-rel : Telescope × Type
-`T-rel = ⇑ getTelescopeT Rel
+`T-rel = getTelescopeT Rel
 
 _ : evalT (fromTelescope $ fst `T-rel) ≡ [ B ∶ Set ] [ bs ∶ List B ] [ bs ∶ List B ] []
 _ = refl
 
-_ : evalT (toTelescope $ [ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] []) ≡ fst `T-rel
+_ : evalT (toTelescope $ [ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] []) ≡ {!!} -- fst `T-rel
 _ = refl
 
 
@@ -52,7 +52,7 @@ _ = refl
 data Pointwise (A : Set) (B : Set) (R : A → B → Set) : (xs : List A) → (ys : List B) → Set where 
 
 T-pointwise : Telescope
-T-pointwise = fst $ ⇑ getTelescopeT Pointwise 
+T-pointwise = fst $ getTelescopeT Pointwise 
 
 _ : evalT (fromTelescope T-pointwise)
   ≡ [ A ∶ Set ] [ B ∶ Set ] [ R ∶ (A → B → Set) ] [ as ∶ List A ] [ bs ∶ List B ] []

@@ -19,7 +19,7 @@ t `∷ u = con (quote Tel._∷_) (vArg t ∷ vArg u ∷ [])
 --
 toTelescope : Tel ℓ → TC Telescope
 toTelescope []      = return []
-toTelescope (A ∷ T) = caseM withNormalisation true (quoteTC T) of λ where
+toTelescope (A ∷ T) = caseM (quoteTC! T) of λ where
   (lam v (abs s _)) → extendContextT (visible-relevant-ω) A λ `A x → do
     `Γ ← toTelescope (T x)
     return $ (s , vArg `A) ∷ `Γ
@@ -28,10 +28,6 @@ toTelescope (A ∷ T) = caseM withNormalisation true (quoteTC T) of λ where
 fromTelescope : Telescope → TC (Tel ℓ)
 fromTelescope = unquoteTC ∘ foldr `[] λ where
     (s , arg _ `A) `T → `A `∷ (`vλ s `→ `T)
-
-macro
-  getTelescopeT : Name → Tactic
-  getTelescopeT s = evalTC $ getDefType s
 
 length : Tel ℓ → TC ℕ
 length [] = return 0

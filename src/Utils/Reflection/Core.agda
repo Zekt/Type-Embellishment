@@ -188,10 +188,7 @@ define! a cs = do
   return f
 
 quoteTC! : A → TC Term
-quoteTC! a = quoteTC a >>= reduce
-
-quoteTC!! : A → TC Term
-quoteTC!! a = quoteTC a >>= normalise
+quoteTC! a = withNormalisation true (quoteTC a)
 
 newMeta : Type → TC Term
 newMeta = checkType unknown
@@ -233,6 +230,13 @@ getDefType : Name → TC Type
 getDefType n = caseM getDefinition n of λ where
     (data-cons d) → inferType $ con n []
     _             → inferType $ def n []
+
+getTelescope : Name → TC (Telescope × Type)
+getTelescope s = ⦇ ⇑ (getDefType s) ⦈
+
+macro
+  getTelescopeT : Name → Tactic
+  getTelescopeT s = evalTC $ getTelescope s
 
 IMPOSSIBLE : Term → TC A
 IMPOSSIBLE t = typeError $ termErr t ∷ [ strErr " should not occur." ]
