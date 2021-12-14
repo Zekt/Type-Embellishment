@@ -40,3 +40,6 @@ record Alg (D : DataD) : Setω where
     {flevel} : DataD.Levels D → Level
     Carrier  : Carrierᵈ D flevel
     apply    : Algᵈ D Carrier
+
+Coalgᵈ : (D : DataD) {ℓf : DataD.Levels D → Level} → Carrierᵈ D ℓf → Setω
+Coalgᵈ D X = ∀ {ℓs p i} → X ℓs p i → ⟦ D ⟧ᵈ ℓs p (X ℓs p) i

@@ -187,18 +187,3 @@ fmapᵈ : (D : DataD) (ℓs : DataD.Levels D) → let Dᵖ = DataD.applyL D ℓs
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈ ℓs p X i → ⟦ D ⟧ᵈ ℓs p Y i
 fmapᵈ D ℓs = fmapᵖᵈ (DataD.applyL D ℓs)
-
-module DFunctor {I : Set ℓⁱ} {J : Set ℓʲ} (f : I → J) where
-
-  imapʳ : RecD I rb → RecD J rb
-  imapʳ (ι i  ) = ι (f i)
-  imapʳ (π A D) = π A λ a → imapʳ (D a)
-
-  imapᶜ : ConD I cb → ConD J cb
-  imapᶜ (ι i  ) = ι (f i)
-  imapᶜ (σ A D) = σ A λ a → imapᶜ (D a)
-  imapᶜ (ρ D E) = ρ (imapʳ D) (imapᶜ E)
-
-  imapᶜˢ : ConDs I cbs → ConDs J cbs
-  imapᶜˢ []       = []
-  imapᶜˢ (D ∷ Ds) = imapᶜ D ∷ imapᶜˢ Ds
