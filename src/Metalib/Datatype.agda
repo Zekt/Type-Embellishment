@@ -7,9 +7,9 @@ open import Generics.Description as Desc
 
 open import Metalib.Telescope as Tel
 
-telescopeToType : Level → Telescope → TC Term
-telescopeToType ℓ [] = quoteTC! (Set ℓ)
-telescopeToType ℓ ((s , x) ∷ tel) = pi x ∘ abs s <$> telescopeToType ℓ tel
+telescopeToType : Telescope → Type → TC Term
+telescopeToType [] end = return end
+telescopeToType ((s , x) ∷ tel) end = pi x ∘ abs s <$> telescopeToType tel end
 
 idxToArgs : {tel : Tel ℓ} → ⟦ tel ⟧ᵗ → TC Context
 idxToArgs {tel = []} tt = return []
@@ -66,7 +66,7 @@ module _ (dataName : Name) (pars : ℕ) where
   ConDsToTypes depth [] = return []
   ConDsToTypes depth (D ∷ Ds) = ⦇ ConDToType depth D ∷ ConDsToTypes depth Ds ⦈
 
-defineDataByDescription : Name → List Name → PDataD → TC _
+defineDataByDescription : Name → List Name → PDataD → TC (ℕ × Type × List Type)
 defineDataByDescription
   dataName
   conNames
@@ -78,15 +78,34 @@ defineDataByDescription
          ; Param = Param
          ; Index = Index
          ; applyP = Desc } = do
-  parType ← telescopeToType level =<< toTelescope Param
-  dataType ← telescopeToType level =<< toTelescope (Param Desc.++ Index)
+  parType ← uncurry telescopeToType =<< toTelescope Param (Set level)
+  dataType ← uncurry telescopeToType  =<< toTelescope (Param Desc.++ Index) (Set level)
   parLen ← Tel.length Param
-  aux Param $ λ ⟦par⟧ → do
+  auxᵗ Param $ λ ⟦par⟧ → do
     conTypes ← ConDsToTypes dataName parLen 0 (Desc ⟦par⟧)
-    declareData dataName parLen dataType
-    defineData dataName $ zip conNames $ map (Refl._++_ parType) conTypes
+    return (parLen , dataType , map (Refl._++_ parType) conTypes)
   where
-    aux : ∀ {a : Set ℓ'} → (T : Tel ℓ) → (⟦ T ⟧ᵗ → TC a) → TC a
-    aux [] cont = cont tt
-    aux (A ∷ T) cont = extendContextT visible-relevant-ω A λ typ a →
-                       aux (T a) (curry cont a)
+    auxᵗ : ∀ {a : Set ℓ'} → (T : Tel ℓ) → (⟦ T ⟧ᵗ → TC a) → TC a
+    auxᵗ [] cont = cont tt
+    auxᵗ (A ∷ T) cont = extendContextT visible-relevant-ω A λ _ a →
+                        auxᵗ (T a) (curry cont a)
+
+defineDataByDescription' : Name → List Name → DataD → TC _
+defineDataByDescription' dataName conNames record { #levels = #levels
+                                                  ; applyL = applyL
+                                                  } =
+  auxℓ #levels $ λ ℓs → do
+    (parLen , dataType , conTypes) ← defineDataByDescription dataName conNames (applyL ℓs)
+    dataType! ← normalise $ dataType
+    declareData dataName (#levels + parLen) (levels #levels Refl.++ dataType!)
+    dprint [ strErr $ showTerms (map (vArg ∘ Refl._++_ (levels #levels)) conTypes) ]
+    defineData dataName $ zip conNames $ map (Refl._++_ (levels #levels)) conTypes
+  where
+    auxℓ : ∀ {A : Set ℓ} → (#levels : ℕ) → (Level ^ #levels → TC A) → TC A
+    auxℓ zero cont = cont tt
+    auxℓ (suc #levels) cont = extendContextT hidden-relevant-ω Level λ _ ℓ →
+                              auxℓ #levels (curry cont ℓ)
+
+    levels : ℕ → Term
+    levels zero = unknown
+    levels (suc n) = hΠ[ quoteTerm Level ] levels n
