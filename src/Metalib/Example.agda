@@ -7,6 +7,7 @@ module Metalib.Example where
 open import Utils.Reflection
 
 open import Generics.Description
+open import Generics.Telescope
 open import Generics.Example
 
 open import Metalib.Telescope
@@ -15,9 +16,9 @@ open import Metalib.Datatype
 ------------------------------------------------------------------------------
 -- 
 `T-Nat : Telescope × Type
-`T-Nat = ⇑ getTelescopeT ℕ
+`T-Nat = getTelescopeT ℕ
 
-_ : evalT (fromTelescope $ fst `T-Nat) ≡ Tel.[]
+_ : evalT (fromTelescope $ fst `T-Nat) ≡ []
 _ = refl
 
 --_ : evalT(toTelescope [] ?) ≡ fst `T-Nat
@@ -27,10 +28,10 @@ _ = refl
 -- Level-polymorphic telescope
 
 `T-List : Telescope × Type
-`T-List = ⇑ getTelescopeT List
+`T-List = getTelescopeT List
 
 T-List : Tel 0ℓ
-T-List = {! evalT (fromTelescope $ fst `T-List) !}
+T-List = {! !}
 
 ------------------------------------------------------------------------------
 -- 
@@ -38,7 +39,7 @@ T-List = {! evalT (fromTelescope $ fst `T-List) !}
 data Rel (A : Set) : (xs ys : List A) → Set where
   
 `T-rel : Telescope × Type
-`T-rel = ⇑ getTelescopeT Rel
+`T-rel = getTelescopeT Rel
 
 _ : evalT (fromTelescope $ fst `T-rel) ≡ [ B ∶ Set ] [ bs ∶ List B ] [ bs ∶ List B ] []
 _ = refl
@@ -53,7 +54,7 @@ _ = refl
 data Pointwise (A : Set) (B : Set) (R : A → B → Set) : (xs : List A) → (ys : List B) → Set where 
 
 T-pointwise : Telescope
-T-pointwise = fst $ ⇑ getTelescopeT Pointwise 
+T-pointwise = fst $ getTelescopeT Pointwise 
 
 _ : evalT (fromTelescope T-pointwise)
   ≡ [ A ∶ Set ] [ B ∶ Set ] [ R ∶ (A → B → Set) ] [ as ∶ List A ] [ bs ∶ List B ] []
@@ -115,11 +116,11 @@ LenD = record
          }
 
 defineLen : Name → List Name → TC _
-defineLen n cs = defineDataByDescription n cs LenD
+defineLen n cs = defineByPDataD n cs LenD
 
 {--
 unquoteDecl data newLen constructor newz news =
-  defineLen newLen (newz ∷ news ∷ []) >> return tt
+  defineByPDataD newLen (newz ∷ news ∷ []) LenD >> return tt
 --}
 
 REL : {a b : Level} → Set a → Set b
@@ -151,7 +152,7 @@ pointwiseD =
 
 {--
 unquoteDecl data newPW constructor newJust newNothing =
-  defineDataByDescription' newPW (newJust ∷ newNothing ∷ []) pointwiseD >> return tt
+  defineByPDataD newPW (newJust ∷ newNothing ∷ []) pointwiseD >> return tt
 
 kk : ∀ {A B : Set} {C : A → B → Set} → newPW A B C nothing nothing
 kk = newNothing

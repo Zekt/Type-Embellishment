@@ -2,6 +2,7 @@ open import Prelude
 
 module Generics.Example where
 
+open import Generics.Telescope
 open import Generics.Description
 
 

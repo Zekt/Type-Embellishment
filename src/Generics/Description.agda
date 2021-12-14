@@ -1,40 +1,10 @@
+{-# OPTIONS --without-K #-}
+
 open import Prelude hiding (_++_)
 
 module Generics.Description where
 
-infixr 5 _∷_
-
-{-# NO_UNIVERSE_CHECK #-}
-data Tel : Level → Set where
-  []  : Tel lzero
-  _∷_ : (A : Set ℓ) (T : A → Tel ℓ') → Tel (ℓ ⊔ ℓ')
-
--- de Bruijn's notation
-
-∷-syntax : (A : Set ℓ) (T : A → Tel ℓ') → Tel (ℓ ⊔ ℓ')
-∷-syntax = _∷_
-
-syntax ∷-syntax A (λ x → T) = [ x ∶ A ] T
-
-⟦_⟧ᵗ : Tel ℓ → Set ℓ
-⟦ []    ⟧ᵗ = ⊤
-⟦ A ∷ T ⟧ᵗ = Σ A λ a → ⟦ T a ⟧ᵗ
-
-_++_ : (tel : Tel ℓ) → (⟦ tel ⟧ᵗ → Tel ℓ') → Tel (ℓ ⊔ ℓ')
-_++_ [] tel' = tel' tt
-_++_ (A ∷ tel) tel' = A ∷ λ a → (tel a) ++ λ ⟦tel⟧ → tel' (a , ⟦tel⟧)
-
-Curried : ∀ {ℓ ℓ'} → (T : Tel ℓ) → (⟦ T ⟧ᵗ → Set ℓ') → Set (ℓ ⊔ ℓ')
-Curried []      X = X tt
-Curried (A ∷ T) X = (a : A) → Curried (T a) λ t → X (a , t)
-
-curryⁿ : (T : Tel ℓ) (X : ⟦ T ⟧ᵗ → Set ℓ') → ((t : ⟦ T ⟧ᵗ) → X t) → Curried T X
-curryⁿ []      X f = f tt
-curryⁿ (A ∷ T) X f = λ a → curryⁿ (T a) (λ t → X (a , t)) (λ t → f (a , t))
-
-uncurryⁿ : (T : Tel ℓ) (X : ⟦ T ⟧ᵗ → Set ℓ′) → Curried T X → (t : ⟦ T ⟧ᵗ) → X t
-uncurryⁿ []      X f tt      = f
-uncurryⁿ (A ∷ T) X f (x , t) = uncurryⁿ (T x) (λ t → X (x , t)) (f x) t
+open import Generics.Telescope
 
 RecB : Set
 RecB = List Level
@@ -145,7 +115,7 @@ record PDataD : Set where
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
     level  : Level
-    level-pre-fixed-point : flevel level ⊔ level ≡ level
+    level-pre-fixed-point : flevel level ⊔ level ⊑ level
     Param  : Tel plevel
     Index  : ⟦ Param ⟧ᵗ → Tel ilevel
     applyP : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ struct

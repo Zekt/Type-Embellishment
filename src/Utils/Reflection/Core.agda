@@ -24,6 +24,7 @@ record Code (A : Set ℓ) : Set ℓ where
     code  : Term 
 open Code
 -}
+Types     = List Type
 Clauses   = List Clause
 Telescope = List (String × Arg Type)
 Context   = List (Arg Type)
@@ -39,19 +40,19 @@ pattern `Set₀ = agda-sort (lit 0)
 pattern `Set₁ = agda-sort (lit 1)
 pattern `Set₂ = agda-sort (lit 2)
 
-`Set = agda-sort ∘ lit
+pattern `Set n = agda-sort (lit n)
 
 pattern `Set! = agda-sort unknown
 
 `List : Name
 `List = quote List
 
-pattern relevant-ω         = modality relevant quantity-ω
-pattern relevant-erased    = modality relevant quantity-0
-pattern visible-relevant-ω = arg-info visible relevant-ω
-pattern hidden-relevant-ω  = arg-info hidden relevant-ω
-pattern visible-relevant-erased = arg-info visible relevant-erased
-pattern hidden-relevant-erased  = arg-info hidden relevant-erased
+pattern relevant-ω              = modality relevant quantity-ω
+pattern relevant-erased         = modality relevant quantity-0
+pattern visible-relevant-ω      = arg-info visible  relevant-ω
+pattern hidden-relevant-ω       = arg-info hidden   relevant-ω
+pattern visible-relevant-erased = arg-info visible  relevant-erased
+pattern hidden-relevant-erased  = arg-info hidden   relevant-erased
 
 pattern vArg x = arg (arg-info visible relevant-ω) x
 pattern hArg x = arg (arg-info hidden  relevant-ω) x
@@ -80,7 +81,7 @@ pattern hLam x = lam hidden x
 pattern iLam x = lam instance′ x
 
 pattern Π[_∶_]_ s a ty  = pi a (abs s ty)
-pattern Π[_]_ a ty      = Π[ "" ∶ a ] ty
+pattern Π[_]_ a ty      = Π[ "_" ∶ a ] ty
 pattern vΠ[_∶_]_ s a ty = Π[ s ∶ (vArg a) ] ty
 pattern hΠ[_∶_]_ s a ty = Π[ s ∶ (hArg a) ] ty
 pattern iΠ[_∶_]_ s a ty = Π[ s ∶ (iArg a) ] ty
@@ -123,17 +124,22 @@ isVisible _ = false
 
 private
   -- Assumption: The argument is a valid type.
-  tyToCxt : Type → Telescope × Type
-  tyToCxt (pi a (abs s b)) = let T , A = tyToCxt b in (s , a) ∷ T , A
-  tyToCxt t                = [] , t
+  ΠToTelescope : Type → Telescope × Type
+  ΠToTelescope (pi a (abs s b)) = let T , A = ΠToTelescope b in (s , a) ∷ T , A
+  ΠToTelescope t                = [] , t
 
+  TelescopeToΠ : Type → Telescope → Type
+  TelescopeToΠ `B []             = `B
+  TelescopeToΠ `B ((s , `A) ∷ T) = Π[ s ∶ `A ] TelescopeToΠ `B T
 instance
   TelescopeToContext : Coercion' Telescope Context
   ⇑_ ⦃ TelescopeToContext ⦄ = map snd
 
   TypeToTelescope : Coercion' Type (Telescope × Type)
-  ⇑_ ⦃ TypeToTelescope ⦄ = tyToCxt
+  ⇑_ ⦃ TypeToTelescope ⦄ = ΠToTelescope
 
+  TelescopeToType : Coercion' (Telescope × Type) Type
+  ⇑_ ⦃ TelescopeToType ⦄ (T , `A) = TelescopeToΠ `A T
 instance
   FunctorArg : Functor Arg
   fmap {{FunctorArg}} f (arg i x) = arg i (f x)
@@ -174,6 +180,8 @@ instance
   AlternativeTC : Alternative TC
   _<|>_ ⦃ AlternativeTC ⦄ = catchTC
 
+IMPOSSIBLE : Term → TC A
+IMPOSSIBLE t = typeError $ termErr t ∷ [ strErr " should not occur" ]
 
 give : Term → Tactic
 give v = λ hole → unify hole v
@@ -188,10 +196,7 @@ define! a cs = do
   return f
 
 quoteTC! : A → TC Term
-quoteTC! a = quoteTC a >>= reduce
-
-quoteTC!! : A → TC Term
-quoteTC!! a = quoteTC a >>= normalise
+quoteTC! a = withNormalisation true (quoteTC a)
 
 newMeta : Type → TC Term
 newMeta = checkType unknown
@@ -229,15 +234,25 @@ extendContextT i B f = do
     x ← unquoteTC {A = B} (var₀ 0)
     f `B x
 
+quoteLevelTC : Level → TC ℕ
+quoteLevelTC ℓ = do
+  `Set n ← quoteTC (Set ℓ)
+    where t → IMPOSSIBLE t
+  return n
+
 getDefType : Name → TC Type
 getDefType n = caseM getDefinition n of λ where
     (data-cons d) → inferType $ con n []
     _             → inferType $ def n []
 
-IMPOSSIBLE : Term → TC A
-IMPOSSIBLE t = typeError $ termErr t ∷ [ strErr " should not occur." ]
+getTelescope : Name → TC (Telescope × Type)
+getTelescope s = ⦇ ⇑ (getDefType s) ⦈
+
+macro
+  getTelescopeT : Name → Tactic
+  getTelescopeT s = evalTC $ getTelescope s
 
 -- append pi types and discard the last term in t₁
-_++_ : Term → Term → Term
-_++_ (pi a (abs _ b)) t₂ = pi a (abs "" (b ++ t₂))
-_++_ _ t₂ = t₂
+_`++_ : Type → Type → Type
+_`++_ (pi a (abs s b)) t₂ = pi a (abs s (b `++ t₂))
+_`++_ _                t₂ = t₂

@@ -5,6 +5,8 @@ open import Prelude hiding (length)
 module Metalib.Telescope where
 
 open import Utils.Reflection
+
+open import Generics.Telescope
 open import Generics.Description
 
 dprint = debugPrint "meta" 5
@@ -30,15 +32,15 @@ fromTelescope : Telescope → TC (Tel ℓ)
 fromTelescope = unquoteTC ∘ foldr `[] λ where
     (s , arg _ `A) `T → `A `∷ (`vλ s `→ `T)
 
-macro
-  getTelescopeT : Name → Tactic
-  getTelescopeT s = evalTC $ getDefType s
-
+-- this may fail if `Tel` is not built by λ by pattern matching lambdas.
 length : Tel ℓ → TC ℕ
-length [] = return 0
-length (A ∷ tel) = do
-  a ← quoteTC A
-  extendContext (vArg a) $ do
-    a' ← unquoteTC (var₀ 0)
-    suc <$> length (tel a')
+length []      = return 0
+length (A ∷ T) = extendContextT (visible-relevant-ω) A
+  λ _ x → suc <$> length (T x)
 
+-- extend the context in a TC computation 
+extendContextTs : {A : Set ℓ′}
+  → (T : Tel ℓ) → (⟦ T ⟧ᵗ → TC A) → TC A
+extendContextTs []      f = f tt
+extendContextTs (A ∷ T) f = extendContextT visible-relevant-ω A λ _ x →
+  extendContextTs (T x) (curry f x)
