@@ -7,6 +7,7 @@ module Metalib.Example where
 open import Utils.Reflection
 
 open import Generics.Description
+open import Generics.Telescope
 open import Generics.Example
 
 open import Metalib.Telescope
@@ -42,7 +43,7 @@ data Rel (A : Set) : (xs ys : List A) → Set where
 _ : evalT (fromTelescope $ fst `T-rel) ≡ [ B ∶ Set ] [ bs ∶ List B ] [ bs ∶ List B ] []
 _ = refl
 
-_ : evalT (toTelescope $ [ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] []) ≡ {!!} -- fst `T-rel
+_ : evalT (toTelescope $ [ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] []) ≡ fst `T-rel -- fst `T-rel
 _ = refl
 
 

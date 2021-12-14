@@ -1,24 +1,24 @@
 open import Prelude
+  hiding (_++_)
 
 module Metalib.Datatype where
 
 open import Utils.Reflection as Refl
+
+open import Generics.Telescope   as Desc
 open import Generics.Description as Desc
 
 open import Metalib.Telescope as Tel
 
-CxtToPi : Level → Context → TC Term
-CxtToPi ℓ [] = quoteTC! (Set ℓ)
-CxtToPi ℓ (x ∷ cxt') = pi x ∘ abs "" <$> CxtToPi ℓ cxt'
+idxToArgs : {T : Tel ℓ} → ⟦ T ⟧ᵗ → TC Context
+idxToArgs {T = []}    tt          = return []
+idxToArgs {T = A ∷ _} (x , ⟦T⟧) = do
+  `T ← idxToArgs ⟦T⟧
+  `x   ← quoteTC x
+  return (vArg `x ∷ `T)
 
-idxToArgs : {tel : Tel ℓ} → ⟦ tel ⟧ᵗ → TC Context
-idxToArgs {tel = []} tt = return []
-idxToArgs {tel = A ∷ tel} (a , ⟦tel⟧) = do
-  tel' ← idxToArgs ⟦tel⟧
-  a' ← quoteTC a
-  return (vArg a' ∷ tel')
-
-argVars : ℕ → (weakenBy : ℕ) → List (Arg Term)
+-- 
+argVars : ℕ → (weakenBy : ℕ) → Args Term
 argVars zero    wk = []
 argVars (suc N) wk = vArg (var₀ (N + wk)) ∷ argVars N wk
 
@@ -32,10 +32,8 @@ module _ (dataName : Name) (pars : ℕ) where
     idxs ← idxToArgs i
     return (def dataName (argVars pars depth Prelude.++ idxs))
 
-  RecDToType depth (π A D) = do
-    `A ← quoteTC! A
-    extendContext (vArg `A) $ do
-      `D ← RecDToType (suc depth) ∘ D =<< unquoteTC (var₀ 0)
+  RecDToType depth (π A D) = extendContextT visible-relevant-ω A λ `A x → do
+      `D ← RecDToType (suc depth) (D x)
       return (vΠ[ `A ] `D)
 
   ConDToType : ∀ {b : ConB} → {tel : Tel ℓ}
@@ -47,11 +45,8 @@ module _ (dataName : Name) (pars : ℕ) where
     --dprint [ strErr $ "ι: " <> showTerm end ]
     return end
 
-  ConDToType depth (σ A D) = do
-    `A ← quoteTC! A
-    --dprint [ strErr $ "σ: " <> showTerm `A ]
-    extendContext (vArg `A) $ do
-      `D ← ConDToType (suc depth) ∘ D =<< unquoteTC (var₀ 0)
+  ConDToType depth (σ A D) = extendContextT visible-relevant-ω A λ `A x → do
+      `D ← ConDToType (suc depth) (D x)
       return (vΠ[ `A ] `D)
 
   ConDToType depth (ρ R D) = do
@@ -61,34 +56,23 @@ module _ (dataName : Name) (pars : ℕ) where
       `D ← ConDToType (suc depth) D
       return (vΠ[ `R ] `D)
 
-  ConDsToTypes : {tel : Tel ℓ} {Bs : ConBs}
-               → ℕ → ConDs ⟦ tel ⟧ᵗ Bs → TC (List Type)
-  ConDsToTypes depth [] = return []
+  ConDsToTypes : {T : Tel ℓ} {Bs : ConBs}
+               → ℕ → ConDs ⟦ T ⟧ᵗ Bs → TC (List Type)
+  ConDsToTypes depth []       = return []
   ConDsToTypes depth (D ∷ Ds) = ⦇ ConDToType depth D ∷ ConDsToTypes depth Ds ⦈
 
-defineDataByDescription : Name → List Name → PDataD → TC _
-defineDataByDescription
-  dataName
-  conNames
-  record { plevel = plevel
-         ; ilevel = ilevel
-         ; struct = struct
-         ; level = level
-         ; level-pre-fixed-point = level-pre-fixed-point
-         ; Param = Param
-         ; Index = Index
-         ; applyP = Desc } = do
-  parTel ← toTelescope Param
-  parType ← CxtToPi level (⇑ parTel)
-  dataTypeTel ← toTelescope (Param Desc.++ Index)
-  dataType ← CxtToPi level (⇑ dataTypeTel)
-  parLen ← Tel.length Param
-  aux Param $ λ ⟦par⟧ → do
-    conTypes ← ConDsToTypes dataName parLen 0 (Desc ⟦par⟧)
+defineByPDataD : Name → List Name → PDataD → TC _
+defineByPDataD dataName conNames dataD = do
+  `level      ← quoteLevelTC level
+  parTel      ← toTelescope Param
+  let parType  = ⇑ (parTel , `Set `level)
+  dataTypeTel ← toTelescope $ Param ++ Index
+  let dataType = ⇑ (dataTypeTel , `Set `level)
+  parLen      ← Tel.length Param
+  extendContextTs Param $ λ ⟦par⟧ → do
+    conTypes    ← ConDsToTypes dataName parLen 0 (applyP ⟦par⟧)
     declareData dataName parLen dataType
-    defineData dataName $ zip conNames $ map (Refl._++_ parType) conTypes
+    let conTypes = map (parType `++_) conTypes -- LT: This is hacky.
+    defineData  dataName $ zip conNames conTypes
   where
-    aux : ∀ {a : Set ℓ'} → (T : Tel ℓ) → (⟦ T ⟧ᵗ → TC a) → TC a
-    aux [] cont = cont tt
-    aux (A ∷ T) cont = extendContextT visible-relevant-ω A λ typ a →
-                       aux (T a) (curry cont a)
+    open PDataD dataD
