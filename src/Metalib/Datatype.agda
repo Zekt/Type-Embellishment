@@ -11,87 +11,62 @@ open import Generics.Description as Desc
 
 open import Metalib.Telescope as Tel
 
-levels : ℕ → Term
-levels zero = unknown
-levels (suc n) = hΠ[ quoteTerm Level ] levels n
+-- Translate the semantics of an object-level telescope to
+-- a context
+idxToArgs : {T : Tel ℓ} → ⟦ T ⟧ᵗ → TC Context
+idxToArgs {T = []}    tt        = return []
+idxToArgs {T = _ ∷ _} (x , ⟦T⟧) = do
+  `T ← idxToArgs ⟦T⟧
+  `x ← quoteTC x
+  return (vArg `x ∷ `T)
 
-extendContextℓs : {A : Set ℓ} → (#levels : ℕ) → (Level ^ #levels → TC A) → TC A
-extendContextℓs zero          cont = cont tt
-extendContextℓs (suc #levels) cont =
-  extendContextT hidden-relevant-ω Level λ _ ℓ →
-    extendContextℓs #levels (curry cont ℓ)
-
-telescopeToType : Telescope → Type → TC Term
-telescopeToType [] end = return end
-telescopeToType ((s , x) ∷ tel) end = pi x ∘ abs s <$> telescopeToType tel end
-
-idxToArgs : {tel : Tel ℓ} → ⟦ tel ⟧ᵗ → TC Context
-idxToArgs {tel = []} tt = return []
-idxToArgs {tel = A ∷ tel} (a , ⟦tel⟧) = do
-  tel' ← idxToArgs ⟦tel⟧
-  a' ← quoteTC a
-  return (vArg a' ∷ tel')
-
---depth is the level without params
-module _ (dataName : Name) (pars : ℕ) where
+module _ (dataName : Name) (pars : ℕ) {T : Tel ℓ} where
   unknowns : Args Term
   unknowns = duplicate pars (vArg unknown)
 
-  RecDToType : {T : Tel ℓ} {B : RecB}
-             → RecD ⟦ T ⟧ᵗ B → TC Type
-
+  RecDToType : {B : RecB} → RecD ⟦ T ⟧ᵗ B → TC Type
   RecDToType (ι i) = do
     idxs ← idxToArgs i
-    return (def dataName (unknowns L.++ idxs))
-
+    return $ def dataName (unknowns L.++ idxs)
   RecDToType (π A D) = extendContextT visible-relevant-ω A λ `A x → do
       vΠ[ `A ]_ <$> RecDToType (D x)
 
-  ConDToType : {b : ConB} → {tel : Tel ℓ}
-             → ConD ⟦ tel ⟧ᵗ b → TC Type
-
+  ConDToType : {B : ConB} → ConD ⟦ T ⟧ᵗ B → TC Type
   ConDToType (ι i) = do
     idxs ← idxToArgs i
-    --let end = def dataName (unknowns L.++ idxs)
-    --dprint [ strErr $ "ι: " <> showTerm end ]
     return $ def dataName (unknowns L.++ idxs)
-
   ConDToType (σ A D) = extendContextT visible-relevant-ω A λ `A x → do
       vΠ[ `A ]_ <$>  ConDToType (D x)
-
   ConDToType (ρ R D) = do
     `R ← RecDToType R
     --dprint [ strErr $ "ρ: " <> showTerm `R ]
-    extendContext (vArg (quoteTerm ⊤)) $ do
+    extendContext (vArg (quoteTerm ⊤)) do
+    -- we might still need to give a correct type to it
       vΠ[ `R ]_ <$> ConDToType D
 
-  ConDsToTypes : {T : Tel ℓ} {Bs : ConBs}
-    → ConDs ⟦ T ⟧ᵗ Bs → TC (List Type)
+  ConDsToTypes : {Bs : ConBs} → ConDs ⟦ T ⟧ᵗ Bs → TC Types
   ConDsToTypes []       = return []
   ConDsToTypes (D ∷ Ds) = ⦇ ConDToType D ∷ ConDsToTypes Ds ⦈
 
 defineByPDataD : Name → List Name → PDataD → TC (ℕ × Type × List Type)
 defineByPDataD dataName conNames dataD = do
-  parType  ← uncurry telescopeToType
-               =<< toTelescope Param (Set level)
-  dataType ← uncurry telescopeToType
-               =<< toTelescope (Param Desc.++ Index) (Set level)
-  parLen   ← Tel.length Param
-  extendContextTs Param $ λ ⟦par⟧ → do
-    conTypes ← ConDsToTypes dataName parLen (applyP ⟦par⟧)
-    return (parLen , dataType , map (parType `++_) conTypes)
-  where
-    open PDataD dataD
+  pars , `Param ← fromTel Param
+  dataT         ← fromTelType (Param Desc.++ Index) (Set level)
+  extendContextTs Param λ ⟦par⟧ → do
+    conTs ← ConDsToTypes dataName pars $ applyP ⟦par⟧
+    return $ pars , dataT , map (prefixToType `Param) conTs
+  where open PDataD dataD
+
+levels : ℕ → Telescope
+levels zero    = []
+levels (suc n) = ("_" , hArg `Level) ∷ levels n
 
 defineByDataD : DataD → Name → List Name → TC _
-defineByDataD dataD dataName conNames =
-  extendContextℓs #levels $ λ ℓs → do
-    (parLen , dataType , conTypes)
-      ← defineByPDataD dataName conNames (applyL ℓs)
-    declareData dataName
-                (#levels + parLen)
-                (levels #levels `++ dataType)
-    defineData dataName
-               (zip conNames $ map (levels #levels `++_) conTypes)
-  where
-    open DataD dataD
+defineByDataD dataD dataName conNames = extendContextℓs #levels λ ℓs → do
+  pars , dataT , conTs ← defineByPDataD dataName conNames $ applyL ℓs
+  declareData dataName
+              (#levels + pars)
+              (prefixToType (levels #levels) dataT)
+  defineData dataName
+               (zip conNames $ map (prefixToType $ levels #levels) conTs)
+  where open DataD dataD
