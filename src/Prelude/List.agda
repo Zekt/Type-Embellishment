@@ -121,6 +121,12 @@ intersperse x []       = []
 intersperse x [ y ]    = [ y ]
 intersperse x (y ∷ ys) = y ∷ x ∷ intersperse x ys
 
+--------------------------------------------------------------------------
+-- Generaion of a list
+
+duplicate : ℕ → A → List A
+duplicate zero    x = []
+duplicate (suc n) x = x ∷ duplicate n x
 ------------------------------------------------------------------------
 -- Operations for reversing lists
 

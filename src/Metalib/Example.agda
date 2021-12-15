@@ -31,7 +31,7 @@ _ = refl
 `T-List = getTelescopeT List
 
 T-List : Tel 0ℓ
-T-List = {! !}
+T-List = Level ∷ λ ℓ → {!Set ℓ !} 
 
 ------------------------------------------------------------------------------
 -- 
@@ -89,71 +89,62 @@ bad = [ b ∶ Bool ] (case b of λ { true → [ n ∶ ℕ ] [] ; false → [] })
 _ : Telescope
 _ = {!evalT (toTelescope bad)!} -- when ?
 
---fromData' : Name → List Name → DataD → TC (ℕ × Type × List Type)
---fromData' n cs record { #levels = #levels ; Desc = Desc } = {!!}
---
---toData : Name → TC (DataD)
---
-data Len (A : Set) : List A → List A → Set where
+data Len (A : Set ℓ) : List A → List A → Set ℓ where
   z : Len A [] []
   s : ∀ {x y xs ys} → Len A xs ys → Len A (x ∷ xs) (y ∷ ys)
 
-LenD : PDataD
+PLenD : Level → PDataD
+PLenD ℓ = record
+  { level = ℓ
+  ; level-pre-fixed-point = refl
+  ; Param = Set ℓ ∷ const []
+  ; Index = λ where
+    (A , tt) → List A ∷ λ _ → List A ∷ const []
+  ; applyP = λ where
+    (A , tt) →
+      ι ([] , [] , tt)
+      ∷ Σ[ x ∶ A ] Σ[ y ∶ A ] Σ[ xs ∶ List A ] Σ[ ys ∶ List A ] ρ (ι (xs , ys , _)) (ι (x ∷ xs , y ∷ ys , _))
+      ∷ []
+   }
+
+LenD : DataD
 LenD = record
-         { level = lzero
-         ; level-pre-fixed-point = refl
-         ; Param = Set lzero ∷ const []
-         ; Index = λ p → let (A , tt) = p
-                          in List A ∷ λ _ → List A ∷ const []
-         ; applyP = λ p → let (A , tt) = p
-                          in ι ([] , [] , tt) ∷
-                             (σ A λ x →
-                             σ A λ y →
-                             σ (List A) λ xs →
-                             σ (List A) λ ys →
-                             ρ (ι (xs , ys , tt))
-                             (ι (x ∷ xs , (y ∷ ys) , tt))) ∷ []
-         }
+  { #levels = 1
+  ; applyL  = λ where
+    (ℓ , _) → PLenD ℓ
+  }
 
-defineLen : Name → List Name → TC _
-defineLen n cs = defineByPDataD n cs LenD
-
-{--
 unquoteDecl data newLen constructor newz news =
-  defineByPDataD newLen (newz ∷ news ∷ []) LenD >> return tt
---}
+  defineByDataD LenD newLen (newz ∷ news ∷ [])
 
 REL : {a b : Level} → Set a → Set b
     → (ℓ : Level) → Set (a ⊔ b ⊔ lsuc ℓ)
 REL A B ℓ = A → B → Set ℓ
 
-data Pointwise' {a b ℓ} {A : Set a} {B : Set b}
-                (R : REL A B ℓ) : REL (Maybe A) (Maybe B) (a ⊔ b ⊔ ℓ)
-                where
+data Pointwise' {a b ℓ} {A : Set a} {B : Set b} (R : REL A B ℓ) : REL (Maybe A) (Maybe B) (a ⊔ b ⊔ ℓ) where
   just    : ∀ {x y} → R x y → Pointwise' R (just x) (just y)
   nothing : Pointwise' R nothing nothing
 
 pointwiseD : DataD
-pointwiseD =
-  record { #levels = 3
-         ; applyL = λ { (a , b , ℓ , tt) →
-             record
-               { level = a ⊔ b ⊔ ℓ
-               ; level-pre-fixed-point = refl
-               ; Param = [ A ∶ Set a ] [ B ∶ Set b ]
-                         [ R ∶ REL A B ℓ ] []
-               ; Index = λ { (A , B , R , _) →
-                         [ _ ∶ Maybe A ] [ _ ∶ Maybe B ] []}
-               ; applyP = λ { (A , B , R , _) →
-                   Σ[ x ∶ A ] Σ[ y ∶ B ] Σ[ _ ∶ R x y ] ι (just x , (just y) , tt)
-                 ∷ ι (nothing , nothing , tt)
-                 ∷ []}
-               }}}
+pointwiseD = record
+  { #levels = 3
+  ; applyL = λ where
+    (a , b , ℓ , tt) → record
+      { level = a ⊔ b ⊔ ℓ
+      ; level-pre-fixed-point = refl
+      ; Param = [ A ∶ Set a ] [ B ∶ Set b ] [ R ∶ REL A B ℓ ] []
+      ; Index = λ where
+        (A , B , R , _) → [ _ ∶ Maybe A ] [ _ ∶ Maybe B ] []
+      ; applyP = λ where
+        (A , B , R , _) →
+          Σ[ x ∶ A ] Σ[ y ∶ B ] Σ[ _ ∶ R x y ] ι (just x , (just y) , tt)
+          ∷ ι (nothing , nothing , tt)
+          ∷ []
+      }
+  }
 
-{--
 unquoteDecl data newPW constructor newJust newNothing =
-  defineByPDataD newPW (newJust ∷ newNothing ∷ []) pointwiseD >> return tt
+  defineByDataD pointwiseD newPW (newJust ∷ newNothing ∷ []) 
 
 kk : ∀ {A B : Set} {C : A → B → Set} → newPW A B C nothing nothing
 kk = newNothing
---}
