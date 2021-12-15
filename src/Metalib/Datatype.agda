@@ -52,9 +52,9 @@ defineByPDataD : Name → PDataD → TC (ℕ × Type × List Type)
 defineByPDataD dataN dataD = do
   pars , `Param ← fromTel Param
   dataT         ← fromTelType (Param Desc.++ Index) (Set level)
-  extendContextTs Param λ ⟦par⟧ → do
+  extendContextTs Param λ ⟦Ps⟧ → do
     conTs ← map (prefixToType `Param)
-      <$> ConDsToTypes dataN pars (applyP ⟦par⟧)
+      <$> ConDsToTypes dataN pars (applyP ⟦Ps⟧)
     return $ pars , dataT , conTs
   where open PDataD dataD
 

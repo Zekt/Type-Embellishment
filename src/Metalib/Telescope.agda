@@ -19,16 +19,6 @@ t `∷ u = con (quote Tel._∷_) (vArg t ∷ vArg u ∷ [])
 `[] = quoteTerm Tel.[]
 
 --
-toTelescope : Tel ℓ → Set ℓ' → TC (Telescope × Type)
-toTelescope []      end = quoteTC! end >>= λ `end →
-                          return ([] , `end)
-toTelescope (A ∷ T) end = caseM quoteTC! T of λ where
-  (lam v (abs s _)) → extendContextT (visible-relevant-ω) A λ `A x → do
-    `Γ , `end ← toTelescope (T x) end
-    return $ ((s , vArg `A) ∷ `Γ , `end)
-  t                 → typeError $ strErr (show t) ∷ strErr " cannot be reduced further to a λ-abstraction" ∷ []
-
---
 fromTelType : Tel ℓ → Set ℓ′ → TC Type
 fromTelType []      B = quoteTC! B
 fromTelType (A ∷ T) B = caseM quoteTC! T of λ where
