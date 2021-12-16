@@ -4,6 +4,7 @@ module Generics.Safe.Ornament.Algebraic where
 
 open import Prelude
 open import Prelude.List as List
+open import Generics.Safe.Telescope
 open import Generics.Safe.Description
 open import Generics.Safe.Algebra
 open import Generics.Safe.Ornament
@@ -38,15 +39,15 @@ algODᶜˢ []       X f = []
 algODᶜˢ (D ∷ Ds) X f = algODᶜ  D  X (λ xs → f (inl xs))
                    ∷ ∺ algODᶜˢ Ds X (λ xs → f (inr xs))
 
-algODᵖᵈ : (D : PDataD) (X : Carrierᵖᵈ D ℓ) → Algᵖᵈ D X → PDataOD D
-algODᵖᵈ {ℓ} D X f = record
+algODᵖᵈ : (D : PDataD) → (∀ ps → Algebraᵖᵈ D ps ℓ) → PDataOD D
+algODᵖᵈ {ℓ} D alg = let X = Algebraᵖᵈ.Carrier ∘ alg in record
   { dlevel  = PDataD.dlevel D
   ; level-pre-fixed-point = pfp (PDataD.ilevel D) (PDataD.dlevel D) (PDataD.struct D)
                                 (PDataD.level-pre-fixed-point D)
   ; ParamOD = ε
-  ; IndexOD = λ p → ▷ ε (X p)
-  ; applyP  = λ p → imapODᶜˢ snocᵗ-inj (fst ∘ snocᵗ-proj) (cong fst ∘ snocᵗ-proj-inj)
-                      (algODᶜˢ (PDataD.applyP D p) (X p) f)
+  ; IndexOD = λ ps → ▷ ε (X ps)
+  ; applyP  = λ ps → imapODᶜˢ snocᵗ-inj (fst ∘ snocᵗ-proj) (cong fst ∘ snocᵗ-proj-inj)
+                       (algODᶜˢ (PDataD.applyP D ps) (X ps) (Algebraᵖᵈ.apply (alg ps)))
   }
   where
     algConB-lemma₀ : ∀ cb → max-π (algConB ℓ cb) ≡ max-π cb
@@ -101,12 +102,8 @@ algODᵖᵈ {ℓ} D X f = record
         ℓᵈ ⊔ ℓⁱ ⊔ ℓ
       ∎ where open ≡-Reasoning
 
-algODᵈ : (D : DataD) {ℓf : DataD.Levels D → Level} (X : Carrierᵈ D ℓf)
-       → Algᵈ D X → DataOD D
-algODᵈ D X f = record
+algODᵈ : (D : DataD) → (∀ ℓs ps → Algebraᵈ D ℓs ps ℓ) → DataOD D
+algODᵈ D alg = record
   { #levels = DataD.#levels D
   ; LevelO  = ε
-  ; applyL  = λ ℓs → algODᵖᵈ (DataD.applyL D ℓs) (X ℓs) f }
-
-algOD : (D : DataD) → Alg D → DataOD D
-algOD D alg = algODᵈ D (Alg.Carrier alg) (Alg.apply alg)
+  ; applyL  = λ ℓs → algODᵖᵈ (DataD.applyL D ℓs) (alg ℓs) }

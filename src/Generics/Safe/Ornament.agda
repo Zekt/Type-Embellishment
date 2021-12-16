@@ -3,6 +3,7 @@
 module Generics.Safe.Ornament where
 
 open import Prelude
+open import Generics.Safe.Telescope
 open import Generics.Safe.Description
 
 private variable
@@ -74,12 +75,12 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} (e : I → J) where
 module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 
   eraseʳ : {D : RecD I rb} {E : RecD J rb} (O : RecO e D E)
-           {X : J → Set ℓ} → ⟦ D ⟧ʳ (λ i → X (e i)) → ⟦ E ⟧ʳ X
+           {X : J → Set ℓ} → ⟦ D ⟧ʳ (X ∘ e) → ⟦ E ⟧ʳ X
   eraseʳ (ι eq) x  = subst _ eq x
   eraseʳ (π  O) xs = λ a → eraseʳ (O a) (xs a)
 
   eraseᶜ : {D : ConD I cb} {E : ConD J cb'} (O : ConO e D E)
-           {X : J → Set ℓˣ} {i : I} → ⟦ D ⟧ᶜ (λ i' → X (e i')) i → ⟦ E ⟧ᶜ X (e i)
+           {X : J → Set ℓˣ} {i : I} → ⟦ D ⟧ᶜ (X ∘ e) i → ⟦ E ⟧ᶜ X (e i)
   eraseᶜ (ι eq  ) eq'      = trans (sym eq) (cong _ eq')
   eraseᶜ (σ   O ) (a , xs) = a , eraseᶜ (O a) xs
   eraseᶜ (Δ   O ) (a , xs) =     eraseᶜ (O a) xs
@@ -87,7 +88,7 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
   eraseᶜ (ρ O O') (x , xs) = eraseʳ O x , eraseᶜ O' xs
 
   eraseᶜˢ : {Ds : ConDs I cbs} {Es : ConDs J cbs'} (Os : ConOs e Ds Es)
-            {X : J → Set ℓˣ} {i : I} → ⟦ Ds ⟧ᶜˢ (λ i' → X (e i')) i → ⟦ Es ⟧ᶜˢ X (e i)
+            {X : J → Set ℓˣ} {i : I} → ⟦ Ds ⟧ᶜˢ (X ∘ e) i → ⟦ Es ⟧ᶜˢ X (e i)
   eraseᶜˢ (O ∷ Os) (inl xs) = inl (eraseᶜ  O  xs)
   eraseᶜˢ (O ∷ Os) (inr xs) =      eraseᶜˢ Os xs
   eraseᶜˢ (  ∺ Os)      xs  = inr (eraseᶜˢ Os xs)
@@ -95,11 +96,11 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 record PDataO (D E : PDataD) : Setω where
   field
     ParamO : TelO (PDataD.Param D) (PDataD.Param E)
-    IndexO : (p : ⟦ PDataD.Param D ⟧ᵗ)
-           → TelO (PDataD.Index D p) (PDataD.Index E (eraseᵗ ParamO p))
-    applyP : (p : ⟦ PDataD.Param D ⟧ᵗ)
-           → ConOs (eraseᵗ (IndexO p)) (PDataD.applyP D p)
-                                       (PDataD.applyP E (eraseᵗ ParamO p))
+    IndexO : (ps : ⟦ PDataD.Param D ⟧ᵗ)
+           → TelO (PDataD.Index D ps) (PDataD.Index E (eraseᵗ ParamO ps))
+    applyP : (ps : ⟦ PDataD.Param D ⟧ᵗ)
+           → ConOs (eraseᵗ (IndexO ps)) (PDataD.applyP D ps)
+                                        (PDataD.applyP E (eraseᵗ ParamO ps))
 
 record DataO (D E : DataD) : Setω where
   field
@@ -107,19 +108,20 @@ record DataO (D E : DataD) : Setω where
     applyL : (ℓs : DataD.Levels D)
            → PDataO (DataD.applyL D ℓs) (DataD.applyL E (erase# LevelO ℓs))
 
-eraseᵖᵈ : {D E : PDataD} (O : PDataO D E) {p : ⟦ PDataD.Param D ⟧ᵗ}
-        → let q = eraseᵗ (PDataO.ParamO O) p; index = eraseᵗ (PDataO.IndexO O p) in
-          {X : ⟦ PDataD.Index E q ⟧ᵗ → Set ℓ} {i : ⟦ PDataD.Index D p ⟧ᵗ}
-        → ⟦ D ⟧ᵖᵈ p (λ i' → X (index i')) i → ⟦ E ⟧ᵖᵈ q X (index i)
-eraseᵖᵈ O {p} = eraseᶜˢ (PDataO.applyP O p)
+eraseᵖᵈ : {D E : PDataD} (O : PDataO D E) {ps : ⟦ PDataD.Param D ⟧ᵗ}
+        → let qs = eraseᵗ (PDataO.ParamO O) ps
+              index = eraseᵗ (PDataO.IndexO O ps) in
+          {X : ⟦ PDataD.Index E qs ⟧ᵗ → Set ℓ} {i : ⟦ PDataD.Index D ps ⟧ᵗ}
+        → ⟦ D ⟧ᵖᵈ (X ∘ index) i → ⟦ E ⟧ᵖᵈ X (index i)
+eraseᵖᵈ O {ps} = eraseᶜˢ (PDataO.applyP O ps)
 
 eraseᵈ : {D E : DataD} (O : DataO D E) {ℓs : DataD.Levels D}
-       → let ℓs' = erase# (DataO.LevelO O) ℓs
-             Dᵖ  = DataD.applyL D ℓs
-             Eᵖ  = DataD.applyL E ℓs'
-             Oᵖ  = DataO.applyL O ℓs in
-         {p : ⟦ PDataD.Param Dᵖ ⟧ᵗ}
-       → let q = eraseᵗ (PDataO.ParamO Oᵖ) p; index = eraseᵗ (PDataO.IndexO Oᵖ p) in
-         {X : ⟦ PDataD.Index Eᵖ q ⟧ᵗ → Set ℓ} {i : ⟦ PDataD.Index Dᵖ p ⟧ᵗ}
-       → ⟦ D ⟧ᵈ ℓs p (λ i' → X (index i')) i → ⟦ E ⟧ᵈ ℓs' q X (index i)
+       → let Dᵖ = DataD.applyL D ℓs
+             Eᵖ = DataD.applyL E (erase# (DataO.LevelO O) ℓs)
+             Oᵖ = DataO.applyL O ℓs in
+         {ps : ⟦ PDataD.Param Dᵖ ⟧ᵗ}
+       → let qs = eraseᵗ (PDataO.ParamO Oᵖ) ps
+             index = eraseᵗ (PDataO.IndexO Oᵖ ps) in
+         {X : ⟦ PDataD.Index Eᵖ qs ⟧ᵗ → Set ℓ} {is : ⟦ PDataD.Index Dᵖ ps ⟧ᵗ}
+       → ⟦ D ⟧ᵈ (X ∘ index) is → ⟦ E ⟧ᵈ X (index is)
 eraseᵈ O {ℓs} = eraseᵖᵈ (DataO.applyL O ℓs)

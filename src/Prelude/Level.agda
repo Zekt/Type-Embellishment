@@ -29,11 +29,6 @@ open Lift public
 1ℓ = lsuc 0ℓ
 2ℓ = lsuc 1ℓ
 
-
-_^_ : Set → ℕ → Set
-A ^ zero  = ⊤
-A ^ suc n = Σ A λ _ → A ^ n
-
 rewriteLevel : ∀ {ℓ ℓ'} → ℓ ≡ ℓ' → Set ℓ → Set ℓ'
 rewriteLevel refl X = X
 

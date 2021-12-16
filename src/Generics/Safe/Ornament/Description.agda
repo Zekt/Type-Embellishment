@@ -3,6 +3,7 @@
 module Generics.Safe.Ornament.Description where
 
 open import Prelude
+open import Generics.Safe.Telescope
 open import Generics.Safe.Description
 open import Generics.Safe.Ornament
 
@@ -77,7 +78,7 @@ record PDataOD (E : PDataD) : Setω where
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
     dlevel  : Level
-    level-pre-fixed-point : let ℓ = dlevel ⊔ ilevel in flevel ℓ ⊔ ℓ ≡ ℓ
+    level-pre-fixed-point : let ℓ = dlevel ⊔ ilevel in flevel ℓ ⊑ ℓ
     ParamOD : TelOD (PDataD.Param E) plevel
     IndexOD : (p : ⟦ ⌊ ParamOD ⌋ᵗ ⟧ᵗ)
             → TelOD (PDataD.Index E (eraseᵗ ⌈ ParamOD ⌉ᵗ p)) ilevel

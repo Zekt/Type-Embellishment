@@ -4,41 +4,7 @@ module Generics.Safe.Description where
 
 open import Prelude
 open import Prelude.List as List
-
-infixr 5 _∷_
-
-data Tel : Level → Setω where
-  []  : Tel lzero
-  _∷_ : (A : Set ℓ) (T : A → Tel ℓ') → Tel (ℓ ⊔ ℓ')
-
--- de Bruijn's notation
-
-∷-syntax : (A : Set ℓ) (T : A → Tel ℓ') → Tel (ℓ ⊔ ℓ')
-∷-syntax = _∷_
-
-syntax ∷-syntax A (λ x → T) = [ x ∶ A ] T
-
-⟦_⟧ᵗ : Tel ℓ → Set ℓ
-⟦ []    ⟧ᵗ = ⊤
-⟦ A ∷ T ⟧ᵗ = Σ A λ a → ⟦ T a ⟧ᵗ
-
-snocᵗ : (T : Tel ℓ) → (⟦ T ⟧ᵗ → Set ℓ') → Tel (ℓ ⊔ ℓ')
-snocᵗ []      B = B tt ∷ λ _ → []
-snocᵗ (A ∷ T) B = A ∷ λ a → snocᵗ (T a) λ t → B (a , t)
-
-snocᵗ-inj : {T : Tel ℓ} {A : ⟦ T ⟧ᵗ → Set ℓ'} → Σ ⟦ T ⟧ᵗ A → ⟦ snocᵗ T A ⟧ᵗ
-snocᵗ-inj {T = []   } (_       , a) = a , tt
-snocᵗ-inj {T = B ∷ T} ((b , t) , a) = b , snocᵗ-inj {T = T b} (t , a)
-
-snocᵗ-proj : {T : Tel ℓ} {A : ⟦ T ⟧ᵗ → Set ℓ'} → ⟦ snocᵗ T A ⟧ᵗ → Σ ⟦ T ⟧ᵗ A
-snocᵗ-proj {T = []   } (a , _) = tt , a
-snocᵗ-proj {T = B ∷ T} (b , t) = let (t' , a) = snocᵗ-proj {T = T b} t in ((b , t') , a)
-
-snocᵗ-proj-inj : {T : Tel ℓ} {A : ⟦ T ⟧ᵗ → Set ℓ'}
-                 (p : Σ ⟦ T ⟧ᵗ A) → snocᵗ-proj (snocᵗ-inj p) ≡ p
-snocᵗ-proj-inj {T = []   } (_       , a) = refl
-snocᵗ-proj-inj {T = B ∷ T} ((b , t) , a) = cong (λ p → let (t , a) = p in (b , t) , a)
-                                                (snocᵗ-proj-inj {T = T b} (t , a))
+open import Generics.Safe.Telescope
 
 RecB : Set
 RecB = List Level
@@ -80,16 +46,16 @@ hasCon? : Level → ConBs → Level
 hasCon? ℓ = maxMap (λ _ → ℓ)
 
 maxMap-bound : {A : Set} (f : A → Level) (ℓ : Level)
-             → (∀ a → f a ⊔ ℓ ≡ ℓ) → ∀ as → maxMap f as ⊔ ℓ ≡ ℓ
+             → (∀ a → f a ⊑ ℓ) → ∀ as → maxMap f as ⊑ ℓ
 maxMap-bound f ℓ eq []       = refl
 maxMap-bound f ℓ eq (a ∷ as) = cong₂ _⊔_ (eq a) (maxMap-bound f ℓ eq as)
 
-hasRec?-bound : ∀ ℓ cb → hasRec? ℓ cb ⊔ ℓ ≡ ℓ
+hasRec?-bound : ∀ ℓ cb → hasRec? ℓ cb ⊑ ℓ
 hasRec?-bound ℓ []            = refl
 hasRec?-bound ℓ (inl ℓ' ∷ cb) = hasRec?-bound ℓ cb
 hasRec?-bound ℓ (inr rb ∷ cb) = hasRec?-bound ℓ cb
 
-hasCon?-bound : ∀ ℓ cbs → hasCon? ℓ cbs ⊔ ℓ ≡ ℓ
+hasCon?-bound : ∀ ℓ cbs → hasCon? ℓ cbs ⊑ ℓ
 hasCon?-bound ℓ = maxMap-bound (λ _ → ℓ) ℓ (λ _ → refl)
 
 private variable
@@ -112,7 +78,6 @@ module _ (I : Set ℓⁱ) where
     []  : ConDs []
     _∷_ : (D : ConD cb) (Ds : ConDs cbs) → ConDs (cb ∷ cbs)
 
-
 record PDataD : Setω where
   field
     {plevel} : Level
@@ -123,7 +88,7 @@ record PDataD : Setω where
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
     dlevel : Level
-    level-pre-fixed-point : let ℓ = dlevel ⊔ ilevel in flevel ℓ ⊔ ℓ ≡ ℓ
+    level-pre-fixed-point : let ℓ = dlevel ⊔ ilevel in flevel ℓ ⊑ ℓ
     Param  : Tel plevel
     Index  : ⟦ Param ⟧ᵗ → Tel ilevel
     applyP : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ struct
@@ -152,14 +117,14 @@ module _ {I : Set ℓⁱ} where
   ⟦ []     ⟧ᶜˢ X i = ⊥
   ⟦ D ∷ Ds ⟧ᶜˢ X i = ⟦ D ⟧ᶜ X i ⊎ ⟦ Ds ⟧ᶜˢ X i
 
-⟦_⟧ᵖᵈ : (D : PDataD) (p : ⟦ PDataD.Param D ⟧ᵗ)
+⟦_⟧ᵖᵈ : (D : PDataD) {p : ⟦ PDataD.Param D ⟧ᵗ}
       → let I = ⟦ PDataD.Index D p ⟧ᵗ in (I → Set ℓ) → (I → Set (PDataD.flevel D ℓ))
-⟦ D ⟧ᵖᵈ p = ⟦ PDataD.applyP D p ⟧ᶜˢ
+⟦ D ⟧ᵖᵈ {p} = ⟦ PDataD.applyP D p ⟧ᶜˢ
 
-⟦_⟧ᵈ : (D : DataD) (ℓs : DataD.Levels D) → let Dᵖ = DataD.applyL D ℓs in
-       (p : ⟦ PDataD.Param Dᵖ ⟧ᵗ)
+⟦_⟧ᵈ : (D : DataD) {ℓs : DataD.Levels D} → let Dᵖ = DataD.applyL D ℓs in
+       {p : ⟦ PDataD.Param Dᵖ ⟧ᵗ}
      → let I = ⟦ PDataD.Index Dᵖ p ⟧ᵗ in (I → Set ℓ) → (I → Set (PDataD.flevel Dᵖ ℓ))
-⟦ D ⟧ᵈ ℓs = ⟦ DataD.applyL D ℓs ⟧ᵖᵈ
+⟦ D ⟧ᵈ {ℓs} = ⟦ DataD.applyL D ℓs ⟧ᵖᵈ
 
 fmapʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → ⟦ D ⟧ʳ X → ⟦ D ⟧ʳ Y
@@ -177,13 +142,13 @@ fmapᶜˢ : {I : Set ℓ} (Ds : ConDs I cbs) {X : I → Set ℓˣ} {Y : I → Se
 fmapᶜˢ (D ∷ Ds) f (inl xs) = inl (fmapᶜ  D  f xs)
 fmapᶜˢ (D ∷ Ds) f (inr xs) = inr (fmapᶜˢ Ds f xs)
 
-fmapᵖᵈ : (D : PDataD)  (p : ⟦ PDataD.Param D ⟧ᵗ) → let I = ⟦ PDataD.Index D p ⟧ᵗ in
+fmapᵖᵈ : (D : PDataD) {p : ⟦ PDataD.Param D ⟧ᵗ} → let I = ⟦ PDataD.Index D p ⟧ᵗ in
          {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
-       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵖᵈ p X i → ⟦ D ⟧ᵖᵈ p Y i
-fmapᵖᵈ D p = fmapᶜˢ (PDataD.applyP D p)
+       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵖᵈ X i → ⟦ D ⟧ᵖᵈ Y i
+fmapᵖᵈ D {p} = fmapᶜˢ (PDataD.applyP D p)
 
-fmapᵈ : (D : DataD) (ℓs : DataD.Levels D) → let Dᵖ = DataD.applyL D ℓs in
-        (p : ⟦ PDataD.Param Dᵖ ⟧ᵗ) → let I = ⟦ PDataD.Index Dᵖ p ⟧ᵗ in
+fmapᵈ : (D : DataD) {ℓs : DataD.Levels D} → let Dᵖ = DataD.applyL D ℓs in
+        {p : ⟦ PDataD.Param Dᵖ ⟧ᵗ} → let I = ⟦ PDataD.Index Dᵖ p ⟧ᵗ in
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
-      → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈ ℓs p X i → ⟦ D ⟧ᵈ ℓs p Y i
-fmapᵈ D ℓs = fmapᵖᵈ (DataD.applyL D ℓs)
+      → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈ X i → ⟦ D ⟧ᵈ Y i
+fmapᵈ D {ℓs} = fmapᵖᵈ (DataD.applyL D ℓs)
