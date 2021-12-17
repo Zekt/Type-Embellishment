@@ -80,15 +80,17 @@ module _ (I : Set ℓⁱ) where
 
 record PDataD : Setω where
   field
+    alevel   : Level
     {plevel} : Level
     {ilevel} : Level
     {struct} : ConBs
+  dlevel : Level
+  dlevel = alevel ⊔ ilevel
   flevel : Level → Level
   flevel ℓ = maxMap max-π struct ⊔ maxMap max-σ struct ⊔
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
-    dlevel : Level
-    level-pre-fixed-point : let ℓ = dlevel ⊔ ilevel in flevel ℓ ⊑ ℓ
+    level-pre-fixed-point : flevel dlevel ⊑ dlevel
     Param  : Tel plevel
     Index  : ⟦ Param ⟧ᵗ → Tel ilevel
     applyP : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ struct

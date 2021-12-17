@@ -17,7 +17,7 @@ NatD : DataD
 NatD = record
   { #levels = 0
   ; applyL  = λ _ → record
-      { dlevel = lzero
+      { alevel = lzero
       ; level-pre-fixed-point = refl
       ; Param  = []
       ; Index  = λ _ → []
@@ -25,11 +25,12 @@ NatD = record
                      ∷ ρ (ι tt) (ι tt)
                      ∷ [] } }
 
-testNat : μ NatD tt tt tt
-testNat = con (lift (inr (inl (con (lift (inl refl)) , refl))))
+-- META
+ℕ-wrapper : DataT NatD
+ℕ-wrapper _ _ _ = ℕ
 
 -- META
-NatC : DataC NatD λ _ _ _ → ℕ
+NatC : DataC NatD ℕ-wrapper
 NatC = record
   { toN   = λ { (inl           refl  ) → zero
               ; (inr (inl (n , refl))) → suc n }
@@ -40,16 +41,34 @@ NatC = record
   ; toN-fromN = λ {  zero   → refl
                   ; (suc n) → refl } }
 
--- META
-foldℕ : (X : ⊤ → Set) → X tt → (X tt → X tt) → ∀ {i} → ℕ → X i
-foldℕ X z s  zero   = z                  -- {! fold-base NatC (fold-algᵈ NatD X xz xs) (foldℕ X xz xs)  zero   !}
-foldℕ X z s (suc n) = s (foldℕ X z s n)  -- {! fold-base NatC (fold-algᵈ NatD X xz xs) (foldℕ X xz xs) (suc n) !}
+-- USER
+foldℕ-alg : ∀ ℓs ps ℓ (X : Set ℓ) → X → (X → X) → Algebraᵈ NatD ℓs ps ℓ  -- {! ∀ {ℓs ps ℓ} → FoldAlgTᵈ NatD ℓs ps ℓ !}
+foldℕ-alg = fold-algᵈ NatD
 
 -- META
-foldℕ-is-fold : (X : ⊤ → Set) (z : X tt) (s : X tt → X tt)
-              → AlgC NatC (fold-algᵈ NatD X z s) (foldℕ X z s)
-foldℕ-is-fold X z s  zero   = refl
-foldℕ-is-fold X z s (suc n) = refl
+foldℕ-wrapper : ∀ ℓs ps ℓ (X : Set ℓ) (z : X) (s : X → X)
+              → FoldT NatC ℓs ps (foldℕ-alg ℓs ps ℓ X z s)
+foldℕ : {ℓ : Level} (X : Set ℓ) (z : X) (s : X → X) → ℕ → X
+-- foldℕ : {- optimised version of -} {! ∀ {ℓs ps ℓ} (X : Set ℓ) (z : X) (s : X → X) → FoldT NatC (foldℕ-alg X z s) !}
+
+-- META
+foldℕ-wrapper _ _ _ X z s n = foldℕ X z s n
+foldℕ X z s  zero   = z
+foldℕ X z s (suc n) = s (foldℕ X z s n)
+-- foldℕ X z s  zero   = {! fold-base NatC (fold-algᵈ NatD X z s) (foldℕ-wrapper X z s)  zero   !}
+-- foldℕ X z s (suc n) = {! fold-base NatC (fold-algᵈ NatD X z s) (foldℕ-wrapper X z s) (suc n) !}
+
+-- USER
+-- foldℕ-wrapper ℓs ps ℓ X z s n = foldℕ s z n
+-- foldℕ : ∀ {ℓ} {X : Set ℓ} → (X → X) → X → ℕ → X
+-- foldℕ s z  zero   = z
+-- foldℕ s z (suc n) = s (foldℕ s z n)
+
+-- META
+foldℕ-is-fold : ∀ ℓs ps ℓ (X : Set ℓ) (z : X) (s : X → X)
+              → AlgC NatC ℓs ps (foldℕ-alg ℓs ps ℓ X z s) (foldℕ-wrapper ℓs ps ℓ X z s)
+foldℕ-is-fold ℓs ps ℓ X z s  zero   = refl
+foldℕ-is-fold ℓs ps ℓ X z s (suc n) = refl
 
 -- -- DGP
 -- indℕ-alg : (P : ℕ → Set) → P zero → (∀ n → P n → P (suc n)) → IndAlg NatC
@@ -137,7 +156,7 @@ data PNat : ℕ → Bool → Set where
 --   { #levels = 0
 --   ; LevelO  = ε
 --   ; applyL  = λ _ → record
---       { dlevel  = lzero
+--       { alevel  = lzero
 --       ; level-pre-fixed-point = refl
 --       ; ParamOD = ε
 --       ; IndexOD = λ _ → ε
@@ -160,7 +179,7 @@ ListOD = record
   { #levels = 1
   ; LevelO  = Δ (λ _ → ε)
   ; applyL  = λ ℓs → let (ℓ , _) = ℓs in record
-      { dlevel  = ℓ; level-pre-fixed-point = refl
+      { alevel  = ℓ; level-pre-fixed-point = refl
       ; ParamOD = Δ (Set ℓ) λ _ → ε
       ; IndexOD = λ _ → ε
       ; applyP  = λ ps → let (A , _) = ps
@@ -190,7 +209,7 @@ ListD' A = record
   { #levels = 0
   ; LevelO  = ∇ lzero ε
   ; applyL  = λ _ → record
-      { dlevel  = lzero
+      { alevel  = lzero
       ; level-pre-fixed-point = refl
       ; ParamOD = ∇ A ε
       ; IndexOD = λ _ → ε
@@ -205,7 +224,7 @@ WD : DataD
 WD = record
   { #levels = 2
   ; applyL  = λ ℓs → let (ℓ , ℓ' , _) = ℓs in record
-      { dlevel = ℓ ⊔ ℓ'; level-pre-fixed-point = refl
+      { alevel = ℓ ⊔ ℓ'; level-pre-fixed-point = refl
       ; Param  = [ A ∶ Set ℓ ] [ _ ∶ (A → Set ℓ') ] []
       ; Index  = λ _ → []
       ; applyP = λ ps → let (A , B , _) = ps
@@ -216,7 +235,7 @@ PointwiseD : DataD
 PointwiseD = record
   { #levels = 3
   ; applyL  = λ ℓs → let (ℓᵃ , ℓᵇ , ℓʳ , _) = ℓs in record
-      { dlevel = ℓᵃ ⊔ ℓᵇ ⊔ ℓʳ
+      { alevel = ℓᵃ ⊔ ℓᵇ ⊔ ℓʳ
       ; level-pre-fixed-point = refl
       ; Param  = [ A ∶ Set ℓᵃ ] [ B ∶ Set ℓᵇ ] [ _ ∶ (A → B → Set ℓʳ) ] []
       ; Index  = λ p → let (A , B , R , _) = p

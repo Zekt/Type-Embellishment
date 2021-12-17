@@ -10,8 +10,8 @@ data μ (D : DataD)
        (ℓs : DataD.Levels D)
        (ps : ⟦ PDataD.Param (DataD.applyL D ℓs) ⟧ᵗ)
      : let Dᵖ = DataD.applyL D ℓs
-       in  ⟦ PDataD.Index Dᵖ ps ⟧ᵗ → Set (PDataD.dlevel Dᵖ ⊔ PDataD.ilevel Dᵖ) where
+       in  ⟦ PDataD.Index Dᵖ ps ⟧ᵗ → Set (PDataD.dlevel Dᵖ) where
   con : let Dᵖ = DataD.applyL D ℓs in ∀ {is}
       → rewriteLevel (PDataD.level-pre-fixed-point Dᵖ)
-          (Lift (PDataD.dlevel Dᵖ ⊔ PDataD.ilevel Dᵖ) (⟦ D ⟧ᵈ (μ D ℓs ps) is))
+          (Lift (PDataD.dlevel Dᵖ) (⟦ D ⟧ᵈ (μ D ℓs ps) is))
       → μ D ℓs ps is

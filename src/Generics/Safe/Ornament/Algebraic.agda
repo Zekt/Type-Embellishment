@@ -41,7 +41,7 @@ algODᶜˢ (D ∷ Ds) X f = algODᶜ  D  X (λ xs → f (inl xs))
 
 algODᵖᵈ : (D : PDataD) → (∀ ps → Algebraᵖᵈ D ps ℓ) → PDataOD D
 algODᵖᵈ {ℓ} D alg = let X = Algebraᵖᵈ.Carrier ∘ alg in record
-  { dlevel  = PDataD.dlevel D
+  { alevel  = PDataD.alevel D
   ; level-pre-fixed-point = pfp (PDataD.ilevel D) (PDataD.dlevel D) (PDataD.struct D)
                                 (PDataD.level-pre-fixed-point D)
   ; ParamOD = ε
@@ -69,37 +69,37 @@ algODᵖᵈ {ℓ} D alg = let X = Algebraᵖᵈ.Carrier ∘ alg in record
     algConB-lemma₃ []         = refl
     algConB-lemma₃ (cb ∷ cbs) = cong₂ _⊔_ (algConB-lemma₂ cb) (algConB-lemma₃ cbs)
 
-    pfp : (ℓⁱ ℓᵈ : Level) (cbs : ConBs)
-        → maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? (ℓᵈ ⊔ ℓⁱ)) cbs ⊔
-          hasCon? ℓⁱ cbs ⊔ ℓᵈ ⊔ ℓⁱ ≡ ℓᵈ ⊔ ℓⁱ
+    pfp : (ℓⁱ ℓᵃ : Level) (cbs : ConBs)
+        → maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? (ℓᵃ ⊔ ℓⁱ)) cbs ⊔
+          hasCon? ℓⁱ cbs ⊔ ℓᵃ ⊔ ℓⁱ ≡ ℓᵃ ⊔ ℓⁱ
         → maxMap max-π (List.map (algConB ℓ) cbs) ⊔
           maxMap max-σ (List.map (algConB ℓ) cbs) ⊔
-          maxMap (hasRec? (ℓᵈ ⊔ ℓⁱ ⊔ ℓ)) (List.map (algConB ℓ) cbs) ⊔
-          hasCon? (ℓⁱ ⊔ ℓ) (List.map (algConB ℓ) cbs) ⊔ ℓᵈ ⊔ ℓⁱ ⊔ ℓ ≡ ℓᵈ ⊔ ℓⁱ ⊔ ℓ
-    pfp ℓⁱ ℓᵈ cbs pfp' =
+          maxMap (hasRec? (ℓᵃ ⊔ ℓⁱ ⊔ ℓ)) (List.map (algConB ℓ) cbs) ⊔
+          hasCon? (ℓⁱ ⊔ ℓ) (List.map (algConB ℓ) cbs) ⊔ ℓᵃ ⊔ ℓⁱ ⊔ ℓ ≡ ℓᵃ ⊔ ℓⁱ ⊔ ℓ
+    pfp ℓⁱ ℓᵃ cbs pfp' =
       begin
         maxMap max-π (List.map (algConB ℓ) cbs) ⊔
         maxMap max-σ (List.map (algConB ℓ) cbs) ⊔
-        maxMap (hasRec? (ℓᵈ ⊔ ℓⁱ ⊔ ℓ)) (List.map (algConB ℓ) cbs) ⊔
-        hasCon? (ℓⁱ ⊔ ℓ) (List.map (algConB ℓ) cbs) ⊔ ℓᵈ ⊔ ℓⁱ ⊔ ℓ
+        maxMap (hasRec? (ℓᵃ ⊔ ℓⁱ ⊔ ℓ)) (List.map (algConB ℓ) cbs) ⊔
+        hasCon? (ℓⁱ ⊔ ℓ) (List.map (algConB ℓ) cbs) ⊔ ℓᵃ ⊔ ℓⁱ ⊔ ℓ
           ≡⟨ -- eliminating algConB; boundedness of level-conditionals
             (let cbs' = List.map (algConB ℓ) cbs
              in  cong₂ _⊔_ (cong₂ _⊔_ (cong₂ _⊔_
                 (algConB-lemma₁ cbs)
                 (algConB-lemma₃ cbs))
-                (maxMap-bound (hasRec? (ℓᵈ ⊔ ℓⁱ ⊔ ℓ)) _
-                              (hasRec?-bound (ℓᵈ ⊔ ℓⁱ ⊔ ℓ)) cbs'))
+                (maxMap-bound (hasRec? (ℓᵃ ⊔ ℓⁱ ⊔ ℓ)) _
+                              (hasRec?-bound (ℓᵃ ⊔ ℓⁱ ⊔ ℓ)) cbs'))
                 (hasCon?-bound (ℓⁱ ⊔ ℓ) cbs')) ⟩
-        maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓ) cbs ⊔ ℓᵈ ⊔ ℓ ⊔ ℓⁱ
+        maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓ) cbs ⊔ ℓᵃ ⊔ ℓ ⊔ ℓⁱ
           ≡⟨ -- boundedness of level-conditionals
              cong (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔_) (cong₂ _⊔_ (cong₂ _⊔_
             (maxMap-bound (hasRec? ℓ) _ (hasRec?-bound ℓ) cbs)
-            (sym (maxMap-bound (hasRec? (ℓᵈ ⊔ ℓⁱ)) _ (hasRec?-bound (ℓᵈ ⊔ ℓⁱ)) cbs)))
+            (sym (maxMap-bound (hasRec? (ℓᵃ ⊔ ℓⁱ)) _ (hasRec?-bound (ℓᵃ ⊔ ℓⁱ)) cbs)))
             (sym (hasCon?-bound ℓⁱ cbs))) ⟩
-        maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? (ℓᵈ ⊔ ℓⁱ)) cbs ⊔
-        hasCon? ℓⁱ cbs ⊔ ℓᵈ ⊔ ℓⁱ ⊔ ℓ
+        maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? (ℓᵃ ⊔ ℓⁱ)) cbs ⊔
+        hasCon? ℓⁱ cbs ⊔ ℓᵃ ⊔ ℓⁱ ⊔ ℓ
           ≡⟨ cong (ℓ ⊔_) pfp' ⟩
-        ℓᵈ ⊔ ℓⁱ ⊔ ℓ
+        ℓᵃ ⊔ ℓⁱ ⊔ ℓ
       ∎ where open ≡-Reasoning
 
 algODᵈ : (D : DataD) → (∀ ℓs ps → Algebraᵈ D ℓs ps ℓ) → DataOD D

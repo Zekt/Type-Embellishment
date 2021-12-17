@@ -16,8 +16,7 @@ private variable
   cbs : ConBs
 
 DataT : DataD → Setω
-DataT D = Carrierᵈ D (λ ℓs → let Dᵖ = DataD.applyL D ℓs
-                             in  PDataD.dlevel Dᵖ ⊔ PDataD.ilevel Dᵖ)
+DataT D = Carrierᵈ D (λ ℓs → PDataD.dlevel (DataD.applyL D ℓs))
 
 record DataC (D : DataD) (N : DataT D) : Setω where
   field
@@ -26,16 +25,16 @@ record DataC (D : DataD) (N : DataT D) : Setω where
     fromN-toN : ∀ {ℓs ps is} (ns : ⟦ D ⟧ᵈ (N ℓs ps) is) → fromN (toN ns) ≡ ns
     toN-fromN : ∀ {ℓs ps is}          (n : N ℓs ps  is) → toN (fromN n ) ≡ n
 
-FoldT : ∀ {D N} (_ : DataC D N) {ℓs ps} (alg : Algebraᵈ D ℓs ps ℓ) → Set _
-FoldT {N = N} _ {ℓs} {ps} alg = ∀ {is} → N ℓs ps is → Algebraᵖᵈ.Carrier alg is
+FoldT : ∀ {D N} (_ : DataC D N) ℓs ps (alg : Algebraᵈ D ℓs ps ℓ) → Set _
+FoldT {N = N} _ ℓs ps alg = ∀ {is} → N ℓs ps is → Algebraᵖᵈ.Carrier alg is
 
-fold-base : ∀ {D N} (C : DataC D N) {ℓs ps} (alg : Algebraᵈ D ℓs ps ℓ)
-          → FoldT C alg → FoldT C alg
-fold-base {D = D} C alg rec = Algebraᵖᵈ.apply alg ∘ fmapᵈ D rec ∘ DataC.fromN C
+fold-base : ∀ {D N} (C : DataC D N) ℓs ps (alg : Algebraᵈ D ℓs ps ℓ)
+          → FoldT C ℓs ps alg → FoldT C ℓs ps alg
+fold-base {D = D} C ℓs ps alg rec = Algebraᵖᵈ.apply alg ∘ fmapᵈ D rec ∘ DataC.fromN C
 
-AlgC : ∀ {D N} (C : DataC D N) {ℓs ps} (alg : Algebraᵈ D ℓs ps ℓ) → FoldT C alg → Set _
-AlgC {N = N} C {ℓs} {ps} alg fold =
-  ∀ {is} (n : N ℓs ps is) → fold-base C alg fold n ≡ fold n
+AlgC : ∀ {D N} (C : DataC D N) ℓs ps (alg : Algebraᵈ D ℓs ps ℓ) → FoldT C ℓs ps alg → Set _
+AlgC {N = N} C ℓs ps alg fold =
+  ∀ {is} (n : N ℓs ps is) → fold-base C ℓs ps alg fold n ≡ fold n
 
 -- ind-fmapʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓ}
 --             {P : Σ I X → Set ℓ'} → (∀ {i} x → P (i , x))

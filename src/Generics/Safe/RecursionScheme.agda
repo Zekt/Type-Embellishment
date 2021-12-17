@@ -24,8 +24,10 @@ FoldAlgTᶜˢ []       X T = T
 FoldAlgTᶜˢ (D ∷ Ds) X T = FoldAlgTᶜ D X → FoldAlgTᶜˢ Ds X T
 
 FoldAlgTᵖᵈ : ∀ (D : PDataD) ps ℓ → Set _
-FoldAlgTᵖᵈ D ps ℓ = (X : ⟦ PDataD.Index D ps ⟧ᵗ → Set ℓ)
-                  → FoldAlgTᶜˢ (PDataD.applyP D ps) X (Algebraᵖᵈ D ps ℓ)
+FoldAlgTᵖᵈ D ps ℓ = (X : Curriedᵗ (PDataD.Index D ps) λ _ → Set ℓ)
+                  → FoldAlgTᶜˢ (PDataD.applyP D ps)
+                               (uncurryᵗ (PDataD.Index D ps) (λ _ → Set ℓ) X)
+                               (Algebraᵖᵈ D ps ℓ)
 
 FoldAlgTᵈ : ∀ (D : DataD) ℓs ps ℓ → Set _
 FoldAlgTᵈ D ℓs = FoldAlgTᵖᵈ (DataD.applyL D ℓs)
@@ -41,8 +43,9 @@ fold-algᶜˢ []       T cont = cont λ ()
 fold-algᶜˢ (D ∷ Ds) T cont = λ f → fold-algᶜˢ Ds T λ g →
                              cont λ { (inl xs) → fold-algᶜ D f xs; (inr xs) → g xs }
 
-fold-algᵖᵈ : (D : PDataD) → ∀ {ps ℓ} → FoldAlgTᵖᵈ D ps ℓ
-fold-algᵖᵈ D {ps} {ℓ} X = fold-algᶜˢ (PDataD.applyP D ps) (Algebraᵖᵈ D ps ℓ) (algebra X)
+fold-algᵖᵈ : (D : PDataD) → ∀ ps ℓ → FoldAlgTᵖᵈ D ps ℓ
+fold-algᵖᵈ D ps ℓ X = fold-algᶜˢ (PDataD.applyP D ps) (Algebraᵖᵈ D ps ℓ)
+                                 (algebra (uncurryᵗ _ _ X))
 
-fold-algᵈ : (D : DataD) → ∀ {ℓs ps ℓ} → FoldAlgTᵈ D ℓs ps ℓ
-fold-algᵈ D {ℓs} = fold-algᵖᵈ (DataD.applyL D ℓs)
+fold-algᵈ : (D : DataD) → ∀ ℓs ps ℓ → FoldAlgTᵈ D ℓs ps ℓ
+fold-algᵈ D ℓs = fold-algᵖᵈ (DataD.applyL D ℓs)
