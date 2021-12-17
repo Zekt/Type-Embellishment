@@ -37,3 +37,7 @@ curryⁿ (A ∷ T) X f = λ a → curryⁿ (T a) (λ t → X (a , t)) (λ t → 
 uncurryⁿ : (T : Tel ℓ) (X : ⟦ T ⟧ᵗ → Set ℓ′) → Curried T X → (t : ⟦ T ⟧ᵗ) → X t
 uncurryⁿ []      X f tt      = f
 uncurryⁿ (A ∷ T) X f (x , t) = uncurryⁿ (T x) (λ t → X (x , t)) (f x) t
+
+_^_ : Set → ℕ → Set
+A ^ zero  = ⊤
+A ^ suc n = A × (A ^ n)

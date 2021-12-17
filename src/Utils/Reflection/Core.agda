@@ -44,8 +44,7 @@ pattern `Set n = agda-sort (lit n)
 
 pattern `Set! = agda-sort unknown
 
-`List : Name
-`List = quote List
+pattern `Level = def (quote Level) []
 
 pattern relevant-ω              = modality relevant quantity-ω
 pattern relevant-erased         = modality relevant quantity-0
@@ -80,14 +79,14 @@ pattern vLam x = lam visible x
 pattern hLam x = lam hidden x
 pattern iLam x = lam instance′ x
 
-pattern Π[_∶_]_ s a ty  = pi a (abs s ty)
-pattern Π[_]_ a ty      = Π[ "_" ∶ a ] ty
-pattern vΠ[_∶_]_ s a ty = Π[ s ∶ (vArg a) ] ty
-pattern hΠ[_∶_]_ s a ty = Π[ s ∶ (hArg a) ] ty
-pattern iΠ[_∶_]_ s a ty = Π[ s ∶ (iArg a) ] ty
-pattern vΠ[_]_ a ty     = Π[ vArg a ] ty
-pattern hΠ[_]_ a ty     = Π[ hArg a ] ty
-pattern iΠ[_]_ a ty     = Π[ iArg a ] ty
+pattern `Π[_∶_]_ s a ty  = pi a (abs s ty)
+pattern `Π[_]_ a ty      = `Π[ "_" ∶ a ] ty
+pattern vΠ[_∶_]_ s a ty = `Π[ s ∶ (vArg a) ] ty
+pattern hΠ[_∶_]_ s a ty = `Π[ s ∶ (hArg a) ] ty
+pattern iΠ[_∶_]_ s a ty = `Π[ s ∶ (iArg a) ] ty
+pattern vΠ[_]_ a ty     = `Π[ vArg a ] ty
+pattern hΠ[_]_ a ty     = `Π[ hArg a ] ty
+pattern iΠ[_]_ a ty     = `Π[ iArg a ] ty
 
 infixr 20 `vλ_`→_ `hλ_`→_ `iλ_`→_
 
@@ -130,7 +129,7 @@ private
 
   TelescopeToΠ : Type → Telescope → Type
   TelescopeToΠ `B []             = `B
-  TelescopeToΠ `B ((s , `A) ∷ T) = Π[ s ∶ `A ] TelescopeToΠ `B T
+  TelescopeToΠ `B ((s , `A) ∷ T) = `Π[ s ∶ `A ] TelescopeToΠ `B T
 instance
   TelescopeToContext : Coercion' Telescope Context
   ⇑_ ⦃ TelescopeToContext ⦄ = map snd
@@ -234,12 +233,6 @@ extendContextT i B f = do
     x ← unquoteTC {A = B} (var₀ 0)
     f `B x
 
-quoteLevelTC : Level → TC ℕ
-quoteLevelTC ℓ = do
-  `Set n ← quoteTC (Set ℓ)
-    where t → IMPOSSIBLE t
-  return n
-
 getDefType : Name → TC Type
 getDefType n = caseM getDefinition n of λ where
     (data-cons d) → inferType $ con n []
@@ -260,7 +253,6 @@ macro
   getTelescopeT : Name → Tactic
   getTelescopeT s = evalTC $ getTelescope s
 
--- append pi types and discard the last term in t₁
-_`++_ : Type → Type → Type
-_`++_ (pi a (abs s b)) t₂ = pi a (abs s (b `++ t₂))
-_`++_ _                t₂ = t₂
+prefixToType : Telescope → Type → Type
+prefixToType []              `B = `B
+prefixToType ((s , `A) ∷ `Γ) `B = `Π[ s ∶ `A ] prefixToType `Γ `B
