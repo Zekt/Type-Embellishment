@@ -248,6 +248,14 @@ getDefType n = caseM getDefinition n of λ where
 getTelescope : Name → TC (Telescope × Type)
 getTelescope s = ⦇ ⇑ (getDefType s) ⦈
 
+getLevel : Type → TC Level
+getLevel t = case t of λ where
+               (def (quote Set) [])    → return lzero
+               (def (quote Set) [ l ]) → unquoteTC (unArg l)
+               _ → typeError (termErr t
+                             ∷ strErr "is not a type."
+                             ∷ [])
+
 macro
   getTelescopeT : Name → Tactic
   getTelescopeT s = evalTC $ getTelescope s

@@ -58,6 +58,11 @@ _++_ : List A → List A → List A
 []       ++ ys = ys
 (x ∷ xs) ++ ys = x ∷ (xs ++ ys)
 
+drop : ℕ → List A → List A
+drop zero    xs       = xs
+drop (suc n) []       = []
+drop (suc n) (x ∷ xs) = drop n xs
+
 zipWith : (A → B → C) → List A → List B → List C
 zipWith f (x ∷ xs) (y ∷ ys) = f x y ∷ zipWith f xs ys
 zipWith f _        _        = []
