@@ -40,14 +40,14 @@ algODᶜˢ (D ∷ Ds) X f = algODᶜ  D  X (λ xs → f (inl xs))
                    ∷ ∺ algODᶜˢ Ds X (λ xs → f (inr xs))
 
 algODᵖᵈ : (D : PDataD) → (∀ ps → Algebraᵖᵈ D ps ℓ) → PDataOD D
-algODᵖᵈ {ℓ} D alg = let X = Algebraᵖᵈ.Carrier ∘ alg in record
+algODᵖᵈ {ℓ} D alg = let X = Algebra.Carrier ∘ alg in record
   { alevel  = PDataD.alevel D
   ; level-pre-fixed-point = pfp (PDataD.ilevel D) (PDataD.dlevel D) (PDataD.struct D)
                                 (PDataD.level-pre-fixed-point D)
   ; ParamOD = ε
   ; IndexOD = λ ps → ▷ ε (X ps)
   ; applyP  = λ ps → imapODᶜˢ snocᵗ-inj (fst ∘ snocᵗ-proj) (cong fst ∘ snocᵗ-proj-inj)
-                       (algODᶜˢ (PDataD.applyP D ps) (X ps) (Algebraᵖᵈ.apply (alg ps)))
+                       (algODᶜˢ (PDataD.applyP D ps) (X ps) (Algebra.apply (alg ps)))
   }
   where
     algConB-lemma₀ : ∀ cb → max-π (algConB ℓ cb) ≡ max-π cb
@@ -102,7 +102,8 @@ algODᵖᵈ {ℓ} D alg = let X = Algebraᵖᵈ.Carrier ∘ alg in record
         ℓᵃ ⊔ ℓⁱ ⊔ ℓ
       ∎ where open ≡-Reasoning
 
-algODᵈ : (D : DataD) → (∀ ℓs ps → Algebraᵈ D ℓs ps ℓ) → DataOD D
+algODᵈ : (D : DataD) {ℓf : DataD.Levels D → Level}
+       → (∀ ℓs ps → Algebraᵈ D ℓs ps (ℓf ℓs)) → DataOD D
 algODᵈ D alg = record
   { #levels = DataD.#levels D
   ; LevelO  = ε

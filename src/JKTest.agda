@@ -251,69 +251,69 @@ PointwiseD = record
                           (ι (a ∷ as , b ∷ bs , tt)))
                         ∷ [] } }
 
--- -- VecD/NatD : SetO VecD NatD
--- -- VecD/NatD = record
--- --   { param = λ _ → tt
--- --   ; index = λ _ _ → tt
--- --   ; applyP   = λ { (_ , A) → ι refl
--- --                       ∷ ◂ Δ (λ a → Δ λ n → ρ (ι refl) (ι refl))
--- --                       ∷ ◂ [] } }
+-- VecD/NatD : SetO VecD NatD
+-- VecD/NatD = record
+--   { param = λ _ → tt
+--   ; index = λ _ _ → tt
+--   ; applyP   = λ { (_ , A) → ι refl
+--                       ∷ ◂ Δ (λ a → Δ λ n → ρ (ι refl) (ι refl))
+--                       ∷ ◂ [] } }
 
--- -- ListD : PDataD {_} {lzero}
--- -- ListD = record
--- --   { Param = [] ▷ (λ _ → Set)
--- --   ; Index = λ _ → []
--- --   ; Desc  = λ { (_ , A) → ι tt
--- --                         ∷ σ A (λ _ → ρ (ι tt) (ι tt))
--- --                         ∷ [] } }
+-- ListD : PDataD {_} {lzero}
+-- ListD = record
+--   { Param = [] ▷ (λ _ → Set)
+--   ; Index = λ _ → []
+--   ; Desc  = λ { (_ , A) → ι tt
+--                         ∷ σ A (λ _ → ρ (ι tt) (ι tt))
+--                         ∷ [] } }
 
--- -- BinOD : SetOD ListD
--- -- BinOD = record
--- --   { Param = []
--- --   ; param = λ _ → tt , Bool
--- --   ; Index = λ _ → []
--- --   ; index = λ _ _ → tt
--- --   ; applyP   = λ _ → ι tt refl
--- --               ∷ ◂ ∇ false (ρ (ι tt refl) (ι tt refl))
--- --               ∷   ∇ true  (ρ (ι tt refl) (ι tt refl))
--- --               ∷ ◂ [] }
+-- BinOD : SetOD ListD
+-- BinOD = record
+--   { Param = []
+--   ; param = λ _ → tt , Bool
+--   ; Index = λ _ → []
+--   ; index = λ _ _ → tt
+--   ; applyP   = λ _ → ι tt refl
+--               ∷ ◂ ∇ false (ρ (ι tt refl) (ι tt refl))
+--               ∷   ∇ true  (ρ (ι tt refl) (ι tt refl))
+--               ∷ ◂ [] }
 
--- -- VecD' : ⟦ [] ▷ (λ _ → Set) ⟧ᵗ → PDataD {lsuc lzero}
--- -- VecD' (_ , A) = record
--- --   { Param = []
--- --   ; Index = λ _ → [] ▷ (λ _ → ℕ)
--- --   ; Desc  = λ _ → ι (tt , zero)
--- --                 ∷ σ A (λ _ → σ ℕ λ n → ρ (ι (tt , n)) (ι (tt , suc n)))
--- --                 ∷ [] }
+-- VecD' : ⟦ [] ▷ (λ _ → Set) ⟧ᵗ → PDataD {lsuc lzero}
+-- VecD' (_ , A) = record
+--   { Param = []
+--   ; Index = λ _ → [] ▷ (λ _ → ℕ)
+--   ; Desc  = λ _ → ι (tt , zero)
+--                 ∷ σ A (λ _ → σ ℕ λ n → ρ (ι (tt , n)) (ι (tt , suc n)))
+--                 ∷ [] }
 
--- -- open import Data.Vec
+-- open import Data.Vec
 
--- -- toVec' : {p : ⟦ [] ▷ (λ _ → Set) ⟧ᵗ} {i : ⟦ [] ▷ (λ _ → ℕ) ⟧ᵗ}
--- --        → ⟦ VecD' p ⟧ˢ (Vec (snd p) ∘ snd) i → Vec (snd p) (snd i)
--- -- toVec' (inl                    refl  ) = []
--- -- toVec' (inr (inl (a , _ , as , refl))) = a ∷ as
+-- toVec' : {p : ⟦ [] ▷ (λ _ → Set) ⟧ᵗ} {i : ⟦ [] ▷ (λ _ → ℕ) ⟧ᵗ}
+--        → ⟦ VecD' p ⟧ˢ (Vec (snd p) ∘ snd) i → Vec (snd p) (snd i)
+-- toVec' (inl                    refl  ) = []
+-- toVec' (inr (inl (a , _ , as , refl))) = a ∷ as
 
--- -- fromVec' : {p : ⟦ [] ▷ (λ _ → Set) ⟧ᵗ} {i : ⟦ [] ▷ (λ _ → ℕ) ⟧ᵗ}
--- --          → Vec (snd p) (snd i) → ⟦ VecD' p ⟧ˢ (Vec (snd p) ∘ snd) i
--- -- fromVec' []       = inl                    refl
--- -- fromVec' (a ∷ as) = inr (inl (a , _ , as , refl))
+-- fromVec' : {p : ⟦ [] ▷ (λ _ → Set) ⟧ᵗ} {i : ⟦ [] ▷ (λ _ → ℕ) ⟧ᵗ}
+--          → Vec (snd p) (snd i) → ⟦ VecD' p ⟧ˢ (Vec (snd p) ∘ snd) i
+-- fromVec' []       = inl                    refl
+-- fromVec' (a ∷ as) = inr (inl (a , _ , as , refl))
 
--- -- VecParamO : (p q : ⟦ [] ▷ (λ _ → Set) ⟧ᵗ)
--- --           → (snd p → snd q)
--- --          → SetO (VecD' p) (VecD' q)
--- -- VecParamO (_ , A) (_ , B) f = record
--- --   { param = λ _ → tt
--- --   ; index = λ _ i → i
--- --   ; applyP   = λ _ → ι refl
--- --               ∷ ◂ Δ (λ a → ∇ (f a) (σ λ n → ρ (ι refl) (ι refl)))
--- --               ∷ ◂ [] }
+-- VecParamO : (p q : ⟦ [] ▷ (λ _ → Set) ⟧ᵗ)
+--           → (snd p → snd q)
+--          → SetO (VecD' p) (VecD' q)
+-- VecParamO (_ , A) (_ , B) f = record
+--   { param = λ _ → tt
+--   ; index = λ _ i → i
+--   ; applyP   = λ _ → ι refl
+--               ∷ ◂ Δ (λ a → ∇ (f a) (σ λ n → ρ (ι refl) (ι refl)))
+--               ∷ ◂ [] }
 
--- -- vmap-base : {A B : Set} → (A → B)
--- --           → ({n : ℕ} → Vec A n → Vec B n)
--- --           → ({n : ℕ} → Vec A n → Vec B n)
--- -- vmap-base {A} {B} f rec =
--- --   toVec' ∘ eraseˢ (VecParamO (tt , A) (tt , B) f) ∘ fmapˢ (VecD' (tt , A)) rec ∘ fromVec'
+-- vmap-base : {A B : Set} → (A → B)
+--           → ({n : ℕ} → Vec A n → Vec B n)
+--           → ({n : ℕ} → Vec A n → Vec B n)
+-- vmap-base {A} {B} f rec =
+--   toVec' ∘ eraseˢ (VecParamO (tt , A) (tt , B) f) ∘ fmapˢ (VecD' (tt , A)) rec ∘ fromVec'
 
--- -- vmap : {A B : Set} → (A → B) → {n : ℕ} → Vec A n → Vec B n
--- -- vmap f []       = {! vmap-base f (vmap f) [] !}
--- -- vmap f (x ∷ xs) = {! vmap-base f (vmap f) (x ∷ xs) !}
+-- vmap : {A B : Set} → (A → B) → {n : ℕ} → Vec A n → Vec B n
+-- vmap f []       = {! vmap-base f (vmap f) [] !}
+-- vmap f (x ∷ xs) = {! vmap-base f (vmap f) (x ∷ xs) !}

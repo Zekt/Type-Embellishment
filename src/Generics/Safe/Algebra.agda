@@ -35,15 +35,16 @@ Carrierᵈ D ℓf = (ℓs : DataD.Levels D) → Carrierᵖᵈ (DataD.applyL D �
 Algᵈ : (D : DataD) {ℓf : DataD.Levels D → Level} → Carrierᵈ D ℓf → Setω
 Algᵈ D X = ∀ {ℓs p i} → ⟦ D ⟧ᵈ (X ℓs p) i → X ℓs p i
 
-record Algebraᵖᵈ (D : PDataD) ps ℓ
-     : let ℓⁱ  = PDataD.ilevel D
-           cbs = PDataD.struct D
-       in  Set (ℓⁱ ⊔ maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓ) cbs ⊔
-                hasCon? ℓⁱ cbs ⊔ lsuc ℓ) where
+record Algebra {I : Set ℓⁱ} (D : ConDs I cbs) ℓ
+     : Set (ℓⁱ ⊔ maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓ) cbs ⊔
+            hasCon? ℓⁱ cbs ⊔ lsuc ℓ) where
   constructor algebra
   field
-    Carrier : Carrierᶜˢ (PDataD.applyP D ps) ℓ
-    apply   : Algᶜˢ (PDataD.applyP D ps) Carrier
+    Carrier : Carrierᶜˢ D ℓ
+    apply   : Algᶜˢ D Carrier
+
+Algebraᵖᵈ : ∀ (D : PDataD) ps ℓ → Set _
+Algebraᵖᵈ D ps = Algebra (PDataD.applyP D ps)
 
 Algebraᵈ : ∀ (D : DataD) ℓs ps ℓ → Set _
 Algebraᵈ D ℓs = Algebraᵖᵈ (DataD.applyL D ℓs)
