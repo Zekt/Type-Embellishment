@@ -8,6 +8,7 @@ open import Generics.Safe.Algebra
 open import Generics.Safe.Ornament
 open import Generics.Safe.Ornament.Description
 open import Generics.Safe.Ornament.Algebraic
+open import Generics.Safe.Ornament.Algebraic.Properties
 open import Generics.Safe.Ornament.Promotion
 open import Generics.Safe.Recursion
 open import Generics.Safe.RecursionScheme
@@ -41,8 +42,9 @@ NatC = record
   ; toN-fromN = λ {  zero   → refl
                   ; (suc n) → refl } }
 
--- USER
-foldℕ-alg : ∀ ℓs ps ℓ (X : Set ℓ) → X → (X → X) → Algebraᵈ NatD ℓs ps ℓ  -- {! ∀ {ℓs ps ℓ} → FoldAlgTᵈ NatD ℓs ps ℓ !}
+-- USER (specialising a generic library component)
+foldℕ-alg : ∀ ℓs ps ℓ (X : Set ℓ) → X → (X → X) → Algebraᵈ NatD ℓs ps ℓ
+-- foldℕ-alg : {! ∀ ℓs ps ℓ → FoldAlgTᵈ NatD ℓs ps ℓ !}
 foldℕ-alg = fold-algᵈ NatD
 
 -- META
@@ -58,7 +60,7 @@ foldℕ X z s (suc n) = s (foldℕ X z s n)
 -- foldℕ X z s  zero   = {! fold-base NatC (fold-algᵈ NatD X z s) (foldℕ-wrapper X z s)  zero   !}
 -- foldℕ X z s (suc n) = {! fold-base NatC (fold-algᵈ NatD X z s) (foldℕ-wrapper X z s) (suc n) !}
 
--- USER
+-- USER (changing the form of the fold)
 -- foldℕ-wrapper ℓs ps ℓ X z s n = foldℕ s z n
 -- foldℕ : ∀ {ℓ} {X : Set ℓ} → (X → X) → X → ℕ → X
 -- foldℕ s z  zero   = z
@@ -66,113 +68,29 @@ foldℕ X z s (suc n) = s (foldℕ X z s n)
 
 -- META
 foldℕ-is-fold : ∀ ℓs ps ℓ (X : Set ℓ) (z : X) (s : X → X)
-              → AlgC NatC ℓs ps (foldℕ-alg ℓs ps ℓ X z s) (foldℕ-wrapper ℓs ps ℓ X z s)
-foldℕ-is-fold ℓs ps ℓ X z s  zero   = refl
-foldℕ-is-fold ℓs ps ℓ X z s (suc n) = refl
+              → AlgC NatC (foldℕ-alg ℓs ps ℓ X z s) (foldℕ-wrapper ℓs ps ℓ X z s)
+foldℕ-is-fold ℓs ps ℓ X z s (inl           refl  ) = refl
+foldℕ-is-fold ℓs ps ℓ X z s (inr (inl (_ , refl))) = refl
 
--- -- DGP
--- indℕ-alg : (P : ℕ → Set) → P zero → (∀ n → P n → P (suc n)) → IndAlg NatC
--- indℕ-alg P pz ps = record
---   { Carrier = λ _ _ i → P (fst i)
---   ; apply = λ { (inl                refl  ) → pz
---               ; (inr (inl (n , pn , refl))) → ps n pn } }
+-- USER (for now; will be a specialisation of a generic library component)
+indℕ-alg : (P : ℕ → Set) → P zero → (∀ n → P n → P (suc n)) → IndAlgebraᵈ NatC tt tt _
+indℕ-alg P z s = record
+  { Carrier = λ _ → P
+  ; apply = λ { (inl           refl  ) _        → z
+              ; (inr (inl (n , refl))) (pn , _) → s n pn } }
 
--- -- META
--- indℕ : (P : ℕ → Set) → P zero → (∀ n → P n → P (suc n)) → ∀ n → P n
--- indℕ P pz ps  zero   = pz                     -- {! ind-base NatC (indℕ-alg P pz ps) (indℕ P pz ps) zero !}
--- indℕ P pz ps (suc n) = ps n (indℕ P pz ps n)  -- {! ind-base NatC (indℕ-alg P pz ps) (indℕ P pz ps) (suc n) !}
+-- META
+indℕ : (P : ℕ → Set) → P zero → (∀ n → P n → P (suc n)) → ∀ n → P n
+indℕ P z s  zero   = z
+indℕ P z s (suc n) = s n (indℕ P z s n)
+-- indℕ P z s  zero   = {! ind-base NatC (indℕ-alg P z s) (indℕ P z s)  zero   !}
+-- indℕ P z s (suc n) = {! ind-base NatC (indℕ-alg P z s) (indℕ P z s) (suc n) !}
 
--- -- META
--- indℕ-is-ind : (P : ℕ → Set) (pz : P zero) (ps : ∀ n → P n → P (suc n))
---             → IndAlgC NatC (indℕ-alg P pz ps) (indℕ P pz ps)
--- indℕ-is-ind P pz ps  zero   = refl
--- indℕ-is-ind P pz ps (suc n) = refl
-
--- -- DGP
--- indℕ'-alg : (alg : Alg NatD) (P : Alg.Carrier alg tt tt tt → Set)
---           → P (Alg.apply alg (inl refl))
---           → (∀ x → P x → P (Alg.apply alg (inr (inl (x , refl)))))
---           → (g : ℕ → Alg.Carrier alg tt tt tt) → AlgC NatC alg g
---           → IndAlg NatC
--- indℕ'-alg alg P pz ps g alg-g = record
---   { Carrier = λ _ _ → P ∘ g ∘ fst
---   ; apply = λ { (inl               refl  ) → subst P (alg-g  zero  )  pz
---               ; (inr (inl (n , p , refl))) → subst P (alg-g (suc n)) (ps (g n) p) } }
-
--- -- META
--- indℕ' : (alg : Alg NatD) (P : Alg.Carrier alg tt tt tt → Set)
---       → P (Alg.apply alg (inl refl))
---       → (∀ x → P x → P (Alg.apply alg (inr (inl (x , refl)))))
---       → (n : ℕ) → P (foldℕ alg n)
--- indℕ' alg P pz ps  zero   = pz                                     -- {! ind-base NatC (indℕ'-alg alg P pz ps (foldℕ alg) (foldℕ-is-fold alg)) (indℕ' alg P pz ps)  zero  !}
--- indℕ' alg P pz ps (suc n) = ps (foldℕ alg n) (indℕ' alg P pz ps n) -- {! ind-base NatC (indℕ'-alg alg P pz ps (foldℕ alg) (foldℕ-is-fold alg)) (indℕ' alg P pz ps) (suc n) !}
-
--- -- META
--- indℕ'-is-ind : (alg : Alg NatD) (P : Alg.Carrier alg tt tt tt → Set)
---                (pz : P (Alg.apply alg (inl refl)))
---                (ps : ∀ x → P x → P (Alg.apply alg (inr (inl (x , refl)))))
---              → IndAlgC NatC (indℕ'-alg alg P pz ps (foldℕ alg) (foldℕ-is-fold alg))
---                             (indℕ'     alg P pz ps)
--- indℕ'-is-ind alg P pz ps  zero   = refl
--- indℕ'-is-ind alg P pz ps (suc n) = refl
-
-data SNat : ℕ → Set where
-  zero : SNat zero
-  suc  : ∀ {n} → SNat n → SNat (suc n)
-
-SNatOD : DataOD NatD
-SNatOD = algODᵈ NatD (λ _ _ → algebra _ (DataC.toN NatC))
-
-toSNat : ∀ {n} → ⟦ ⌊ SNatOD ⌋ᵈ ⟧ᵈ (SNat ∘ fst) n → SNat (fst n)
-toSNat (inl               refl  ) = zero
-toSNat (inr (inl (_ , s , refl))) = suc s
-
-fromSNat : ∀ {n} → SNat (fst n) → ⟦ ⌊ SNatOD ⌋ᵈ ⟧ᵈ (SNat ∘ fst) n
-fromSNat  zero   = inl               refl
-fromSNat (suc s) = inr (inl (_ , s , refl))
-
-mutual
-
-  data Even : ℕ → Set where
-    zero : Even zero
-    suc  : ∀ {n} → Odd n → Even (suc n)
-
-  data Odd : ℕ → Set where
-    suc : ∀ {n} → Even n → Odd (suc n)
-
-parity : Algᵈ ⌊ SNatOD ⌋ᵈ λ _ _ _ → Bool
-parity (inl               refl  ) = false
-parity (inr (inl (_ , b , refl))) = not b
-
-PNatOD : DataOD ⌊ SNatOD ⌋ᵈ
-PNatOD = algODᵈ ⌊ SNatOD ⌋ᵈ (λ _ _ → algebra _ parity)
-
-data PNat : ℕ → Bool → Set where
-  zero : PNat zero false
-  suc  : ∀ {n b} → PNat n b → PNat (suc n) (not b)
-
--- ParityOD : DataOD ⌊ PNatOD ⌋ᵈ
--- ParityOD = record
---   { #levels = 0
---   ; LevelO  = ε
---   ; applyL  = λ _ → record
---       { alevel  = lzero
---       ; level-pre-fixed-point = refl
---       ; ParamOD = ε
---       ; IndexOD = λ _ → ε
---       ; applyP  = λ _ → (ι _ refl)
---                     ∷ ∺ (σ λ n → ∇ false (ρ (ι _ refl) (ι _ refl)))
---                     ∷   (σ λ n → ∇ true  (ρ (ι _ refl) (ι _ refl)))
---                     ∷ ∺ [] } }
-
-data Parity : ℕ → Bool → Set where
-  zero : Parity zero false
-  suc₀ : ∀ {n} → Parity n false → Parity (suc n) true
-  suc₁ : ∀ {n} → Parity n true  → Parity (suc n) false
-
-Even' Odd' : ℕ → Set
-Even' n = Parity n false
-Odd'  n = Parity n true
+-- META
+indℕ-is-ind : (P : ℕ → Set) (z : P zero) (s : ∀ n → P n → P (suc n))
+            → IndAlgC NatC (indℕ-alg P z s) (indℕ P z s)
+indℕ-is-ind P z s (inl           refl  ) = refl
+indℕ-is-ind P z s (inr (inl (n , refl))) = refl
 
 ListOD : DataOD NatD
 ListOD = record
@@ -190,16 +108,8 @@ ListOD = record
 ListD : DataD
 ListD = ⌊ ListOD ⌋ᵈ
 
-ListD/NatD : DataO ListD NatD
-ListD/NatD = record
-  { LevelO = Δ λ _ → ε
-  ; applyL = λ ℓs → let (ℓ , _) = ℓs in record
-      { ParamO = Δ λ _ → ε
-      ; IndexO = λ _ → ε
-      ; applyP = λ _ → ι refl ∷ ∺ Δ (λ _ → ρ (ι refl) (ι refl)) ∷ ∺ [] } }
-
 VecOD : DataOD ListD
-VecOD = algODᵈ ListD (ornAlg ListD/NatD NatC)
+VecOD = algODᵈ ListD (ornAlg ⌈ ListOD ⌉ᵈ NatC)
 
 VecD : DataD
 VecD = ⌊ VecOD ⌋ᵈ
@@ -250,6 +160,49 @@ PointwiseD = record
                            ρ (ι (as , bs , tt))
                           (ι (a ∷ as , b ∷ bs , tt)))
                         ∷ [] } }
+
+-- mutual
+
+--   data Even : ℕ → Set where
+--     zero : Even zero
+--     suc  : ∀ {n} → Odd n → Even (suc n)
+
+--   data Odd : ℕ → Set where
+--     suc : ∀ {n} → Even n → Odd (suc n)
+
+-- parity : Algᵈ ⌊ SNatOD ⌋ᵈ λ _ _ _ → Bool
+-- parity (inl               refl  ) = false
+-- parity (inr (inl (_ , b , refl))) = not b
+
+-- PNatOD : DataOD ⌊ SNatOD ⌋ᵈ
+-- PNatOD = algODᵈ ⌊ SNatOD ⌋ᵈ (λ _ _ → algebra _ parity)
+
+-- data PNat : ℕ → Bool → Set where
+--   zero : PNat zero false
+--   suc  : ∀ {n b} → PNat n b → PNat (suc n) (not b)
+
+-- ParityOD : DataOD ⌊ PNatOD ⌋ᵈ
+-- ParityOD = record
+--   { #levels = 0
+--   ; LevelO  = ε
+--   ; applyL  = λ _ → record
+--       { alevel  = lzero
+--       ; level-pre-fixed-point = refl
+--       ; ParamOD = ε
+--       ; IndexOD = λ _ → ε
+--       ; applyP  = λ _ → (ι _ refl)
+--                     ∷ ∺ (σ λ n → ∇ false (ρ (ι _ refl) (ι _ refl)))
+--                     ∷   (σ λ n → ∇ true  (ρ (ι _ refl) (ι _ refl)))
+--                     ∷ ∺ [] } }
+
+-- data Parity : ℕ → Bool → Set where
+--   zero : Parity zero false
+--   suc₀ : ∀ {n} → Parity n false → Parity (suc n) true
+--   suc₁ : ∀ {n} → Parity n true  → Parity (suc n) false
+
+-- Even' Odd' : ℕ → Set
+-- Even' n = Parity n false
+-- Odd'  n = Parity n true
 
 -- VecD/NatD : SetO VecD NatD
 -- VecD/NatD = record

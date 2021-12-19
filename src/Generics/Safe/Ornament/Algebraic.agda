@@ -17,27 +17,27 @@ private variable
   cbs : ConBs
 
 algODʳ : {I : Set ℓⁱ} (D : RecD I rb)
-         (X : I → Set ℓ) (xs : ⟦ D ⟧ʳ X) → RecOD (Σ I X) fst D
-algODʳ (ι i  ) X x  = ι (_ , x) refl
-algODʳ (π A D) X xs = π λ a → algODʳ (D a) X (xs a)
+         {X : I → Set ℓ} (xs : ⟦ D ⟧ʳ X) → RecOD (Σ I X) fst D
+algODʳ (ι i  ) x  = ι (_ , x) refl
+algODʳ (π A D) xs = π λ a → algODʳ (D a) (xs a)
 
 algConB : Level → ConB → ConB
 algConB ℓ []            = []
 algConB ℓ (inl ℓ' ∷ cb) = inl ℓ' ∷ algConB ℓ cb
 algConB ℓ (inr rb ∷ cb) = inl (max-ℓ rb ⊔ ℓ) ∷ inr rb ∷ algConB ℓ cb
 
-algODᶜ : {I : Set ℓⁱ} (D : ConD I cb) (X : I → Set ℓ)
+algODᶜ : {I : Set ℓⁱ} (D : ConD I cb) {X : I → Set ℓ}
        → Algᶜ D X → ConOD (Σ I X) fst D (algConB ℓ cb)
-algODᶜ (ι i  ) X f = ι (_ , f refl) refl
-algODᶜ (σ A D) X f = σ λ a → algODᶜ (D a) X λ xs → f (a , xs)
-algODᶜ (ρ D E) X f = Δ (⟦ D ⟧ʳ X) λ xs →
-                     ρ (algODʳ D X xs) (algODᶜ E X (λ xs' → f (xs , xs')))
+algODᶜ (ι i  ) f = ι (_ , f refl) refl
+algODᶜ (σ A D) f = σ λ a → algODᶜ (D a) λ xs → f (a , xs)
+algODᶜ (ρ D E) f = Δ (⟦ D ⟧ʳ _) λ xs →
+                   ρ (algODʳ D xs) (algODᶜ E (λ xs' → f (xs , xs')))
 
-algODᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) (X : I → Set ℓ)
+algODᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {X : I → Set ℓ}
         → Algᶜˢ D X → ConODs (Σ I X) fst D (List.map (algConB ℓ) cbs)
-algODᶜˢ []       X f = []
-algODᶜˢ (D ∷ Ds) X f = algODᶜ  D  X (λ xs → f (inl xs))
-                   ∷ ∺ algODᶜˢ Ds X (λ xs → f (inr xs))
+algODᶜˢ []       f = []
+algODᶜˢ (D ∷ Ds) f = algODᶜ  D  (λ xs → f (inl xs))
+                 ∷ ∺ algODᶜˢ Ds (λ xs → f (inr xs))
 
 algODᵖᵈ : (D : PDataD) → (∀ ps → Algebraᵖᵈ D ps ℓ) → PDataOD D
 algODᵖᵈ {ℓ} D alg = let X = Algebra.Carrier ∘ alg in record
@@ -47,7 +47,7 @@ algODᵖᵈ {ℓ} D alg = let X = Algebra.Carrier ∘ alg in record
   ; ParamOD = ε
   ; IndexOD = λ ps → ▷ ε (X ps)
   ; applyP  = λ ps → imapODᶜˢ snocᵗ-inj (fst ∘ snocᵗ-proj) (cong fst ∘ snocᵗ-proj-inj)
-                       (algODᶜˢ (PDataD.applyP D ps) (X ps) (Algebra.apply (alg ps)))
+                       (algODᶜˢ (PDataD.applyP D ps) (Algebra.apply (alg ps)))
   }
   where
     algConB-lemma₀ : ∀ cb → max-π (algConB ℓ cb) ≡ max-π cb
