@@ -51,7 +51,7 @@ foldℕ-alg = fold-algᵈ NatD
 foldℕ-wrapper : ∀ ℓs ps ℓ (X : Set ℓ) (z : X) (s : X → X)
               → FoldT NatC ℓs ps (foldℕ-alg ℓs ps ℓ X z s)
 foldℕ : {ℓ : Level} (X : Set ℓ) (z : X) (s : X → X) → ℕ → X
--- foldℕ : {- optimised version of -} {! ∀ {ℓs ps ℓ} (X : Set ℓ) (z : X) (s : X → X) → FoldT NatC (foldℕ-alg X z s) !}
+-- foldℕ : {- optimised version of -} {! ∀ ℓs ps ℓ (X : Set ℓ) (z : X) (s : X → X) → FoldT NatC (foldℕ-alg X z s) !}
 
 -- META
 foldℕ-wrapper _ _ _ X z s n = foldℕ X z s n
@@ -92,40 +92,121 @@ indℕ-is-ind : (P : ℕ → Set) (z : P zero) (s : ∀ n → P n → P (suc n))
 indℕ-is-ind P z s (inl           refl  ) = refl
 indℕ-is-ind P z s (inr (inl (n , refl))) = refl
 
-ListOD : DataOD NatD
-ListOD = record
-  { #levels = 1
-  ; LevelO  = Δ (λ _ → ε)
-  ; applyL  = λ ℓs → let (ℓ , _) = ℓs in record
-      { alevel  = ℓ; level-pre-fixed-point = refl
-      ; ParamOD = Δ (Set ℓ) λ _ → ε
-      ; IndexOD = λ _ → ε
-      ; applyP  = λ ps → let (A , _) = ps
-                         in (ι tt refl)
-                        ∷ ∺ (Δ A λ _ → ρ (ι tt refl) (ι tt refl))
-                        ∷ ∺ [] } }
-
+-- META
 ListD : DataD
-ListD = ⌊ ListOD ⌋ᵈ
-
-VecOD : DataOD ListD
-VecOD = algODᵈ ListD (ornAlg ⌈ ListOD ⌉ᵈ NatC)
-
-VecD : DataD
-VecD = ⌊ VecOD ⌋ᵈ
-
-ListD' : Set → DataOD ListD
-ListD' A = record
-  { #levels = 0
-  ; LevelO  = ∇ lzero ε
-  ; applyL  = λ _ → record
-      { alevel  = lzero
+ListD = record
+  { #levels = 1
+  ; applyL  = λ ℓs → let (ℓ , _) = ℓs in record
+      { alevel = ℓ
       ; level-pre-fixed-point = refl
-      ; ParamOD = ∇ A ε
-      ; IndexOD = λ _ → ε
-      ; applyP  = λ _ → (ι tt refl)
-                    ∷ ∺ (σ λ _ → ρ (ι tt refl) (ι tt refl))
-                    ∷ ∺ [] } }
+      ; Param  = [ A ∶ Set ℓ ] []
+      ; Index  = λ _ → []
+      ; applyP = λ ps → let (A , _) = ps
+                        in (ι tt)
+                         ∷ (σ A λ _ → ρ (ι tt) (ι tt))
+                         ∷ [] } }
+
+-- META
+List-wrapper : DataT ListD
+List-wrapper (ℓ , _) (A , _) _ = List A
+
+-- META
+ListC : DataC ListD List-wrapper
+ListC = record
+  { toN   = λ { (inl                refl  ) → []
+              ; (inr (inl (a , as , refl))) → a ∷ as }
+  ; fromN = λ { []       → inl                refl
+              ; (a ∷ as) → inr (inl (a , as , refl)) }
+  ; fromN-toN = λ { (inl                refl  ) → refl
+                  ; (inr (inl (a , as , refl))) → refl }
+  ; toN-fromN = λ { []       → refl
+                  ; (a ∷ as) → refl } }
+
+-- USER
+ListD/NatD : DataO ListD NatD
+ListD/NatD = record
+  { LevelO = Δ λ _ → ε
+  ; applyL = λ ℓs → let (ℓ , _) = ℓs in record
+      { ParamO = Δ λ _ → ε
+      ; IndexO = λ _ → ε
+      ; applyP = λ _ → (ι refl)
+                   ∷ ∺ (Δ λ _ → ρ (ι refl) (ι refl))
+                   ∷ ∺ [] } }
+
+-- USER
+length-alg : ∀ ℓs ps → Algebraᵈ ListD ℓs ps 0ℓ
+length-alg = orn-alg ListD/NatD NatC
+
+-- META
+length'-wrapper : ∀ ℓs ps → FoldT ListC ℓs ps (length-alg ℓs ps)
+length' : {A : Set ℓ} → List A → ℕ  -- slightly modified by the user
+length'-wrapper _ _ = length'       -- also slightly modified
+length' []       = 0
+length' (a ∷ as) = suc (length' as)
+length'C : ∀ ℓs ps → AlgC ListC (length-alg ℓs ps) (length'-wrapper ℓs ps)
+length'C ℓs ps (inl                refl  ) = refl
+length'C ℓs ps (inr (inl (a , as , refl))) = refl
+-- length' : {! ∀ ℓs ps → FoldT ListC ℓs ps (length-alg ℓs ps) !}
+-- length'-wrapper = length'
+-- length' ℓs ps []       = {! fold-base ListC ℓs ps (length-alg ℓs ps) (length'-wrapper ℓs ps) []      !}
+-- length' ℓs ps (a ∷ as) = {! fold-base ListC ℓs ps (length-alg ℓs ps) (length'-wrapper ℓs ps) (a ∷ as) !}
+
+-- USER
+VecOD : DataOD ListD
+VecOD = algODᵈ ListD length-alg
+
+-- META (slightly modified by the user)
+data Vec (A : Set ℓ) : ℕ → Set ℓ where
+  []  : Vec A zero
+  _∷_ : A → {n : ℕ} → Vec A n → Vec A (suc n)
+
+-- META
+VecD : DataD
+VecD = record
+  { #levels = 1
+  ; applyL  = λ ℓs → let (ℓ , _) = ℓs in record
+      { alevel = ℓ
+      ; level-pre-fixed-point = refl
+      ; Param  = [ A ∶ Set ℓ ] []
+      ; Index  = λ _ → [ _ ∶ ℕ ] []
+      ; applyP = λ ps → let (A , _) = ps
+                        in (ι (0 , _))
+                         ∷ (σ A λ _ → σ ℕ λ n → ρ (ι (n , _)) (ι (suc n , _)))
+                         ∷ [] } }
+
+-- META
+Vec-wrapper : DataT VecD
+Vec-wrapper (ℓ , _) (A , _) (n , _) = Vec A n
+
+-- META
+VecC : DataC VecD Vec-wrapper
+VecC = record
+  { toN   = λ { (inl                    refl  ) → []
+              ; (inr (inl (a , n , as , refl))) → a ∷ as }
+  ; fromN = λ { []       → inl                    refl
+              ; (a ∷ as) → inr (inl (a , _ , as , refl)) }
+  ; fromN-toN = λ { (inl                    refl  ) → refl
+                  ; (inr (inl (a , n , as , refl))) → refl }
+  ; toN-fromN = λ { []       → refl
+                  ; (a ∷ as) → refl } }
+
+-- USER
+Vec-inhabitance-alg : ∀ ℓs ps → IndAlgebraᵈ ListC ℓs ps _
+Vec-inhabitance-alg = inhabitance ListC length-alg (length'-wrapper _ _) length'C VecC
+
+-- META
+Vec-inhabitance-wrapper : ∀ ℓs ps → IndT ListC (Vec-inhabitance-alg ℓs ps)
+Vec-inhabitance : {A : Set ℓ} (as : List A) → Vec A (length' as)  -- modified by the user
+Vec-inhabitance-wrapper _ _ = Vec-inhabitance                     -- and
+Vec-inhabitance []       = []                                     -- these
+Vec-inhabitance (a ∷ as) = a ∷ Vec-inhabitance as                 -- as well
+Vec-inhabitanceC : ∀ ℓs ps → IndAlgC ListC (Vec-inhabitance-alg ℓs ps) (Vec-inhabitance-wrapper ℓs ps)
+Vec-inhabitanceC ℓs ps (inl                refl  ) = refl
+Vec-inhabitanceC ℓs ps (inr (inl (a , as , refl))) = refl
+-- Vec-inhabitance : {! ∀ ℓs ps → IndT ListC (Vec-inhabitance-alg ℓs ps) !}
+-- Vec-inhabitance-wrapper = Vec-inhabitance
+-- Vec-inhabitance ℓs ps []       = {! ind-base ListC (Vec-inhabitance-alg ℓs ps) (Vec-inhabitance-wrapper ℓs ps) []       !}
+-- Vec-inhabitance ℓs ps (a ∷ as) = {! ind-base ListC (Vec-inhabitance-alg ℓs ps) (Vec-inhabitance-wrapper ℓs ps) (a ∷ as) !}
 
 data W {ℓ ℓ'} (A : Set ℓ) (B : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
   sup : (a : A) → (B a → W A B) → W A B
