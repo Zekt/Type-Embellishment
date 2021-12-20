@@ -84,7 +84,7 @@ data Len (A : Set ℓ) : List A → List A → Set ℓ where
 LenD : DataD
 DataD.#levels LenD = 1
 DataD.applyL  LenD (ℓ , _) = record
-  { level = ℓ
+  { alevel = ℓ
   ; level-pre-fixed-point = refl
   ; Param = [ _ ∶ Set ℓ ] []
   ; Index = λ where
@@ -110,7 +110,7 @@ data Pointwise' {a b ℓ} {A : Set a} {B : Set b} (R : REL A B ℓ) : REL (Maybe
 pointwiseD : DataD
 DataD.#levels pointwiseD = 3
 DataD.applyL  pointwiseD (a , b , ℓ , _) = record
-      { level = a ⊔ b ⊔ ℓ
+      { alevel = a ⊔ b ⊔ ℓ
       ; level-pre-fixed-point = refl
       ; Param = [ A ∶ Set a ] [ B ∶ Set b ] [ R ∶ REL A B ℓ ] []
       ; Index = λ where

@@ -5,12 +5,13 @@ open import Prelude
 
 module Metalib.Datatype where
 
-open import Prelude.List as L
-open import Utils.Reflection as Refl
-open import Utils.Error as Err
+open import Prelude.List         as L
+open import Utils.Reflection
+open import Utils.Error          as Err
 
 open import Generics.Telescope   as Desc
 open import Generics.Description as Desc
+open import Generics.Levels      as Desc
 
 open import Metalib.Telescope as Tel
 
@@ -60,7 +61,7 @@ getCons d pars `Param Dᵖ = extendContextTs (PDataD.Param Dᵖ) λ ⟦Ps⟧ →
 getSignature : PDataD → TC (ℕ × Type × Telescope)
 getSignature Dᵖ = let open PDataD Dᵖ in do
   pars  , `Param ← fromTel Param
-  dT             ← fromTelType (Param Desc.++ Index) (Set level)
+  dT             ← fromTelType (Param Desc.++ Index) (Set dlevel)
   return $ pars , dT , `Param
 
 defineByDataD : DataD → Name → List Name → TC _

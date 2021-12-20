@@ -13,7 +13,7 @@ NatD : DataD
 NatD = record
   { #levels = 0
   ; applyL  = λ { tt → record
-    { level  = 0ℓ
+    { alevel  = 0ℓ
     ; level-pre-fixed-point = refl
     ; Param  = []
     ; Index  = λ _ → []
@@ -33,7 +33,7 @@ ListD : DataD
 ListD = record
   { #levels = 1
   ; applyL  = λ { (ℓ , _) → record
-    { level = ℓ
+    { alevel = ℓ
     ; level-pre-fixed-point = refl
     ; Param = [ A ∶ Set ] []
     ; Index = λ _ → []
@@ -54,7 +54,7 @@ VecD : DataD
 VecD = record
   { #levels = 1
   ; applyL  = λ { (ℓ , tt) → record
-    { level = ℓ
+    { alevel = ℓ
     ; level-pre-fixed-point = refl
     ; Param                 = [ A ∶ Set ] []
     ; Index                 = λ _ → [ _ ∶ ℕ ] []
@@ -78,7 +78,7 @@ VecD = record
   { #levels = 1
   ; applyL  = λ where
     (ℓ , _) → record
-      { level = ℓ
+      { alevel = ℓ
       ; level-pre-fixed-point = refl
       ; Param = [ A ∶ Set ℓ ] []
       ; Index = λ {(A , _) → [ _ ∶ A ] [ _ ∶ List A ] []}
@@ -99,7 +99,7 @@ WD = record
   { #levels = 2
   ; applyL  = λ where
     (ℓ , ℓ' , tt) → record
-      { level = ℓ ⊔ ℓ'
+      { alevel = ℓ ⊔ ℓ'
       ; level-pre-fixed-point = refl
       ; Param = [ A ∶ Set ℓ ] [ B ∶ (A → Set ℓ') ] []
       ; Index = λ _ → []
