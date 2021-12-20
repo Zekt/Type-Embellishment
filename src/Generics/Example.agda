@@ -4,6 +4,8 @@ module Generics.Example where
 
 open import Generics.Telescope
 open import Generics.Description
+open import Generics.Algebra
+open import Generics.Recursion
 
 
 ------------------------------------------------------------------------------

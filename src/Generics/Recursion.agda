@@ -3,8 +3,9 @@ open import Prelude
 
 module Generics.Recursion where
 
-open import Generics.Description
+open import Generics.Telescope
 open import Generics.Levels
+open import Generics.Description
 open import Generics.Algebra
 
 private variable
@@ -12,8 +13,12 @@ private variable
   cb  : ConB
   cbs : ConBs
 
+PDataT : (Dᵖ : PDataD) → Set _
+PDataT Dᵖ = ∀ ps → Carrierᵖᵈ Dᵖ ps (PDataD.dlevel Dᵖ)
+
 DataT : DataD → Setω
-DataT D = ∀ ℓs ps → Carrierᵈ D ℓs ps (PDataD.dlevel (DataD.applyL D ℓs))
+DataT D = ∀ ℓs → PDataT (DataD.applyL D ℓs)
+
 
 {-# NO_UNIVERSE_CHECK #-}
 record DataC (D : DataD) (N : DataT D) : Set where
@@ -22,7 +27,7 @@ record DataC (D : DataD) (N : DataT D) : Set where
     fromN : ∀ {ℓs ps} → Coalgᵈ D (N ℓs ps)
     fromN-toN : ∀ {ℓs ps is} (ns : ⟦ D ⟧ᵈ (N ℓs ps) is) → fromN (toN ns) ≡ ns
     toN-fromN : ∀ {ℓs ps is}          (n : N ℓs ps  is) → toN (fromN n ) ≡ n
-
+    
 FoldT : ∀ {D N} (_ : DataC D N) ℓs ps (alg : Algebraᵈ D ℓs ps ℓ) → Set _
 FoldT {N = N} _ ℓs ps alg = ∀ {is} → N ℓs ps is → Algebra.Carrier alg is
 
@@ -63,3 +68,21 @@ IndAlgC : ∀ {D N} (C : DataC D N) {ℓs ps ℓ}
 IndAlgC {D} {N} C {ℓs} {ps} alg ind =
   ∀ {is} (ns : ⟦ D ⟧ᵈ (N ℓs ps) is)
   → IndAlgebra.apply alg _ (ind-fmapᵈ D ind ns) ≡ ind (DataC.toN C ns)
+
+-- Curried form of `DataT` 
+PDataTᶜ : (Dᵖ : PDataD) → Set _
+PDataTᶜ Dᵖ = Curried Param λ ps → Curried (Index ps) λ is → Set dlevel
+  where open PDataD Dᵖ
+
+DataTᶜ : DataD → Setω
+DataTᶜ D = ∀ {ℓs} → PDataTᶜ (DataD.applyL D ℓs)
+
+uncurryᵖᵈᵗ : {Dᵖ : PDataD} → PDataTᶜ Dᵖ → PDataT Dᵖ
+uncurryᵖᵈᵗ {Dᵖ} N ps = uncurryⁿ (Index ps) $ uncurryⁿ Param N ps
+  where open PDataD Dᵖ
+
+uncurryᵈᵗ : (D : DataD) → DataTᶜ D → DataT D
+uncurryᵈᵗ D N ℓs = uncurryᵖᵈᵗ {DataD.applyL D ℓs} (N {ℓs})
+
+DataCᶜ : (D : DataD) (Nᶜ : DataTᶜ D) → Set
+DataCᶜ D Nᶜ = DataC D (uncurryᵈᵗ D Nᶜ)
