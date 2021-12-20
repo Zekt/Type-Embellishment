@@ -238,16 +238,21 @@ getDefType n = caseM getDefinition n of λ where
     (data-cons d) → inferType $ con n []
     _             → inferType $ def n []
 
+fromℕ : ℕ → Level
+fromℕ zero = lzero
+fromℕ (suc n) = lsuc (fromℕ n)
+
+getTypeLevel : Type → TC Level
+getTypeLevel (`Set n)        = return (fromℕ n)
+getTypeLevel t@(agda-sort _) = typeError (termErr t
+                                         ∷ strErr " has no level."
+                                         ∷ [])
+getTypeLevel t = typeError (termErr t
+                           ∷ strErr " is not a type."
+                           ∷ [])
+
 getTelescope : Name → TC (Telescope × Type)
 getTelescope s = ⦇ ⇑ (getDefType s) ⦈
-
-getLevel : Type → TC Level
-getLevel t = case t of λ where
-               (def (quote Set) [])    → return lzero
-               (def (quote Set) [ l ]) → unquoteTC (unArg l)
-               _ → typeError (termErr t
-                             ∷ strErr "is not a type."
-                             ∷ [])
 
 macro
   getTelescopeT : Name → Tactic

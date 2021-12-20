@@ -42,13 +42,14 @@ fromTelescope = unquoteTC ∘ foldr `[] λ where
 
 -- extend the context in a TC computation 
 extendContextTs : {A : Set ℓ′}
-  → (T : Tel ℓ) → (⟦ T ⟧ᵗ → TC A) → TC A
-extendContextTs []      f = f tt
-extendContextTs (A ∷ T) f = extendContextT visible-relevant-ω A λ _ x →
-  extendContextTs (T x) (curry f x)
+  → (T : Tel ℓ) → (List (Arg Type) → ⟦ T ⟧ᵗ → TC A) → TC A
+extendContextTs []      f = f [] tt
+extendContextTs (A ∷ T) f = extendContextT visible-relevant-ω A λ t x →
+  extendContextTs (T x) λ ts xs → f (vArg t ∷ ts) (x , xs)
 
+--assume parametric levels are implicit arguments
 extendContextℓs : {A : Set ℓ}
-  → (#levels : ℕ) → (Level ^ #levels → TC A) → TC A
-extendContextℓs zero    c = c tt
-extendContextℓs (suc n) c = extendContextT hidden-relevant-ω Level λ _ ℓ →
-    extendContextℓs n (curry c ℓ)
+  → (#levels : ℕ) → (List (Arg Type) → Level ^ #levels → TC A) → TC A
+extendContextℓs zero    c = c [] tt
+extendContextℓs (suc n) c = extendContextT hidden-relevant-ω Level λ `ℓ ℓ →
+    extendContextℓs n λ `ℓs ℓs → c (hArg `ℓ ∷ `ℓs) (ℓ , ℓs)

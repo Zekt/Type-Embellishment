@@ -9,6 +9,7 @@ open import Prelude.Function
 
 open import Prelude.Functor
 open import Prelude.Applicative
+open import Prelude.List
 
 private variable
   A B : Set _
@@ -37,6 +38,10 @@ record Monad (M : ∀ {ℓ} → Set ℓ → Set ℓ) : Setω where
   ifM mb then mx else my = caseM mb of λ where
     true  → mx
     false → my
+
+  mapM : (A → M B) → List A → M (List B)
+  mapM f []       = return []
+  mapM f (x ∷ xs) = ⦇ f x ∷ mapM f xs ⦈
 
 open Monad ⦃...⦄ public
 
