@@ -30,13 +30,13 @@ Curried : ∀ {ℓ ℓ'} → (T : Tel ℓ) → (⟦ T ⟧ᵗ → Set ℓ') → S
 Curried []      X = X tt
 Curried (A ∷ T) X = (a : A) → Curried (T a) λ t → X (a , t)
 
-curryⁿ : (T : Tel ℓ) (X : ⟦ T ⟧ᵗ → Set ℓ') → ((t : ⟦ T ⟧ᵗ) → X t) → Curried T X
-curryⁿ []      X f = f tt
-curryⁿ (A ∷ T) X f = λ a → curryⁿ (T a) (λ t → X (a , t)) (λ t → f (a , t))
+curryⁿ : (T : Tel ℓ) {X : ⟦ T ⟧ᵗ → Set ℓ'} → ((t : ⟦ T ⟧ᵗ) → X t) → Curried T X
+curryⁿ []          f = f tt
+curryⁿ (A ∷ T) {X} f = λ a → curryⁿ (T a) {λ t → X (a , t)} (λ t → f (a , t))
 
-uncurryⁿ : (T : Tel ℓ) (X : ⟦ T ⟧ᵗ → Set ℓ′) → Curried T X → (t : ⟦ T ⟧ᵗ) → X t
-uncurryⁿ []      X f tt      = f
-uncurryⁿ (A ∷ T) X f (x , t) = uncurryⁿ (T x) (λ t → X (x , t)) (f x) t
+uncurryⁿ : (T : Tel ℓ) {X : ⟦ T ⟧ᵗ → Set ℓ′} → Curried T X → (t : ⟦ T ⟧ᵗ) → X t
+uncurryⁿ []          f tt      = f
+uncurryⁿ (A ∷ T) {X} f (x , t) = uncurryⁿ (T x) {λ t → X (x , t)} (f x) t
 
 _^_ : Set → ℕ → Set
 A ^ zero  = ⊤
