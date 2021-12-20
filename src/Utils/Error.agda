@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K #-}
+
 open import Prelude
 open import Utils.Reflection
 

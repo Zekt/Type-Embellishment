@@ -25,15 +25,6 @@ _ : (evalT (fromTel [])) ≡ (0 , fst `T-Nat)
 _ = refl
 
 ------------------------------------------------------------------------------
--- Level-polymorphic telescope
-
-`T-List : Telescope × Type
-`T-List = getTelescopeT List
-
-T-List : Tel 0ℓ
-T-List = Level ∷ λ ℓ → {!Set ℓ !} 
-
-------------------------------------------------------------------------------
 -- 
 
 data Rel (A : Set) : (xs ys : List A) → Set where
@@ -86,32 +77,23 @@ ex₁ = λ b → []
 bad : Tel _
 bad = [ b ∶ Bool ] (case b of λ { true → [ n ∶ ℕ ] [] ; false → [] })
 
-_ : Telescope
-_ = {!evalT (toTelescope bad)!} -- when ?
-
 data Len (A : Set ℓ) : List A → List A → Set ℓ where
   z : Len A [] []
   s : ∀ {x y xs ys} → Len A xs ys → Len A (x ∷ xs) (y ∷ ys)
 
-PLenD : Level → PDataD
-PLenD ℓ = record
+LenD : DataD
+DataD.#levels LenD = 1
+DataD.applyL  LenD (ℓ , _) = record
   { level = ℓ
   ; level-pre-fixed-point = refl
-  ; Param = Set ℓ ∷ const []
+  ; Param = [ _ ∶ Set ℓ ] []
   ; Index = λ where
-    (A , tt) → List A ∷ λ _ → List A ∷ const []
+    (A , tt) → [ _ ∶ List A ] [ _ ∶ List A ] []
   ; applyP = λ where
     (A , tt) →
       ι ([] , [] , tt)
-      ∷ Σ[ x ∶ A ] Σ[ y ∶ A ] Σ[ xs ∶ List A ] Σ[ ys ∶ List A ] ρ (ι (xs , ys , _)) (ι (x ∷ xs , y ∷ ys , _))
+      ∷ (Σ[ x ∶ A ] Σ[ y ∶ A ] Σ[ xs ∶ List A ] Σ[ ys ∶ List A ] ρ (ι (xs , ys , _)) (ι (x ∷ xs , y ∷ ys , _)))
       ∷ []
-   }
-
-LenD : DataD
-LenD = record
-  { #levels = 1
-  ; applyL  = λ where
-    (ℓ , _) → PLenD ℓ
   }
 
 unquoteDecl data newLen constructor newz news =
@@ -126,10 +108,8 @@ data Pointwise' {a b ℓ} {A : Set a} {B : Set b} (R : REL A B ℓ) : REL (Maybe
   nothing : Pointwise' R nothing nothing
 
 pointwiseD : DataD
-pointwiseD = record
-  { #levels = 3
-  ; applyL = λ where
-    (a , b , ℓ , tt) → record
+DataD.#levels pointwiseD = 3
+DataD.applyL  pointwiseD (a , b , ℓ , _) = record
       { level = a ⊔ b ⊔ ℓ
       ; level-pre-fixed-point = refl
       ; Param = [ A ∶ Set a ] [ B ∶ Set b ] [ R ∶ REL A B ℓ ] []
@@ -141,10 +121,9 @@ pointwiseD = record
           ∷ ι (nothing , nothing , tt)
           ∷ []
       }
-  }
 
 unquoteDecl data newPW constructor newJust newNothing =
   defineByDataD pointwiseD newPW (newJust ∷ newNothing ∷ []) 
 
-kk : ∀ {A B : Set} {C : A → B → Set} → newPW A B C nothing nothing
-kk = newNothing
+科科 : ∀ {A B : Set} {C : A → B → Set} → newPW A B C nothing nothing
+科科 =  newNothing 

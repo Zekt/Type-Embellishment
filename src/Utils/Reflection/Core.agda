@@ -1,8 +1,8 @@
-{-# OPTIONS --safe #-}
+{-# OPTIONS --safe --without-K #-}
 open import Prelude
-  hiding ([_,_]; _++_)
 
 module Utils.Reflection.Core where
+
 open import Agda.Builtin.Reflection as Builtin
 open Builtin public
   hiding ( primQNameEquality
@@ -15,15 +15,8 @@ open Builtin public
 private variable
   A B : Set _
 
--- Types
-{-  
-record Code (A : Set ℓ) : Set ℓ where
-  constructor _,_
-  field
-    val : A
-    code  : Term 
-open Code
--}
+Names     = List Name
+Terms     = List Term
 Types     = List Type
 Clauses   = List Clause
 Telescope = List (String × Arg Type)
@@ -121,31 +114,17 @@ isVisible : Arg A → Bool
 isVisible (arg (arg-info visible _) _) = true
 isVisible _ = false
 
-private
-  -- Assumption: The argument is a valid type.
-  ΠToTelescope : Type → Telescope × Type
-  ΠToTelescope (pi a (abs s b)) = let T , A = ΠToTelescope b in (s , a) ∷ T , A
-  ΠToTelescope t                = [] , t
-
-  TelescopeToΠ : Type → Telescope → Type
-  TelescopeToΠ `B []             = `B
-  TelescopeToΠ `B ((s , `A) ∷ T) = `Π[ s ∶ `A ] TelescopeToΠ `B T
-instance
-  TelescopeToContext : Coercion' Telescope Context
-  ⇑_ ⦃ TelescopeToContext ⦄ = map snd
-
-  TypeToTelescope : Coercion' Type (Telescope × Type)
-  ⇑_ ⦃ TypeToTelescope ⦄ = ΠToTelescope
-
-  TelescopeToType : Coercion' (Telescope × Type) Type
-  ⇑_ ⦃ TelescopeToType ⦄ (T , `A) = TelescopeToΠ `A T
 instance
   FunctorArg : Functor Arg
   fmap {{FunctorArg}} f (arg i x) = arg i (f x)
 
+mapArgs : (A → B) → Args A → Args B
+mapArgs f []       = []
+mapArgs f (x ∷ xs) = fmap f x ∷ mapArgs f xs
+
+instance
   ArgsFunctor : Functor λ A → List (Arg A)
-  fmap ⦃ ArgsFunctor ⦄ f []       = []
-  fmap ⦃ ArgsFunctor ⦄ f (x ∷ xs) = fmap f x ∷ fmap f xs
+  fmap ⦃ ArgsFunctor ⦄ = mapArgs
 
 unAbs : Abs A → A
 unAbs (abs _ x) = x
@@ -178,81 +157,3 @@ instance
 
   AlternativeTC : Alternative TC
   _<|>_ ⦃ AlternativeTC ⦄ = catchTC
-
-IMPOSSIBLE : Term → TC A
-IMPOSSIBLE t = typeError $ termErr t ∷ [ strErr " should not occur" ]
-
-give : Term → Tactic
-give v = λ hole → unify hole v
-
-define : Arg Name → Type → Clauses → TC ⊤
-define f a cs = declareDef f a >> defineFun (unArg f) cs
-
-define! : Type → Clauses → TC Name
-define! a cs = do
-  f ← freshName "_"
-  define (vArg f) a cs
-  return f
-
-quoteTC! : A → TC Term
-quoteTC! a = withNormalisation true (quoteTC a)
-
-newMeta : Type → TC Term
-newMeta = checkType unknown
-
-newMeta! : TC Term
-newMeta! = newMeta unknown
-
-typeErrorS : String → TC A
-typeErrorS s = typeError (strErr s ∷ [])
-
-blockOnMeta! : Meta → TC A
-blockOnMeta! x = commitTC >>= λ _ → blockOnMeta x
-
-inferNormalisedType : Term → TC Type
-inferNormalisedType t = withNormalisation true (inferType t)
-
-evalTC : ∀ {a} {A : Set a} → TC A → Tactic
-evalTC {A = A} c hole = do
-  v  ← c
-  `v ← quoteTC v
-  `A ← quoteTC A
-  checkedHole ← checkType hole `A
-  unify checkedHole `v
-
-macro
-  evalT : ∀ {a} {A : Set a} → TC A → Tactic
-  evalT = evalTC
-
--- Typed version of extendContext
-extendContextT : ArgInfo → (B : Set ℓ)
-  → (Type → B → TC A) → TC A
-extendContextT i B f = do
-  `B ← quoteTC B
-  extendContext (arg i `B) do
-    x ← unquoteTC {A = B} (var₀ 0)
-    f `B x
-
-getDefType : Name → TC Type
-getDefType n = caseM getDefinition n of λ where
-    (data-cons d) → inferType $ con n []
-    _             → inferType $ def n []
-
-getTelescope : Name → TC (Telescope × Type)
-getTelescope s = ⦇ ⇑ (getDefType s) ⦈
-
-getLevel : Type → TC Level
-getLevel t = case t of λ where
-               (def (quote Set) [])    → return lzero
-               (def (quote Set) [ l ]) → unquoteTC (unArg l)
-               _ → typeError (termErr t
-                             ∷ strErr "is not a type."
-                             ∷ [])
-
-macro
-  getTelescopeT : Name → Tactic
-  getTelescopeT s = evalTC $ getTelescope s
-
-prefixToType : Telescope → Type → Type
-prefixToType []              `B = `B
-prefixToType ((s , `A) ∷ `Γ) `B = `Π[ s ∶ `A ] prefixToType `Γ `B
