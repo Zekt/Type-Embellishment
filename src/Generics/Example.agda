@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K #-}
+
 open import Prelude
 
 module Generics.Example where
@@ -6,7 +8,6 @@ open import Generics.Telescope
 open import Generics.Description
 open import Generics.Algebra
 open import Generics.Recursion
-
 
 ------------------------------------------------------------------------------
 -- Data types
@@ -27,7 +28,7 @@ NatD = record
     }}
   }
 
--- data List (A : Set) : Set where
+-- data List (A : Set ℓ) : Set ℓ where
 --   []  : List A
 --   _∷_ : A → List A → List A
 
@@ -37,7 +38,7 @@ ListD = record
   ; applyL  = λ { (ℓ , _) → record
     { alevel = ℓ
     ; level-pre-fixed-point = refl
-    ; Param = [ A ∶ Set ] []
+    ; Param = [ A ∶ Set ℓ ] []
     ; Index = λ _ → []
     ; applyP = λ where
       (A , tt) →
@@ -49,9 +50,9 @@ ListD = record
     }}
   }
 
--- data Vec (A : Set) : ℕ → Set where
---   []  : Vec A 0
---   _∷_ : A → Vec A n → Vec A (suc n)
+data Vec (A : Set) : ℕ → Set where
+  []  : Vec A 0
+  _∷_ : ∀ {n} → A → Vec A n → Vec A (suc n)
 VecD : DataD
 VecD = record
   { #levels = 1
@@ -70,10 +71,10 @@ VecD = record
     } }
   }
 
--- data _∈_ {ℓ} {A : Set ℓ} : A → List A → Set ℓ where
---   zero : {x : A} {xs : List A} → x ∈ x ∷ xs
---   suc  : {x y : A} {xs : List A}
---        → x ∈ xs → x ∈ y ∷ xs
+data _∈_ {ℓ} {A : Set ℓ} : A → List A → Set ℓ where
+  zero : {x : A} {xs : List A} → x ∈ (x ∷ xs)
+  suc  : {x y : A} {xs : List A}
+       → x ∈ xs → x ∈ (y ∷ xs)
 
 ∈D : DataD
 ∈D = record
