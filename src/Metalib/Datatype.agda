@@ -13,6 +13,13 @@ open import Generics.Levels      as Desc
 
 open import Metalib.Telescope as Tel
 
+--
+argVars : ℕ → (weakenBy : ℕ) → Args Term
+argVars zero    wk = []
+argVars (suc N) wk = vArg (var₀ (N + wk)) ∷ argVars N wk
+
+-- Translate the semantics of an object-level telescope to
+-- a context
 idxToArgs : {T : Tel ℓ} → ⟦ T ⟧ᵗ → TC Context
 idxToArgs {T = []}    tt        = return []
 idxToArgs {T = _ ∷ _} (x , ⟦T⟧) = do
@@ -44,7 +51,8 @@ module _ (d : Name) (pars : ℕ) {T : Tel ℓ} where
     vΠ[ `A ]_ <$>  ConDToType (D x)
   ConDToType (ρ R D) = do
     `R ← RecDToType R
-    extendContext (vArg `R) do
+    extendContext (vArg (quoteTerm ⊤)) do
+    -- we might still need to give a correct type
       vΠ[ `R ]_ <$> ConDToType D
 
   ConDsToTypes : (Ds : ConDs ⟦ T ⟧ᵗ cbs) → TC (List Type)
@@ -62,130 +70,128 @@ getSignature Dᵖ = let open PDataD Dᵖ in do
   dT             ← fromTelType (Param Desc.++ Index) (Set dlevel)
   return $ pars , dT , `Param
 
+defineByPDataD : Name → PDataD → TC (ℕ × Type × List Type)
+defineByPDataD dataN dataD = do
+  pars , `Param ← fromTel Param
+  dataT         ← fromTelType (Param Desc.++ Index) (Set dlevel)
+  extendContextTs Param λ ⟦Ps⟧ → do
+    conTs ← map (prefixToType `Param)
+      <$> ConDsToTypes dataN pars (applyP ⟦Ps⟧)
+    return $ pars , dataT , conTs
+  where open PDataD dataD
+
 defineByDataD : DataD → Name → List Name → TC _
-defineByDataD D d cs = let open DataD D in extendContextℓs #levels λ ℓs → do
+defineByDataD dataD dataN conNs = extendContextℓs #levels λ ℓs → do
+  pars , dataT , conTs ← defineByPDataD dataN $ applyL ℓs
+  -- dataT and conTs do not contain Level in their types
   let `Levels = levels #levels
   let Dᵖ      = applyL ℓs
   pars , dT , `Param ← getSignature Dᵖ
-  declareData d (#levels + pars) (prefixToType `Levels dT)
+  declareData dataN (#levels + pars) (prefixToType `Levels dT)
 
-  conTs ← map (prefixToType `Levels) <$> getCons d pars `Param Dᵖ
-  defineData d (zip cs conTs)
+  conTs ← map (prefixToType `Levels) <$> getCons dataN pars `Param Dᵖ
+  defineData dataN (zip conNs conTs)
+  where open DataD dataD
 
 ---------
--- should remove parameters in args
-argsToIdx : List (Arg Type) → (tel : Tel ℓ) → TC ⟦ tel ⟧ᵗ
-argsToIdx [] []       = return tt
-argsToIdx [] tel      = Err.#idxNotMatch
-argsToIdx (x ∷ ts) [] = Err.#idxNotMatch
-argsToIdx (x ∷ ts) (A ∷ T) = do a ← unquoteTC {A = A} (unArg x)
-                                ⟦tel⟧ ← argsToIdx ts (T a)
-                                return {TC} {TC} (a , ⟦tel⟧)
+argsToIdx : List (Arg Type) → Term
+argsToIdx []       = quoteTerm tt
+argsToIdx (x ∷ xs) = con (quote _,_)
+                         (x ∷ vArg (argsToIdx xs) ∷ [])
 
 endsIn : Type → Name → Bool
 endsIn (pi a (abs _ b)) u = endsIn b u
 endsIn (def f args)     u = f == u
 endsIn t                u = false
 
-module _ (dataName : Name) (parLen : ℕ) where
-  telescopeToRecD : Telescope → Type → (tel : Tel ℓ)
-                  → TC (Σ RecB λ b → RecD ⟦ tel ⟧ᵗ b)
-  telescopeToRecD ((s , arg _ `x) ∷ `tel) end idxTel = do
-    ℓ          ← getLevel =<< inferType `x
-    x          ← unquoteTC {A = Set ℓ} `x
-    (ℓs , rec) ← telescopeToRecD `tel end idxTel
-    `rec       ← quoteTC rec
-    lamRec     ← unquoteTC $ vLam (abs s `rec)
-    return (ℓ ∷ ℓs , π x lamRec)
-  telescopeToRecD [] (def f args) idxTel with f == dataName
-  ... | true  = argsToIdx (drop parLen args) idxTel >>= λ ⟦idx⟧ →
-                return ([] , ι ⟦idx⟧)
+module _ (dataName : Name) (#levels : ℕ) (parLen : ℕ) where
+  telescopeToRecD : Telescope → Type → TC Term
+  telescopeToRecD ((s , arg _ `x) ∷ `tel) end = do
+    rec ← telescopeToRecD `tel end
+    return (con (quote RecD.π) (vArg `x ∷ vArg (vLam (abs s rec)) ∷ []))
+
+  telescopeToRecD [] (def f args) with f == dataName
+  ... | true  = return (con (quote RecD.ι)
+                            [ vArg $ argsToIdx $ drop (#levels + parLen) args ])
   ... | false = Err.notEndIn dataName
-  telescopeToRecD [] _ _ = Err.notEndIn dataName
+
+  telescopeToRecD [] _ = Err.notEndIn dataName
 
 
-  telescopeToConD : Telescope → Type → (idxTel : Tel ℓ)
-                  → TC (Σ ConB λ b → ConD ⟦ idxTel ⟧ᵗ b)
-  telescopeToConD ((s , (arg _ `x)) ∷ `tel) end idxTel
-             with endsIn `x dataName
+  telescopeToConD : Telescope → Type → TC Term
+  telescopeToConD ((s , (arg _ `x)) ∷ `tel) end with endsIn `x dataName
   ... | true = do
-    (b , recd)  ← uncurry telescopeToRecD (⇑ `x) idxTel
-    (ℓs , cond) ← telescopeToConD `tel end idxTel
-    return (inr b ∷ ℓs , ρ recd cond)
+    recd ← uncurry telescopeToRecD (⇑ `x)
+    cond ← telescopeToConD `tel end
+    return (con (quote ρ) (vArg recd ∷ vArg cond ∷ []))
   ... | false = do
-    ℓ           ← getLevel =<< inferType `x
-    x           ← unquoteTC {A = Set ℓ} `x
-    (ℓs , cond) ← telescopeToConD `tel end idxTel
-    `cond       ← quoteTC cond
-    lamConD     ← unquoteTC $ vLam (abs s `cond)
-    return (inl ℓ ∷ ℓs , σ x lamConD)
-  telescopeToConD [] (def f args) idxTel with f == dataName
-  ... | true  = argsToIdx (drop parLen args) idxTel >>= λ ⟦idx⟧ →
-                return ([] , ι ⟦idx⟧)
+    cond ← telescopeToConD `tel end
+    return (con (quote σ) (vArg `x ∷ vArg (vLam (abs s cond)) ∷ []))
+
+  telescopeToConD [] (def f args) with f == dataName
+  ... | true  = return $ con (quote ConD.ι)
+                             [ vArg $ argsToIdx $ drop (#levels + parLen) args ]
   ... | false = Err.notEndIn dataName
-  telescopeToConD [] _ _ = Err.notEndIn dataName
 
--- describeByConstructor : {b : ConB} {Index : Tel ℓ} → Name → Type
---                       → TC (ConD ⟦ Index ⟧ᵗ b)
--- describeByConstructor {Index = Index} dataName t = do
---   let (tel , end) = ⇑_ ⦃ TypeToTelescope ⦄ t
---   return {!!}
+  telescopeToConD [] _ = Err.notEndIn dataName
+
+  describeConstructor : Name → TC Term
+  describeConstructor conName = do
+    conType ← getType conName
+    let (tel , end) = ⇑_ ⦃ TypeToTelescope ⦄ conType
+    let tel' = drop (#levels + parLen) tel
+    telescopeToConD tel' end
 
 
--- describeByData : ℕ → Type → List Type → TC DataD
--- describeByData parLen dataType conTypes = do
---    let (tel     , end) = ⇑_ ⦃ TypeToTelescope ⦄ dataType
---        (#levels , tel) = splitLevels tel
---        (par     , idx) = splitAcc [] tel parLen
---    parTel ← fromTelescope par
---    idxTel ← unquoteTC {A = Curried parTel (const (Tel _))} (lamTel parLen idx)
---    level ← getLevel end
---    return (record { #levels = #levels
---                   ; applyL = λ {x →
---                       record
---                         { level = level
---                         ; level-pre-fixed-point = refl
---                         ; Param = parTel
---                         ; Index = uncurryⁿ parTel (const (Tel _)) idxTel
---                         ; applyP = {!!}
---                         }}
---                   })
---  where
---    splitLevels : Telescope → (ℕ × Telescope)
---    splitLevels [] = 0 , []
---    splitLevels t@((_ , arg _ a) ∷ tel) =
---      if a == quoteTerm Level then bimap suc id (splitLevels tel)
---                              else 0 , t
+describeData : ℕ → Name → List Name → TC Term
+describeData parLen dataName conNames = do
+    dataType ← getType dataName
+    let (tel     , end) = ⇑_ ⦃ TypeToTelescope ⦄ dataType
+        (#levels , tel) = splitLevels tel
+        (par     , idx) = splitAcc [] tel parLen
+    conDefs ← mapM (describeConstructor dataName #levels parLen) conNames
+    level  ← getTypeLevel end
+    `level ← quoteTC level
+    `refl  ← quoteTC {A = _≡_ {lzero} {Level} level level} _≡_.refl
+    let applyBody : Term
+        applyBody = foldr (con (quote ConDs.[]) [])
+                          (λ x xs →
+                            con (quote ConDs._∷_)
+                                (vArg x ∷ vArg xs ∷ []))
+                          conDefs
+        `pdatad : Term
+        `pdatad = con (quote pdatad)
+                      (map vArg
+                      (`level                  --level
+                      ∷ `refl                  --level-pre-fixed-point
+                      ∷ to`Tel par             --Param
+                      ∷ patLam par (to`Tel idx)--Index
+                      ∷ patLam par applyBody   --applyP
+                      ∷ []))
+    return `pdatad
+  where
+    splitLevels : Telescope → (ℕ × Telescope)
+    splitLevels [] = 0 , []
+    splitLevels t@((_ , arg _ a) ∷ tel) =
+      if a == quoteTerm Level then bimap suc id (splitLevels tel)
+                              else 0 , t
 
---    splitAcc : Telescope → Telescope → ℕ → (Telescope × Telescope)
---    splitAcc tel₁ [] n = tel₁ , []
---    splitAcc tel₁ tel₂ 0 = tel₁ , tel₂
---    splitAcc tel₁ (x ∷ tel₂) (suc n) = splitAcc (tel₁ L.++ [ x ]) tel₂ n
---    toTel : Telescope → Term
---    toTel []              = quoteTerm Tel.[]
---    toTel ((s , x) ∷ tel) = con (quote Tel._∷_)
---                                (x
---                                ∷ vArg (vLam (abs s (toTel tel)))
---                                ∷ [])
+    splitAcc : Telescope → Telescope → ℕ → (Telescope × Telescope)
+    splitAcc tel₁ []   n = tel₁ , []
+    splitAcc tel₁ tel₂ 0 = tel₁ , tel₂
+    splitAcc tel₁ (x ∷ tel₂) (suc n) = splitAcc (tel₁ <> [ x ]) tel₂ n
+    to`Tel : Telescope → Term
+    to`Tel []              = quoteTerm Tel.[]
+    to`Tel ((s , x) ∷ tel) = con (quote Tel._∷_)
+                                 (x
+                                 ∷ vArg (vLam (abs s (to`Tel tel)))
+                                 ∷ [])
 
---    lamTel : ℕ → Telescope → Term
---    lamTel zero    tel = toTel tel
---    lamTel (suc n) tel = vLam (abs "" (lamTel n tel))
+    Σpat : Telescope → Arg Pattern
+    Σpat [] = vArg (con (quote tt) [])
+    Σpat ((s , arg _ x) ∷ tel) =
+      vArg (con (quote _,_)
+                (vArg (var (length tel)) ∷ Σpat tel ∷ []))
 
--- getLevel : Term → TC Level
--- getLevel (def f args) =
---  if f == quote Set then
---    case args of (λ where
---      []       → return lzero
---      (x ∷ x₁) → unquoteTC (unArg x)
---    )
---  else typeError [ strErr "datatype does not end in Set." ]
--- getLevel t = typeError [ strErr "datatype is not canonical." ]
-
--- splitDep ((s , x) ∷ tel₁) tel₂ =
---  let (tel₁' , tel₂') = splitDep tel₁ tel₂
---   in con (quote Tel._∷_) (x ∷ vArg (vLam (abs s tel₁')) ∷ []) , vLam (abs s tel₂')
-
--- ΣTel : ℕ → ℕ → Pattern
--- ΣTel n zero    = var n
--- ΣTel n (suc m) = con (quote _,_) {!!}
+    patLam : Telescope → Term → Term
+    patLam tel body = pat-lam [ clause tel [ Σpat tel ] body ] []

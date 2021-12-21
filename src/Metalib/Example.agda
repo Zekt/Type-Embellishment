@@ -1,4 +1,4 @@
-{-# OPTIONS -v meta:10  #-}
+{-# OPTIONS -v meta:5  #-}
 open import Prelude
   hiding ([_,_])
 
@@ -92,7 +92,10 @@ DataD.applyL  LenD (ℓ , _) = record
   ; applyP = λ where
     (A , tt) →
       ι ([] , [] , tt)
-      ∷ (Σ[ x ∶ A ] Σ[ y ∶ A ] Σ[ xs ∶ List A ] Σ[ ys ∶ List A ] ρ (ι (xs , ys , _)) (ι (x ∷ xs , y ∷ ys , _)))
+      ∷ Σ[ x ∶ A ]
+        Σ[ y ∶ A ]
+        Σ[ xs ∶ List A ]
+        Σ[ ys ∶ List A ] ρ (ι (xs , ys , _)) (ι (x ∷ xs , y ∷ ys , _))
       ∷ []
   }
 
@@ -122,8 +125,7 @@ DataD.applyL  pointwiseD (a , b , ℓ , _) = record
           ∷ []
       }
 
-unquoteDecl data newPW constructor newJust newNothing =
-  defineByDataD pointwiseD newPW (newJust ∷ newNothing ∷ []) 
+test : TC _
+test = describeData 0 (quote ℕ) (quote ℕ.zero ∷ quote ℕ.suc ∷ [])
 
-科科 : ∀ {A B : Set} {C : A → B → Set} → newPW A B C nothing nothing
-科科 =  newNothing 
+unquoteDecl = test >>= normalise >>= λ x → dprint [ termErr x ]

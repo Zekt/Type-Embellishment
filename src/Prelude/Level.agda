@@ -35,3 +35,9 @@ rewriteLevel refl X = X
 infix 4 _⊑_ -- Type `\squb=` to get `⊑`
 _⊑_ : Level → Level → Set
 ℓ₁ ⊑ ℓ₂ = ℓ₁ ⊔ ℓ₂ ≡ ℓ₂
+
+levelOfType : ∀ {a} → Set a → Level
+levelOfType {a} _ = a
+
+levelOfTerm : ∀ {a} {A : Set a} → A → Level
+levelOfTerm {a} _ = a

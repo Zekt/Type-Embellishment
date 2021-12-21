@@ -35,6 +35,7 @@ module _ (I : Set ℓⁱ) where
 
 {-# NO_UNIVERSE_CHECK #-}
 record PDataD : Set where
+  constructor pdatad
   field
     alevel   : Level
     {plevel} : Level

@@ -92,4 +92,3 @@ getLevel t = case t of λ where
                _ → typeError (termErr t
                              ∷ strErr "is not a type."
                              ∷ [])
-
