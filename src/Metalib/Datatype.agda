@@ -1,11 +1,9 @@
 {-# OPTIONS --without-K #-}
 
 open import Prelude
-  hiding (_++_)
 
 module Metalib.Datatype where
 
-open import Prelude.List         as L
 open import Utils.Reflection
 open import Utils.Error          as Err
 
@@ -34,14 +32,14 @@ module _ (d : Name) (pars : ℕ) {T : Tel ℓ} where
   RecDToType : (R : RecD ⟦ T ⟧ᵗ rb) → TC Type
   RecDToType (ι i) = do
     idxs ← idxToArgs i
-    return $ def d (unknowns L.++ idxs)
+    return $ def d (unknowns <> idxs)
   RecDToType (π A D) = extendContextT visible-relevant-ω A λ `A x →
       vΠ[ `A ]_ <$> RecDToType (D x)
 
   ConDToType : (D : ConD ⟦ T ⟧ᵗ cb) → TC Type
   ConDToType (ι i) = do
     idxs ← idxToArgs i
-    return $ def d (unknowns L.++ idxs)
+    return $ def d (unknowns <> idxs)
   ConDToType (σ A D) = extendContextT visible-relevant-ω A λ `A x →
     vΠ[ `A ]_ <$>  ConDToType (D x)
   ConDToType (ρ R D) = do

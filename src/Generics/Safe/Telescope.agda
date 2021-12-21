@@ -2,7 +2,7 @@
 
 module Generics.Safe.Telescope where
 
-open import Prelude hiding (_++_)
+open import Prelude
 
 infixr 5 _∷_
 

@@ -7,10 +7,10 @@ open import Agda.Builtin.List
 
 open import Prelude.Eq
 open import Prelude.Coercion
+open import Prelude.Monoid
 
 open import Agda.Builtin.String as S public
   using (String)
-  renaming (primStringAppend to infixr 5 _<>_)
 
 parens : String → String
 parens s = "(" <> s <> ")"

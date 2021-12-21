@@ -12,6 +12,7 @@ open import Prelude.Relation              public
 -- Type classes (without instances unless builtin)
 open import Prelude.Show                  public
 open import Prelude.Eq                    public
+open import Prelude.Monoid                public
 open import Prelude.Coercion              public
 open import Prelude.Functor               public
 open import Prelude.Applicative           public

@@ -1,4 +1,4 @@
-{-# OPTIONS --safe #-}
+{-# OPTIONS --without-K --safe #-}
 open import Prelude
 
 module Utils.Reflection.Properties where

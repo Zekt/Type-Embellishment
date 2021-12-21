@@ -7,6 +7,7 @@ open import Agda.Builtin.Nat using (zero; suc; _+_; _*_)
 
 open import Prelude.Function
 open import Prelude.Eq
+open import Prelude.Monoid
 open import Prelude.Show
 open import Prelude.Functor
 open import Prelude.Relation.PropositionalEquality
@@ -54,9 +55,17 @@ instance
     ; fmap-comp = map-comp
     }
 
-_++_ : List A → List A → List A
-[]       ++ ys = ys
-(x ∷ xs) ++ ys = x ∷ (xs ++ ys)
+private
+  _++_ : List A → List A → List A
+  []       ++ ys = ys
+  (x ∷ xs) ++ ys = x ∷ (xs ++ ys)
+
+instance
+  SemigroupList : Semigroup (List A)
+  _<>_ ⦃ SemigroupList ⦄ = _++_
+
+  MonoidList : Monoid (List A)
+  mempty ⦃ MonoidList ⦄ = []
 
 drop : ℕ → List A → List A
 drop zero    xs       = xs

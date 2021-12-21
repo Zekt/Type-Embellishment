@@ -1,6 +1,6 @@
 {-# OPTIONS --without-K #-}
 
-open import Prelude hiding (_++_)
+open import Prelude
 
 module Generics.Telescope where
 
@@ -22,9 +22,10 @@ syntax ∷-syntax A (λ x → T) = [ x ∶ A ] T
 ⟦ []    ⟧ᵗ = ⊤
 ⟦ A ∷ T ⟧ᵗ = Σ A λ a → ⟦ T a ⟧ᵗ
 
-_++_ : (tel : Tel ℓ) → (⟦ tel ⟧ᵗ → Tel ℓ') → Tel (ℓ ⊔ ℓ')
+infixr 5 _++_
+_++_ : (T : Tel ℓ) → (⟦ T ⟧ᵗ → Tel ℓ') → Tel (ℓ ⊔ ℓ')
 _++_ []      U = U tt
-_++_ (A ∷ T) U = A ∷ λ x → (T x) ++ λ ⟦Tx⟧ → U (x , ⟦Tx⟧)
+_++_ (A ∷ T) U = A ∷ λ x → T x ++ λ ⟦Tx⟧ → U (x , ⟦Tx⟧)
 
 Curried : ∀ {ℓ ℓ'} → (T : Tel ℓ) → (⟦ T ⟧ᵗ → Set ℓ') → Set (ℓ ⊔ ℓ')
 Curried []      X = X tt

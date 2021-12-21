@@ -1,6 +1,6 @@
 {-# OPTIONS --without-K #-}
 
-open import Prelude hiding (_++_)
+open import Prelude
 
 module Generics.Levels where
 
