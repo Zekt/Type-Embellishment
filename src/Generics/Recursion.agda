@@ -22,6 +22,7 @@ DataT D = ∀ ℓs → PDataT (DataD.applyL D ℓs)
 
 {-# NO_UNIVERSE_CHECK #-}
 record DataC (D : DataD) (N : DataT D) : Set where
+  constructor dataC
   field
     toN   : ∀ {ℓs ps} → Algᵈ   D (N ℓs ps)
     fromN : ∀ {ℓs ps} → Coalgᵈ D (N ℓs ps)
