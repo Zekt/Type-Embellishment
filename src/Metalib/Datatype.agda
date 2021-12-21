@@ -64,29 +64,17 @@ getCons d pars `Param Dᵖ = extendContextTs (PDataD.Param Dᵖ) λ ⟦Ps⟧ →
   map (prefixToType `Param) <$> ConDsToTypes d pars (PDataD.applyP Dᵖ ⟦Ps⟧)
 {-# INLINE getCons #-}
 
-getSignature : PDataD → TC (ℕ × Type × Telescope)
+getSignature : PDataD → TC (ℕ × Telescope × Type)
 getSignature Dᵖ = let open PDataD Dᵖ in do
   pars  , `Param ← fromTel Param
   dT             ← fromTelType (Param Desc.++ Index) (Set dlevel)
-  return $ pars , dT , `Param
-
-defineByPDataD : Name → PDataD → TC (ℕ × Type × List Type)
-defineByPDataD dataN dataD = do
-  pars , `Param ← fromTel Param
-  dataT         ← fromTelType (Param Desc.++ Index) (Set dlevel)
-  extendContextTs Param λ ⟦Ps⟧ → do
-    conTs ← map (prefixToType `Param)
-      <$> ConDsToTypes dataN pars (applyP ⟦Ps⟧)
-    return $ pars , dataT , conTs
-  where open PDataD dataD
+  return $ pars , `Param , dT
 
 defineByDataD : DataD → Name → List Name → TC _
 defineByDataD dataD dataN conNs = extendContextℓs #levels λ ℓs → do
-  pars , dataT , conTs ← defineByPDataD dataN $ applyL ℓs
-  -- dataT and conTs do not contain Level in their types
   let `Levels = levels #levels
   let Dᵖ      = applyL ℓs
-  pars , dT , `Param ← getSignature Dᵖ
+  pars , `Param , dT ← getSignature Dᵖ
   declareData dataN (#levels + pars) (prefixToType `Levels dT)
 
   conTs ← map (prefixToType `Levels) <$> getCons dataN pars `Param Dᵖ

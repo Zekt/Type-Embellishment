@@ -72,6 +72,8 @@ pattern vLam x = lam visible x
 pattern hLam x = lam hidden x
 pattern iLam x = lam instance′ x
 
+pattern pat-lam₀ cs = pat-lam cs []
+
 pattern `Π[_∶_]_ s a ty  = pi a (abs s ty)
 pattern `Π[_]_ a ty      = `Π[ "_" ∶ a ] ty
 pattern vΠ[_∶_]_ s a ty = `Π[ s ∶ (vArg a) ] ty
@@ -80,6 +82,8 @@ pattern iΠ[_∶_]_ s a ty = `Π[ s ∶ (iArg a) ] ty
 pattern vΠ[_]_ a ty     = `Π[ vArg a ] ty
 pattern hΠ[_]_ a ty     = `Π[ hArg a ] ty
 pattern iΠ[_]_ a ty     = `Π[ iArg a ] ty
+
+pattern _⊢_`=_ tel ps t = clause tel ps t 
 
 infixr 20 `vλ_`→_ `hλ_`→_ `iλ_`→_
 

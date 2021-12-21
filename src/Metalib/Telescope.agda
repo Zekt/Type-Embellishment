@@ -12,25 +12,12 @@ open import Generics.Description
 dprint = debugPrint "meta" 5
 
 -- Frequently used terms
-_`∷_ : Term → Term → Term
-t `∷ u = con (quote Tel._∷_) (vArg t ∷ vArg u ∷ [])
+private
+  _`∷_ : Term → Term → Term
+  t `∷ u = con (quote Tel._∷_) (vArg t ∷ vArg u ∷ [])
 
-`[] : Term
-`[] = quoteTerm Tel.[]
-
-
--- extend the context in a TC computation 
-extendContextTs : {A : Set ℓ′}
-  → (T : Tel ℓ) → (⟦ T ⟧ᵗ → TC A) → TC A
-extendContextTs []      f = f tt
-extendContextTs (A ∷ T) f = extendContextT visible-relevant-ω A λ _ x →
-  extendContextTs (T x) (curry f x)
-
-extendContextℓs : {A : Set ℓ}
-  → (#levels : ℕ) → (Level ^ #levels → TC A) → TC A
-extendContextℓs zero    c = c tt
-extendContextℓs (suc n) c = extendContextT hidden-relevant-ω Level λ _ ℓ →
-    extendContextℓs n (curry c ℓ)
+  `[] : Term
+  `[] = quoteTerm Tel.[]
 
 --
 fromTelType : Tel ℓ → Set ℓ′ → TC Type
@@ -53,3 +40,16 @@ fromTel (A ∷ T) = caseM quoteTC! T of λ where
 fromTelescope : Telescope → TC (Tel ℓ)
 fromTelescope = unquoteTC ∘ foldr `[] λ where
     (s , arg _ `A) `T → `A `∷ (`vλ s `→ `T)
+
+-- extend the context in a TC computation 
+extendContextTs : {A : Set ℓ′}
+  → (T : Tel ℓ) → (⟦ T ⟧ᵗ → TC A) → TC A
+extendContextTs []      f = f tt
+extendContextTs (A ∷ T) f = extendContextT visible-relevant-ω A λ _ x →
+  extendContextTs (T x) (curry f x)
+
+extendContextℓs : {A : Set ℓ}
+  → (#levels : ℕ) → (Level ^ #levels → TC A) → TC A
+extendContextℓs zero    c = c tt
+extendContextℓs (suc n) c = extendContextT hidden-relevant-ω Level λ _ ℓ →
+    extendContextℓs n (curry c ℓ)

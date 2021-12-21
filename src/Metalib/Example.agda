@@ -1,4 +1,4 @@
-{-# OPTIONS -v meta:5  #-}
+{-# OPTIONS -v meta:10  #-}
 open import Prelude
   hiding ([_,_])
 
@@ -8,10 +8,12 @@ open import Utils.Reflection
 
 open import Generics.Description
 open import Generics.Telescope
+open import Generics.Recursion
 open import Generics.Example
 
 open import Metalib.Telescope
 open import Metalib.Datatype
+open import Metalib.Recursion
 
 ------------------------------------------------------------------------------
 -- 
@@ -28,7 +30,6 @@ _ = refl
 -- 
 
 data Rel (A : Set) : (xs ys : List A) → Set where
-  
 `T-rel : Telescope × Type
 `T-rel = getTelescopeT Rel
 
@@ -129,3 +130,39 @@ test : TC _
 test = describeData 0 (quote ℕ) (quote ℕ.zero ∷ quote ℕ.suc ∷ [])
 
 unquoteDecl = test >>= normalise >>= λ x → dprint [ termErr x ]
+
+ListDataC : DataCᶜ ListD List
+ListDataC = dataC
+  (λ { (inl refl) → [] ; (inr (inl (x , xs , refl))) → x ∷ xs })
+  (λ { [] → inl refl ; (x ∷ xs) → inr (inl (x , xs , refl))})
+  (λ { (inl refl) → refl ; (inr (inl (x , xs , refl))) → refl})
+  (λ { [] → refl ; (x ∷ xs) → refl })
+
+
+LenDataC : DataCᶜ LenD newLen
+LenDataC = dataC
+  (λ { (inl refl) → newz ; (inr (inl (x , y , xs , ys , len , refl))) → news x y xs ys len })
+  (λ { newz → inl refl ; (news z₁ z₂ l₁ l₂ x) → inr (inl (z₁ , z₂ , l₁ , l₂ , x , refl))})
+  (λ { (inl refl) → refl ; (inr (inl (_ , _ , _ , _ , _ , refl))) → refl })
+  λ { newz → refl ; (news z₁ z₂ l₁ l₂ x) → refl }
+
+n-refl : (n : ℕ) → n ≡ n
+n-refl = λ
+  { zero    → refl
+  ; (suc n) → refl }
+`n-refl : Term
+`n-refl = pat-lam₀
+  $ []                       ⊢ [ vArg (con₀ `zero)        ] `= con₀ `refl
+  ∷ [ "n" , vArg (def₀ `ℕ) ] ⊢ [ vArg (con₁ `suc (var 0)) ] `= con₀ `refl
+  ∷ []
+  where
+    `ℕ    = quote ℕ
+    `refl = quote refl
+    `zero = quote Prelude.zero
+    `suc  = quote Prelude.suc
+macro
+  run : Tactic
+  run hole = unify hole `n-refl
+
+n-refl' : (n : ℕ) → n ≡ n
+n-refl' = run
