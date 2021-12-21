@@ -106,7 +106,7 @@ PLenD ℓ = record
       ∷ Σ[ x ∶ A ]
         Σ[ y ∶ A ]
         Σ[ xs ∶ List A ]
-        Σ[ ys ∶ {!!} ] ρ (ι (xs , ys , _)) (ι (x ∷ xs , y ∷ ys , _))
+        Σ[ ys ∶ List A ] ρ (ι (xs , ys , _)) (ι (x ∷ xs , y ∷ ys , _))
       ∷ []
    }
 
@@ -146,24 +146,9 @@ pointwiseD = record
       }
   }
 
---unquoteDecl data newPW constructor newJust newNothing =
---  defineByDataD pointwiseD newPW (newJust ∷ newNothing ∷ []) 
+{--
+test : TC _
+test = describeData 0 (quote ℕ) (quote ℕ.zero ∷ quote ℕ.suc ∷ [])
 
---kk : ∀ {A B : Set} {C : A → B → Set} → newPW A B C nothing nothing
---kk = newNothing
-
---telToD : TC _
---telToD = do t ← getType (quote newPW)
---            (tel , end) ← getTelescope (quote newPW)
---            let idx = PDataD.Index (DataD.applyL pointwiseD (lzero , lzero , lzero , tt)) (ℕ , List ℕ , (λ x s → length s ≡ x) , tt)
---            telescopeToRecD (quote newPW) 3 tel end idx >>= λ x →
---              {!!}
-
---idx = PDataD.Index (DataD.applyL pointwiseD (lzero , lzero , lzero , tt)) (ℕ , List ℕ , (λ x s → length s ≡ x) , tt)
-idx = PDataD.Index (DataD.applyL LenD (lzero , tt)) (ℕ , tt)
-test : TC _  --{tel : Tel ℓ} → (Σ RecB λ b → RecD ⟦ tel ⟧ᵗ b)
-test = do t ← getType (quote news)
-          dprint [ termErr t ]
-          describeByConstructor (quote newLen) 1 1 {Index = idx} (quote news)
-
---unquoteDecl = test >> return tt
+unquoteDecl = test >>= normalise >>= λ x → dprint [ termErr x ]
+--}

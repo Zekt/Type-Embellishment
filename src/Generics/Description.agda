@@ -106,6 +106,7 @@ module _ (I : Set ℓⁱ) where
 
 {-# NO_UNIVERSE_CHECK #-}
 record PDataD : Set where
+  constructor pdatad
   field
     {plevel} : Level
     {ilevel} : Level
@@ -115,7 +116,7 @@ record PDataD : Set where
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
     level  : Level
-    level-pre-fixed-point : flevel level ⊔ level ⊑ level
+    level-pre-fixed-point : flevel level ⊑ level
     Param  : Tel plevel
     Index  : ⟦ Param ⟧ᵗ → Tel ilevel
     applyP : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ struct
