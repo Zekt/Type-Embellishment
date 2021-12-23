@@ -52,7 +52,7 @@ ListD = record
 
 data Vec (A : Set ℓ) : ℕ → Set ℓ where
   []  : Vec A 0
-  _∷_ : ∀ {n} → A → Vec A n → Vec A (suc n)
+  _∷_ : (x : A) → {n : ℕ} → (xs : Vec A n) → Vec A (suc n)
 
 VecD : DataD
 VecD = record

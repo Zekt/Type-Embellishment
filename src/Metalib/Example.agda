@@ -129,40 +129,37 @@ DataD.applyL  pointwiseD (a , b , ℓ , _) = record
 test : TC _
 test = describeData 0 (quote ℕ) (quote ℕ.zero ∷ quote ℕ.suc ∷ [])
 
-unquoteDecl = test >>= normalise >>= λ x → dprint [ termErr x ]
+macro
+  getDataD : Name → ℕ → List Name → Tactic
+  getDataD d pars cs hole = do
+    checkedHole ← checkType hole (quoteTerm PDataD) 
+    unify checkedHole =<< describeData pars d cs
+    
+_ : PDataD 
+_ = {! getDataD ℕ 0 (quote ℕ.zero ∷ quote ℕ.suc ∷ []) !}
+
+macro
+  give! : TC Term → Tactic
+  give! mt hole = mt >>= unify hole
 
 ListDataC : DataCᶜ ListD List
 ListDataC = dataC
-  (λ { (inl refl) → [] ; (inr (inl (x , xs , refl))) → x ∷ xs })
+  (give! (genToN (quote List)))
   (λ { [] → inl refl ; (x ∷ xs) → inr (inl (x , xs , refl))})
   (λ { (inl refl) → refl ; (inr (inl (x , xs , refl))) → refl})
   (λ { [] → refl ; (x ∷ xs) → refl })
-
-
+  
 LenDataC : DataCᶜ LenD newLen
 LenDataC = dataC
-  (λ { (inl refl) → newz ; (inr (inl (x , y , xs , ys , len , refl))) → news x y xs ys len })
-  (λ { newz → inl refl ; (news z₁ z₂ l₁ l₂ x) → inr (inl (z₁ , z₂ , l₁ , l₂ , x , refl))})
-  (λ { (inl refl) → refl ; (inr (inl (_ , _ , _ , _ , _ , refl))) → refl })
-  λ { newz → refl ; (news z₁ z₂ l₁ l₂ x) → refl }
-
-n-refl : (n : ℕ) → n ≡ n
-n-refl = λ
-  { zero    → refl
-  ; (suc n) → refl }
-`n-refl : Term
-`n-refl = pat-lam₀
-  $ []                       ⊢ [ vArg (con₀ `zero)        ] `= con₀ `refl
-  ∷ [ "n" , vArg (def₀ `ℕ) ] ⊢ [ vArg (con₁ `suc (var 0)) ] `= con₀ `refl
-  ∷ []
-  where
-    `ℕ    = quote ℕ
-    `refl = quote refl
-    `zero = quote Prelude.zero
-    `suc  = quote Prelude.suc
-macro
-  run : Tactic
-  run hole = unify hole `n-refl
-
-n-refl' : (n : ℕ) → n ≡ n
-n-refl' = run
+  (give! (genToN (quote newLen)))
+  (λ { newz → inl refl
+     ; (news z₁ z₂ l₁ l₂ x) → inr (inl (z₁ , z₂ , l₁ , l₂ , x , refl))
+     }
+  )
+  (λ { (inl refl) → refl
+     ; (inr (inl (_ , _ , _ , _ , _ , refl))) → refl
+     }
+  )
+  λ { newz → refl
+    ; (news z₁ z₂ l₁ l₂ x) → refl
+    }

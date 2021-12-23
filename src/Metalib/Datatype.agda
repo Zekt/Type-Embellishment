@@ -1,6 +1,7 @@
 {-# OPTIONS --without-K #-}
 
 open import Prelude
+  hiding (T)
 
 module Metalib.Datatype where
 
@@ -13,40 +14,19 @@ open import Generics.Levels      as Desc
 
 open import Metalib.Telescope as Tel
 
---
-argVars : ℕ → (weakenBy : ℕ) → Args Term
-argVars zero    wk = []
-argVars (suc N) wk = vArg (var₀ (N + wk)) ∷ argVars N wk
-
--- Translate the semantics of an object-level telescope to
--- a context
-idxToArgs : {T : Tel ℓ} → ⟦ T ⟧ᵗ → TC Context
-idxToArgs {T = []}    tt        = return []
-idxToArgs {T = _ ∷ _} (x , ⟦T⟧) = do
-  `T ← idxToArgs ⟦T⟧
-  `x ← quoteTC x
-  return (vArg `x ∷ `T)
-
 private variable
   rb  : RecB
   cb  : ConB
   cbs : ConBs
+  T   : Tel ℓ
 
-module _ (d : Name) (pars : ℕ) {T : Tel ℓ} where
-  unknowns : Args Term
-  unknowns = duplicate pars (vArg unknown)
-
+module _ {T : Tel ℓ} (`A : ⟦ T ⟧ᵗ → TC Type) where
   RecDToType : (R : RecD ⟦ T ⟧ᵗ rb) → TC Type
-  RecDToType (ι i) = do
-    idxs ← idxToArgs i
-    return $ def d (unknowns <> idxs)
+  RecDToType (ι i) = `A i
   RecDToType (π A D) = extendContextT visible-relevant-ω A λ `A x →
       vΠ[ `A ]_ <$> RecDToType (D x)
-
   ConDToType : (D : ConD ⟦ T ⟧ᵗ cb) → TC Type
-  ConDToType (ι i) = do
-    idxs ← idxToArgs i
-    return $ def d (unknowns <> idxs)
+  ConDToType (ι i) = `A i
   ConDToType (σ A D) = extendContextT visible-relevant-ω A λ `A x →
     vΠ[ `A ]_ <$>  ConDToType (D x)
   ConDToType (ρ R D) = do
@@ -54,14 +34,25 @@ module _ (d : Name) (pars : ℕ) {T : Tel ℓ} where
     extendContext (vArg (quoteTerm ⊤)) do
     -- we might still need to give a correct type
       vΠ[ `R ]_ <$> ConDToType D
-
   ConDsToTypes : (Ds : ConDs ⟦ T ⟧ᵗ cbs) → TC (List Type)
   ConDsToTypes []       = return []
   ConDsToTypes (D ∷ Ds) = ⦇ ConDToType D ∷ ConDsToTypes Ds ⦈
 
+private
+  -- Translate the semantics of an object-level telescope to a context
+  idxToArgs : ⟦ T ⟧ᵗ → TC Context
+  idxToArgs {T = []}    tt      = ⦇ [] ⦈
+  idxToArgs {T = _ ∷ _} (x , Γ) = ⦇ (vArg <$> quoteTC x) ∷ (idxToArgs Γ) ⦈
+
+  -- The type of datatype 
+  typeOfData : (d : Name) (pars : ℕ)  → ⟦ T ⟧ᵗ → TC Type 
+  typeOfData d pars `x = do
+    args ← (duplicate pars (vArg unknown) <>_) <$> idxToArgs `x
+    return $ def d args
+
 getCons : Name → (pars : ℕ) → (`Param : Telescope) → PDataD → TC (List Type)
 getCons d pars `Param Dᵖ = extendContextTs (PDataD.Param Dᵖ) λ ⟦Ps⟧ →
-  map (prefixToType `Param) <$> ConDsToTypes d pars (PDataD.applyP Dᵖ ⟦Ps⟧)
+  map (prefixToType `Param) <$> ConDsToTypes (typeOfData d pars) (PDataD.applyP Dᵖ ⟦Ps⟧)
 {-# INLINE getCons #-}
 
 getSignature : PDataD → TC (ℕ × Telescope × Type)
