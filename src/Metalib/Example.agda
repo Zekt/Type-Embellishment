@@ -138,28 +138,17 @@ macro
 _ : PDataD 
 _ = {! getDataD ℕ 0 (quote ℕ.zero ∷ quote ℕ.suc ∷ []) !}
 
-macro
-  give! : TC Term → Tactic
-  give! mt hole = mt >>= unify hole
-
 ListDataC : DataCᶜ ListD List
 ListDataC = dataC
-  (give! (genToN (quote List)))
+  (genToNT List)
   (λ { [] → inl refl ; (x ∷ xs) → inr (inl (x , xs , refl))})
   (λ { (inl refl) → refl ; (inr (inl (x , xs , refl))) → refl})
   (λ { [] → refl ; (x ∷ xs) → refl })
   
-LenDataC : DataCᶜ LenD newLen
+LenDataC : DataCᶜ LenD Len
 LenDataC = dataC
-  (give! (genToN (quote newLen)))
-  (λ { newz → inl refl
-     ; (news z₁ z₂ l₁ l₂ x) → inr (inl (z₁ , z₂ , l₁ , l₂ , x , refl))
-     }
-  )
-  (λ { (inl refl) → refl
-     ; (inr (inl (_ , _ , _ , _ , _ , refl))) → refl
-     }
-  )
-  λ { newz → refl
-    ; (news z₁ z₂ l₁ l₂ x) → refl
-    }
+  (genToNT Len)
+  -- (λ { (inl refl) → z {_} {_} ; (inr (inl (x , y , xs , ys , p , refl))) → s {_} {_} {x} {y} {xs} {ys} p })
+  (λ { z → inl refl ; (s {x} {y} {xs} {ys} p) → inr (inl (x , y , xs , ys , p , refl)) })
+  (λ { (inl refl) → refl ; (inr (inl (x , y , xs , ys , p , refl))) → refl })
+  λ { z → refl ; (s x) → refl }

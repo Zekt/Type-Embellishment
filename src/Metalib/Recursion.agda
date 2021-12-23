@@ -26,33 +26,30 @@ private
   `dataC : Term → Term → Term → Term → Term
   `dataC = con₄ (quote dataC)
 
-
   pattern `inl x = con₁ (quote inl) x
   pattern `inr x = con₁ (quote inr) x
   pattern `refl  = con₀ (quote refl)
   pattern _`,_ x y = con₂ (quote _,_) x y
 
-------------------------------------------------------------------------
---
-  getLevels : (D : DataD) → TC Type
-  getLevels D = quoteTC {A = Set} Levels
-    where open DataD D
 
 -- Γ is the telescope of a constructor (without parameters and indices)
-cxtToVars : (Γ : Telescope) → Telescope × Pattern × Args Term -- Arg Pattern × Args Term
-cxtToVars Γ = let _ , p , args = go Γ in
-  (bimap id (const $ vArg unknown) <$> Γ) , p , args
-  where
-    go : (Γ : Telescope) → ℕ × Pattern × Args Term
-    go = foldr (0 , `refl , []) λ where
-      (_ , arg i _) (n , p , args) → suc n , (var n `, p) , arg i (var₀ n) ∷ args
         
-conTypeToTelescope : (pars : ℕ) → Type → Telescope
-conTypeToTelescope pars `A = drop pars $ (⇑ `A) .fst
 
 module _ (pars : ℕ) where
+  cxtToVars : (Γ : Telescope) → Telescope × Pattern × Args Term -- Arg Pattern × Args Term
+  cxtToVars Γ = let _ , p , args = go Γ in
+    (bimap id (const $ vArg unknown) <$> Γ) , p , unknowns <> args
+    where
+      unknowns = duplicate pars (hArg unknown)
+      go : (Γ : Telescope) → ℕ × Pattern × Args Term
+      go = foldr (0 , `refl , []) λ where
+        (_ , arg i _) (n , p , args) → suc n , (var n `, p) , arg i (var₀ n) ∷ args
+
+  conTypeToTelescope : Type → Telescope
+  conTypeToTelescope `A = drop pars $ (⇑ `A) .fst
+
   conToClause : (c : Name) → TC (Telescope × Pattern × Args Term)
-  conToClause c = cxtToVars ∘ conTypeToTelescope pars <$> getType c
+  conToClause c = cxtToVars ∘ conTypeToTelescope <$> getType c
 
   consToClauses : (cs : List Name) → TC (List $ Telescope × Pattern × Term)
   consToClauses []       = ⦇ [] ⦈
@@ -67,6 +64,9 @@ genToN c = do
     where _ → typeError (nameErr c ∷ strErr " is not a datatype." ∷ [] )
   pat-lam₀ ∘ map (λ { (`Γ , p , t) → clause `Γ [ vArg p ] t }) <$> consToClauses pars cs
 
+macro
+  genToNT : Name → Tactic
+  genToNT c hole = genToN c >>= unify hole
 -- module _ (D : DataD) (Nᶜ : DataTᶜ D) where
 --   open DataD D
 
