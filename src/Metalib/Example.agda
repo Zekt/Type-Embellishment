@@ -107,9 +107,9 @@ REL : {a b : Level} → Set a → Set b
     → (ℓ : Level) → Set (a ⊔ b ⊔ lsuc ℓ)
 REL A B ℓ = A → B → Set ℓ
 
-data Pointwise' {a b ℓ} {A : Set a} {B : Set b} (R : REL A B ℓ) : REL (Maybe A) (Maybe B) (a ⊔ b ⊔ ℓ) where
-  just    : ∀ {x y} → R x y → Pointwise' R (just x) (just y)
-  nothing : Pointwise' R nothing nothing
+data Pointwise' {a b ℓ} (A : Set a) (B : Set b) (R : REL A B ℓ) : REL (Maybe A) (Maybe B) (a ⊔ b ⊔ ℓ) where
+  just    : ∀ {x y} → R x y → Pointwise' A B R (just x) (just y)
+  nothing : Pointwise' A B R nothing nothing
 
 pointwiseD : DataD
 DataD.#levels pointwiseD = 3
@@ -138,6 +138,9 @@ macro
 _ : PDataD 
 _ = {! getDataD ℕ 0 (quote ℕ.zero ∷ quote ℕ.suc ∷ []) !}
 
+NatDataC = genDataCT NatD ℕ
+PointwiseDataC = genDataCT pointwiseD Pointwise'
+
 ListDataC : DataCᶜ ListD List
 ListDataC = genDataCT ListD List
 {- dataC
@@ -150,10 +153,10 @@ ListDataC = genDataCT ListD List
 -}
    
 LenDataC : DataCᶜ LenD Len
-LenDataC = genDataCT LenD Len 
-{- dataC
-  -- (λ { (inl refl) → z {_} {_} ; (inr (inl (x , y , xs , ys , p , refl))) → s {_} {_} {x} {y} {xs} {ys} p })
-  -- (λ { z → inl refl ; (s {x} {y} {xs} {ys} p) → inr (inl (x , y , xs , ys , p , refl)) })
-  -- (λ { (inl refl) → refl ; (inr (inl (x , y , xs , ys , p , refl))) → refl })
-  -- λ { z → refl ; (s x) → refl }
-  -}
+LenDataC =  genDataCT LenD Len 
+--   dataC
+--   (λ { (inl refl) → z {_} {_} ; (inr (inl (x , y , xs , ys , p , refl))) → s {_} {_} {x} {y} {xs} {ys} p })
+--   (λ { z → inl refl ; (s {x} {y} {xs} {ys} p) → inr (inl (x , y , xs , ys , p , refl)) })
+--   (λ { (inl refl) → refl ; (inr (inl (x , y , xs , ys , p , refl))) → refl })
+--   λ { z → refl ; (s x) → refl }
+

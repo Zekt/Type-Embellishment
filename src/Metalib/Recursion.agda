@@ -60,7 +60,7 @@ genFromConDs f d = do
 module _ (pars : ℕ) where
   cxtToUncurriedVars : (Γ : Telescope) → Telescope × Args Pattern × Term
   cxtToUncurriedVars Γ = let _ , args , t = go Γ in
-    (bimap id (const $ vArg unknown) <$> Γ) , args , t
+    (bimap id (λ `A → arg (getArgInfo `A) unknown) <$> Γ) , args , t
     where
       go : (Γ : Telescope) → ℕ × Args Pattern × Term
       go = foldr (0 , [] , `refl) λ where
@@ -120,4 +120,4 @@ macro
   genToN-fromNT c hole = genToN-fromN c >>= unify hole
 
   genDataCT : (D : DataD) → (Nᶜ : DataTᶜ D) → Tactic
-  genDataCT D Nᶜ = genDataC D Nᶜ
+  genDataCT = genDataC
