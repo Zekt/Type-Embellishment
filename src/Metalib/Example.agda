@@ -139,16 +139,21 @@ _ : PDataD
 _ = {! getDataD ℕ 0 (quote ℕ.zero ∷ quote ℕ.suc ∷ []) !}
 
 ListDataC : DataCᶜ ListD List
-ListDataC = dataC
+ListDataC = genDataCT ListD List
+{- dataC
   (genToNT List)
-  (λ { [] → inl refl ; (x ∷ xs) → inr (inl (x , xs , refl))})
-  (λ { (inl refl) → refl ; (inr (inl (x , xs , refl))) → refl})
-  (λ { [] → refl ; (x ∷ xs) → refl })
-  
+  (genFromNT List)
+  (genFromN-toNT List)
+  -- (λ { (inl refl) → refl ; (inr (inl (x , xs , refl))) → refl })
+  (genToN-fromNT List)
+  -- (λ { [] → refl ; (x ∷ xs) → refl })
+-}
+   
 LenDataC : DataCᶜ LenD Len
-LenDataC = dataC
-  (genToNT Len)
+LenDataC = genDataCT LenD Len 
+{- dataC
   -- (λ { (inl refl) → z {_} {_} ; (inr (inl (x , y , xs , ys , p , refl))) → s {_} {_} {x} {y} {xs} {ys} p })
-  (λ { z → inl refl ; (s {x} {y} {xs} {ys} p) → inr (inl (x , y , xs , ys , p , refl)) })
-  (λ { (inl refl) → refl ; (inr (inl (x , y , xs , ys , p , refl))) → refl })
-  λ { z → refl ; (s x) → refl }
+  -- (λ { z → inl refl ; (s {x} {y} {xs} {ys} p) → inr (inl (x , y , xs , ys , p , refl)) })
+  -- (λ { (inl refl) → refl ; (inr (inl (x , y , xs , ys , p , refl))) → refl })
+  -- λ { z → refl ; (s x) → refl }
+  -}
