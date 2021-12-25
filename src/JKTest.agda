@@ -1,7 +1,7 @@
 {-# OPTIONS --safe #-}
 
 open import Prelude
-open import Generics.Safe.Telescope
+open import Generics.Safe.Telescope; open ∀ℓ; open ∀ℓω; open ∀ᵗ
 open import Generics.Safe.Description
 open import Generics.Safe.Description.FixedPoint
 open import Generics.Safe.Algebra
@@ -12,6 +12,8 @@ open import Generics.Safe.Ornament.Algebraic.Properties
 open import Generics.Safe.Ornament.Promotion
 open import Generics.Safe.Recursion
 open import Generics.Safe.RecursionScheme
+
+-- USER: ℕ
 
 -- META
 NatD : DataD
@@ -43,34 +45,39 @@ NatC = record
                   ; (suc n) → refl } }
 
 -- USER (specialising a generic library component)
-foldℕ-alg : ∀ ℓs ps ℓ (X : Set ℓ) → X → (X → X) → Algebraᵈ NatD ℓs ps ℓ
--- foldℕ-alg : {! ∀ ℓs ps ℓ → FoldAlgTᵈ NatD ℓs ps ℓ !}
+foldℕ-alg : ∀ℓω 0 λ ℓs → {ℓ : Level} → ∀ᵗ false [] λ ps →
+            {X : ∀ᵗ false [] λ _ → Set ℓ} →
+            ∀ᵗ true ((X $$ tt) ∷ λ _ → (X $$ tt → X $$ tt) ∷ λ _ → []) λ _ →
+            Algebra (ι tt ∷ ρ (ι tt) (ι tt) ∷ []) ℓ
+-- foldℕ-alg : {! ∀ℓω _ λ ℓs → ∀ {ℓ} → ∀ᵗ false _ λ ps → FoldAlgTᵈ NatD ℓs ps ℓ !}
 foldℕ-alg = fold-algᵈ NatD
 
 -- META
-foldℕ-wrapper : ∀ ℓs ps ℓ (X : Set ℓ) (z : X) (s : X → X)
-              → FoldT NatC ℓs ps (foldℕ-alg ℓs ps ℓ X z s)
-foldℕ : {ℓ : Level} (X : Set ℓ) (z : X) (s : X → X) → ℕ → X
--- foldℕ : {- optimised version of -} {! ∀ ℓs ps ℓ (X : Set ℓ) (z : X) (s : X → X) → FoldT NatC (foldℕ-alg X z s) !}
+foldℕ-wrapper : ∀ℓω 0 λ ℓs → {ℓ : Level} → ∀ᵗ false [] λ ps →
+                {X : ∀ᵗ false [] λ _ → Set ℓ} →
+                ∀ᵗ true ((X $$ tt) ∷ λ _ → (X $$ tt → X $$ tt) ∷ λ _ → []) λ args →
+                FoldT NatC (foldℕ-alg $$ ℓs $$ ps $$ args)
+foldℕ : {ℓ : Level} {X : Set ℓ} → X → (X → X) → ℕ → X
 
 -- META
-foldℕ-wrapper _ _ _ X z s n = foldℕ X z s n
-foldℕ X z s  zero   = z
-foldℕ X z s (suc n) = s (foldℕ X z s n)
--- foldℕ X z s  zero   = {! fold-base NatC (fold-algᵈ NatD X z s) (foldℕ-wrapper X z s)  zero   !}
--- foldℕ X z s (suc n) = {! fold-base NatC (fold-algᵈ NatD X z s) (foldℕ-wrapper X z s) (suc n) !}
+foldℕ-wrapper $$ _ $$ _ $$ z , s , _ = foldℕ z s
+foldℕ z s  zero   = z
+foldℕ z s (suc n) = s (foldℕ z s n)
+-- foldℕ z s  zero   = {! (fold-base NatC (foldℕ-alg $$ _ $$ _ $$ z , s , _) (foldℕ-wrapper $$ _ $$ _ $$ (z , s , _)) $$ _) zero  !}
+-- foldℕ z s (suc n) = {! (fold-base NatC (foldℕ-alg $$ _ $$ _ $$ z , s , _) (foldℕ-wrapper $$ _ $$ _ $$ (z , s , _)) $$ _) (suc n) !}
 
 -- USER (changing the form of the fold)
--- foldℕ-wrapper ℓs ps ℓ X z s n = foldℕ s z n
--- foldℕ : ∀ {ℓ} {X : Set ℓ} → (X → X) → X → ℕ → X
--- foldℕ s z  zero   = z
--- foldℕ s z (suc n) = s (foldℕ s z n)
+-- foldℕ : ∀ {ℓ} (X : Set ℓ) → (X → X) → X → ℕ → X
+-- foldℕ X s z  zero   = z
+-- foldℕ X s z (suc n) = s (foldℕ X s z n)
+-- (foldℕ-wrapper $$ _ $$ _ $$ (z , s , _) $$ _) n = foldℕ _ s z n
 
 -- META
-foldℕ-is-fold : ∀ ℓs ps ℓ (X : Set ℓ) (z : X) (s : X → X)
-              → AlgC NatC (foldℕ-alg ℓs ps ℓ X z s) (foldℕ-wrapper ℓs ps ℓ X z s)
-foldℕ-is-fold ℓs ps ℓ X z s (inl           refl  ) = refl
-foldℕ-is-fold ℓs ps ℓ X z s (inr (inl (_ , refl))) = refl
+foldℕ-is-fold : ∀ {ℓs ps ℓ} {X : Set ℓ} (z : X) (s : X → X)
+              → AlgC NatC (foldℕ-alg     $$ ℓs $$ ps $$ (z , s , _))
+                          (foldℕ-wrapper $$ ℓs $$ ps $$ (z , s , _))
+foldℕ-is-fold z s (inl           refl  ) = refl
+foldℕ-is-fold z s (inr (inl (_ , refl))) = refl
 
 -- USER (for now; will be a specialisation of a generic library component)
 indℕ-alg : (P : ℕ → Set) → P zero → (∀ n → P n → P (suc n)) → IndAlgebraᵈ NatC tt tt _
@@ -134,26 +141,25 @@ ListD/NatD = record
                    ∷ ∺ [] } }
 
 -- USER
-length-alg : ∀ ℓs ps → Algebraᵈ ListD ℓs ps 0ℓ
+length-alg : ∀ℓ _ λ ℓs → ∀ᵗ false _ λ ps → Algebraᵈ ListD ℓs ps 0ℓ
 length-alg = orn-alg ListD/NatD NatC
 
 -- META
-length'-wrapper : ∀ ℓs ps → FoldT ListC ℓs ps (length-alg ℓs ps)
+length'-wrapper : ∀ℓ _ λ ℓs → ∀ᵗ false _ λ ps → FoldT ListC (length-alg $$ ℓs $$ ps)
 length' : {A : Set ℓ} → List A → ℕ  -- slightly modified by the user
-length'-wrapper _ _ = length'       -- also slightly modified
+length'-wrapper $$ _ $$ _ = length'       -- also slightly modified
 length' []       = 0
 length' (a ∷ as) = suc (length' as)
-length'C : ∀ ℓs ps → AlgC ListC (length-alg ℓs ps) (length'-wrapper ℓs ps)
+length'C : ∀ ℓs ps → AlgC ListC (length-alg $$ ℓs $$ ps) (length'-wrapper $$ ℓs $$ ps)
 length'C ℓs ps (inl                refl  ) = refl
 length'C ℓs ps (inr (inl (a , as , refl))) = refl
--- length' : {! ∀ ℓs ps → FoldT ListC ℓs ps (length-alg ℓs ps) !}
 -- length'-wrapper = length'
--- length' ℓs ps []       = {! fold-base ListC ℓs ps (length-alg ℓs ps) (length'-wrapper ℓs ps) []      !}
--- length' ℓs ps (a ∷ as) = {! fold-base ListC ℓs ps (length-alg ℓs ps) (length'-wrapper ℓs ps) (a ∷ as) !}
+-- length' []       = {! (fold-base ListC (length-alg $$ _ $$ _) (length'-wrapper $$ _ $$ _) $$ _) []      !}
+-- length' (a ∷ as) = {! (fold-base ListC (length-alg $$ _ $$ _) (length'-wrapper $$ _ $$ _) $$ _) (a ∷ as) !}
 
 -- USER
 VecOD : DataOD ListD
-VecOD = algODᵈ ListD length-alg
+VecOD = algODᵈ ListD (λ ℓs ps → length-alg $$ ℓs $$ ps)
 
 -- META (slightly modified by the user)
 data Vec (A : Set ℓ) : ℕ → Set ℓ where
@@ -190,23 +196,26 @@ VecC = record
   ; toN-fromN = λ { []       → refl
                   ; (a ∷ as) → refl } }
 
--- USER
-Vec-inhabitance-alg : ∀ ℓs ps → IndAlgebraᵈ ListC ℓs ps _
-Vec-inhabitance-alg = inhabitance ListC length-alg (length'-wrapper _ _) length'C VecC
+-- -- USER
+Vec-inhabitance-alg : ∀ℓ 1 λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ A → [])) λ ps
+                    → IndAlgebraᵈ ListC ℓs ps (fst ℓs)
+Vec-inhabitance-alg =
+  inhabitance ListC (λ ℓs ps → length-alg      $$ ℓs $$ ps)
+                    (λ ℓs ps → length'-wrapper $$ ℓs $$ ps) length'C VecC
 
 -- META
-Vec-inhabitance-wrapper : ∀ ℓs ps → IndT ListC (Vec-inhabitance-alg ℓs ps)
-Vec-inhabitance : {A : Set ℓ} (as : List A) → Vec A (length' as)  -- modified by the user
-Vec-inhabitance-wrapper _ _ = Vec-inhabitance                     -- and
-Vec-inhabitance []       = []                                     -- these
-Vec-inhabitance (a ∷ as) = a ∷ Vec-inhabitance as                 -- as well
-Vec-inhabitanceC : ∀ ℓs ps → IndAlgC ListC (Vec-inhabitance-alg ℓs ps) (Vec-inhabitance-wrapper ℓs ps)
+Vec-inhabitance-wrapper : ∀ℓ 1 λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ A → [])) λ ps
+                        → IndT ListC (Vec-inhabitance-alg $$ ℓs $$ ps)
+Vec-inhabitance : {ℓ : Level} {A : Set ℓ} (as : List A) → Vec A (length' as)
+Vec-inhabitance-wrapper $$ _ $$ _ = Vec-inhabitance
+Vec-inhabitance []       = []
+Vec-inhabitance (a ∷ as) = a ∷ Vec-inhabitance as
+Vec-inhabitanceC : ∀ ℓs ps → IndAlgC ListC (Vec-inhabitance-alg     $$ ℓs $$ ps)
+                                           (Vec-inhabitance-wrapper $$ ℓs $$ ps)
 Vec-inhabitanceC ℓs ps (inl                refl  ) = refl
 Vec-inhabitanceC ℓs ps (inr (inl (a , as , refl))) = refl
--- Vec-inhabitance : {! ∀ ℓs ps → IndT ListC (Vec-inhabitance-alg ℓs ps) !}
--- Vec-inhabitance-wrapper = Vec-inhabitance
--- Vec-inhabitance ℓs ps []       = {! ind-base ListC (Vec-inhabitance-alg ℓs ps) (Vec-inhabitance-wrapper ℓs ps) []       !}
--- Vec-inhabitance ℓs ps (a ∷ as) = {! ind-base ListC (Vec-inhabitance-alg ℓs ps) (Vec-inhabitance-wrapper ℓs ps) (a ∷ as) !}
+-- Vec-inhabitance {ℓ} {A} []       = {! ind-base ListC (Vec-inhabitance-alg $$ ℓ , _ $$ A , _) (Vec-inhabitance-wrapper $$ ℓ , _ $$ A , _) []       !}
+-- Vec-inhabitance {ℓ} {A} (a ∷ as) = {! ind-base ListC (Vec-inhabitance-alg $$ ℓ , _ $$ A , _) (Vec-inhabitance-wrapper $$ ℓ , _ $$ A , _) (a ∷ as) !}
 
 data W {ℓ ℓ'} (A : Set ℓ) (B : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
   sup : (a : A) → (B a → W A B) → W A B

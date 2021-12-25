@@ -19,7 +19,10 @@ id x = x
 const : A → (B → A)
 const a = λ _ → a
 
-infix -10 idFun 
+constω : {A : Setω} {B : Set b} → A → (B → A)
+constω a = λ _ → a
+
+infix -10 idFun
 idFun : (A : Set a) → A → A
 idFun A x = x
 
