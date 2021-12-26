@@ -134,7 +134,7 @@ module _ (dataName : Name) (#levels : ℕ) (parLen : ℕ) where
   ... | true = do
     recd ← uncurry telescopeToRecD (⇑ `x)
     cond ← telescopeToConD `tel end
-    -- Indices in recursion in Description is different from those in native constructors!
+    -- Indices in recursion in Description is different from those in native constructors! Should strengthen by one instead of abstracting.
     return $ `ρ (recd ∷ strengthen 0 1 cond ∷ [])
   ... | false = do
     cond ← telescopeToConD `tel end
@@ -169,9 +169,7 @@ describeData parLen dataName conNames = do
                                 (vArg x ∷ vArg xs ∷ []))
                           conDefs
         `lamℓ = strengthen (length tel) (length tel) `ℓ
-        --patLams (length tel) [] `ℓ (duplicate (length tel) (vArg (quoteTerm tt)))
         `lampar = strengthen (length tel) (length tel) $ to`Tel par
-        --patLams (length tel) [] (to`Tel par) (duplicate (length tel) (vArg (quoteTerm tt)))
         `refl : Term
         `refl = con (quote _≡_.refl) (hArg (quoteTerm lzero)
                                      ∷ hArg (quoteTerm Level)
@@ -192,15 +190,6 @@ describeData parLen dataName conNames = do
         `datad = con (quote datad)
                      (map vArg
                      (`#levels ∷ patLam ℓtel `pdatad ∷ []))
-    --inContext (map snd ℓtel) $ do
-    --  n ← normalise $ patLam par applyBody
-    --  dprint [ termErr n ]
-    --new`datad ← normalise `datad
-    dprint [ strErr $ showTerm $ patLam ℓtel `pdatad ]
-    dprint [ strErr $ "#levels: " <> showTerm `#levels ]
-    dprint [ strErr $ "`lamℓ: " <> showTerm `lamℓ ]
-    dprint [ strErr $ "`datad: " <> showTerm `datad ]
-    --d ← unquoteTC {A = DataD} `datad
     return `datad
   where
     splitLevels : Telescope → (ℕ × Telescope)
@@ -226,20 +215,6 @@ describeData parLen dataName conNames = do
     Σpat ((s , arg _ x) ∷ tel) =
       vArg (con (quote _,_)
                 (vArg (var (length tel)) ∷ Σpat tel ∷ []))
-
-    --patLams : ℕ → Telescope → Term → List (Arg Term) → Term
-    --patLams zero    tel body apps = body
-    --patLams (suc n) tel body apps =
-    --  pat-lam [ clause tel [ Σpat tel ] (patLams n tel body []) ] apps
-
-    fakeLam : ℕ → Term → Term
-    fakeLam n body = pat-lam [ clause (duplicate n ("" , vArg (quoteTerm ⊤))) (varlist n) body ] (duplicate n (vArg (quoteTerm tt)))
-      where varlist : ℕ → List (Arg Pattern)
-            varlist zero    = []
-            varlist (suc n) = vArg (var n) ∷ varlist n
-
-    --patLam : Telescope → Term → Term
-    --patLam tel body = patLams 0 tel body []
 
     patLam : Telescope → Term → Term
     patLam tel body = pat-lam [ clause tel [ Σpat tel ] body ] []

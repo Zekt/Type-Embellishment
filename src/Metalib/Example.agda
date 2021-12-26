@@ -88,7 +88,7 @@ DataD.applyL  LenD (ℓ , _) = record
   ; level-pre-fixed-point = refl
   ; Param = [ _ ∶ Set ℓ ] []
   ; Index = λ where
-    (A , tt) → [ _ ∶ List A ] [ _ ∶ List A ] []
+    (A , tt) → [ _ ∶ List {ℓ} A ] [ _ ∶ List {ℓ} A ] []
   ; applyP = λ where
     (A , tt) →
       ι ([] , [] , tt)
@@ -125,7 +125,18 @@ DataD.applyL  pointwiseD (a , b , ℓ , _) = record
           ∷ []
       }
 
-test : TC _
-test = describeData 0 (quote ℕ) (quote ℕ.zero ∷ quote ℕ.suc ∷ [])
+describeLen : Name → TC _
+describeLen dname = do d ← describeData 1 (quote newLen) (quote newz ∷ quote news ∷ [])
+                       declareDef (vArg dname) (quoteTerm DataD)
+                       defineFun dname [ clause [] [] d ]
 
-unquoteDecl = test >>= normalise >>= λ x → dprint [ termErr x ]
+{--
+unquoteDecl newDataD = test newDataD
+
+unquoteDecl data newnewLen constructor newnewz newnews =
+  defineByDataD newDataD newnewLen (newnewz ∷ newnews ∷ [])
+
+-- translate a translation back
+newnewlen : newnewLen ℕ (2 ∷ 5 ∷ []) (1 ∷ 3 ∷ [])
+newnewlen = newnews 2 1 [ 5 ] [ 3 ] (newnews 5 3 [] [] newnewz)
+--}
