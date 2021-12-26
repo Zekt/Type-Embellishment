@@ -12,8 +12,11 @@ open import Utils.Reflection.Term     public
 private variable
   A : Set ℓ
 
-IMPOSSIBLE : Term → TC A
-IMPOSSIBLE t = typeError $ termErr t ∷ [ strErr " should not occur" ]
+IMPOSSIBLE : TC A
+IMPOSSIBLE = typeError $ [ strErr "An impossible event occurs." ]
+
+IMPOSSIBLE-term : Term → TC A
+IMPOSSIBLE-term t = typeError $ termErr t ∷ [ strErr " should not occur" ]
 
 give : Term → Tactic
 give v = λ hole → unify hole v

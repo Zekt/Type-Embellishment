@@ -1,4 +1,4 @@
-{-# OPTIONS -v meta:5  #-}
+{-# OPTIONS -v meta:10  #-}
 open import Prelude
   hiding ([_,_])
 
@@ -8,10 +8,12 @@ open import Utils.Reflection
 
 open import Generics.Description
 open import Generics.Telescope
+open import Generics.Recursion
 open import Generics.Example
 
 open import Metalib.Telescope
 open import Metalib.Datatype
+open import Metalib.Recursion
 
 ------------------------------------------------------------------------------
 -- 
@@ -28,7 +30,6 @@ _ = refl
 -- 
 
 data Rel (A : Set) : (xs ys : List A) → Set where
-  
 `T-rel : Telescope × Type
 `T-rel = getTelescopeT Rel
 
@@ -106,9 +107,9 @@ REL : {a b : Level} → Set a → Set b
     → (ℓ : Level) → Set (a ⊔ b ⊔ lsuc ℓ)
 REL A B ℓ = A → B → Set ℓ
 
-data Pointwise' {a b ℓ} {A : Set a} {B : Set b} (R : REL A B ℓ) : REL (Maybe A) (Maybe B) (a ⊔ b ⊔ ℓ) where
-  just    : ∀ {x y} → R x y → Pointwise' R (just x) (just y)
-  nothing : Pointwise' R nothing nothing
+data Pointwise' {a b ℓ} (A : Set a) (B : Set b) (R : REL A B ℓ) : REL (Maybe A) (Maybe B) (a ⊔ b ⊔ ℓ) where
+  just    : ∀ {x y} → R x y → Pointwise' A B R (just x) (just y)
+  nothing : Pointwise' A B R nothing nothing
 
 pointwiseD : DataD
 DataD.#levels pointwiseD = 3
@@ -140,3 +141,34 @@ unquoteDecl data newnewLen constructor newnewz newnews =
 newnewlen : newnewLen ℕ (2 ∷ 5 ∷ []) (1 ∷ 3 ∷ [])
 newnewlen = newnews 2 1 [ 5 ] [ 3 ] (newnews 5 3 [] [] newnewz)
 --}
+
+macro
+  getDataD : Name → ℕ → List Name → Tactic
+  getDataD d pars cs hole = do
+    checkedHole ← checkType hole (quoteTerm PDataD) 
+    unify checkedHole =<< describeData pars d cs
+    
+_ : PDataD 
+_ = {! getDataD ℕ 0 (quote ℕ.zero ∷ quote ℕ.suc ∷ []) !}
+
+NatDataC = genDataCT NatD ℕ
+PointwiseDataC = genDataCT pointwiseD Pointwise'
+
+ListDataC : DataCᶜ ListD List
+ListDataC = genDataCT ListD List
+{- dataC
+  (genToNT List)
+  (genFromNT List)
+  (genFromN-toNT List)
+  -- (λ { (inl refl) → refl ; (inr (inl (x , xs , refl))) → refl })
+  (genToN-fromNT List)
+  -- (λ { [] → refl ; (x ∷ xs) → refl })
+-}
+   
+LenDataC : DataCᶜ LenD Len
+LenDataC =  genDataCT LenD Len 
+--   dataC
+--   (λ { (inl refl) → z {_} {_} ; (inr (inl (x , y , xs , ys , p , refl))) → s {_} {_} {x} {y} {xs} {ys} p })
+--   (λ { z → inl refl ; (s {x} {y} {xs} {ys} p) → inr (inl (x , y , xs , ys , p , refl)) })
+--   (λ { (inl refl) → refl ; (inr (inl (x , y , xs , ys , p , refl))) → refl })
+--   λ { z → refl ; (s x) → refl }

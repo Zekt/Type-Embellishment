@@ -3,7 +3,7 @@
 module Generics.Safe.Ornament.Algebraic.Properties where
 
 open import Prelude
-open import Generics.Safe.Telescope
+open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵗ
 open import Generics.Safe.Description
 open import Generics.Safe.Algebra
 open import Generics.Safe.Ornament
@@ -55,12 +55,13 @@ inhabitanceᶜˢ (D ∷ Ds) toN f g geq toY (inr ns) all =
 inhabitance :
   ∀ {D N} (C : DataC D N) {ℓf : DataD.Levels D → Level}
     (alg : ∀ ℓs ps → Algebraᵈ D ℓs ps (ℓf ℓs))
-    (fold : ∀ {ℓs ps} → FoldT C ℓs ps (alg ℓs ps))
-  → (∀ ℓs ps → AlgC C (alg ℓs ps) fold)
+    (fold : ∀ ℓs ps → FoldT C (alg ℓs ps))
+  → (∀ ℓs ps → AlgC C (alg ℓs ps) (fold ℓs ps))
   → ∀ {N'} (C' : DataC ⌊ algODᵈ D alg ⌋ᵈ N')
-  → ∀ ℓs ps → IndAlgebraᵈ C ℓs ps _
-inhabitance {D} {N} C alg fold algC {N'} C' ℓs ps = record
-  { Carrier = λ is n → N' ℓs ps (snocᵗ-inj (is , fold n))
+  → ∀ℓ _ λ ℓs → ∀ᵗ false _ λ ps → IndAlgebraᵈ C ℓs ps _
+inhabitance {D} {N} C alg fold algC {N'} C' $$ ℓs $$ ps = record
+  { Carrier = λ is n → N' ℓs ps (snocᵗ-inj (is , fold ℓs ps n))
   ; apply = let Dᶜˢ = PDataD.applyP (DataD.applyL D ℓs) ps
-            in inhabitanceᶜˢ Dᶜˢ (DataC.toN C) (Algebra.apply (alg ℓs ps)) fold (algC ℓs ps)
+            in inhabitanceᶜˢ Dᶜˢ (DataC.toN C)
+                 (Algebra.apply (alg ℓs ps)) (fold ℓs ps) (algC ℓs ps)
                  (DataC.toN C' ∘ imapOD-injᶜˢ (algODᶜˢ Dᶜˢ (Algebra.apply (alg ℓs ps)))) }

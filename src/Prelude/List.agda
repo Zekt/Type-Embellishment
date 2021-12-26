@@ -67,6 +67,12 @@ instance
   MonoidList : Monoid (List A)
   mempty ⦃ MonoidList ⦄ = []
 
+filter : (A → Bool) → List A → List A
+filter p []       = []
+filter p (x ∷ xs) = if p x
+  then x ∷ filter p xs
+  else filter p xs
+
 drop : ℕ → List A → List A
 drop zero    xs       = xs
 drop (suc n) []       = []
@@ -129,6 +135,14 @@ span p (x ∷ xs) with p x
 
 break : (A → Bool) → List A → (List A × List A)
 break p = span (not ∘ p)
+
+splitAt : ℕ → List A → List A × List A
+splitAt zero    xs               = [] , xs
+splitAt (suc _) []               = [] , []
+splitAt (suc zero)    (x ∷ xs)   = [ x ] , xs
+splitAt (suc m@(suc n)) (x ∷ xs) = let xs' , xs'' = splitAt m xs in
+  x ∷ xs' , xs''
+  
 
 intersperse : A → List A → List A
 intersperse x []       = []

@@ -21,17 +21,16 @@ record DataC (D : DataD) (N : DataT D) : Setω where
     fromN-toN : ∀ {ℓs ps is} (ns : ⟦ D ⟧ᵈ (N ℓs ps) is) → fromN (toN ns) ≡ ns
     toN-fromN : ∀ {ℓs ps is}          (n : N ℓs ps  is) → toN (fromN n ) ≡ n
 
-FoldT : ∀ {D N} (_ : DataC D N) ℓs ps (alg : Algebraᵈ D ℓs ps ℓ) → Set _
-FoldT {N = N} _ ℓs ps alg = ∀ {is} → N ℓs ps is → Algebra.Carrier alg is
+FoldT : ∀ {D N} (_ : DataC D N) {ℓs ps ℓ} (alg : Algebraᵈ D ℓs ps ℓ) → Set _
+FoldT {D} {N} _ alg = ∀ {is} → N _ _ is → Algebra.Carrier alg is
 
-fold-base : ∀ {D N} (C : DataC D N) ℓs ps (alg : Algebraᵈ D ℓs ps ℓ)
-          → FoldT C ℓs ps alg → FoldT C ℓs ps alg
-fold-base {D = D} C ℓs ps alg rec = Algebra.apply alg ∘ fmapᵈ D rec ∘ DataC.fromN C
+fold-base : ∀ {D N} (C : DataC D N) {ℓs ps} (alg : Algebraᵈ D ℓs ps ℓ)
+          → FoldT C alg → FoldT C alg
+fold-base {D = D} C alg rec = Algebra.apply alg ∘ fmapᵈ D rec ∘ DataC.fromN C
 
-AlgC : ∀ {D N} (C : DataC D N) {ℓs ps ℓ} (alg : Algebraᵈ D ℓs ps ℓ) → FoldT C ℓs ps alg → Set _
-AlgC {D} {N} C {ℓs} {ps} alg fold =
-  ∀ {is} (ns : ⟦ D ⟧ᵈ (N ℓs ps) is)
-  → Algebra.apply alg (fmapᵈ D fold ns) ≡ fold (DataC.toN C ns)
+AlgC : ∀ {D N} (C : DataC D N) {ℓs ps ℓ} (alg : Algebraᵈ D ℓs ps ℓ) → FoldT C alg → Set _
+AlgC {D} {N} C alg fold = ∀ {is} (ns : ⟦ D ⟧ᵈ (N _ _) is)
+                        → Algebra.apply alg (fmapᵈ D fold ns) ≡ fold (DataC.toN C ns)
 
 record IndAlgebra
   {I : Set ℓⁱ} (D : ConDs I cbs) {X : Carrierᶜˢ D ℓˣ} (f : Algᶜˢ D X) (ℓ : Level) :

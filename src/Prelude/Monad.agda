@@ -43,6 +43,9 @@ record Monad (M : ∀ {ℓ} → Set ℓ → Set ℓ) : Setω where
   mapM f []       = return []
   mapM f (x ∷ xs) = ⦇ f x ∷ mapM f xs ⦈
 
+  forM : List A → (A → M B) → M (List B)
+  forM = flip mapM
+
 open Monad ⦃...⦄ public
 
 {-# DISPLAY Monad._>>=_  _ = _>>=_  #-}

@@ -120,8 +120,8 @@ levels (suc n) = ("_" , hArg `Level) ∷ levels n
 private
   -- Assumption: The argument is a valid type.
   ΠToTelescope : Type → Telescope × Type
-  ΠToTelescope (pi a (abs s b)) = let T , A = ΠToTelescope b in (s , a) ∷ T , A
-  ΠToTelescope t                = [] , t
+  ΠToTelescope (`Π[ s ∶ a ] b) = let T , A = ΠToTelescope b in (s , a) ∷ T , A
+  ΠToTelescope t               = [] , t
 
   TelescopeToΠ : Type → Telescope → Type
   TelescopeToΠ `B []             = `B

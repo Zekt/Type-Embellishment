@@ -50,16 +50,17 @@ ListD = record
     }}
   }
 
-data Vec (A : Set) : ℕ → Set where
+data Vec (A : Set ℓ) : ℕ → Set ℓ where
   []  : Vec A 0
-  _∷_ : ∀ {n} → A → Vec A n → Vec A (suc n)
+  _∷_ : (x : A) → {n : ℕ} → (xs : Vec A n) → Vec A (suc n)
+
 VecD : DataD
 VecD = record
   { #levels = 1
   ; applyL  = λ { (ℓ , tt) → record
     { alevel = ℓ
     ; level-pre-fixed-point = refl
-    ; Param                 = [ A ∶ Set ] []
+    ; Param                 = [ A ∶ Set ℓ ] []
     ; Index                 = λ _ → [ _ ∶ ℕ ] []
     ; applyP                = λ where
       (A , tt) →
