@@ -92,3 +92,12 @@ getLevel t = case t of λ where
                _ → typeError (termErr t
                              ∷ strErr "is not a type."
                              ∷ [])
+
+fromℕ : ℕ → Level
+fromℕ zero = lzero
+fromℕ (suc n) = lsuc (fromℕ n)
+
+getTypeLevel : Type → TC Level
+getTypeLevel (`Set n)        = return (fromℕ n)
+getTypeLevel t@(agda-sort _) = typeError [ strErr $ showTerm t <> " has no level." ]
+getTypeLevel t = typeError [ strErr $ showTerm t <> " is not a type." ]

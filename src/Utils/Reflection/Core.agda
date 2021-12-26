@@ -157,16 +157,3 @@ instance
 
   AlternativeTC : Alternative TC
   _<|>_ ⦃ AlternativeTC ⦄ = catchTC
-
-fromℕ : ℕ → Level
-fromℕ zero = lzero
-fromℕ (suc n) = lsuc (fromℕ n)
-
-getTypeLevel : Type → TC Level
-getTypeLevel (`Set n)        = return (fromℕ n)
-getTypeLevel t@(agda-sort _) = typeError (termErr t
-                                         ∷ strErr " has no level."
-                                         ∷ [])
-getTypeLevel t = typeError (termErr t
-                           ∷ strErr " is not a type."
-                           ∷ [])

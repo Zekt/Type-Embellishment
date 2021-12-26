@@ -56,6 +56,7 @@ open PDataD
 
 {-# NO_UNIVERSE_CHECK #-}
 record DataD : Set where
+  constructor datad
   field
     #levels : ℕ
   Levels : Set

@@ -4,7 +4,7 @@ open import Prelude
 
 module Metalib.Datatype where
 
-open import Utils.Reflection
+open import Utils.Reflection hiding (_,_)
 open import Utils.Error          as Err
 
 open import Generics.Telescope   as Desc
@@ -14,9 +14,21 @@ open import Generics.Levels      as Desc
 open import Metalib.Telescope as Tel
 
 --
-argVars : ℕ → (weakenBy : ℕ) → Args Term
-argVars zero    wk = []
-argVars (suc N) wk = vArg (var₀ (N + wk)) ∷ argVars N wk
+
+`π : List Term → Term
+`π = con (quote π) ∘ map vArg
+
+`ιʳ : List Term → Term
+`ιʳ = con (quote RecD.ι) ∘ map vArg
+
+`σ : List Term → Term
+`σ = con (quote σ) ∘ map vArg
+
+`ρ : List Term → Term
+`ρ = con (quote ρ) ∘ map vArg
+
+`ιᶜ : List Term → Term
+`ιᶜ = con (quote ConD.ι) ∘ map vArg
 
 -- Translate the semantics of an object-level telescope to
 -- a context
@@ -108,11 +120,10 @@ module _ (dataName : Name) (#levels : ℕ) (parLen : ℕ) where
   telescopeToRecD : Telescope → Type → TC Term
   telescopeToRecD ((s , arg _ `x) ∷ `tel) end = do
     rec ← telescopeToRecD `tel end
-    return (con (quote RecD.π) (vArg `x ∷ vArg (vLam (abs s rec)) ∷ []))
+    return $ `π (`x ∷ (vLam (abs s rec)) ∷ [])
 
   telescopeToRecD [] (def f args) with f == dataName
-  ... | true  = return (con (quote RecD.ι)
-                            [ vArg $ argsToIdx $ drop (#levels + parLen) args ])
+  ... | true  = return $ `ιʳ [ argsToIdx $ drop (#levels + parLen) args ]
   ... | false = Err.notEndIn dataName
 
   telescopeToRecD [] _ = Err.notEndIn dataName
@@ -123,14 +134,14 @@ module _ (dataName : Name) (#levels : ℕ) (parLen : ℕ) where
   ... | true = do
     recd ← uncurry telescopeToRecD (⇑ `x)
     cond ← telescopeToConD `tel end
-    return (con (quote ρ) (vArg recd ∷ vArg cond ∷ []))
+    -- Indices in recursion in Description is different from those in native constructors!
+    return $ `ρ (recd ∷ strengthen 0 1 cond ∷ [])
   ... | false = do
     cond ← telescopeToConD `tel end
-    return (con (quote σ) (vArg `x ∷ vArg (vLam (abs s cond)) ∷ []))
+    return $ `σ (`x ∷ (vLam (abs s cond)) ∷ [])
 
   telescopeToConD [] (def f args) with f == dataName
-  ... | true  = return $ con (quote ConD.ι)
-                             [ vArg $ argsToIdx $ drop (#levels + parLen) args ]
+  ... | true  = return $ `ιᶜ [ argsToIdx $ drop (#levels + parLen) args ]
   ... | false = Err.notEndIn dataName
 
   telescopeToConD [] _ = Err.notEndIn dataName
@@ -150,25 +161,47 @@ describeData parLen dataName conNames = do
         (#levels , tel) = splitLevels tel
         (par     , idx) = splitAcc [] tel parLen
     conDefs ← mapM (describeConstructor dataName #levels parLen) conNames
-    level  ← getTypeLevel end
-    `level ← quoteTC level
-    `refl  ← quoteTC {A = _≡_ {lzero} {Level} level level} _≡_.refl
+    `ℓ ← extractLevel end
     let applyBody : Term
         applyBody = foldr (con (quote ConDs.[]) [])
                           (λ x xs →
                             con (quote ConDs._∷_)
                                 (vArg x ∷ vArg xs ∷ []))
                           conDefs
+        `lamℓ = strengthen (length tel) (length tel) `ℓ
+        --patLams (length tel) [] `ℓ (duplicate (length tel) (vArg (quoteTerm tt)))
+        `lampar = strengthen (length tel) (length tel) $ to`Tel par
+        --patLams (length tel) [] (to`Tel par) (duplicate (length tel) (vArg (quoteTerm tt)))
+        `refl : Term
+        `refl = con (quote _≡_.refl) (hArg (quoteTerm lzero)
+                                     ∷ hArg (quoteTerm Level)
+                                     ∷ hArg unknown
+                                     ∷ [])
         `pdatad : Term
         `pdatad = con (quote pdatad)
                       (map vArg
-                      (`level                  --level
+                      (`lamℓ                   --level
                       ∷ `refl                  --level-pre-fixed-point
-                      ∷ to`Tel par             --Param
+                      ∷ `lampar                --Param
                       ∷ patLam par (to`Tel idx)--Index
                       ∷ patLam par applyBody   --applyP
                       ∷ []))
-    return `pdatad
+        ℓtel = duplicate #levels ("" , (vArg (quoteTerm Level)))
+    `#levels ← quoteTC #levels >>= normalise
+    let `datad : Term
+        `datad = con (quote datad)
+                     (map vArg
+                     (`#levels ∷ patLam ℓtel `pdatad ∷ []))
+    --inContext (map snd ℓtel) $ do
+    --  n ← normalise $ patLam par applyBody
+    --  dprint [ termErr n ]
+    --new`datad ← normalise `datad
+    dprint [ strErr $ showTerm $ patLam ℓtel `pdatad ]
+    dprint [ strErr $ "#levels: " <> showTerm `#levels ]
+    dprint [ strErr $ "`lamℓ: " <> showTerm `lamℓ ]
+    dprint [ strErr $ "`datad: " <> showTerm `datad ]
+    --d ← unquoteTC {A = DataD} `datad
+    return `datad
   where
     splitLevels : Telescope → (ℕ × Telescope)
     splitLevels [] = 0 , []
@@ -180,6 +213,7 @@ describeData parLen dataName conNames = do
     splitAcc tel₁ []   n = tel₁ , []
     splitAcc tel₁ tel₂ 0 = tel₁ , tel₂
     splitAcc tel₁ (x ∷ tel₂) (suc n) = splitAcc (tel₁ <> [ x ]) tel₂ n
+
     to`Tel : Telescope → Term
     to`Tel []              = quoteTerm Tel.[]
     to`Tel ((s , x) ∷ tel) = con (quote Tel._∷_)
@@ -193,5 +227,27 @@ describeData parLen dataName conNames = do
       vArg (con (quote _,_)
                 (vArg (var (length tel)) ∷ Σpat tel ∷ []))
 
+    --patLams : ℕ → Telescope → Term → List (Arg Term) → Term
+    --patLams zero    tel body apps = body
+    --patLams (suc n) tel body apps =
+    --  pat-lam [ clause tel [ Σpat tel ] (patLams n tel body []) ] apps
+
+    fakeLam : ℕ → Term → Term
+    fakeLam n body = pat-lam [ clause (duplicate n ("" , vArg (quoteTerm ⊤))) (varlist n) body ] (duplicate n (vArg (quoteTerm tt)))
+      where varlist : ℕ → List (Arg Pattern)
+            varlist zero    = []
+            varlist (suc n) = vArg (var n) ∷ varlist n
+
+    --patLam : Telescope → Term → Term
+    --patLam tel body = patLams 0 tel body []
+
     patLam : Telescope → Term → Term
     patLam tel body = pat-lam [ clause tel [ Σpat tel ] body ] []
+
+    extractLevel : Type → TC Term
+    extractLevel (agda-sort (set t)) = return t
+    extractLevel (`Set n) = quoteTC (fromℕ n)
+    extractLevel (def (quote Set) []) = return (quoteTerm lzero)
+    extractLevel (def (quote Set) [ arg _ x ]) = return x
+    extractLevel t = quoteTC t >>= λ t →
+                     typeError [ strErr $ showTerm t <> " level error!" ]
