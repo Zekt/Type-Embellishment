@@ -16,72 +16,60 @@ private
   pattern `refl  = con₀ (quote refl)
   pattern _`,_ x y = con₂ (quote Prelude._,_) x y
 
-cxtToVars : (Γ : Telescope) → Pattern × Args Pattern
-cxtToVars = snd ∘ foldr (0 , `refl , []) λ where
-  (_ , arg i _) (n , p , args) → suc n , (var n `, p) , (arg i (var n) ∷ args)
+  cxtToVars : (Γ : Telescope) → Pattern × Args Pattern
+  cxtToVars = snd ∘ foldr (0 , `refl , []) λ where
+    (_ , arg i _) (n , p , args) → suc n , (var n `, p) , (arg i (var n) ∷ args)
 
-mutual
-  -- move this to Utils.Reflection if fixed
-  fromPattern : Pattern → Term
-  fromPattern (con c ps) = con c (fromPatterns ps)
-  fromPattern (dot t)    = t
-  fromPattern (var x)    = var₀ x
-  fromPattern (lit l)    = lit l
-  fromPattern (proj f)   = def₀ f
-  -- incorrect for projections
-  fromPattern (absurd x) = var₀ x
-  -- incorrect for projections
+  mutual
+    -- move this to Utils.Reflection if fixed
+    fromPattern : Pattern → Term
+    fromPattern (con c ps) = con c (fromPatterns ps)
+    fromPattern (dot t)    = t
+    fromPattern (var x)    = var₀ x
+    fromPattern (lit l)    = lit l
+    fromPattern (proj f)   = def₀ f
+    -- incorrect for projections
+    fromPattern (absurd x) = var₀ x
+    -- incorrect for projections
 
-  fromPatterns : Args Pattern → Args Term
-  fromPatterns []             = []
-  fromPatterns (arg i p ∷ ps) = arg i (fromPattern p) ∷ fromPatterns ps
-
-forgetTypes : Telescope → Telescope
-forgetTypes = map $ bimap id (λ `A → arg (getArgInfo `A) unknown)
+    fromPatterns : Args Pattern → Args Term
+    fromPatterns []             = []
+    fromPatterns (arg i p ∷ ps) = arg i (fromPattern p) ∷ fromPatterns ps
 
 module _ (pars : ℕ) where
-  -- The telescope for parameters and the rest of it.
-  splitConType : Type → Telescope
-  splitConType `A = drop pars ((⇑ `A) .fst)
-
   conToClause : (c : Name) → TC (Telescope × Pattern × Args Pattern)
-  conToClause c = < forgetTypes , cxtToVars > ∘ splitConType <$> getType c
+  conToClause c = < forgetTypes , cxtToVars > ∘ (λ `A → drop pars $ (⇑ `A) .fst) <$> getType c
+    where forgetTypes = map $ bimap id (λ `A → arg (getArgInfo `A) unknown)
 
   consToClauses : (cs : Names) → TC (List (Telescope × Pattern × Name × Args Pattern))
   consToClauses []       = ⦇ [] ⦈
   consToClauses (c ∷ cs) = do
     `Γ , p , args ← conToClause c
-    cls  ← consToClauses cs
-    return $ (`Γ , `inl p , c , args) ∷
-      map (λ { (`Γ , p , c , args) → `Γ , `inr p , c , args}) cls
+    cls           ← consToClauses cs
+    return $ (`Γ , `inl p , c , args) ∷ ((λ { (`Γ , p , c , args) → `Γ , `inr p , c , args}) <$> cls)
 
 module _ (pars : ℕ) (cs : Names) where
   genFromCons :  (Telescope × Pattern × Name × Args Pattern → Clause) → TC Clauses
   genFromCons f = map f <$> consToClauses pars cs
 
-  genToN : TC Term
+  genToN genFromN-toN genFromN genToN-fromN : TC Term
+  
   genToN = pat-lam₀ <$> genFromCons λ where
     (`Γ , p , c , args) → `Γ ⊢ [ vArg p ] `=
       con c (duplicate pars (hArg unknown) <> (fromPattern <$> args))
-
-  genFromN-toN : TC Term
   genFromN-toN = pat-lam₀ <$> genFromCons λ where
     (Γ , p , _ , _) → Γ ⊢ [ vArg p ] `= `refl
-
-  genFromN : TC Term
   genFromN = pat-lam₀ <$> genFromCons λ where
     (Γ , p , c , args) → Γ ⊢ [ vArg (con c args) ] `= fromPattern p
-
-  genToN-fromN : TC Term
   genToN-fromN = pat-lam₀ <$> genFromCons λ where
     (Γ , p , c , args) → Γ ⊢ [ vArg (con c args) ] `= `refl
   
 genDataC : (D : DataD) → (Nᶜ : DataTᶜ D) → Tactic
 genDataC D Nᶜ hole = do
+  hole ← checkType hole =<< quoteTC (DataCᶜ D Nᶜ)
+  
   hLam (abs "ℓs" t@(def d args)) ← quoteωTC (λ {ℓs} → Nᶜ {ℓs})
     where t → typeError (termErr t ∷ strErr " is not a definition." ∷ [])
-  hole ← checkType hole =<< quoteTC (DataCᶜ D Nᶜ)
-
   pars , cs ← getDataDefinition d
 
   `toN       ← genToN       pars cs
