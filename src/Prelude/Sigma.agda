@@ -1,6 +1,8 @@
 {-# OPTIONS --without-K --safe #-}
 module Prelude.Sigma where
 
+open import Prelude.Level
+
 open import Agda.Builtin.Sigma public
   hiding (module Σ)
 module Σ = Agda.Builtin.Sigma.Σ
@@ -21,6 +23,11 @@ infixr 2 _×_
 _×_ : ∀ {a b}
   → (A : Set a) (B : Set b) → Set _
 A × B = Σ[ _ ∈ A ] B
+
+<_,_> : {B : A → Set ℓ} {C : {x : A} → B x → Set ℓ'}
+        (f : (x : A) → B x) → ((x : A) → C (f x)) →
+        ((x : A) → Σ (B x) C)
+< f , g > x = (f x , g x)
 
 bimap : ∀ {ℓ} {P : A → Set ℓ} {ℓ′} {Q : B → Set ℓ′} →
       (f : A → B) → (∀ {x} → P x → Q (f x)) →

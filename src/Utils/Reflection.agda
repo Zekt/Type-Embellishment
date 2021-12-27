@@ -75,11 +75,17 @@ getDefType n = caseM getDefinition n of λ where
     _             → inferType $ def n []
 
 getFunction : Name → TC (Type × Clauses)
-getFunction s = do
-  function cs ← getDefinition s
-    where t → typeError $ [ strErr (show s <> " is not a function.") ]
-  t ← getType s
+getFunction d = do
+  function cs ← getDefinition d
+    where t → typeError $ nameErr d ∷ [ strErr " is not a function." ]
+  t ← getType d
   return $ t , cs
+
+getDataDefinition : Name → TC (ℕ × Names)
+getDataDefinition d = do
+  data-type pars cs ← getDefinition d
+    where _ → typeError $ nameErr d ∷ [ strErr " is not a datatype." ]
+  return $ pars , cs
   
 getTelescope : Name → TC (Telescope × Type)
 getTelescope s = ⦇ ⇑ (getDefType s) ⦈

@@ -6,14 +6,9 @@ module Metalib.Recursion where
 
 open import Utils.Reflection
 
-open import Generics.Telescope   as D
 open import Generics.Description as D
-open import Generics.Levels      as D
 open import Generics.Algebra     as D
 open import Generics.Recursion   as D
-
-open import Metalib.Telescope    as M
-open import Metalib.Datatype     as M
 
 private
   pattern `inl x = con₁ (quote inl) x
@@ -21,103 +16,101 @@ private
   pattern `refl  = con₀ (quote refl)
   pattern _`,_ x y = con₂ (quote Prelude._,_) x y
 
+cxtToVars : (Γ : Telescope) → Pattern × Args Pattern
+cxtToVars = snd ∘ foldr (0 , `refl , []) λ where
+  (_ , arg i _) (n , p , args) → suc n , (var n `, p) , (arg i (var n) ∷ args)
+
+mutual
+  -- move this to Utils.Reflection if fixed
+  fromPattern : Pattern → Term
+  fromPattern (con c ps) = con c (fromPatterns ps)
+  fromPattern (dot t)    = t
+  fromPattern (var x)    = var₀ x
+  fromPattern (lit l)    = lit l
+  fromPattern (proj f)   = def₀ f
+  -- incorrect for projections
+  fromPattern (absurd x) = var₀ x
+  -- incorrect for projections
+
+  fromPatterns : Args Pattern → Args Term
+  fromPatterns []             = []
+  fromPatterns (arg i p ∷ ps) = arg i (fromPattern p) ∷ fromPatterns ps
+
+forgetTypes : Telescope → Telescope
+forgetTypes = map $ bimap id (λ `A → arg (getArgInfo `A) unknown)
+
 module _ (pars : ℕ) where
-  -- Γ is the telescope of a constructor (without parameters and indices)
-  cxtToCurriedVars : (Γ : Telescope) → Telescope × Pattern × Args Term
-  cxtToCurriedVars Γ = let _ , p , args = go Γ in
-    (bimap id (const $ vArg unknown) <$> Γ) , p , unknowns <> args
-    where
-      go : (Γ : Telescope) → ℕ × Pattern × Args Term
-      go = foldr (0 , `refl , []) λ where
-        (_ , arg i _) (n , p , args) → suc n , (var n `, p) , arg i (var₀ n) ∷ args
-      unknowns = duplicate pars (hArg unknown)
+  -- The telescope for parameters and the rest of it.
+  splitConType : Type → Telescope
+  splitConType `A = drop pars ((⇑ `A) .fst)
 
-  conTypeToTelescope : Type → Telescope
-  conTypeToTelescope `A = drop pars $ (⇑ `A) .fst
+  conToClause : (c : Name) → TC (Telescope × Pattern × Args Pattern)
+  conToClause c = < forgetTypes , cxtToVars > ∘ splitConType <$> getType c
 
-  conToClause : (c : Name) → TC (Telescope × Pattern × Args Term)
-  conToClause c = cxtToCurriedVars ∘ conTypeToTelescope <$> getType c
-
-  consToClauses : (cs : List Name) → TC (List (Telescope × Pattern × Name × Args Term))
+  consToClauses : (cs : Names) → TC (List (Telescope × Pattern × Name × Args Pattern))
   consToClauses []       = ⦇ [] ⦈
   consToClauses (c ∷ cs) = do
     `Γ , p , args ← conToClause c
-    cls           ← map (bimap id (bimap `inr id)) <$> consToClauses cs
-    return $ (`Γ , `inl p , c , args) ∷ cls
+    cls  ← consToClauses cs
+    return $ (`Γ , `inl p , c , args) ∷
+      map (λ { (`Γ , p , c , args) → `Γ , `inr p , c , args}) cls
 
-getDataDefinition : Name → TC (ℕ × Names)
-getDataDefinition d = do
-  data-type pars cs ← getDefinition d
-    where _ → typeError (nameErr d ∷ strErr " is not a datatype." ∷ [])
-  return $ pars , cs
+module _ (pars : ℕ) (cs : Names) where
+  genFromCons :  (Telescope × Pattern × Name × Args Pattern → Clause) → TC Clauses
+  genFromCons f = map f <$> consToClauses pars cs
 
-genFromConDs : (Telescope × Pattern × Name × Args Term → Clause) → (d : Name) → TC Term
-genFromConDs f d = do
-  pars , cs ← getDataDefinition d
-  pat-lam₀ ∘ map f <$> consToClauses pars cs
+  genToN : TC Term
+  genToN = pat-lam₀ <$> genFromCons λ where
+    (`Γ , p , c , args) → `Γ ⊢ [ vArg p ] `=
+      con c (duplicate pars (hArg unknown) <> (fromPattern <$> args))
 
+  genFromN-toN : TC Term
+  genFromN-toN = pat-lam₀ <$> genFromCons λ where
+    (Γ , p , _ , _) → Γ ⊢ [ vArg p ] `= `refl
 
-module _ (pars : ℕ) where
-  cxtToUncurriedVars : (Γ : Telescope) → Telescope × Args Pattern × Term
-  cxtToUncurriedVars Γ = let _ , args , t = go Γ in
-    (bimap id (λ `A → arg (getArgInfo `A) unknown) <$> Γ) , args , t
-    where
-      go : (Γ : Telescope) → ℕ × Args Pattern × Term
-      go = foldr (0 , [] , `refl) λ where
-        (_ , arg i _) (n , args , t) → suc n , arg i (var n) ∷ args , (var₀ n `, t)
-        
-  conToClause′ : (c : Name) → TC (Telescope × Args Pattern × Term)
-  conToClause′ c = cxtToUncurriedVars ∘ conTypeToTelescope pars <$> getType c
+  genFromN : TC Term
+  genFromN = pat-lam₀ <$> genFromCons λ where
+    (Γ , p , c , args) → Γ ⊢ [ vArg (con c args) ] `= fromPattern p
 
-  consToClauses′ : (cs : List Name) → TC (List (Telescope × Args Pattern × Name × Term))
-  consToClauses′ []       = ⦇ [] ⦈
-  consToClauses′ (c ∷ cs) = do
-    `Γ , args , t ← conToClause′ c
-    cls           ← map (λ { (`Γ , args , c , t) → `Γ , args , c , `inr t }) <$> consToClauses′ cs
-    return $ (`Γ , args , c , `inl t) ∷ cls
-
-genFromCons : (Telescope × Args Pattern × Name × Term → Clause) → (d : Name) → TC Term
-genFromCons f d = do
-  pars , cs ← getDataDefinition d
-  pat-lam₀ ∘ map f <$> consToClauses′ pars cs
-
-genToN : (d : Name) → TC Term
-genToN = genFromConDs (λ { (Γ , p , c , args) → Γ ⊢ [ vArg p ] `= con c args })
-
-genFromN-toN : (d : Name) → TC Term
-genFromN-toN = genFromConDs (λ { (Γ , p , _ , _) → Γ ⊢ [ vArg p ] `= `refl })
-
-genFromN : (d : Name) → TC Term
-genFromN = genFromCons (λ { (Γ , args , c , t) → Γ ⊢ [ vArg (con c args) ] `= t })
-
-genToN-fromN : (d : Name) → TC Term
-genToN-fromN = genFromCons (λ { (Γ , args , c , t) → Γ ⊢ [ vArg (con c args) ] `= `refl })
+  genToN-fromN : TC Term
+  genToN-fromN = pat-lam₀ <$> genFromCons λ where
+    (Γ , p , c , args) → Γ ⊢ [ vArg (con c args) ] `= `refl
   
 genDataC : (D : DataD) → (Nᶜ : DataTᶜ D) → Tactic
 genDataC D Nᶜ hole = do
   hLam (abs "ℓs" t@(def d args)) ← quoteωTC (λ {ℓs} → Nᶜ {ℓs})
     where t → typeError (termErr t ∷ strErr " is not a definition." ∷ [])
+  hole ← checkType hole =<< quoteTC (DataCᶜ D Nᶜ)
 
-  `toN       ← genToN d 
-  `fromN     ← genFromN d 
-  `fromN-toN ← genFromN-toN d 
-  `toN-fromN ← genToN-fromN d 
+  pars , cs ← getDataDefinition d
 
-  checkedHole ← checkType hole =<< quoteTC (DataCᶜ D Nᶜ)
-  unify checkedHole $ con₄ (quote dataC) `toN `fromN `fromN-toN `toN-fromN
+  `toN       ← genToN       pars cs
+  `fromN     ← genFromN     pars cs 
+  `fromN-toN ← genFromN-toN pars cs 
+  `toN-fromN ← genToN-fromN pars cs 
+
+  unify hole $ con₄ (quote dataC) `toN `fromN `fromN-toN `toN-fromN
 
 macro
   genToNT : Name → Tactic
-  genToNT c hole = genToN c >>= unify hole
+  genToNT d hole = do
+    pars , cs ← getDataDefinition d
+    genToN pars cs >>= unify hole
 
   genFromN-toNT : Name → Tactic
-  genFromN-toNT c hole = genFromN-toN c >>= unify hole
+  genFromN-toNT d hole = do
+    pars , cs ← getDataDefinition d
+    genFromN-toN pars cs >>= unify hole
 
   genFromNT : Name → Tactic
-  genFromNT c hole = genFromN c >>= unify hole
+  genFromNT d hole = do
+    pars , cs ← getDataDefinition d
+    genFromN pars cs >>= unify hole
 
   genToN-fromNT : Name → Tactic
-  genToN-fromNT c hole = genToN-fromN c >>= unify hole
+  genToN-fromNT d hole = do
+    pars , cs ← getDataDefinition d
+    genToN-fromN pars cs >>= unify hole
 
   genDataCT : (D : DataD) → (Nᶜ : DataTᶜ D) → Tactic
   genDataCT = genDataC
