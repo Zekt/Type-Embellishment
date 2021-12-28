@@ -34,20 +34,6 @@ Algᵖᵈ D X = ∀ {is} → ⟦ D ⟧ᵖᵈ X is → X is
 Algᵈ : ∀ (D : DataD) {ℓs ps} → Carrierᵈ D ℓs ps ℓ → Set _
 Algᵈ D X = ∀ {is} → ⟦ D ⟧ᵈ X is → X is
 
-record Algebra {I : Set ℓⁱ} (D : ConDs I cbs) ℓ
-     : Set (ℓⁱ ⊔ maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓ) cbs ⊔
-            hasCon? ℓⁱ cbs ⊔ lsuc ℓ) where
-  constructor algebra
-  field
-    Carrier : Carrierᶜˢ D ℓ
-    apply   : Algᶜˢ D Carrier
-
-Algebraᵖᵈ : ∀ (D : PDataD) ps ℓ → Set _
-Algebraᵖᵈ D ps = Algebra (PDataD.applyP D ps)
-
-Algebraᵈ : ∀ (D : DataD) ℓs ps ℓ → Set _
-Algebraᵈ D ℓs = Algebraᵖᵈ (DataD.applyL D ℓs)
-
 Coalgᶜ : {I : Set ℓⁱ} (D : ConD I cb) → Carrierᶜ D ℓ → Set _
 Coalgᶜ D X = ∀ {i} → X i → ⟦ D ⟧ᶜ X i
 

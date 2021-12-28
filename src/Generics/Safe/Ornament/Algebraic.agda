@@ -7,6 +7,7 @@ open import Prelude.List as List
 open import Generics.Safe.Telescope
 open import Generics.Safe.Description
 open import Generics.Safe.Algebra
+open import Generics.Safe.Recursion
 open import Generics.Safe.Ornament
 open import Generics.Safe.Ornament.Description
 open Generics.Safe.Ornament.Description.ODFunctor

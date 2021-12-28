@@ -21,6 +21,21 @@ record DataC (D : DataD) (N : DataT D) : Setω where
     fromN-toN : ∀ {ℓs ps is} (ns : ⟦ D ⟧ᵈ (N ℓs ps) is) → fromN (toN ns) ≡ ns
     toN-fromN : ∀ {ℓs ps is}          (n : N ℓs ps  is) → toN (fromN n ) ≡ n
 
+record Algebra {I : Set ℓⁱ} (D : ConDs I cbs) ℓ
+     : Set (ℓⁱ ⊔ maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓ) cbs ⊔
+            hasCon? ℓⁱ cbs ⊔ lsuc ℓ) where
+  constructor algebra
+  field
+    Carrier : Carrierᶜˢ D ℓ
+    apply   : Algᶜˢ D Carrier
+
+Algebraᵖᵈ : ∀ (D : PDataD) ps ℓ → Set _
+Algebraᵖᵈ D ps = Algebra (PDataD.applyP D ps)
+
+Algebraᵈ : ∀ (D : DataD) ℓs ps ℓ → Set _
+Algebraᵈ D ℓs = Algebraᵖᵈ (DataD.applyL D ℓs)
+
+
 FoldT : ∀ {D N} (_ : DataC D N) {ℓs ps ℓ} (alg : Algebraᵈ D ℓs ps ℓ) → Set _
 FoldT {D} {N} _ alg = ∀ {is} → N _ _ is → Algebra.Carrier alg is
 
