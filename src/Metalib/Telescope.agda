@@ -5,6 +5,7 @@ open import Prelude hiding (length)
 module Metalib.Telescope where
 
 open import Utils.Reflection
+open import Utils.Error as Err
 
 open import Generics.Telescope
 open import Generics.Description
@@ -25,7 +26,7 @@ fromTelType []      B = quoteTC! B
 fromTelType (A ∷ T) B = caseM quoteTC! T of λ where
   (lam v (abs s _)) → extendContextT (visible-relevant-ω) A λ `A x → do
     vΠ[ s ∶ `A ]_ <$> fromTelType (T x) B
-  t                 → typeError $ strErr (show t) ∷ strErr " cannot be reduced further to a λ-abstraction" ∷ []
+  t                 → Err.notλ t
 
 -- ℕ is the length of (T : Tel ℓ)
 -- this may fail if `Tel` is not built by λ by pattern matching lambdas.
@@ -35,11 +36,14 @@ fromTel (A ∷ T) = caseM quoteTC! T of λ where
   (lam v (abs s _)) → extendContextT (visible-relevant-ω) A λ `A x → do
     n , `Γ ← fromTel (T x) 
     return $ (suc n) , (s , vArg `A) ∷ `Γ 
-  t                 → typeError $ strErr (show t) ∷ strErr " cannot be reduced further to a λ-abstraction" ∷ []
+  t                 → Err.notλ t
+
+to`Tel : Telescope → Term
+to`Tel = foldr `[] λ where
+  (s , arg _ `A) `T →  `A `∷ vLam (abs s `T)
 
 fromTelescope : Telescope → TC (Tel ℓ)
-fromTelescope = unquoteTC ∘ foldr `[] λ where
-    (s , arg _ `A) `T → `A `∷ (`vλ s `→ `T)
+fromTelescope = unquoteTC ∘ to`Tel
 
 -- extend the context in a TC computation 
 extendContextTs : {A : Set ℓ′}

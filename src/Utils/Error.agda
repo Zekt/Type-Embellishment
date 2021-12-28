@@ -15,3 +15,6 @@ notEndIn n = typeError (strErr "recursion does not end in "
 
 #idxNotMatch : TC A
 #idxNotMatch = typeError [ strErr "number of indices doesn't match." ]
+
+notλ : Term → TC A
+notλ t = typeError $ strErr (show t) ∷ strErr " cannot be reduced further to a λ-abstraction" ∷ []

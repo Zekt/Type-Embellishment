@@ -126,30 +126,32 @@ DataD.applyL  pointwiseD (a , b , ℓ , _) = record
           ∷ []
       }
 
+macro
+  getDataD : Name → ℕ → List Name → Tactic
+  getDataD d pars cs hole = do
+    checkedHole ← checkType hole (quoteTerm DataD) 
+    unify checkedHole =<< describeData pars d cs
+
 describeLen : Name → TC _
 describeLen dname = do d ← describeData 1 (quote newLen) (quote newz ∷ quote news ∷ [])
                        declareDef (vArg dname) (quoteTerm DataD)
                        defineFun dname [ clause [] [] d ]
 
-{--
-unquoteDecl newDataD = test newDataD
+newLenD : DataD
+newLenD = getDataD newLen 1 (quote newz ∷ quote news ∷ [])
+    
+natD' : DataD 
+natD' = getDataD ℕ 0 (quote ℕ.zero ∷ quote ℕ.suc ∷ []) 
+
+-- unquoteDecl newDataD = test newDataD
 
 unquoteDecl data newnewLen constructor newnewz newnews =
-  defineByDataD newDataD newnewLen (newnewz ∷ newnews ∷ [])
+  defineByDataD newLenD newnewLen (newnewz ∷ newnews ∷ [])
 
 -- translate a translation back
 newnewlen : newnewLen ℕ (2 ∷ 5 ∷ []) (1 ∷ 3 ∷ [])
 newnewlen = newnews 2 1 [ 5 ] [ 3 ] (newnews 5 3 [] [] newnewz)
---}
 
-macro
-  getDataD : Name → ℕ → List Name → Tactic
-  getDataD d pars cs hole = do
-    checkedHole ← checkType hole (quoteTerm PDataD) 
-    unify checkedHole =<< describeData pars d cs
-    
-_ : PDataD 
-_ = {! getDataD ℕ 0 (quote ℕ.zero ∷ quote ℕ.suc ∷ []) !}
 
 NatDataC = genDataCT NatD ℕ
 PointwiseDataC = genDataCT pointwiseD Pointwise'

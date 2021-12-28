@@ -29,15 +29,11 @@ Tactic = Term → TC ⊤
 
 --- Terms ---
 
-pattern `Set₀ = agda-sort (lit 0)
-pattern `Set₁ = agda-sort (lit 1)
-pattern `Set₂ = agda-sort (lit 2)
-
+pattern `Set₀  = agda-sort (lit 0)
+pattern `Set₁  = agda-sort (lit 1)
+pattern `Set₂  = agda-sort (lit 2)
 pattern `Set n = agda-sort (lit n)
-
-pattern `Set! = agda-sort unknown
-
-pattern `Level = def (quote Level) []
+pattern `Set?  = agda-sort unknown
 
 pattern relevant-ω              = modality relevant quantity-ω
 pattern relevant-erased         = modality relevant quantity-0
@@ -61,6 +57,7 @@ pattern con₁ c x       = con c (vArg x ∷ [])
 pattern con₂ c x y     = con c (vArg x ∷ vArg y ∷ [])
 pattern con₃ c x y z   = con c (vArg x ∷ vArg y ∷ vArg z ∷ [])
 pattern con₄ c x y z u = con c (vArg x ∷ vArg y ∷ vArg z ∷ vArg u ∷ [])
+pattern con₅ c x y z u v = con c (vArg x ∷ vArg y ∷ vArg z ∷ vArg u ∷ vArg v ∷ [])
 
 pattern def₀ f         = def f []
 pattern def₁ f x       = def f (vArg x ∷ [])
@@ -84,6 +81,11 @@ pattern hΠ[_]_ a ty     = `Π[ hArg a ] ty
 pattern iΠ[_]_ a ty     = `Π[ iArg a ] ty
 
 pattern _⊢_`=_ tel ps t = clause tel ps t 
+
+pattern `lzero   = def₀ (quote lzero)
+pattern `Level   = def₀ (quote Level)
+pattern `tt      = con₀ (quote tt)
+pattern _`,_ t u = con₂ (quote Prelude._,_) t u
 
 infixr 20 `vλ_`→_ `hλ_`→_ `iλ_`→_
 

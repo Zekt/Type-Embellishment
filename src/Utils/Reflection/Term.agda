@@ -122,6 +122,7 @@ vUnknowns = flip duplicate (vArg unknown)
 
 hUnknowns : ℕ → Args Term
 hUnknowns = flip duplicate (hArg unknown)
+
 private
   -- Assumption: The argument is a valid type.
   ΠToTelescope : Type → Telescope × Type
