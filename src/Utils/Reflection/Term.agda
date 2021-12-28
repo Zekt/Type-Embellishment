@@ -117,6 +117,11 @@ levels : ℕ → Telescope
 levels zero    = []
 levels (suc n) = ("_" , hArg `Level) ∷ levels n
 
+vUnknowns : ℕ → Args Term
+vUnknowns = flip duplicate (vArg unknown)
+
+hUnknowns : ℕ → Args Term
+hUnknowns = flip duplicate (hArg unknown)
 private
   -- Assumption: The argument is a valid type.
   ΠToTelescope : Type → Telescope × Type

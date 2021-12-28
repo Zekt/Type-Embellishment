@@ -64,7 +64,7 @@ private
   -- The type of datatype 
   typeOfData : (d : Name) (pars : ℕ)  → ⟦ T ⟧ᵗ → TC Type 
   typeOfData d pars `x = do
-    args ← (duplicate pars (vArg unknown) <>_) <$> idxToArgs `x
+    args ← (vUnknowns pars <>_) <$> idxToArgs `x
     return $ def d args
 
 getCons : Name → (pars : ℕ) → (`Param : Telescope) → PDataD → TC (List Type)

@@ -1,5 +1,4 @@
-{-# OPTIONS --without-K --allow-unsolved-metas #-}
-
+{-# OPTIONS --without-K #-}
 open import Prelude
 
 module Metalib.Recursion where
@@ -7,7 +6,6 @@ module Metalib.Recursion where
 open import Utils.Reflection
 
 open import Generics.Description as D
-open import Generics.Algebra     as D
 open import Generics.Recursion   as D
 
 private
@@ -16,53 +14,39 @@ private
   pattern `refl  = con₀ (quote refl)
   pattern _`,_ x y = con₂ (quote Prelude._,_) x y
 
-  cxtToVars : (Γ : Telescope) → Pattern × Args Pattern
-  cxtToVars = snd ∘ foldr (0 , `refl , []) λ where
-    (_ , arg i _) (n , p , args) → suc n , (var n `, p) , (arg i (var n) ∷ args)
-
-  mutual
-    -- move this to Utils.Reflection if fixed
-    fromPattern : Pattern → Term
-    fromPattern (con c ps) = con c (fromPatterns ps)
-    fromPattern (dot t)    = t
-    fromPattern (var x)    = var₀ x
-    fromPattern (lit l)    = lit l
-    fromPattern (proj f)   = def₀ f
-    -- incorrect for projections
-    fromPattern (absurd x) = var₀ x
-    -- incorrect for projections
-
-    fromPatterns : Args Pattern → Args Term
-    fromPatterns []             = []
-    fromPatterns (arg i p ∷ ps) = arg i (fromPattern p) ∷ fromPatterns ps
+  -- c x₁ x₂ ⋯ xₙ can be represented as `Term` and `Pattern`
+  cxtToVars : (Γ : Telescope) → (Term × Pattern) × (Args Term × Args Pattern)
+  cxtToVars = snd ∘ foldr (0 , (`refl , `refl) , ([] , [])) λ where
+    (_ , arg i _) (n , (t , p) , (targs , pargs)) →
+      suc n , ((var₀ n `, t) , (var n `, p)) , (arg i (var₀ n) ∷ targs) , (arg i (var n) ∷ pargs)
 
 module _ (pars : ℕ) where
-  conToClause : (c : Name) → TC (Telescope × Pattern × Args Pattern)
-  conToClause c = < forgetTypes , cxtToVars > ∘ (λ `A → drop pars $ (⇑ `A) .fst) <$> getType c
-    where forgetTypes = map $ bimap id (λ `A → arg (getArgInfo `A) unknown)
+  conToClause : (c : Name) → TC (Telescope × (Term × Pattern) × Args Term × Args Pattern)
+  conToClause c = < forgetTy , cxtToVars > ∘ (λ `A → drop pars $ (⇑ `A) .fst) <$> getType c
+    where forgetTy = map $ bimap id (λ `A → arg (getArgInfo `A) unknown)
 
-  consToClauses : (cs : Names) → TC (List (Telescope × Pattern × Name × Args Pattern))
+  consToClauses : (cs : Names) → TC (List (Telescope × (Term × Pattern) × Name × Args Term × Args Pattern))
   consToClauses []       = ⦇ [] ⦈
   consToClauses (c ∷ cs) = do
-    `Γ , p , args ← conToClause c
-    cls           ← consToClauses cs
-    return $ (`Γ , `inl p , c , args) ∷ ((λ { (`Γ , p , c , args) → `Γ , `inr p , c , args}) <$> cls)
+    `Γ , (t , p) , args ← conToClause c
+    cls                 ← consToClauses cs
+    return $ (`Γ , (`inl t , `inl p) , c , args)
+      ∷ ((λ { (`Γ , (t , p) , c , args) → `Γ , (`inr t , `inr p) , c , args}) <$> cls)
 
-module _ (pars : ℕ) (cs : Names) where
-  genFromCons :  (Telescope × Pattern × Name × Args Pattern → Clause) → TC Clauses
-  genFromCons f = map f <$> consToClauses pars cs
+  module _ (cs : Names) where
+    genFromCons :  (Telescope × (Term × Pattern) × Name × Args Term × Args Pattern → Clause) → TC Clauses
+    genFromCons f = map f <$> consToClauses cs
 
-  genToN genFromN-toN genFromN genToN-fromN : TC Term
-  
-  genToN = pat-lam₀ <$> genFromCons λ where
-    (`Γ , p , c , args) → `Γ ⊢ [ vArg p ] `=
-      con c (duplicate pars (hArg unknown) <> (fromPattern <$> args))
-  genFromN-toN = pat-lam₀ <$> genFromCons λ where
-    (Γ , p , _ , _) → Γ ⊢ [ vArg p ] `= `refl
-  genFromN = pat-lam₀ <$> genFromCons λ where
-    (Γ , p , c , args) → Γ ⊢ [ vArg (con c args) ] `= fromPattern p
-  genToN-fromN = pat-lam₀ <$> genFromCons λ where
-    (Γ , p , c , args) → Γ ⊢ [ vArg (con c args) ] `= `refl
+    genToN genFromN-toN genFromN genToN-fromN : TC Term
+    genToN = pat-lam₀ <$> genFromCons λ where
+      (`Γ , (_ , p) , c , args , _) → `Γ ⊢ [ vArg p ] `=
+        con c (hUnknowns pars <> args)
+    genFromN-toN = pat-lam₀ <$> genFromCons λ where
+      (Γ , (_ , p) , _ , _) → Γ ⊢ [ vArg p ] `= `refl
+    genFromN = pat-lam₀ <$> genFromCons λ where
+      (Γ , (t , _) , c , _ , args) → Γ ⊢ [ vArg (con c args) ] `= t
+    genToN-fromN = pat-lam₀ <$> genFromCons λ where
+      (Γ , _ , c , _ , args) → Γ ⊢ [ vArg (con c args) ] `= `refl
   
 genDataC : (D : DataD) → (Nᶜ : DataTᶜ D) → Tactic
 genDataC D Nᶜ hole = do
@@ -79,26 +63,15 @@ genDataC D Nᶜ hole = do
 
   unify hole $ con₄ (quote dataC) `toN `fromN `fromN-toN `toN-fromN
 
+private
+  fromData : (f : ℕ → Names → TC Term) → Name → Tactic
+  fromData f d hole = getDataDefinition d >>= uncurry f >>= unify hole
+
 macro
-  genToNT : Name → Tactic
-  genToNT d hole = do
-    pars , cs ← getDataDefinition d
-    genToN pars cs >>= unify hole
-
-  genFromN-toNT : Name → Tactic
-  genFromN-toNT d hole = do
-    pars , cs ← getDataDefinition d
-    genFromN-toN pars cs >>= unify hole
-
-  genFromNT : Name → Tactic
-  genFromNT d hole = do
-    pars , cs ← getDataDefinition d
-    genFromN pars cs >>= unify hole
-
-  genToN-fromNT : Name → Tactic
-  genToN-fromNT d hole = do
-    pars , cs ← getDataDefinition d
-    genToN-fromN pars cs >>= unify hole
+  genToNT       = fromData genToN
+  genFromN-toNT = fromData genFromN-toN
+  genFromNT     = fromData genFromN
+  genToN-fromNT = fromData genToN-fromN
 
   genDataCT : (D : DataD) → (Nᶜ : DataTᶜ D) → Tactic
   genDataCT = genDataC

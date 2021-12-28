@@ -166,7 +166,7 @@ ListDataC = genDataCT ListD List
 -}
    
 LenDataC : DataCᶜ LenD Len
-LenDataC =  genDataCT LenD Len 
+LenDataC = genDataCT LenD Len 
 --   dataC
 --   (λ { (inl refl) → z {_} {_} ; (inr (inl (x , y , xs , ys , p , refl))) → s {_} {_} {x} {y} {xs} {ys} p })
 --   (λ { z → inl refl ; (s {x} {y} {xs} {ys} p) → inr (inl (x , y , xs , ys , p , refl)) })
