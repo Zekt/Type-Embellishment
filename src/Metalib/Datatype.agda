@@ -28,7 +28,7 @@ private
   pattern `ρ x y = con₂ (quote ρ) x y
 
   pattern `refl          = con (quote _≡_.refl) (hArg `lzero ∷ hArg `Level ∷ hArg unknown ∷ [])
-  pattern pat₁lam₀ Γ p t = pat-lam₀ [ Γ ⊢ [ p ] `= t ]
+  pattern pat₁lam₀ Γ p t = pat-lam₀ [ Γ ⊢ [ vArg p ] `= t ]
 
   pattern `datad x y        = con₂ (quote datad) x y
   pattern `pdatad x y z u v = con₅ (quote pdatad) x y z u v
@@ -51,7 +51,8 @@ private
     _ (n , p) → suc n , (var n `, p)
 
   patLam : Telescope → Term → Term
-  patLam tel body = pat₁lam₀ tel (vArg (Σpat tel)) body
+  patLam tel body = pat₁lam₀ tel (Σpat tel) body
+  {-# INLINE patLam #-}
 
   -- Some functions to parse the type signature of a datatype
   splitLevels : Telescope → (ℕ × Telescope)
@@ -162,7 +163,7 @@ describeData parLen dataName conNames = do
         (#levels , tel) = splitLevels tel
         (par     , idx) = splitAcc [] tel parLen
     conDefs  ← mapM (describeConstructor dataName #levels parLen) conNames
-    `ℓ       ← extractLevel end
+    `ℓ       ← getSetLevel end
     `#levels ← quoteTC! #levels
     
     let applyBody = to`ConDs conDefs
@@ -177,11 +178,3 @@ describeData parLen dataName conNames = do
     splitAcc tel₁ []   n = tel₁ , []
     splitAcc tel₁ tel₂ 0 = tel₁ , tel₂
     splitAcc tel₁ (x ∷ tel₂) (suc n) = splitAcc (tel₁ <> [ x ]) tel₂ n
-
-    extractLevel : Type → TC Term
-    extractLevel (agda-sort (set t)) = return t
-    extractLevel (`Set n) = quoteTC (fromℕ n)
-    extractLevel (def (quote Set) []) = return (quoteTerm lzero)
-    extractLevel (def (quote Set) [ arg _ x ]) = return x
-    extractLevel t = quoteTC t >>= λ t →
-                     typeError [ strErr $ showTerm t <> " level error!" ]

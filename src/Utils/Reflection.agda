@@ -94,19 +94,27 @@ macro
   getTelescopeT : Name → Tactic
   getTelescopeT s = evalTC $ getTelescope s
 
-getLevel : Type → TC Level
-getLevel t = case t of λ where
-               (def₀ (quote Set))       → return lzero
-               (def  (quote Set) [ l ]) → unquoteTC (unArg l)
-               _ → typeError (termErr t
-                             ∷ strErr "is not a type."
-                             ∷ [])
+--getLevel : Type → TC Level
+--getLevel t = case t of λ where
+--               (def₀ (quote Set))       → return lzero
+--               (def  (quote Set) [ l ]) → unquoteTC (unArg l)
+--               _ → typeError (termErr t
+--                             ∷ strErr "is not a type."
+--                             ∷ [])
 
 fromℕ : ℕ → Level
 fromℕ zero = lzero
 fromℕ (suc n) = lsuc (fromℕ n)
 
-getTypeLevel : Type → TC Level
-getTypeLevel (`Set n)        = return (fromℕ n)
-getTypeLevel t@(agda-sort _) = typeError [ strErr $ showTerm t <> " has no level." ]
-getTypeLevel t = typeError [ strErr $ showTerm t <> " is not a type." ]
+-- getTypeLevel : Type → TC Level
+-- getTypeLevel (`Set n)        = return (fromℕ n)
+-- getTypeLevel t@(agda-sort _) = typeError [ strErr $ showTerm t <> " has no level." ]
+-- getTypeLevel t = typeError [ strErr $ showTerm t <> " is not a type." ]
+
+getSetLevel : Type → TC Term
+getSetLevel (agda-sort (set t)) = return t
+getSetLevel (`Set n) = quoteTC (fromℕ n)
+getSetLevel (def (quote Set) []) = return (quoteTerm lzero)
+getSetLevel (def (quote Set) [ arg _ x ]) = return x
+getSetLevel t = quoteTC t >>= λ t →
+                  typeError [ strErr $ showTerm t <> " level error!" ]
