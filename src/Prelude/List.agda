@@ -17,7 +17,7 @@ open import Prelude.Bool
 open import Prelude.Maybe
 
 private variable
-  ℓ     : Level
+  ℓ ℓ'  : Level
   A B C : Set _
 
 open import Agda.Builtin.List public
@@ -142,7 +142,7 @@ splitAt (suc _) []               = [] , []
 splitAt (suc zero)    (x ∷ xs)   = [ x ] , xs
 splitAt (suc m@(suc n)) (x ∷ xs) = let xs' , xs'' = splitAt m xs in
   x ∷ xs' , xs''
-  
+
 
 intersperse : A → List A → List A
 intersperse x []       = []
@@ -182,7 +182,7 @@ snocView (x ∷ xs)         with snocView xs
 eq : ⦃ _ : Eq A ⦄ → List A → List A → Bool
 eq []       []       = true
 eq (x ∷ xs) (y ∷ ys) = if x == y then eq xs ys else false
-eq _        _        = false  
+eq _        _        = false
 
 instance
   open import Agda.Builtin.String
@@ -191,3 +191,7 @@ instance
   EqList : ∀ {a} {A : Set a} ⦃ _ : Eq A ⦄
     → Eq (List A)
   _==_ ⦃ EqList ⦄ = eq
+
+data All {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') where
+  []  : All P []
+  _∷_ : {x : A} → P x → {xs : List A} → All P xs → All P (x ∷ xs)

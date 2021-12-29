@@ -13,36 +13,6 @@ private variable
   cb  cb'  : ConB
   cbs cbs' : ConBs
 
-data #O (A : Set) : ℕ → ℕ → Set where
-  ε : #O A n n
-  κ :     (O : A → #O A m n) → #O A (suc m) (suc n)
-  Δ :     (O : A → #O A m n) → #O A (suc m)      n
-  ∇ : (a : A) (O : #O A m n) → #O A      m  (suc n)
-
-erase# : {A : Set} → #O A m n → A ^ m → A ^ n
-erase#  ε      as       = as
-erase# (κ   O) (a , as) = a , erase# (O a) as
-erase# (Δ   O) (a , as) =     erase# (O a) as
-erase# (∇ a O) as       = a , erase#  O    as
-
-data TelO : Tel ℓ → Tel ℓ' → Setω where
-  ε  : {T : Tel ℓ} → TelO T T
-  ▷  : {T : Tel ℓ} {U : Tel ℓ'} {A : ⟦ T ⟧ᵗ → Set ℓ''}
-     → TelO T U → TelO (snocᵗ T A) U
-  κ  : {T : A → Tel ℓ'} {U : A → Tel ℓ''}
-     → (O : ∀ a → TelO (T a) (U a)) → TelO (A ∷ T) (A ∷ U)
-  Δ  : {T : A → Tel ℓ'} {U : Tel ℓ''}
-     → (O : ∀ a → TelO (T a) U) → TelO (A ∷ T) U
-  ∇  : (a : A) {T : Tel ℓ'} {U : A → Tel ℓ''}
-     → (O : TelO T (U a)) → TelO T (A ∷ U)
-
-eraseᵗ : {T : Tel ℓ} {U : Tel ℓ'} → TelO T U → ⟦ T ⟧ᵗ → ⟦ U ⟧ᵗ
-eraseᵗ  ε           t  = t
-eraseᵗ (▷   O)      t  = eraseᵗ O (fst (snocᵗ-proj t))
-eraseᵗ (κ   O) (a , t) = a , eraseᵗ (O a) t
-eraseᵗ (Δ   O) (a , t) =     eraseᵗ (O a) t
-eraseᵗ (∇ a O)      t  = a , eraseᵗ  O    t
-
 module _ {I : Set ℓⁱ} {J : Set ℓʲ} (e : I → J) where
 
   infixr 5 _∷_
@@ -95,33 +65,30 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 
 record PDataO (D E : PDataD) : Setω where
   field
-    ParamO : TelO (PDataD.Param D) (PDataD.Param E)
-    IndexO : (ps : ⟦ PDataD.Param D ⟧ᵗ)
-           → TelO (PDataD.Index D ps) (PDataD.Index E (eraseᵗ ParamO ps))
+    param  : ⟦ PDataD.Param D ⟧ᵗ → ⟦ PDataD.Param E ⟧ᵗ
+    index  : (ps : ⟦ PDataD.Param D ⟧ᵗ)
+           → ⟦ PDataD.Index D ps ⟧ᵗ → ⟦ PDataD.Index E (param ps) ⟧ᵗ
     applyP : (ps : ⟦ PDataD.Param D ⟧ᵗ)
-           → ConOs (eraseᵗ (IndexO ps)) (PDataD.applyP D ps)
-                                        (PDataD.applyP E (eraseᵗ ParamO ps))
+           → ConOs (index ps) (PDataD.applyP D ps) (PDataD.applyP E (param ps))
 
 record DataO (D E : DataD) : Setω where
   field
-    LevelO : #O Level (DataD.#levels D) (DataD.#levels E)
+    level  : DataD.Levels D → DataD.Levels E
     applyL : (ℓs : DataD.Levels D)
-           → PDataO (DataD.applyL D ℓs) (DataD.applyL E (erase# LevelO ℓs))
+           → PDataO (DataD.applyL D ℓs) (DataD.applyL E (level ℓs))
 
 eraseᵖᵈ : {D E : PDataD} (O : PDataO D E) {ps : ⟦ PDataD.Param D ⟧ᵗ}
-        → let qs = eraseᵗ (PDataO.ParamO O) ps
-              index = eraseᵗ (PDataO.IndexO O ps) in
+        → let qs = PDataO.param O ps; index = PDataO.index O ps in
           {X : ⟦ PDataD.Index E qs ⟧ᵗ → Set ℓ} {i : ⟦ PDataD.Index D ps ⟧ᵗ}
         → ⟦ D ⟧ᵖᵈ (X ∘ index) i → ⟦ E ⟧ᵖᵈ X (index i)
 eraseᵖᵈ O {ps} = eraseᶜˢ (PDataO.applyP O ps)
 
 eraseᵈ : {D E : DataD} (O : DataO D E) {ℓs : DataD.Levels D}
        → let Dᵖ = DataD.applyL D ℓs
-             Eᵖ = DataD.applyL E (erase# (DataO.LevelO O) ℓs)
+             Eᵖ = DataD.applyL E (DataO.level O ℓs)
              Oᵖ = DataO.applyL O ℓs in
          {ps : ⟦ PDataD.Param Dᵖ ⟧ᵗ}
-       → let qs = eraseᵗ (PDataO.ParamO Oᵖ) ps
-             index = eraseᵗ (PDataO.IndexO Oᵖ ps) in
+       → let qs = PDataO.param Oᵖ ps; index = PDataO.index Oᵖ ps in
          {X : ⟦ PDataD.Index Eᵖ qs ⟧ᵗ → Set ℓ} {is : ⟦ PDataD.Index Dᵖ ps ⟧ᵗ}
        → ⟦ D ⟧ᵈ (X ∘ index) is → ⟦ E ⟧ᵈ X (index is)
 eraseᵈ O {ℓs} = eraseᵖᵈ (DataO.applyL O ℓs)

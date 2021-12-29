@@ -12,6 +12,7 @@ open import Generics.Safe.Ornament.Algebraic.Properties
 open import Generics.Safe.Ornament.Promotion
 open import Generics.Safe.Recursion
 open import Generics.Safe.RecursionScheme
+open import Generics.Safe.InductiveEquality
 
 -- USER: ℕ
 
@@ -63,7 +64,7 @@ foldℕ : {ℓ : Level} {X : Set ℓ} → X → (X → X) → ℕ → X
 foldℕ-wrapper $$ _ $$ _ $$ z , s , _ = foldℕ z s
 foldℕ z s  zero   = z
 foldℕ z s (suc n) = s (foldℕ z s n)
--- foldℕ z s  zero   = {! (fold-base NatC (foldℕ-alg $$ _ $$ _ $$ z , s , _) (foldℕ-wrapper $$ _ $$ _ $$ (z , s , _)) $$ _) zero  !}
+-- foldℕ z s  zero   = {! (fold-base NatC (foldℕ-alg $$ _ $$ _ $$ z , s , _) (foldℕ-wrapper $$ _ $$ _ $$ (z , s , _)) $$ _)  zero   !}
 -- foldℕ z s (suc n) = {! (fold-base NatC (foldℕ-alg $$ _ $$ _ $$ z , s , _) (foldℕ-wrapper $$ _ $$ _ $$ (z , s , _)) $$ _) (suc n) !}
 
 -- USER (changing the form of the fold)
@@ -132,10 +133,10 @@ ListC = record
 -- USER
 ListD/NatD : DataO ListD NatD
 ListD/NatD = record
-  { LevelO = Δ λ _ → ε
+  { level  = λ _ → tt
   ; applyL = λ ℓs → let (ℓ , _) = ℓs in record
-      { ParamO = Δ λ _ → ε
-      ; IndexO = λ _ → ε
+      { param  = λ _ → tt
+      ; index  = λ _ _ → tt
       ; applyP = λ _ → (ι refl)
                    ∷ ∺ (Δ λ _ → ρ (ι refl) (ι refl))
                    ∷ ∺ [] } }
@@ -146,20 +147,20 @@ length-alg = orn-alg ListD/NatD NatC
 
 -- META
 length'-wrapper : ∀ℓ _ λ ℓs → ∀ᵗ false _ λ ps → FoldT ListC (length-alg $$ ℓs $$ ps)
-length' : {A : Set ℓ} → List A → ℕ  -- slightly modified by the user
-length'-wrapper $$ _ $$ _ = length'       -- also slightly modified
+length' : {A : Set ℓ} → List A → ℕ   -- slightly modified by the user
+length'-wrapper $$ _ $$ _ = length'  -- also slightly modified
 length' []       = 0
 length' (a ∷ as) = suc (length' as)
 length'C : ∀ ℓs ps → AlgC ListC (length-alg $$ ℓs $$ ps) (length'-wrapper $$ ℓs $$ ps)
 length'C ℓs ps (inl                refl  ) = refl
 length'C ℓs ps (inr (inl (a , as , refl))) = refl
 -- length'-wrapper = length'
--- length' []       = {! (fold-base ListC (length-alg $$ _ $$ _) (length'-wrapper $$ _ $$ _) $$ _) []      !}
+-- length' []       = {! (fold-base ListC (length-alg $$ _ $$ _) (length'-wrapper $$ _ $$ _) $$ _) []       !}
 -- length' (a ∷ as) = {! (fold-base ListC (length-alg $$ _ $$ _) (length'-wrapper $$ _ $$ _) $$ _) (a ∷ as) !}
 
 -- USER
 VecOD : DataOD ListD
-VecOD = algODᵈ ListD (λ ℓs ps → length-alg $$ ℓs $$ ps)
+VecOD = algOD ListD (λ ℓs ps → length-alg $$ ℓs $$ ps)
 
 -- META (slightly modified by the user)
 data Vec (A : Set ℓ) : ℕ → Set ℓ where
@@ -197,28 +198,44 @@ VecC = record
                   ; (a ∷ as) → refl } }
 
 -- -- USER
-Vec-inhabitance-alg : ∀ℓ 1 λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ A → [])) λ ps
-                    → IndAlgebraᵈ ListC ℓs ps (fst ℓs)
-Vec-inhabitance-alg =
-  inhabitance ListC (λ ℓs ps → length-alg      $$ ℓs $$ ps)
-                    (λ ℓs ps → length'-wrapper $$ ℓs $$ ps) length'C VecC
+Vec-remember-alg : ∀ℓ 1 λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ A → [])) λ ps
+                 → IndAlgebraᵈ ListC ℓs ps (fst ℓs)
+Vec-remember-alg = remember-alg ListC (λ ℓs ps → length-alg      $$ ℓs $$ ps)
+                                      (λ ℓs ps → length'-wrapper $$ ℓs $$ ps) length'C VecC
 
 -- META
-Vec-inhabitance-wrapper : ∀ℓ 1 λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ A → [])) λ ps
-                        → IndT ListC (Vec-inhabitance-alg $$ ℓs $$ ps)
-Vec-inhabitance : {ℓ : Level} {A : Set ℓ} (as : List A) → Vec A (length' as)
-Vec-inhabitance-wrapper $$ _ $$ _ = Vec-inhabitance
-Vec-inhabitance []       = []
-Vec-inhabitance (a ∷ as) = a ∷ Vec-inhabitance as
-Vec-inhabitanceC : ∀ ℓs ps → IndAlgC ListC (Vec-inhabitance-alg     $$ ℓs $$ ps)
-                                           (Vec-inhabitance-wrapper $$ ℓs $$ ps)
-Vec-inhabitanceC ℓs ps (inl                refl  ) = refl
-Vec-inhabitanceC ℓs ps (inr (inl (a , as , refl))) = refl
--- Vec-inhabitance {ℓ} {A} []       = {! ind-base ListC (Vec-inhabitance-alg $$ ℓ , _ $$ A , _) (Vec-inhabitance-wrapper $$ ℓ , _ $$ A , _) []       !}
--- Vec-inhabitance {ℓ} {A} (a ∷ as) = {! ind-base ListC (Vec-inhabitance-alg $$ ℓ , _ $$ A , _) (Vec-inhabitance-wrapper $$ ℓ , _ $$ A , _) (a ∷ as) !}
+Vec-remember-wrapper : ∀ℓ 1 λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ A → [])) λ ps
+                     → IndT ListC (Vec-remember-alg $$ ℓs $$ ps)
+Vec-remember : {ℓ : Level} {A : Set ℓ} (as : List A) → Vec A (length' as)
+Vec-remember-wrapper $$ _ $$ _ = Vec-remember
+Vec-remember []       = []
+Vec-remember (a ∷ as) = a ∷ Vec-remember as
+Vec-rememberC : ∀ ℓs ps → IndAlgC ListC (Vec-remember-alg     $$ ℓs $$ ps)
+                                        (Vec-remember-wrapper $$ ℓs $$ ps)
+Vec-rememberC ℓs ps (inl                refl  ) = refl
+Vec-rememberC ℓs ps (inr (inl (a , as , refl))) = refl
+-- Vec-remember {ℓ} {A} []       = {! ind-base ListC (Vec-remember-alg $$ ℓ , _ $$ A , _) (Vec-remember-wrapper $$ ℓ , _ $$ A , _) []       !}
+-- Vec-remember {ℓ} {A} (a ∷ as) = {! ind-base ListC (Vec-remember-alg $$ ℓ , _ $$ A , _) (Vec-remember-wrapper $$ ℓ , _ $$ A , _) (a ∷ as) !}
 
 data W {ℓ ℓ'} (A : Set ℓ) (B : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
   sup : (a : A) → (B a → W A B) → W A B
+
+data IEqW {ℓ ℓ'} {A : Set ℓ} {B : A → Set ℓ'} : W A B → W A B → Set (ℓ ⊔ ℓ') where
+  sup : (a : A) → {x y : B a → W A B}
+                → ((b : B a) → IEqW (x b) (y b)) → IEqW (sup a x) (sup a y)
+
+w₀ w₁ : W Bool λ b → if b then Bool else ⊥
+w₀ = sup true λ _ → sup false λ ()
+w₁ = sup true λ { false → sup false λ (); true → sup false λ () }
+
+-- w₀≡w₁ : w₀ ≡ w₁
+-- w₀≡w₁ = {! refl !}
+
+IEqW-w₀-w₁ : IEqW w₀ w₁
+IEqW-w₀-w₁ = sup true (λ { false → sup false λ (); true → sup false λ () })
+
+fromIEqW : FunExt → {A : Set ℓ} {B : A → Set ℓ'} {x y : W A B} → IEqW x y → x ≡ y
+fromIEqW funext (sup a e) = cong (sup a) (funext λ b → fromIEqW funext (e b))
 
 WD : DataD
 WD = record

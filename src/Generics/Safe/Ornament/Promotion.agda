@@ -13,7 +13,7 @@ orn-alg : ∀ {D E N} (O : DataO D E) → DataC E N
         → ∀ℓ _ λ ℓs → ∀ᵗ false _ λ ps → Algebraᵈ D ℓs ps _
 orn-alg {N = N} O C $$ ℓs $$ ps = record
   { Carrier = λ is → let Oᵖ = DataO.applyL O ℓs
-                     in  N (erase# (DataO.LevelO  O    ) ℓs)
-                           (eraseᵗ (PDataO.ParamO Oᵖ   ) ps)
-                           (eraseᵗ (PDataO.IndexO Oᵖ ps) is)
+                     in  N (DataO.level  O  ℓs   )
+                           (PDataO.param Oᵖ ps   )
+                           (PDataO.index Oᵖ ps is)
   ; apply = DataC.toN C ∘ eraseᵈ O }

@@ -14,33 +14,6 @@ private variable
   cb  cb'  : ConB
   cbs cbs' : ConBs
 
-mutual
-
-  data TelOD : Tel ℓ → Level → Setω where
-    ε : {U : Tel ℓ} → TelOD U ℓ
-    ▷ : {U : Tel ℓ''} (OD : TelOD U ℓ)
-      → (⟦ ⌊ OD ⌋ᵗ ⟧ᵗ → Set ℓ') → TelOD U (ℓ ⊔ ℓ')
-    κ : {A : Set ℓ} {U : A → Tel ℓ''}
-      → (OD : ∀ a → TelOD (U a) ℓ') → TelOD (A ∷ U) (ℓ ⊔ ℓ')
-    Δ : (A : Set ℓ) {U : Tel ℓ''}
-      → (OD : A → TelOD U ℓ') → TelOD U (ℓ ⊔ ℓ')
-    ∇ : (a : A) {U : A → Tel ℓ''}
-      → (OD : TelOD (U a) ℓ') → TelOD (A ∷ U) ℓ'
-
-  ⌊_⌋ᵗ : {U : Tel ℓ'} → TelOD U ℓ → Tel ℓ
-  ⌊ ε {U = U} ⌋ᵗ = U
-  ⌊ ▷ OD A    ⌋ᵗ = snocᵗ ⌊ OD ⌋ᵗ A
-  ⌊ κ   OD    ⌋ᵗ = _ ∷ λ a → ⌊ OD a ⌋ᵗ
-  ⌊ Δ A OD    ⌋ᵗ = A ∷ λ a → ⌊ OD a ⌋ᵗ
-  ⌊ ∇ a OD    ⌋ᵗ = ⌊ OD ⌋ᵗ
-
-⌈_⌉ᵗ : {U : Tel ℓ'} (OD : TelOD U ℓ) → TelO ⌊ OD ⌋ᵗ U
-⌈ ε      ⌉ᵗ = ε
-⌈ ▷ OD A ⌉ᵗ = ▷ ⌈ OD ⌉ᵗ
-⌈ κ   OD ⌉ᵗ = κ λ a → ⌈ OD a ⌉ᵗ
-⌈ Δ A OD ⌉ᵗ = Δ λ a → ⌈ OD a ⌉ᵗ
-⌈ ∇ a OD ⌉ᵗ = ∇ a ⌈ OD ⌉ᵗ
-
 module _ (I : Set ℓⁱ) {J : Set ℓʲ} (e : I → J) where
 
   infixr 5 _∷_
@@ -81,21 +54,21 @@ record PDataOD (E : PDataD) : Setω where
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
     level-pre-fixed-point : flevel dlevel ⊑ dlevel
-    ParamOD : TelOD (PDataD.Param E) plevel
-    IndexOD : (p : ⟦ ⌊ ParamOD ⌋ᵗ ⟧ᵗ)
-            → TelOD (PDataD.Index E (eraseᵗ ⌈ ParamOD ⌉ᵗ p)) ilevel
-    applyP  : (p : ⟦ ⌊ ParamOD ⌋ᵗ ⟧ᵗ)
-            → ConODs ⟦ ⌊ IndexOD p ⌋ᵗ ⟧ᵗ (eraseᵗ ⌈ IndexOD p ⌉ᵗ)
-                (PDataD.applyP E (eraseᵗ ⌈ ParamOD ⌉ᵗ p)) struct
+    Param  : Tel plevel
+    param  : ⟦ Param ⟧ᵗ → ⟦ PDataD.Param E ⟧ᵗ
+    Index  : ⟦ Param ⟧ᵗ → Tel ilevel
+    index  : (ps : ⟦ Param ⟧ᵗ) → ⟦ Index ps ⟧ᵗ → ⟦ PDataD.Index E (param ps) ⟧ᵗ
+    applyP : (ps : ⟦ Param ⟧ᵗ)
+           → ConODs ⟦ Index ps ⟧ᵗ (index ps) (PDataD.applyP E (param ps)) struct
 
 record DataOD (E : DataD) : Setω where
   field
     #levels : ℕ
-    LevelO  : #O Level #levels (DataD.#levels E)
   Levels : Set
   Levels = Level ^ #levels
   field
-    applyL : (ℓs : Levels) → PDataOD (DataD.applyL E (erase# LevelO ℓs))
+    level  : Levels → DataD.Levels E
+    applyL : (ℓs : Levels) → PDataOD (DataD.applyL E (level ℓs))
 
 module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 
@@ -135,17 +108,15 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 ⌊ OD ⌋ᵖᵈ = record
   { alevel = PDataOD.alevel OD
   ; level-pre-fixed-point = PDataOD.level-pre-fixed-point OD
-  ; Param  = ⌊ PDataOD.ParamOD OD ⌋ᵗ
-  ; Index  = λ p → ⌊ PDataOD.IndexOD OD p ⌋ᵗ
-  ; applyP = λ p → ⌊ PDataOD.applyP OD p ⌋ᶜˢ
-  }
+  ; Param  = PDataOD.Param OD
+  ; Index  = PDataOD.Index OD
+  ; applyP = λ ps → ⌊ PDataOD.applyP OD ps ⌋ᶜˢ }
 
 ⌈_⌉ᵖᵈ : ∀ {E} (OD : PDataOD E) → PDataO ⌊ OD ⌋ᵖᵈ E
 ⌈ OD ⌉ᵖᵈ = record
-  { ParamO = ⌈ PDataOD.ParamOD OD ⌉ᵗ
-  ; IndexO = λ p → ⌈ PDataOD.IndexOD OD p ⌉ᵗ
-  ; applyP = λ p → ⌈ PDataOD.applyP OD p ⌉ᶜˢ
-  }
+  { param  = PDataOD.param OD
+  ; index  = PDataOD.index OD
+  ; applyP = λ ps → ⌈ PDataOD.applyP OD ps ⌉ᶜˢ }
 
 ⌊_⌋ᵈ : ∀ {E} → DataOD E → DataD
 ⌊ OD ⌋ᵈ = record
@@ -154,48 +125,69 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 
 ⌈_⌉ᵈ : ∀ {E} (OD : DataOD E) → DataO ⌊ OD ⌋ᵈ E
 ⌈ OD ⌉ᵈ = record
-  { LevelO = DataOD.LevelO OD
+  { level  = DataOD.level OD
   ; applyL = λ ℓs → ⌈ DataOD.applyL OD ℓs ⌉ᵖᵈ }
 
 module ODFunctor {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} {K : Set ℓᵏ} where
 
-  module _ (f : I → K) (e' : K → J) (coh : ∀ i → e' (f i) ≡ e i) where
+  module _ (f : K → I) (f' : I → K) (inv : ∀ i → f (f' i) ≡ i) where
 
-    imapODʳ : {D : RecD J rb} → RecOD I e D → RecOD K e' D
-    imapODʳ (ι i eq) = ι (f i) (trans (coh i) eq)
+    imapODʳ : {D : RecD J rb} → RecOD I e D → RecOD K (e ∘ f) D
+    imapODʳ (ι i eq) = ι (f' i) (trans (cong e (inv i)) eq)
     imapODʳ (π OD  ) = π λ a → imapODʳ (OD a)
 
-    imapODᶜ : {D : ConD J cb} → ConOD I e D cb' → ConOD K e' D cb'
-    imapODᶜ (ι i eq  ) = ι (f i) (trans (coh i) eq)
+    imapODᶜ : {D : ConD J cb} → ConOD I e D cb' → ConOD K (e ∘ f) D cb'
+    imapODᶜ (ι i eq  ) = ι (f' i) (trans (cong e (inv i)) eq)
     imapODᶜ (σ    OD ) = σ λ a → imapODᶜ (OD a)
     imapODᶜ (Δ A  OD ) = Δ A λ a → imapODᶜ (OD a)
     imapODᶜ (∇ a  OD ) = ∇ a (imapODᶜ OD)
     imapODᶜ (ρ OD OD') = ρ (imapODʳ OD) (imapODᶜ OD')
 
-    imapODᶜˢ : {D : ConDs J cbs} → ConODs I e D cbs' → ConODs K e' D cbs'
+    imapODᶜˢ : {D : ConDs J cbs} → ConODs I e D cbs' → ConODs K (e ∘ f) D cbs'
     imapODᶜˢ []         = []
     imapODᶜˢ (OD ∷ ODs) = imapODᶜ OD ∷ imapODᶜˢ ODs
     imapODᶜˢ (   ∺ ODs) =            ∺ imapODᶜˢ ODs
 
-  module _ {f : I → K} {e' : K → J} {coh : ∀ i → e' (f i) ≡ e i} where
+  module _ {f : K → I} {f' : I → K} {inv : ∀ i → f (f' i) ≡ i} where
 
     imapOD-injʳ : {D : RecD J rb} (OD : RecOD I e D) {X : K → Set ℓˣ}
-                → ⟦ ⌊ OD ⌋ʳ ⟧ʳ (X ∘ f) → ⟦ ⌊ imapODʳ f e' coh OD ⌋ʳ ⟧ʳ X
+                → ⟦ ⌊ OD ⌋ʳ ⟧ʳ (X ∘ f') → ⟦ ⌊ imapODʳ f f' inv OD ⌋ʳ ⟧ʳ X
     imapOD-injʳ (ι i eq) x  = x
     imapOD-injʳ (π OD  ) xs = λ a → imapOD-injʳ (OD a) (xs a)
 
     imapOD-injᶜ : {D : ConD J cb} (OD : ConOD I e D cb') {X : K → Set ℓˣ}
-                → ∀ {i} → ⟦ ⌊ OD ⌋ᶜ ⟧ᶜ (X ∘ f) i
-                → ⟦ ⌊ imapODᶜ f e' coh OD ⌋ᶜ ⟧ᶜ X (f i)
-    imapOD-injᶜ (ι i _   ) eq         = cong f eq
+                → ∀ {i} → ⟦ ⌊ OD ⌋ᶜ ⟧ᶜ (X ∘ f') i
+                → ⟦ ⌊ imapODᶜ f f' inv OD ⌋ᶜ ⟧ᶜ X (f' i)
+    imapOD-injᶜ (ι i _   ) eq         = cong f' eq
     imapOD-injᶜ (σ    OD ) (a , xs)   = a , imapOD-injᶜ (OD a) xs
     imapOD-injᶜ (Δ A  OD ) (a , xs)   = a , imapOD-injᶜ (OD a) xs
     imapOD-injᶜ (∇ a  OD )      xs    =     imapOD-injᶜ  OD    xs
     imapOD-injᶜ (ρ OD OD') (xs , xs') = imapOD-injʳ OD xs , imapOD-injᶜ OD' xs'
 
     imapOD-injᶜˢ : {D : ConDs J cbs} (OD : ConODs I e D cbs') {X : K → Set ℓˣ}
-                 → ∀ {i} → ⟦ ⌊ OD ⌋ᶜˢ ⟧ᶜˢ (X ∘ f) i
-                 → ⟦ ⌊ imapODᶜˢ f e' coh OD ⌋ᶜˢ ⟧ᶜˢ X (f i)
+                 → ∀ {i} → ⟦ ⌊ OD ⌋ᶜˢ ⟧ᶜˢ (X ∘ f') i
+                 → ⟦ ⌊ imapODᶜˢ f f' inv OD ⌋ᶜˢ ⟧ᶜˢ X (f' i)
     imapOD-injᶜˢ (OD ∷ ODs) (inl xs) = inl (imapOD-injᶜ  OD  xs)
     imapOD-injᶜˢ (OD ∷ ODs) (inr xs) = inr (imapOD-injᶜˢ ODs xs)
     imapOD-injᶜˢ (   ∺ ODs)      xs  =      imapOD-injᶜˢ ODs xs
+
+    imapOD-projʳ : {D : RecD J rb} (OD : RecOD I e D) {X : I → Set ℓˣ}
+                 → ⟦ ⌊ imapODʳ f f' inv OD ⌋ʳ ⟧ʳ (X ∘ f) → ⟦ ⌊ OD ⌋ʳ ⟧ʳ X
+    imapOD-projʳ (ι i eq) {X} x  = subst X (inv i) x
+    imapOD-projʳ (π OD  )     xs = λ a → imapOD-projʳ (OD a) (xs a)
+
+    imapOD-projᶜ : {D : ConD J cb} (OD : ConOD I e D cb') {X : I → Set ℓˣ}
+                 → ∀ {k} → ⟦ ⌊ imapODᶜ f f' inv OD ⌋ᶜ ⟧ᶜ (X ∘ f) k
+                 → ⟦ ⌊ OD ⌋ᶜ ⟧ᶜ X (f k)
+    imapOD-projᶜ (ι i _   ) eq = trans (sym (inv i)) (cong f eq)
+    imapOD-projᶜ (σ    OD ) (a , xs)   = a , imapOD-projᶜ (OD a) xs
+    imapOD-projᶜ (Δ A  OD ) (a , xs)   = a , imapOD-projᶜ (OD a) xs
+    imapOD-projᶜ (∇ a  OD )      xs    =     imapOD-projᶜ  OD    xs
+    imapOD-projᶜ (ρ OD OD') (xs , xs') = imapOD-projʳ OD xs , imapOD-projᶜ OD' xs'
+
+    imapOD-projᶜˢ : {D : ConDs J cbs} (OD : ConODs I e D cbs') {X : I → Set ℓˣ}
+                  → ∀ {k} → ⟦ ⌊ imapODᶜˢ f f' inv OD ⌋ᶜˢ ⟧ᶜˢ (X ∘ f) k
+                  → ⟦ ⌊ OD ⌋ᶜˢ ⟧ᶜˢ X (f k)
+    imapOD-projᶜˢ (OD ∷ ODs) (inl xs) = inl (imapOD-projᶜ  OD  xs)
+    imapOD-projᶜˢ (OD ∷ ODs) (inr xs) = inr (imapOD-projᶜˢ ODs xs)
+    imapOD-projᶜˢ (   ∺ ODs)      xs  =      imapOD-projᶜˢ ODs xs

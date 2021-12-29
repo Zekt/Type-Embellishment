@@ -44,7 +44,7 @@ uncurryᵗ (A ∷ T) X {true } f (a , t) = uncurryᵗ (T a) (curry X a) (f a) t
 
 snocᵗ : (T : Tel ℓ) → (⟦ T ⟧ᵗ → Set ℓ') → Tel (ℓ ⊔ ℓ')
 snocᵗ []      B = B tt ∷ λ _ → []
-snocᵗ (A ∷ T) B = A ∷ λ a → snocᵗ (T a) λ t → B (a , t)
+snocᵗ (A ∷ T) B = A ∷ λ a → snocᵗ (T a) (curry B a)
 
 snocᵗ-inj : {T : Tel ℓ} {A : ⟦ T ⟧ᵗ → Set ℓ'} → Σ ⟦ T ⟧ᵗ A → ⟦ snocᵗ T A ⟧ᵗ
 snocᵗ-inj {T = []   } (_       , a) = a , tt
@@ -59,6 +59,28 @@ snocᵗ-proj-inj : {T : Tel ℓ} {A : ⟦ T ⟧ᵗ → Set ℓ'}
 snocᵗ-proj-inj {T = []   } (_       , a) = refl
 snocᵗ-proj-inj {T = B ∷ T} ((b , t) , a) = cong (λ p → let (t , a) = p in (b , t) , a)
                                                 (snocᵗ-proj-inj {T = T b} (t , a))
+
+snoc²ᵗ : (T : Tel ℓ) → (⟦ T ⟧ᵗ → Set ℓ') → (⟦ T ⟧ᵗ → Set ℓ'') → Tel (ℓ ⊔ ℓ' ⊔ ℓ'')
+snoc²ᵗ []      B C = B tt ∷ λ _ → C tt ∷ λ _ → []
+snoc²ᵗ (A ∷ T) B C = A ∷ λ a → snoc²ᵗ (T a) (curry B a) (curry C a)
+
+snoc²ᵗ-inj : {T : Tel ℓ} {B : ⟦ T ⟧ᵗ → Set ℓ'} {C : ⟦ T ⟧ᵗ → Set ℓ''}
+           → Σ[ t ∈ ⟦ T ⟧ᵗ ] B t × C t → ⟦ snoc²ᵗ T B C ⟧ᵗ
+snoc²ᵗ-inj {T = []   } (_       , b , c) = b , c , tt
+snoc²ᵗ-inj {T = A ∷ T} ((a , t) , b , c) = a , snoc²ᵗ-inj {T = T a} (t , b , c)
+
+snoc²ᵗ-proj : {T : Tel ℓ} {B : ⟦ T ⟧ᵗ → Set ℓ'} {C : ⟦ T ⟧ᵗ → Set ℓ''}
+            → ⟦ snoc²ᵗ T B C ⟧ᵗ → Σ[ t ∈ ⟦ T ⟧ᵗ ] B t × C t
+snoc²ᵗ-proj {T = []   } (b , c , _) = tt , b , c
+snoc²ᵗ-proj {T = A ∷ T} (a , t) = let (t' , b , c) = snoc²ᵗ-proj {T = T a} t
+                                  in  ((a , t') , b , c)
+
+snoc²ᵗ-proj-inj : {T : Tel ℓ} {B : ⟦ T ⟧ᵗ → Set ℓ'} {C : ⟦ T ⟧ᵗ → Set ℓ''}
+                 (p : Σ[ t ∈ ⟦ T ⟧ᵗ ] B t × C t) → snoc²ᵗ-proj (snoc²ᵗ-inj p) ≡ p
+snoc²ᵗ-proj-inj {T = []   } (_       , b , c) = refl
+snoc²ᵗ-proj-inj {T = A ∷ T} ((a , t) , b , c) =
+  cong (λ p → let (t , b , c) = p in (a , t) , b , c)
+       (snoc²ᵗ-proj-inj {T = T a} (t , b , c))
 
 _++_ : (T : Tel ℓ) → (⟦ T ⟧ᵗ → Tel ℓ') → Tel (ℓ ⊔ ℓ')
 _++_ []      U = U tt
