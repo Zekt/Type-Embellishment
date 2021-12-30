@@ -91,9 +91,9 @@ record PDataD : Setω where
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
     level-pre-fixed-point : flevel dlevel ⊑ dlevel
-    Param  : Tel plevel
-    Index  : ⟦ Param ⟧ᵗ → Tel ilevel
-    applyP : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ struct
+    Param  : BTel plevel
+    Index  : ⟦ Param ⟧ᵇᵗ → BTel ilevel
+    applyP : (p : ⟦ Param ⟧ᵇᵗ) → ConDs ⟦ Index p ⟧ᵇᵗ struct
 
 record DataD : Setω where
   field
@@ -119,13 +119,13 @@ module _ {I : Set ℓⁱ} where
   ⟦ []     ⟧ᶜˢ X i = ⊥
   ⟦ D ∷ Ds ⟧ᶜˢ X i = ⟦ D ⟧ᶜ X i ⊎ ⟦ Ds ⟧ᶜˢ X i
 
-⟦_⟧ᵖᵈ : (D : PDataD) {p : ⟦ PDataD.Param D ⟧ᵗ}
-      → let I = ⟦ PDataD.Index D p ⟧ᵗ in (I → Set ℓ) → (I → Set (PDataD.flevel D ℓ))
+⟦_⟧ᵖᵈ : (D : PDataD) {p : ⟦ PDataD.Param D ⟧ᵇᵗ}
+      → let I = ⟦ PDataD.Index D p ⟧ᵇᵗ in (I → Set ℓ) → (I → Set (PDataD.flevel D ℓ))
 ⟦ D ⟧ᵖᵈ {p} = ⟦ PDataD.applyP D p ⟧ᶜˢ
 
 ⟦_⟧ᵈ : (D : DataD) {ℓs : DataD.Levels D} → let Dᵖ = DataD.applyL D ℓs in
-       {p : ⟦ PDataD.Param Dᵖ ⟧ᵗ}
-     → let I = ⟦ PDataD.Index Dᵖ p ⟧ᵗ in (I → Set ℓ) → (I → Set (PDataD.flevel Dᵖ ℓ))
+       {p : ⟦ PDataD.Param Dᵖ ⟧ᵇᵗ}
+     → let I = ⟦ PDataD.Index Dᵖ p ⟧ᵇᵗ in (I → Set ℓ) → (I → Set (PDataD.flevel Dᵖ ℓ))
 ⟦ D ⟧ᵈ {ℓs} = ⟦ DataD.applyL D ℓs ⟧ᵖᵈ
 
 fmapʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
@@ -144,13 +144,13 @@ fmapᶜˢ : {I : Set ℓ} (Ds : ConDs I cbs) {X : I → Set ℓˣ} {Y : I → Se
 fmapᶜˢ (D ∷ Ds) f (inl xs) = inl (fmapᶜ  D  f xs)
 fmapᶜˢ (D ∷ Ds) f (inr xs) = inr (fmapᶜˢ Ds f xs)
 
-fmapᵖᵈ : (D : PDataD) {p : ⟦ PDataD.Param D ⟧ᵗ} → let I = ⟦ PDataD.Index D p ⟧ᵗ in
+fmapᵖᵈ : (D : PDataD) {p : ⟦ PDataD.Param D ⟧ᵇᵗ} → let I = ⟦ PDataD.Index D p ⟧ᵇᵗ in
          {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
        → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵖᵈ X i → ⟦ D ⟧ᵖᵈ Y i
 fmapᵖᵈ D {p} = fmapᶜˢ (PDataD.applyP D p)
 
 fmapᵈ : (D : DataD) {ℓs : DataD.Levels D} → let Dᵖ = DataD.applyL D ℓs in
-        {p : ⟦ PDataD.Param Dᵖ ⟧ᵗ} → let I = ⟦ PDataD.Index Dᵖ p ⟧ᵗ in
+        {p : ⟦ PDataD.Param Dᵖ ⟧ᵇᵗ} → let I = ⟦ PDataD.Index Dᵖ p ⟧ᵇᵗ in
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈ X i → ⟦ D ⟧ᵈ Y i
 fmapᵈ D {ℓs} = fmapᵖᵈ (DataD.applyL D ℓs)

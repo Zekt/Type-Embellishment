@@ -4,11 +4,10 @@ module Generics.Safe.InductiveEquality where
 
 open import Prelude
 open import Prelude.Sum as Sum
-open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵗ
+open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵇᵗ
 open import Generics.Safe.Description
 open import Generics.Safe.Algebra
 open import Generics.Safe.Ornament.Description
-open Generics.Safe.Ornament.Description.ODFunctor
 open import Generics.Safe.Ornament.Algebraic
 open import Generics.Safe.Recursion
 
@@ -36,10 +35,9 @@ IEqOD {D} {N} C = record
                           (PDataD.struct Dᵖ) (PDataD.level-pre-fixed-point Dᵖ)
       ; Param  = PDataD.Param Dᵖ
       ; param  = id
-      ; Index  = λ ps → snoc²ᵗ (PDataD.Index Dᵖ ps) (N ℓs ps) (N ℓs ps)
-      ; index  = λ ps → fst ∘ snoc²ᵗ-proj
-      ; applyP = λ ps → imapODᶜˢ snoc²ᵗ-proj snoc²ᵗ-inj snoc²ᵗ-proj-inj
-                          (algODᶜˢ (PDataD.applyP Dᵖ ps) (copy-algᶜˢ (DataC.toN C))) } }
+      ; Index  = λ ps → PDataD.Index Dᵖ ps ▷ λ is → N ℓs ps is × N ℓs ps is
+      ; index  = λ _  → fst
+      ; applyP = λ ps → algODᶜˢ (PDataD.applyP Dᵖ ps) (copy-algᶜˢ (DataC.toN C)) } }
 
 nonrec-from-IEq-algᶜ :
     {I : Set ℓⁱ} (D : ConD I cb) → All Sum.[ const ⊤ , (_≡ []) ] cb
@@ -63,12 +61,11 @@ nonrec-from-IEq-algᶜˢ (D ∷ Ds) (_ ∷ nr) f (inr es) =
 nonrec-from-IEq-alg :
   ∀ {D N} (C : DataC D N)
   → (∀ ℓs → All (All Sum.[ const ⊤ , (_≡ []) ]) (PDataD.struct (DataD.applyL D ℓs)))
-  → ∀ℓ _ λ ℓs → ∀ᵗ false _ λ ps → Algebraᵈ ⌊ IEqOD C ⌋ᵈ ℓs ps _
+  → ∀ℓ _ λ ℓs → ∀ᵇᵗ false _ λ ps → Algebraᵈ ⌊ IEqOD C ⌋ᵈ ℓs ps _
 nonrec-from-IEq-alg {D} C nr $$ ℓs $$ ps = record
-  { Carrier = λ is → uncurry _≡_ (snd (snoc²ᵗ-proj is))
+  { Carrier = λ i → uncurry _≡_ (snd i)
   ; apply = let Dᶜˢ = (PDataD.applyP (DataD.applyL D ℓs) ps)
-            in  nonrec-from-IEq-algᶜˢ  Dᶜˢ (nr ℓs) (DataC.toN C)
-              ∘ imapOD-projᶜˢ (algODᶜˢ Dᶜˢ (copy-algᶜˢ (DataC.toN C))) }
+            in  nonrec-from-IEq-algᶜˢ Dᶜˢ (nr ℓs) (DataC.toN C) }
 
 FunExt : Setω
 FunExt = ∀ {ℓ ℓ'} {A : Set ℓ} {B : A → Set ℓ'} {f g : (a : A) → B a}
@@ -100,9 +97,8 @@ from-IEq-algᶜˢ funext (D ∷ Ds) f (inl es) = from-IEq-algᶜ  funext D  (f �
 from-IEq-algᶜˢ funext (D ∷ Ds) f (inr es) = from-IEq-algᶜˢ funext Ds (f ∘ inr) es
 
 from-IEq-alg : ∀ {D N} (C : DataC D N) → FunExt
-             → ∀ℓ _ λ ℓs → ∀ᵗ false _ λ ps → Algebraᵈ ⌊ IEqOD C ⌋ᵈ ℓs ps _
+             → ∀ℓ _ λ ℓs → ∀ᵇᵗ false _ λ ps → Algebraᵈ ⌊ IEqOD C ⌋ᵈ ℓs ps _
 from-IEq-alg {D} C funext $$ ℓs $$ ps = record
-  { Carrier = λ is → uncurry _≡_ (snd (snoc²ᵗ-proj is))
+  { Carrier = λ i → uncurry _≡_ (snd i)
   ; apply = let Dᶜˢ = (PDataD.applyP (DataD.applyL D ℓs) ps)
-            in  from-IEq-algᶜˢ funext  Dᶜˢ (DataC.toN C)
-              ∘ imapOD-projᶜˢ (algODᶜˢ Dᶜˢ (copy-algᶜˢ (DataC.toN C))) }
+            in  from-IEq-algᶜˢ funext  Dᶜˢ (DataC.toN C) }

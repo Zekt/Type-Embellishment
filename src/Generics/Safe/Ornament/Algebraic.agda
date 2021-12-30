@@ -10,7 +10,6 @@ open import Generics.Safe.Algebra
 open import Generics.Safe.Recursion
 open import Generics.Safe.Ornament
 open import Generics.Safe.Ornament.Description
-open Generics.Safe.Ornament.Description.ODFunctor
 
 private variable
   rb  : RecB
@@ -103,10 +102,9 @@ algODᵖᵈ {ℓ} D {X} f = record
                         (PDataD.level-pre-fixed-point D)
   ; Param  = PDataD.Param D
   ; param  = id
-  ; Index  = λ ps → snocᵗ (PDataD.Index D ps) (X ps)
-  ; index  = λ ps is → fst (snocᵗ-proj is)
-  ; applyP = λ ps → imapODᶜˢ snocᵗ-proj snocᵗ-inj snocᵗ-proj-inj
-                      (algODᶜˢ (PDataD.applyP D ps) (f ps)) }
+  ; Index  = λ ps → PDataD.Index D ps ▷ X ps
+  ; index  = λ _ → fst
+  ; applyP = λ ps → algODᶜˢ (PDataD.applyP D ps) (f ps) }
 
 algODᵈ : (D : DataD) {ℓf : DataD.Levels D → Level}
          {X : ∀ ℓs ps → Carrierᵈ D ℓs ps (ℓf ℓs)}

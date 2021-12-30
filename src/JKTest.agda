@@ -1,14 +1,14 @@
 {-# OPTIONS --safe #-}
 
 open import Prelude
-open import Generics.Safe.Telescope; open ∀ℓ; open ∀ℓω; open ∀ᵗ
+open import Generics.Safe.Telescope hiding (∷-syntaxᵗ)
+open ∀ℓ; open ∀ℓω; open ∀ᵗ; open ∀ᵇᵗ
 open import Generics.Safe.Description
 open import Generics.Safe.Description.FixedPoint
 open import Generics.Safe.Algebra
 open import Generics.Safe.Ornament
 open import Generics.Safe.Ornament.Description
 open import Generics.Safe.Ornament.Algebraic
-open import Generics.Safe.Ornament.Algebraic.Properties
 open import Generics.Safe.Ornament.Promotion
 open import Generics.Safe.Recursion
 open import Generics.Safe.RecursionScheme
@@ -46,8 +46,8 @@ NatC = record
                   ; (suc n) → refl } }
 
 -- USER (specialising a generic library component)
-foldℕ-alg : ∀ℓω 0 λ ℓs → {ℓ : Level} → ∀ᵗ false [] λ ps →
-            {X : ∀ᵗ false [] λ _ → Set ℓ} →
+foldℕ-alg : ∀ℓω 0 λ ℓs → {ℓ : Level} → ∀ᵇᵗ false [] λ ps →
+            {X : ∀ᵇᵗ false [] λ _ → Set ℓ} →
             ∀ᵗ true ((X $$ tt) ∷ λ _ → (X $$ tt → X $$ tt) ∷ λ _ → []) λ _ →
             Algebra (ι tt ∷ ρ (ι tt) (ι tt) ∷ []) ℓ
 -- foldℕ-alg : {! ∀ℓω _ λ ℓs → ∀ {ℓ} → ∀ᵗ false _ λ ps → FoldAlgTᵈ NatD ℓs ps ℓ !}
@@ -142,8 +142,8 @@ ListD/NatD = record
                    ∷ ∺ [] } }
 
 -- USER
-length-alg : ∀ℓ _ λ ℓs → ∀ᵗ false _ λ ps → Algebraᵈ ListD ℓs ps 0ℓ
-length-alg = orn-alg ListD/NatD NatC
+length-alg : ∀ℓ _ λ ℓs → ∀ᵇᵗ false _ λ ps → Algebraᵈ ListD ℓs ps 0ℓ
+length-alg = forget-alg ListD/NatD NatC
 
 -- META
 length'-wrapper : ∀ℓ _ λ ℓs → ∀ᵗ false _ λ ps → FoldT ListC (length-alg $$ ℓs $$ ps)
@@ -162,28 +162,31 @@ length'C ℓs ps (inr (inl (a , as , refl))) = refl
 VecOD : DataOD ListD
 VecOD = algOD ListD (λ ℓs ps → length-alg $$ ℓs $$ ps)
 
+VecD : DataD
+VecD = ⌊ VecOD ⌋ᵈ
+
 -- META (slightly modified by the user)
 data Vec (A : Set ℓ) : ℕ → Set ℓ where
   []  : Vec A zero
   _∷_ : A → {n : ℕ} → Vec A n → Vec A (suc n)
 
--- META
-VecD : DataD
-VecD = record
-  { #levels = 1
-  ; applyL  = λ ℓs → let (ℓ , _) = ℓs in record
-      { alevel = ℓ
-      ; level-pre-fixed-point = refl
-      ; Param  = [ A ∶ Set ℓ ] []
-      ; Index  = λ _ → [ _ ∶ ℕ ] []
-      ; applyP = λ ps → let (A , _) = ps
-                        in (ι (0 , _))
-                         ∷ (σ A λ _ → σ ℕ λ n → ρ (ι (n , _)) (ι (suc n , _)))
-                         ∷ [] } }
+-- -- META
+-- VecD : DataD
+-- VecD = record
+--   { #levels = 1
+--   ; applyL  = λ ℓs → let (ℓ , _) = ℓs in record
+--       { alevel = ℓ
+--       ; level-pre-fixed-point = refl
+--       ; Param  = [ A ∶ Set ℓ ] []
+--       ; Index  = λ _ → [ _ ∶ ℕ ] []
+--       ; applyP = λ ps → let (A , _) = ps
+--                         in (ι (0 , _))
+--                          ∷ (σ A λ _ → σ ℕ λ n → ρ (ι (n , _)) (ι (suc n , _)))
+--                          ∷ [] } }
 
 -- META
 Vec-wrapper : DataT VecD
-Vec-wrapper (ℓ , _) (A , _) (n , _) = Vec A n
+Vec-wrapper (ℓ , _) (A , _) (_ , n) = Vec A n
 
 -- META
 VecC : DataC VecD Vec-wrapper
@@ -197,11 +200,12 @@ VecC = record
   ; toN-fromN = λ { []       → refl
                   ; (a ∷ as) → refl } }
 
--- -- USER
-Vec-remember-alg : ∀ℓ 1 λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ A → [])) λ ps
+-- USER
+Vec-remember-alg : ∀ℓ 1 λ ℓs → ∀ᵇᵗ false (Set (fst ℓs) ∷ (λ A → [])) λ ps
                  → IndAlgebraᵈ ListC ℓs ps (fst ℓs)
-Vec-remember-alg = remember-alg ListC (λ ℓs ps → length-alg      $$ ℓs $$ ps)
-                                      (λ ℓs ps → length'-wrapper $$ ℓs $$ ps) length'C VecC
+Vec-remember-alg =
+  remember-alg ListC (λ ℓs ps → length-alg      $$ ℓs $$ ps)
+                     (λ ℓs ps → length'-wrapper $$ ℓs $$ ps) length'C VecC
 
 -- META
 Vec-remember-wrapper : ∀ℓ 1 λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ A → [])) λ ps
