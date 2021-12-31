@@ -65,10 +65,10 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 
 record PDataO (D E : PDataD) : Setω where
   field
-    param  : ⟦ PDataD.Param D ⟧ᵇᵗ → ⟦ PDataD.Param E ⟧ᵇᵗ
-    index  : (ps : ⟦ PDataD.Param D ⟧ᵇᵗ)
-           → ⟦ PDataD.Index D ps ⟧ᵇᵗ → ⟦ PDataD.Index E (param ps) ⟧ᵇᵗ
-    applyP : (ps : ⟦ PDataD.Param D ⟧ᵇᵗ)
+    param  : ⟦ PDataD.Param D ⟧ᵐᵗ → ⟦ PDataD.Param E ⟧ᵐᵗ
+    index  : (ps : ⟦ PDataD.Param D ⟧ᵐᵗ)
+           → ⟦ PDataD.Index D ps ⟧ᵐᵗ → ⟦ PDataD.Index E (param ps) ⟧ᵐᵗ
+    applyP : (ps : ⟦ PDataD.Param D ⟧ᵐᵗ)
            → ConOs (index ps) (PDataD.applyP D ps) (PDataD.applyP E (param ps))
 
 record DataO (D E : DataD) : Setω where
@@ -77,9 +77,9 @@ record DataO (D E : DataD) : Setω where
     applyL : (ℓs : DataD.Levels D)
            → PDataO (DataD.applyL D ℓs) (DataD.applyL E (level ℓs))
 
-eraseᵖᵈ : {D E : PDataD} (O : PDataO D E) {ps : ⟦ PDataD.Param D ⟧ᵇᵗ}
+eraseᵖᵈ : {D E : PDataD} (O : PDataO D E) {ps : ⟦ PDataD.Param D ⟧ᵐᵗ}
         → let qs = PDataO.param O ps; index = PDataO.index O ps in
-          {X : ⟦ PDataD.Index E qs ⟧ᵇᵗ → Set ℓ} {i : ⟦ PDataD.Index D ps ⟧ᵇᵗ}
+          {X : ⟦ PDataD.Index E qs ⟧ᵐᵗ → Set ℓ} {i : ⟦ PDataD.Index D ps ⟧ᵐᵗ}
         → ⟦ D ⟧ᵖᵈ (X ∘ index) i → ⟦ E ⟧ᵖᵈ X (index i)
 eraseᵖᵈ O {ps} = eraseᶜˢ (PDataO.applyP O ps)
 
@@ -87,8 +87,8 @@ eraseᵈ : {D E : DataD} (O : DataO D E) {ℓs : DataD.Levels D}
        → let Dᵖ = DataD.applyL D ℓs
              Eᵖ = DataD.applyL E (DataO.level O ℓs)
              Oᵖ = DataO.applyL O ℓs in
-         {ps : ⟦ PDataD.Param Dᵖ ⟧ᵇᵗ}
+         {ps : ⟦ PDataD.Param Dᵖ ⟧ᵐᵗ}
        → let qs = PDataO.param Oᵖ ps; index = PDataO.index Oᵖ ps in
-         {X : ⟦ PDataD.Index Eᵖ qs ⟧ᵇᵗ → Set ℓ} {is : ⟦ PDataD.Index Dᵖ ps ⟧ᵇᵗ}
+         {X : ⟦ PDataD.Index Eᵖ qs ⟧ᵐᵗ → Set ℓ} {is : ⟦ PDataD.Index Dᵖ ps ⟧ᵐᵗ}
        → ⟦ D ⟧ᵈ (X ∘ index) is → ⟦ E ⟧ᵈ X (index is)
 eraseᵈ O {ℓs} = eraseᵖᵈ (DataO.applyL O ℓs)

@@ -2,7 +2,7 @@
 
 open import Prelude
 open import Generics.Safe.Telescope hiding (∷-syntaxᵗ)
-open ∀ℓ; open ∀ℓω; open ∀ᵗ; open ∀ᵇᵗ
+open ∀ℓ; open ∀ℓω; open ∀ᵗ; open ∀ᵐᵗ
 open import Generics.Safe.Description
 open import Generics.Safe.Description.FixedPoint
 open import Generics.Safe.Algebra
@@ -46,8 +46,8 @@ NatC = record
                   ; (suc n) → refl } }
 
 -- USER (specialising a generic library component)
-foldℕ-alg : ∀ℓω 0 λ ℓs → {ℓ : Level} → ∀ᵇᵗ false [] λ ps →
-            {X : ∀ᵇᵗ false [] λ _ → Set ℓ} →
+foldℕ-alg : ∀ℓω 0 λ ℓs → {ℓ : Level} → ∀ᵐᵗ false [] λ ps →
+            {X : ∀ᵐᵗ false [] λ _ → Set ℓ} →
             ∀ᵗ true ((X $$ tt) ∷ λ _ → (X $$ tt → X $$ tt) ∷ λ _ → []) λ _ →
             Algebra (ι tt ∷ ρ (ι tt) (ι tt) ∷ []) ℓ
 -- foldℕ-alg : {! ∀ℓω _ λ ℓs → ∀ {ℓ} → ∀ᵗ false _ λ ps → FoldAlgTᵈ NatD ℓs ps ℓ !}
@@ -142,7 +142,7 @@ ListD/NatD = record
                    ∷ ∺ [] } }
 
 -- USER
-length-alg : ∀ℓ _ λ ℓs → ∀ᵇᵗ false _ λ ps → Algebraᵈ ListD ℓs ps 0ℓ
+length-alg : ∀ℓ _ λ ℓs → ∀ᵐᵗ false _ λ ps → Algebraᵈ ListD ℓs ps 0ℓ
 length-alg = forget-alg ListD/NatD NatC
 
 -- META
@@ -186,7 +186,7 @@ data Vec (A : Set ℓ) : ℕ → Set ℓ where
 
 -- META
 Vec-wrapper : DataT VecD
-Vec-wrapper (ℓ , _) (A , _) (_ , n) = Vec A n
+Vec-wrapper (ℓ , _) (A , _) (_ , n , _) = Vec A n
 
 -- META
 VecC : DataC VecD Vec-wrapper
@@ -201,7 +201,7 @@ VecC = record
                   ; (a ∷ as) → refl } }
 
 -- USER
-Vec-remember-alg : ∀ℓ 1 λ ℓs → ∀ᵇᵗ false (Set (fst ℓs) ∷ (λ A → [])) λ ps
+Vec-remember-alg : ∀ℓ 1 λ ℓs → ∀ᵐᵗ false (Set (fst ℓs) ∷ (λ A → [])) λ ps
                  → IndAlgebraᵈ ListC ℓs ps (fst ℓs)
 Vec-remember-alg =
   remember-alg ListC (λ ℓs ps → length-alg      $$ ℓs $$ ps)

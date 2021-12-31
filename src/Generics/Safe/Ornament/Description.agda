@@ -54,12 +54,12 @@ record PDataOD (E : PDataD) : Setω where
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
     level-pre-fixed-point : flevel dlevel ⊑ dlevel
-    Param  : BTel plevel
-    param  : ⟦ Param ⟧ᵇᵗ → ⟦ PDataD.Param E ⟧ᵇᵗ
-    Index  : ⟦ Param ⟧ᵇᵗ → BTel ilevel
-    index  : (ps : ⟦ Param ⟧ᵇᵗ) → ⟦ Index ps ⟧ᵇᵗ → ⟦ PDataD.Index E (param ps) ⟧ᵇᵗ
-    applyP : (ps : ⟦ Param ⟧ᵇᵗ)
-           → ConODs ⟦ Index ps ⟧ᵇᵗ (index ps) (PDataD.applyP E (param ps)) struct
+    Param  : MTel plevel
+    param  : ⟦ Param ⟧ᵐᵗ → ⟦ PDataD.Param E ⟧ᵐᵗ
+    Index  : ⟦ Param ⟧ᵐᵗ → MTel ilevel
+    index  : (ps : ⟦ Param ⟧ᵐᵗ) → ⟦ Index ps ⟧ᵐᵗ → ⟦ PDataD.Index E (param ps) ⟧ᵐᵗ
+    applyP : (ps : ⟦ Param ⟧ᵐᵗ)
+           → ConODs ⟦ Index ps ⟧ᵐᵗ (index ps) (PDataD.applyP E (param ps)) struct
 
 record DataOD (E : DataD) : Setω where
   field

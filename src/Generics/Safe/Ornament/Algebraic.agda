@@ -17,8 +17,8 @@ private variable
   cbs : ConBs
 
 algODʳ : {I : Set ℓⁱ} (D : RecD I rb)
-         {X : I → Set ℓ} (xs : ⟦ D ⟧ʳ X) → RecOD (Σ I X) fst D
-algODʳ (ι i  ) x  = ι (_ , x) refl
+         {X : I → Set ℓ} (xs : ⟦ D ⟧ʳ X) → RecOD (Σ[ i ∈ I ] X i × ⊤) fst D
+algODʳ (ι i  ) x  = ι (_ , x , tt) refl
 algODʳ (π A D) xs = π λ a → algODʳ (D a) (xs a)
 
 algConB : Level → ConB → ConB
@@ -27,14 +27,14 @@ algConB ℓ (inl ℓ' ∷ cb) = inl ℓ' ∷ algConB ℓ cb
 algConB ℓ (inr rb ∷ cb) = inl (max-ℓ rb ⊔ ℓ) ∷ inr rb ∷ algConB ℓ cb
 
 algODᶜ : {I : Set ℓⁱ} (D : ConD I cb) {X : I → Set ℓ}
-       → Algᶜ D X → ConOD (Σ I X) fst D (algConB ℓ cb)
-algODᶜ (ι i  ) f = ι (_ , f refl) refl
+       → Algᶜ D X → ConOD (Σ[ i ∈ I ] X i × ⊤) fst D (algConB ℓ cb)
+algODᶜ (ι i  ) f = ι (_ , f refl , tt) refl
 algODᶜ (σ A D) f = σ λ a → algODᶜ (D a) λ xs → f (a , xs)
 algODᶜ (ρ D E) f = Δ (⟦ D ⟧ʳ _) λ xs →
                    ρ (algODʳ D xs) (algODᶜ E (λ xs' → f (xs , xs')))
 
 algODᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {X : I → Set ℓ}
-        → Algᶜˢ D X → ConODs (Σ I X) fst D (List.map (algConB ℓ) cbs)
+        → Algᶜˢ D X → ConODs (Σ[ i ∈ I ] X i × ⊤) fst D (List.map (algConB ℓ) cbs)
 algODᶜˢ []       f = []
 algODᶜˢ (D ∷ Ds) f = algODᶜ  D  (λ xs → f (inl xs))
                  ∷ ∺ algODᶜˢ Ds (λ xs → f (inr xs))
@@ -102,7 +102,7 @@ algODᵖᵈ {ℓ} D {X} f = record
                         (PDataD.level-pre-fixed-point D)
   ; Param  = PDataD.Param D
   ; param  = id
-  ; Index  = λ ps → PDataD.Index D ps ▷ X ps
+  ; Index  = λ ps → PDataD.Index D ps ++ λ is → X ps is ∷ λ _ → []
   ; index  = λ _ → fst
   ; applyP = λ ps → algODᶜˢ (PDataD.applyP D ps) (f ps) }
 
