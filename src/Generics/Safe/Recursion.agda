@@ -45,7 +45,7 @@ fold-base {D = D} C alg rec = Algebra.apply alg ∘ fmapᵈ D rec ∘ DataC.from
 
 AlgC : ∀ {D N} (C : DataC D N) {ℓs ps ℓ} (alg : Algebraᵈ D ℓs ps ℓ) → FoldT C alg → Set _
 AlgC {D} {N} C alg fold = ∀ {is} (ns : ⟦ D ⟧ᵈ (N _ _) is)
-                        → Algebra.apply alg (fmapᵈ D fold ns) ≡ fold (DataC.toN C ns)
+                        → fold (DataC.toN C ns) ≡ Algebra.apply alg (fmapᵈ D fold ns)
 
 record IndAlgebra
   {I : Set ℓⁱ} (D : ConDs I cbs) {X : Carrierᶜˢ D ℓˣ} (f : Algᶜˢ D X) (ℓ : Level) :
@@ -74,4 +74,4 @@ IndAlgC : ∀ {D N} (C : DataC D N) {ℓs ps ℓ}
           (alg : IndAlgebraᵈ C ℓs ps ℓ) → IndT C alg → Set _
 IndAlgC {D} {N} C {ℓs} {ps} alg ind =
   ∀ {is} (ns : ⟦ D ⟧ᵈ (N ℓs ps) is)
-  → IndAlgebra.apply alg _ (ind-fmapᵈ D ind ns) ≡ ind (DataC.toN C ns)
+  → ind (DataC.toN C ns) ≡ IndAlgebra.apply alg _ (ind-fmapᵈ D ind ns)

@@ -6,12 +6,12 @@ open ∀ℓ; open ∀ℓω; open ∀ᵗ; open ∀ᵐᵗ
 open import Generics.Safe.Description
 open import Generics.Safe.Description.FixedPoint
 open import Generics.Safe.Algebra
+open import Generics.Safe.Recursion
+open import Generics.Safe.RecursionScheme
 open import Generics.Safe.Ornament
 open import Generics.Safe.Ornament.Description
 open import Generics.Safe.Ornament.Algebraic
 open import Generics.Safe.Ornament.Promotion
-open import Generics.Safe.Recursion
-open import Generics.Safe.RecursionScheme
 open import Generics.Safe.InductiveEquality
 
 -- USER: ℕ
@@ -225,8 +225,23 @@ data W {ℓ ℓ'} (A : Set ℓ) (B : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
   sup : (a : A) → (B a → W A B) → W A B
 
 data IEqW {ℓ ℓ'} {A : Set ℓ} {B : A → Set ℓ'} : W A B → W A B → Set (ℓ ⊔ ℓ') where
-  sup : (a : A) → {x y : B a → W A B}
-                → ((b : B a) → IEqW (x b) (y b)) → IEqW (sup a x) (sup a y)
+  sup : (a : A) → {ws : B a → W A B × W A B}
+                → ((b : B a) → IEqW (fst (ws b)) (snd (ws b)))
+                → IEqW (sup a (fst ∘ ws)) (sup a (snd ∘ ws))
+
+data SW {ℓ ℓ'} (A : Set ℓ) (B : A → Set ℓ') : W A B → Set (ℓ ⊔ ℓ') where
+  sup : (a : A) → {w : B a → W A B} → ((b : B a) → SW A B (w b)) → SW A B (sup a w)
+
+rememberSW : {A : Set ℓ} {B : A → Set ℓ'} (w : W A B) → SW A B w
+rememberSW (sup a w) = sup a λ b → rememberSW (w b)
+
+forgetSW : {A : Set ℓ} {B : A → Set ℓ'} {w : W A B} → SW A B w → W A B
+forgetSW (sup a s) = sup a λ b → forgetSW (s b)
+
+forget-remember-invSW : {A : Set ℓ} {B : A → Set ℓ'} (w : W A B)
+                      → IEqW (forgetSW (rememberSW w)) w
+forget-remember-invSW (sup a w) =
+  sup a {λ b → forgetSW (rememberSW (w b)) , w b} λ b → forget-remember-invSW (w b)
 
 w₀ w₁ : W Bool λ b → if b then Bool else ⊥
 w₀ = sup true λ _ → sup false λ ()

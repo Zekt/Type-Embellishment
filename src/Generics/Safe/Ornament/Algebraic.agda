@@ -4,7 +4,7 @@ module Generics.Safe.Ornament.Algebraic where
 
 open import Prelude
 open import Prelude.List as List
-open import Generics.Safe.Telescope
+open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵐᵗ
 open import Generics.Safe.Description
 open import Generics.Safe.Algebra
 open import Generics.Safe.Recursion
@@ -36,8 +36,7 @@ algODᶜ (ρ D E) f = Δ (⟦ D ⟧ʳ _) λ xs →
 algODᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {X : I → Set ℓ}
         → Algᶜˢ D X → ConODs (Σ[ i ∈ I ] X i × ⊤) fst D (List.map (algConB ℓ) cbs)
 algODᶜˢ []       f = []
-algODᶜˢ (D ∷ Ds) f = algODᶜ  D  (λ xs → f (inl xs))
-                 ∷ ∺ algODᶜˢ Ds (λ xs → f (inr xs))
+algODᶜˢ (D ∷ Ds) f = algODᶜ D (f ∘ inl) ∷ ∺ algODᶜˢ Ds (f ∘ inr)
 
 module _ (ℓ : Level) where
 
@@ -111,9 +110,48 @@ algODᵈ : (D : DataD) {ℓf : DataD.Levels D → Level}
        → (∀ ℓs ps → Algᵈ D (X ℓs ps)) → DataOD D
 algODᵈ D f = record
   { #levels = DataD.#levels D
-  ; level   = id
+  ; level   = λ ℓs → ℓs
   ; applyL  = λ ℓs → algODᵖᵈ (DataD.applyL D ℓs) (f ℓs) }
 
 algOD : (D : DataD) {ℓf : DataD.Levels D → Level}
       → (∀ ℓs ps → Algebraᵈ D ℓs ps (ℓf ℓs)) → DataOD D
 algOD D alg = algODᵈ D (λ ℓs ps → Algebra.apply (alg ℓs ps))
+
+rememberʳ :
+    {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ}
+    {N : I → Set ℓ} (fold : ∀ {i} → N i → X i) {N' : Σ[ i ∈ I ] X i × ⊤ → Set ℓ'}
+  → (ns : ⟦ D ⟧ʳ N) → Allʳ D (λ i' n → N' (i' , fold n , tt)) ns
+  → ⟦ ⌊ algODʳ D (fmapʳ D fold ns) ⌋ʳ ⟧ʳ N'
+rememberʳ (ι i  ) fold ns n'  = n'
+rememberʳ (π A D) fold ns all = λ a → rememberʳ (D a) fold (ns a) (all a)
+
+rememberᶜ :
+    {I : Set ℓⁱ} (D : ConD I cb) {X : I → Set ℓˣ} (f : Algᶜ D X)
+    {N : I → Set ℓ} (fold : ∀ {i} → N i → X i) {N' : Σ[ i ∈ I ] X i × ⊤ → Set ℓ'}
+  → ∀ {i} (ns : ⟦ D ⟧ᶜ N i) → Allᶜ D (λ i' n → N' (i' , fold n , tt)) ns ℓ''
+  → ⟦ ⌊ algODᶜ D f ⌋ᶜ ⟧ᶜ N' (i , f (fmapᶜ D fold ns) , tt)
+rememberᶜ (ι i  ) f fold refl        all = refl
+rememberᶜ (σ A D) f fold (a  , ns )  all = a , rememberᶜ (D a) (curry f a) fold ns all
+rememberᶜ (ρ D E) f fold (ns , ns') (all , all') =
+  fmapʳ D fold ns , rememberʳ D fold ns all , rememberᶜ E (curry f _) fold ns' all'
+
+rememberᶜˢ :
+    {I : Set ℓⁱ} (D : ConDs I cbs) {X : I → Set ℓˣ} (f : Algᶜˢ D X)
+    {N : I → Set ℓ} (fold : ∀ {i} → N i → X i) {N' : Σ[ i ∈ I ] X i × ⊤ → Set ℓ'}
+  → ∀ {i} (ns : ⟦ D ⟧ᶜˢ N i) → Allᶜˢ D (λ i' n → N' (i' , fold n , tt)) ns ℓ''
+  → ⟦ ⌊ algODᶜˢ D f ⌋ᶜˢ ⟧ᶜˢ N' (i , f (fmapᶜˢ D fold ns) , tt)
+rememberᶜˢ (D ∷ Ds) f fold (inl ns) all = inl (rememberᶜ  D  (f ∘ inl) fold ns all)
+rememberᶜˢ (D ∷ Ds) f fold (inr ns) all = inr (rememberᶜˢ Ds (f ∘ inr) fold ns all)
+
+remember-alg :
+  ∀ {D N} (C : DataC D N) {ℓf : DataD.Levels D → Level}
+    (alg : ∀ ℓs ps → Algebraᵈ D ℓs ps (ℓf ℓs)) (fold : ∀ ℓs ps → FoldT C (alg ℓs ps))
+  → (∀ ℓs ps → AlgC C (alg ℓs ps) (fold ℓs ps))
+  → ∀ {N'} (C' : DataC ⌊ algOD D alg ⌋ᵈ N')
+  → ∀ℓ _ λ ℓs → ∀ᵐᵗ false _ λ ps → IndAlgebraᵈ C ℓs ps _
+remember-alg {D} {N} C alg fold foldC {N'} C' $$ ℓs $$ ps = record
+  { Carrier = λ is n → N' ℓs ps (is , fold ℓs ps n , tt)
+  ; apply = let Dᶜˢ = PDataD.applyP (DataD.applyL D ℓs) ps in λ ns all →
+      DataC.toN C' (subst (λ x → ⟦ ⌊ algOD D alg ⌋ᵈ ⟧ᵈ (N' ℓs ps) (_ , x , tt))
+                      (sym (foldC ℓs ps ns))
+                      (rememberᶜˢ Dᶜˢ (Algebra.apply (alg ℓs ps)) (fold ℓs ps) ns all)) }
