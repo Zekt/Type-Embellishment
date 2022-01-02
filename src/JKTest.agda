@@ -1,8 +1,7 @@
 {-# OPTIONS --safe #-}
 
 open import Prelude
-open import Generics.Safe.Telescope hiding (∷-syntaxᵗ)
-open ∀ℓ; open ∀ℓω; open ∀ᵗ; open ∀ᵐᵗ
+open import Generics.Safe.Telescope hiding (∷-syntaxᵗ); open ∀ℓ; open ∀ℓω; open ∀ᵐᵗ
 open import Generics.Safe.Description
 open import Generics.Safe.Description.FixedPoint
 open import Generics.Safe.Algebra
@@ -11,6 +10,7 @@ open import Generics.Safe.RecursionScheme
 open import Generics.Safe.Ornament
 open import Generics.Safe.Ornament.Description
 open import Generics.Safe.Ornament.Algebraic
+open import Generics.Safe.Ornament.Algebraic.Isomorphism
 open import Generics.Safe.Ornament.Promotion
 open import Generics.Safe.InductiveEquality
 

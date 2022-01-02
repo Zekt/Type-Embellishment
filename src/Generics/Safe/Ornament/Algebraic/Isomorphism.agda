@@ -95,35 +95,38 @@ forget-remember-inv-alg :
   → IndAlgebrasCᵗ C (remember-alg C alg fold foldC C') remember
   → ∀ {E} → DataC (IEqD D (DataC.toN C)) E → IndAlgebrasᵗ C _
 forget-remember-inv-alg {D} {N} C alg fold foldC {N'} C'
-  forget forgetC remember rememberC {E} EC $$ ℓs $$ ps = record
-  { Carrier = λ is n → E ℓs ps (is , forget (remember n) , n , tt)
+  forget forgetC remember rememberC {E} EC $$ ℓs $$ ps =
+  let fold'     = λ {is} → (fold     $$ ℓs $$ ps) {is}
+      forget'   = λ {is} → (forget   $$ ℓs $$ ps) {is}
+      remember' = λ {is} → (remember $$ ℓs $$ ps) {is} in record
+  { Carrier = λ is n → E ℓs ps (is , forget' (remember' n) , n , tt)
   ; apply = λ ns all → let Dᶜˢ = PDataD.applyP (DataD.applyL D ℓs) ps in
       subst (λ n → E ℓs ps (_ , n , DataC.toN C ns , tt)) (sym
      (begin
-        forget (remember (DataC.toN C ns))
-          ≡⟨ cong forget (rememberC ns) ⟩
-        forget (DataC.toN C'
+        forget' (remember' (DataC.toN C ns))
+          ≡⟨ cong forget' (rememberC ns) ⟩
+        forget' (DataC.toN C'
           (subst (λ x → ⟦ ⌊ algOD D alg ⌋ᵈ ⟧ᵈ (N' ℓs ps) (_ , x , tt))
                  (sym (foldC ns))
-                 (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps)) fold
-                    ns (ind-fmapᶜˢ Dᶜˢ remember ns))))
+                 (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps)) fold'
+                    ns (ind-fmapᶜˢ Dᶜˢ remember' ns))))
           ≡⟨ forgetC _ ⟩
         DataC.toN C
           (eraseᶜˢ ⌈ algODᶜˢ Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps)) ⌉ᶜˢ
-          (fmapᶜˢ ⌊ algODᶜˢ Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps)) ⌋ᶜˢ forget
+          (fmapᶜˢ ⌊ algODᶜˢ Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps)) ⌋ᶜˢ forget'
           (subst (λ x → ⟦ ⌊ algODᶜˢ Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps)) ⌋ᶜˢ ⟧ᶜˢ
                           (N' ℓs ps) (_ , x , tt))
                  (sym (foldC ns))
-                 (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps)) fold
-                    ns (ind-fmapᶜˢ Dᶜˢ remember ns)))))
+                 (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps)) fold'
+                    ns (ind-fmapᶜˢ Dᶜˢ remember' ns)))))
           ≡⟨ cong (DataC.toN C)
                   (erase-fmap-subst-lemma
-                     ⌈ algODᶜˢ Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps)) ⌉ᶜˢ forget _ _) ⟩
+                     ⌈ algODᶜˢ Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps)) ⌉ᶜˢ forget' _ _) ⟩
         DataC.toN C
           (eraseᶜˢ ⌈ algODᶜˢ Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps)) ⌉ᶜˢ
-          (fmapᶜˢ ⌊ algODᶜˢ Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps)) ⌋ᶜˢ forget
-                 (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps)) fold
-                    {N' ℓs ps} ns (ind-fmapᶜˢ Dᶜˢ remember ns))))
+          (fmapᶜˢ ⌊ algODᶜˢ Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps)) ⌋ᶜˢ forget'
+                 (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps)) fold'
+                    {N' ℓs ps} ns (ind-fmapᶜˢ Dᶜˢ remember' ns))))
       ∎)) (DataC.toN EC
       (forget-remember-invᶜˢ Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps)) (DataC.toN C)
-         fold forget remember ns all)) } where open ≡-Reasoning
+         fold' forget' remember' ns all)) } where open ≡-Reasoning
