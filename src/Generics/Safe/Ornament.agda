@@ -3,8 +3,10 @@
 module Generics.Safe.Ornament where
 
 open import Prelude
-open import Generics.Safe.Telescope
+open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵐᵗ
 open import Generics.Safe.Description
+open import Generics.Safe.Algebra
+open import Generics.Safe.Recursion
 
 private variable
   A : Set ℓ
@@ -92,3 +94,11 @@ eraseᵈ : {D E : DataD} (O : DataO D E) {ℓs : DataD.Levels D}
          {X : ⟦ PDataD.Index Eᵖ qs ⟧ᵐᵗ → Set ℓ} {is : ⟦ PDataD.Index Dᵖ ps ⟧ᵐᵗ}
        → ⟦ D ⟧ᵈ (X ∘ index) is → ⟦ E ⟧ᵈ X (index is)
 eraseᵈ O {ℓs} = eraseᵖᵈ (DataO.applyL O ℓs)
+
+forget-alg : ∀ {D E} (O : DataO D E) {ℓf} {X : Carriers E ℓf} → Algs E X → Algebrasᵗ D _
+forget-alg O {_} {X} f $$ ℓs $$ ps = record
+  { Carrier = λ is → let Oᵖ = DataO.applyL O ℓs
+                     in  X (DataO.level  O  ℓs   )
+                           (PDataO.param Oᵖ ps   )
+                           (PDataO.index Oᵖ ps is)
+  ; apply = f ∘ eraseᵈ O }

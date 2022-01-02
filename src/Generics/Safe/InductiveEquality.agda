@@ -17,25 +17,25 @@ private variable
   cb  : ConB
   cbs : ConBs
 
-IEqODʳ : {I : Set ℓⁱ} (D : RecD I rb) {N : I → Set ℓ} (ns ns' : ⟦ D ⟧ʳ N)
-       → RecOD (Σ[ i ∈ I ] N i × N i × ⊤) fst D
-IEqODʳ (ι i  ) n  n'  = ι (_ , n , n' , tt) refl
-IEqODʳ (π A D) ns ns' = π λ a → IEqODʳ (D a) (ns a) (ns' a)
+IEqODʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓ} (xs xs' : ⟦ D ⟧ʳ X)
+       → RecOD (Σ[ i ∈ I ] X i × X i × ⊤) fst D
+IEqODʳ (ι i  ) x  x'  = ι (_ , x , x' , tt) refl
+IEqODʳ (π A D) xs xs' = π λ a → IEqODʳ (D a) (xs a) (xs' a)
 
 IEqConB : Level → ConB → ConB
 IEqConB ℓ []            = []
 IEqConB ℓ (inl ℓ' ∷ cb) = inl ℓ' ∷ IEqConB ℓ cb
 IEqConB ℓ (inr rb ∷ cb) = inl (max-ℓ rb ⊔ ℓ) ∷ inl (max-ℓ rb ⊔ ℓ) ∷ inr rb ∷ IEqConB ℓ cb
 
-IEqODᶜ : {I : Set ℓⁱ} (D : ConD I cb) {N : I → Set ℓ}
-       → Algᶜ D N → Algᶜ D N → ConOD (Σ[ i ∈ I ] N i × N i × ⊤) fst D (IEqConB ℓ cb)
+IEqODᶜ : {I : Set ℓⁱ} (D : ConD I cb) {X : I → Set ℓ} → Algᶜ D X → Algᶜ D X
+       → ConOD (Σ[ i ∈ I ] X i × X i × ⊤) fst D (IEqConB ℓ cb)
 IEqODᶜ (ι i  ) f f' = ι (_ , f refl , f' refl , tt) refl
 IEqODᶜ (σ A D) f f' = σ λ a → IEqODᶜ (D a) (curry f a) (curry f' a)
-IEqODᶜ (ρ D E) f f' = Δ (⟦ D ⟧ʳ _) λ ns → Δ (⟦ D ⟧ʳ _) λ ns' →
-                      ρ (IEqODʳ D ns ns') (IEqODᶜ E (curry f ns) (curry f' ns'))
+IEqODᶜ (ρ D E) f f' = Δ (⟦ D ⟧ʳ _) λ xs → Δ (⟦ D ⟧ʳ _) λ xs' →
+                      ρ (IEqODʳ D xs xs') (IEqODᶜ E (curry f xs) (curry f' xs'))
 
-IEqODᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {N : I → Set ℓ}
-        → Algᶜˢ D N → ConODs (Σ[ i ∈ I ] N i × N i × ⊤) fst D (List.map (IEqConB ℓ) cbs)
+IEqODᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {X : I → Set ℓ} → Algᶜˢ D X
+        → ConODs (Σ[ i ∈ I ] X i × X i × ⊤) fst D (List.map (IEqConB ℓ) cbs)
 IEqODᶜˢ []       f = []
 IEqODᶜˢ (D ∷ Ds) f = IEqODᶜ D (f ∘ inl) (f ∘ inl) ∷ ∺ IEqODᶜˢ Ds (f ∘ inr)
 
@@ -94,24 +94,24 @@ module _ (ℓ : Level) where
       ℓᵃ ⊔ ℓⁱ ⊔ ℓ
     ∎ where open ≡-Reasoning
 
-IEqOD : ∀ {D N} → DataC D N → DataOD D
-IEqOD {D} {N} C = record
+IEqOD : ∀ (D : DataD) {ℓf} {X : Carriers D ℓf} → Algs D X → DataOD D
+IEqOD D {ℓf} {X} f = record
   { #levels = DataD.#levels D
   ; level   = id
   ; applyL  = λ ℓs → let Dᵖ = DataD.applyL D ℓs in record
       { alevel = PDataD.alevel Dᵖ
       ; level-pre-fixed-point = IEqOD-pfp-lemma
-          (PDataD.dlevel Dᵖ) (PDataD.ilevel Dᵖ) (PDataD.dlevel Dᵖ) (PDataD.struct Dᵖ)
+          (ℓf ℓs) (PDataD.ilevel Dᵖ) (PDataD.dlevel Dᵖ) (PDataD.struct Dᵖ)
           (PDataD.level-pre-fixed-point Dᵖ)
       ; Param  = PDataD.Param Dᵖ
       ; param  = id
       ; Index  = λ ps → PDataD.Index Dᵖ ps ++ λ is →
-                        N ℓs ps is ∷ λ _ → N ℓs ps is ∷ λ _ → []
+                        X ℓs ps is ∷ λ _ → X ℓs ps is ∷ λ _ → []
       ; index  = λ _  → fst
-      ; applyP = λ ps → IEqODᶜˢ (PDataD.applyP Dᵖ ps) (DataC.toN C) } }
+      ; applyP = λ ps → IEqODᶜˢ (PDataD.applyP Dᵖ ps) f } }
 
-IEqD : ∀ {D N} → DataC D N → DataD
-IEqD C = ⌊ IEqOD C ⌋ᵈ
+IEqD : ∀ (D : DataD) {ℓf} {X : Carriers D ℓf} → Algs D X → DataD
+IEqD D f = ⌊ IEqOD D f ⌋ᵈ
 
 IEq-refl-algʳ :
     {I : Set ℓⁱ} (D : RecD I rb) {N : I → Set ℓ}
@@ -139,12 +139,13 @@ IEq-refl-algᶜˢ :
 IEq-refl-algᶜˢ (D ∷ Ds) toN (inl ns) all = inl (IEq-refl-algᶜ  D  (toN ∘ inl) ns all)
 IEq-refl-algᶜˢ (D ∷ Ds) toN (inr ns) all = inr (IEq-refl-algᶜˢ Ds (toN ∘ inr) ns all)
 
-IEq-refl-alg : ∀ {D N} (C : DataC D N) → ∀ {E} → DataC (IEqD C) E
+IEq-refl-alg : ∀ {D N} (C : DataC D N) {ℓf}
+               {E : Carriers (IEqD D (DataC.toN C)) ℓf} → Algs (IEqD D (DataC.toN C)) E
              → ∀ℓ _ λ ℓs → ∀ᵐᵗ false _ λ ps → IndAlgebraᵈ C ℓs ps _
-IEq-refl-alg {D} C {E} EC $$ ℓs $$ ps = record
+IEq-refl-alg {D} C {_} {E} f $$ ℓs $$ ps = record
   { Carrier = λ is n → E ℓs ps (is , n , n , tt)
-  ; apply = λ ns all → DataC.toN EC
-      (IEq-refl-algᶜˢ (PDataD.applyP (DataD.applyL D ℓs) ps) (DataC.toN C) ns all) }
+  ; apply = λ ns all → f (IEq-refl-algᶜˢ (PDataD.applyP (DataD.applyL D ℓs) ps)
+                                         (DataC.toN C) ns all) }
 
 nonrec-from-IEq-algᶜ :
     {I : Set ℓⁱ} (D : ConD I cb) → All Sum.[ const ⊤ , (_≡ []) ] cb
@@ -166,13 +167,13 @@ nonrec-from-IEq-algᶜˢ (D ∷ Ds) (_ ∷ nr) f (inr es) =
   nonrec-from-IEq-algᶜˢ Ds nr (f ∘ inr) es
 
 nonrec-from-IEq-alg :
-  ∀ {D N} (C : DataC D N)
+  ∀ (D : DataD) {ℓf} {X : Carriers D ℓf} (f : Algs D X)
   → (∀ ℓs → All (All Sum.[ const ⊤ , (_≡ []) ]) (PDataD.struct (DataD.applyL D ℓs)))
-  → ∀ℓ _ λ ℓs → ∀ᵐᵗ false _ λ ps → Algebraᵈ (IEqD C) ℓs ps _
-nonrec-from-IEq-alg {D} C nr $$ ℓs $$ ps = record
+  → ∀ℓ _ λ ℓs → ∀ᵐᵗ false _ λ ps → Algebraᵈ (IEqD D f) ℓs ps _
+nonrec-from-IEq-alg D f nr $$ ℓs $$ ps = record
   { Carrier = λ i → let (_ , n , n' , _) = i in n ≡ n'
   ; apply = let Dᶜˢ = PDataD.applyP (DataD.applyL D ℓs) ps
-            in  nonrec-from-IEq-algᶜˢ Dᶜˢ (nr ℓs) (DataC.toN C) }
+            in  nonrec-from-IEq-algᶜˢ Dᶜˢ (nr ℓs) f }
 
 FunExt : Setω
 FunExt = ∀ {ℓ ℓ'} {A : Set ℓ} {B : A → Set ℓ'} {f g : (a : A) → B a}
@@ -205,9 +206,9 @@ from-IEq-algᶜˢ funext (D ∷ Ds) f (inl es) =
   from-IEq-algᶜ funext D (f ∘ inl) (f ∘ inl) (λ _ → refl) es
 from-IEq-algᶜˢ funext (D ∷ Ds) f (inr es) = from-IEq-algᶜˢ funext Ds (f ∘ inr) es
 
-from-IEq-alg : ∀ {D N} (C : DataC D N) → FunExt
-             → ∀ℓ _ λ ℓs → ∀ᵐᵗ false _ λ ps → Algebraᵈ (IEqD C) ℓs ps _
-from-IEq-alg {D} C funext $$ ℓs $$ ps = record
+from-IEq-alg : ∀ (D : DataD) {ℓf} {X : Carriers D ℓf} (f : Algs D X) → FunExt
+             → ∀ℓ _ λ ℓs → ∀ᵐᵗ false _ λ ps → Algebraᵈ (IEqD D f) ℓs ps _
+from-IEq-alg D f funext $$ ℓs $$ ps = record
   { Carrier = λ i → let (_ , n , n' , _) = i in n ≡ n'
   ; apply = let Dᶜˢ = PDataD.applyP (DataD.applyL D ℓs) ps
-            in  from-IEq-algᶜˢ funext Dᶜˢ (DataC.toN C) }
+            in  from-IEq-algᶜˢ funext Dᶜˢ f }

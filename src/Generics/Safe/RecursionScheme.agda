@@ -3,7 +3,7 @@
 module Generics.Safe.RecursionScheme where
 
 open import Prelude
-open import Generics.Safe.Telescope; open ∀ℓω; open ∀ᵗ; open ∀ᵐᵗ
+open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵐᵗ
 open import Generics.Safe.Description
 open import Generics.Safe.Algebra
 open import Generics.Safe.Recursion
@@ -19,13 +19,13 @@ FoldAlgTᶜ (σ A D) X = (a : A) → FoldAlgTᶜ (D a) X
 FoldAlgTᶜ (ρ D E) X = ⟦ D ⟧ʳ X → FoldAlgTᶜ E X
 
 FoldAlgTᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) → (I → Set ℓ)
-           → Tel (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ hasCon? ℓ cbs)
+           → MTel (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ hasCon? ℓ cbs)
 FoldAlgTᶜˢ []       X = []
 FoldAlgTᶜˢ (D ∷ Ds) X = FoldAlgTᶜ D X ∷ constω (FoldAlgTᶜˢ Ds X)
 
 FoldAlgTᵖᵈ : ∀ (D : PDataD) ps ℓ → Set _
 FoldAlgTᵖᵈ D ps ℓ = {X : ∀ᵐᵗ false (PDataD.Index D ps) λ _ → Set ℓ}
-                  → ∀ᵗ true (FoldAlgTᶜˢ (PDataD.applyP D ps) (X $$_)) λ _
+                  → ∀ᵐᵗ true (FoldAlgTᶜˢ (PDataD.applyP D ps) (X $$_)) λ _
                   → Algebraᵖᵈ D ps ℓ
 
 FoldAlgTᵈ : ∀ (D : DataD) ℓs ps ℓ → Set _
@@ -37,13 +37,11 @@ fold-algᶜ (σ A D) f (a  , xs ) = fold-algᶜ (D a) (f a ) xs
 fold-algᶜ (ρ D E) f (xs , xs') = fold-algᶜ  E    (f xs) xs'
 
 fold-algᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {X : Carrierᶜˢ D ℓ}
-           → ⟦ FoldAlgTᶜˢ D X ⟧ᵗ → Algᶜˢ D X
+           → ⟦ FoldAlgTᶜˢ D X ⟧ᵐᵗ → Algᶜˢ D X
 fold-algᶜˢ []       _        ()
 fold-algᶜˢ (D ∷ Ds) (f , fs) (inl xs) = fold-algᶜ  D  f  xs
 fold-algᶜˢ (D ∷ Ds) (f , fs) (inr xs) = fold-algᶜˢ Ds fs xs
 
-fold-algᵖᵈ : (D : PDataD) → ∀ {ℓ} → ∀ᵐᵗ false _ λ ps → FoldAlgTᵖᵈ D ps ℓ
-fold-algᵖᵈ D $$ ps $$ fs = algebra _ (fold-algᶜˢ (PDataD.applyP D ps) fs)
-
-fold-algᵈ : (D : DataD) → ∀ℓω _ λ ℓs → ∀ {ℓ} → ∀ᵐᵗ false _ λ ps → FoldAlgTᵈ D ℓs ps ℓ
-fold-algᵈ D $$ ℓs = fold-algᵖᵈ (DataD.applyL D ℓs)
+fold-alg : (D : DataD) → ∀ {ℓ} → ∀ℓ _ λ ℓs → ∀ᵐᵗ false _ λ ps → FoldAlgTᵈ D ℓs ps ℓ
+fold-alg D $$ ℓs $$ ps $$ args =
+  algebra _ (fold-algᶜˢ (PDataD.applyP (DataD.applyL D ℓs) ps) args)

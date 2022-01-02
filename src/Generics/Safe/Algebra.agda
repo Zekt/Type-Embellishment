@@ -22,6 +22,9 @@ Carrierᵖᵈ D ps ℓ = Carrierᶜˢ (PDataD.applyP D ps) ℓ
 Carrierᵈ : ∀ (D : DataD) ℓs ps ℓ → Set _
 Carrierᵈ D ℓs = Carrierᵖᵈ (DataD.applyL D ℓs)
 
+Carriers : (D : DataD) (ℓf : DataD.Levels D → Level) → Setω
+Carriers D ℓf = ∀ ℓs ps → Carrierᵈ D ℓs ps (ℓf ℓs)
+
 Algᶜ : {I : Set ℓⁱ} (D : ConD I cb) → Carrierᶜ D ℓ → Set _
 Algᶜ D X = ∀ {i} → ⟦ D ⟧ᶜ X i → X i
 
@@ -34,6 +37,9 @@ Algᵖᵈ D X = ∀ {is} → ⟦ D ⟧ᵖᵈ X is → X is
 Algᵈ : ∀ (D : DataD) {ℓs ps} → Carrierᵈ D ℓs ps ℓ → Set _
 Algᵈ D X = ∀ {is} → ⟦ D ⟧ᵈ X is → X is
 
+Algs : (D : DataD) → ∀ {ℓf} → Carriers D ℓf → Setω
+Algs D X = ∀ {ℓs ps} → Algᵈ D (X ℓs ps)
+
 Coalgᶜ : {I : Set ℓⁱ} (D : ConD I cb) → Carrierᶜ D ℓ → Set _
 Coalgᶜ D X = ∀ {i} → X i → ⟦ D ⟧ᶜ X i
 
@@ -45,6 +51,9 @@ Coalgᵖᵈ D X = ∀ {is} → X is → ⟦ D ⟧ᵖᵈ X is
 
 Coalgᵈ : ∀ (D : DataD) {ℓs ps} → Carrierᵈ D ℓs ps ℓ → Set _
 Coalgᵈ D X = ∀ {is} → X is → ⟦ D ⟧ᵈ X is
+
+Coalgs : (D : DataD) → ∀ {ℓf} → Carriers D ℓf → Setω
+Coalgs D X = ∀ {ℓs ps} → Coalgᵈ D (X ℓs ps)
 
 IndCarrierʳ : {I : Set ℓⁱ} (D : RecD I rb) (X : I → Set ℓˣ) (ℓ : Level) → Set _
 IndCarrierʳ D X ℓ = ∀ i → X i → Set ℓ
