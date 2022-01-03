@@ -142,3 +142,8 @@ instance
   TelescopeToType : Coercion' (Telescope × Type) Type
   ⇑_ ⦃ TelescopeToType ⦄ (T , `A) = TelescopeToΠ `A T
 
+splitType : ℕ → Type → Telescope × Type
+splitType zero    x               = [] , x
+splitType (suc n) (`Π[ s ∶ a ] b) =
+  let tel , c = splitType n b in (s , a) ∷ tel , c
+splitType _       a               = [] , a

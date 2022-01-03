@@ -15,12 +15,12 @@ open Builtin public
 private variable
   A B : Set _
 
-Names     = List Name
-Terms     = List Term
-Types     = List Type
-Clauses   = List Clause
-Telescope = List (String × Arg Type)
-Context   = List (Arg Type)
+Names      = List Name
+Terms      = List Term
+Types      = List Type
+Clauses    = List Clause
+Context    = List (Arg Type)
+ErrorParts = List ErrorPart
 
 Args : Set ℓ → Set ℓ
 Args A = List (Arg A)
@@ -163,3 +163,4 @@ instance
 
   AlternativeTC : Alternative TC
   _<|>_ ⦃ AlternativeTC ⦄ = catchTC
+

@@ -8,9 +8,9 @@ module Metalib.Datatype where
 open import Utils.Reflection
 open import Utils.Error          as Err
 
-open import Generics.Telescope   as Desc
-open import Generics.Levels      as Desc
-open import Generics.Description as Desc
+open import Generics.Telescope   
+open import Generics.Levels      
+open import Generics.Description 
 
 open import Metalib.Telescope as Tel
 
@@ -52,7 +52,6 @@ private
 
   patLam : Telescope → Term → Term
   patLam tel body = pat₁lam₀ tel (Σpat tel) body
-  {-# INLINE patLam #-}
 
   -- Some functions to parse the type signature of a datatype
   splitLevels : Telescope → (ℕ × Telescope)
@@ -85,7 +84,7 @@ module _ {T : Tel ℓ} (`A : ⟦ T ⟧ᵗ → TC Type) where
     vΠ[ `A ]_ <$>  ConDToType (D x)
   ConDToType (ρ R D) = do
     `R ← RecDToType R
-    extendContext (vArg (quoteTerm ⊤)) do
+    extendContext "x" (vArg (quoteTerm ⊤)) do
       vΠ[ `R ]_ <$> ConDToType D
   ConDsToTypes : (Ds : ConDs ⟦ T ⟧ᵗ cbs) → TC (List Type)
   ConDsToTypes []       = return []
@@ -120,7 +119,6 @@ defineByDataD dataD dataN conNs = extendContextℓs #levels λ ℓs → do
 -- description
 
 module _ (dataName : Name) (#levels : ℕ) (parLen : ℕ) where
-  -- `pars` is the total number of parameters
   pars : ℕ
   pars = #levels + parLen 
   

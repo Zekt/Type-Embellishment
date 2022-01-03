@@ -18,3 +18,9 @@ notEndIn n = typeError (strErr "recursion does not end in "
 
 notλ : Term → TC A
 notλ t = typeError $ strErr (show t) ∷ strErr " cannot be reduced further to a λ-abstraction" ∷ []
+
+IMPOSSIBLE : TC A
+IMPOSSIBLE = typeError $ [ strErr "An impossible event occurs." ]
+
+IMPOSSIBLE-term : Term → TC A
+IMPOSSIBLE-term t = typeError $ termErr t ∷ [ strErr " should not occur" ]

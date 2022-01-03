@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --without-K -v meta:10 #-}
 
 open import Prelude
 
@@ -72,10 +72,9 @@ VecD = record
     } }
   }
 
-data _∈_ {ℓ} {A : Set ℓ} : A → List A → Set ℓ where
+data _∈_ {ℓ : Level} {A : Set ℓ} : (z : A) (l : List A) → Set ℓ where
   zero : {x : A} {xs : List A} → x ∈ (x ∷ xs)
-  suc  : {x y : A} {xs : List A}
-       → x ∈ xs → x ∈ (y ∷ xs)
+  suc : {x y : A} {xs : List A} (z : x ∈ xs) → x ∈ (y ∷ xs)
 
 ∈D : DataD
 ∈D = record
