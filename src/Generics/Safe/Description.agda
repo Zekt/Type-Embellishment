@@ -4,6 +4,7 @@ module Generics.Safe.Description where
 
 open import Prelude
 open import Prelude.List as List
+open import Prelude.Sum as Sum
 open import Generics.Safe.Telescope
 
 RecB : Set
@@ -154,3 +155,18 @@ fmapᵈ : (D : DataD) {ℓs : DataD.Levels D} → let Dᵖ = DataD.applyL D ℓs
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈ X i → ⟦ D ⟧ᵈ Y i
 fmapᵈ D {ℓs} = fmapᵖᵈ (DataD.applyL D ℓs)
+
+Finitaryʳ : RecB → Set
+Finitaryʳ = _≡ []
+
+Finitaryᶜ : ConB → Set
+Finitaryᶜ = All Sum.[ const ⊤ , Finitaryʳ ]
+
+Finitaryᶜˢ : ConBs → Set
+Finitaryᶜˢ = All Finitaryᶜ
+
+Finitaryᵖᵈ : PDataD → Set
+Finitaryᵖᵈ D = Finitaryᶜˢ (PDataD.struct D)
+
+Finitaryᵈ : DataD → Set
+Finitaryᵈ D = ∀ ℓs → Finitaryᵖᵈ (DataD.applyL D ℓs)

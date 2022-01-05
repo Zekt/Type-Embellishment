@@ -13,3 +13,6 @@ open import Generics.Safe.Ornament.Algebraic
 
 PromOD : ∀ {D E} (O : DataO D E) {N} → DataC E N → DataOD D
 PromOD {D} O C = algOD D (forget-alg O (DataC.toN C))
+
+PromD : ∀ {D E} (O : DataO D E) {N} → DataC E N → DataD
+PromD O C = ⌊ PromOD O C ⌋ᵈ

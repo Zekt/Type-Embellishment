@@ -11,7 +11,7 @@ private variable
 sym : {x y : A} → x ≡ y → y ≡ x
 sym refl = refl
 
-trans : {x y z : A} → x ≡ y → y ≡ z → x ≡ z
+trans : {x y z : A} → x ≡ y → y ≡ z → x ≡ z
 trans refl eq = eq
 
 cong : ∀ (f : A → B) {x y} → x ≡ y → f x ≡ f y

@@ -1,7 +1,7 @@
 {-# OPTIONS --safe #-}
 
 open import Prelude
-open import Generics.Safe.Telescope hiding (∷-syntaxᵗ); open ∀ℓ; open ∀ℓω; open ∀ᵐᵗ
+open import Generics.Safe.Telescope hiding (∷-syntaxᵗ); open ∀ℓ; open ∀ᵗ; open ∀ᵐᵗ
 open import Generics.Safe.Description
 open import Generics.Safe.Description.FixedPoint
 open import Generics.Safe.Algebra
@@ -12,7 +12,6 @@ open import Generics.Safe.Ornament.Description
 open import Generics.Safe.Ornament.Algebraic
 open import Generics.Safe.Ornament.Algebraic.Isomorphism
 open import Generics.Safe.Ornament.Promotion
-open import Generics.Safe.InductiveEquality
 
 -- USER: ℕ
 
@@ -251,8 +250,8 @@ w₁ = sup true λ { false → sup false λ (); true → sup false λ () }
 IEqW-w₀-w₁ : IEqW w₀ w₁
 IEqW-w₀-w₁ = sup true (λ { false → sup false λ (); true → sup false λ () })
 
-fromIEqW : FunExt → {A : Set ℓ} {B : A → Set ℓ'} {x y : W A B} → IEqW x y → x ≡ y
-fromIEqW funext (sup a e) = cong (sup a) (funext λ b → fromIEqW funext (e b))
+-- fromIEqW : FunExt → {A : Set ℓ} {B : A → Set ℓ'} {x y : W A B} → IEqW x y → x ≡ y
+-- fromIEqW funext (sup a e) = cong (sup a) (funext λ b → fromIEqW funext (e b))
 
 WD : DataD
 WD = record
@@ -264,6 +263,32 @@ WD = record
       ; applyP = λ ps → let (A , B , _) = ps
                        in (σ A λ a → ρ (π (B a) λ _ → ι tt) (ι tt))
                         ∷ [] } }
+
+data BW (A : Set) (B : A → Set) (f : {a : A} → (B a → ℕ) → ℕ) : ℕ → Set where
+  sup : (a : A) → {ns : B a → ℕ} → ((b : B a) → BW A B f (ns b)) → BW A B f (f ns)
+
+data IEqBW {A : Set} {B : A → Set} {f : {a : A} → (B a → ℕ) → ℕ} :
+  (m n : ℕ) → BW A B f m → BW A B f n → Set where
+  sup : (a : A) → {ms ns : B a → ℕ}
+        {x : (b : B a) → BW A B f (ms b)} {y : (b : B a) → BW A B f (ns b)}
+      → ((b : B a) → IEqBW (ms b) (ns b) (x b) (y b))
+      → IEqBW (f ms) (f ns) (sup a x) (sup a y)
+
+module _ {A : Set} {B : A → Set} {f : {a : A} → (B a → ℕ) → ℕ} where
+
+  foldW : W A B → ℕ
+  foldW (sup a w) = f (λ b → foldW (w b))
+
+  forgetBW : {n : ℕ} → BW A B f n → W A B
+  forgetBW (sup a w) = sup a (λ b → forgetBW (w b))
+
+  rememberBW : (w : W A B) → BW A B f (foldW w)
+  rememberBW (sup a w) = sup a (λ b → rememberBW (w b))
+
+  remember-forget-invBW : (n : ℕ) (w : BW A B f n)
+                        → IEqBW (foldW (forgetBW w)) n (rememberBW (forgetBW w)) w
+  remember-forget-invBW .(f _) (sup a w) =
+    sup a {λ b → foldW (forgetBW (w b))} λ b → remember-forget-invBW _ (w b)
 
 PointwiseD : DataD
 PointwiseD = record

@@ -70,6 +70,9 @@ IndCarrierᵖᵈ D {ps} X ℓ = IndCarrierᶜˢ (PDataD.applyP D ps) X ℓ
 IndCarrierᵈ : ∀ (D : DataD) {ℓs ps} (X : Carrierᵈ D ℓs ps ℓˣ) ℓ → Set _
 IndCarrierᵈ D {ℓs} = IndCarrierᵖᵈ (DataD.applyL D ℓs)
 
+IndCarriers : ∀ (D : DataD) {ℓf} (X : Carriers D ℓf) (ℓg : DataD.Levels D → Level) → Setω
+IndCarriers D X ℓg = ∀ {ℓs ps} → IndCarrierᵈ D (X ℓs ps) (ℓg ℓs)
+
 Allʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ} (Y : IndCarrierʳ D X ℓʸ)
        (xs : ⟦ D ⟧ʳ X) → Set (max-ℓ rb ⊔ ℓʸ)
 Allʳ (ι i  ) Y x  = Y i x
@@ -98,12 +101,12 @@ Allᵈ : ∀ (D : DataD) {ℓs ps} {X : Carrierᵈ D ℓs ps ℓˣ} (Y : IndCarr
 Allᵈ D {ℓs} Y xs = Allᵖᵈ (DataD.applyL D ℓs) Y xs
 
 IndAlgᶜ : {I : Set ℓⁱ} (D : ConD I cb) {X : Carrierᶜ D ℓˣ}
-        → Algᶜ D X → IndCarrierᶜ D X ℓʸ → Set _
-IndAlgᶜ D f Y = ∀ {i} xs → Allᶜ D Y xs lzero → Y i (f xs)
+        → Algᶜ D X → IndCarrierᶜ D X ℓʸ → (ℓ : Level) → Set _
+IndAlgᶜ D f Y ℓ = ∀ {i} xs → Allᶜ D Y xs ℓ → Y i (f xs)
 
 IndAlgᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {X : Carrierᶜˢ D ℓˣ}
-         → Algᶜˢ D X → IndCarrierᶜˢ D X ℓʸ → Set _
-IndAlgᶜˢ D f Y = ∀ {i} xs → Allᶜˢ D Y xs lzero → Y i (f xs)
+         → Algᶜˢ D X → IndCarrierᶜˢ D X ℓʸ → (ℓ : Level) → Set _
+IndAlgᶜˢ D f Y ℓ = ∀ {i} xs → Allᶜˢ D Y xs ℓ → Y i (f xs)
 
 IndAlgᵖᵈ : ∀ (D : PDataD) {ps} {X : Carrierᵖᵈ D ps ℓˣ}
          → Algᵖᵈ D X → IndCarrierᵖᵈ D X ℓʸ → Set _
@@ -112,6 +115,10 @@ IndAlgᵖᵈ D f Y = ∀ {is} xs → Allᵖᵈ D Y xs → Y is (f xs)
 IndAlgᵈ : ∀ (D : DataD) {ℓs ps} {X : Carrierᵈ D ℓs ps ℓˣ}
         → Algᵈ D X → IndCarrierᵈ D X ℓ → Set _
 IndAlgᵈ D f Y = ∀ {is} xs → Allᵈ D Y xs → Y is (f xs)
+
+IndAlgs : ∀ (D : DataD) {ℓf} {X : Carriers D ℓf}
+        → Algs D X → ∀ {ℓg} → IndCarriers D X ℓg → Setω
+IndAlgs D f Y = ∀ {ℓs ps} → IndAlgᵈ D {ℓs} {ps} f Y
 
 ind-fmapʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ} {Y : IndCarrierʳ D X ℓʸ}
           → (∀ {i} x → Y i x) → (xs : ⟦ D ⟧ʳ X) → Allʳ D Y xs

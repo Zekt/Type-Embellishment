@@ -1,4 +1,4 @@
-{-# OPTIONS --safe #-}
+{-# OPTIONS --safe --without-K #-}
 
 module Generics.Safe.Recursion where
 
@@ -74,7 +74,7 @@ record IndAlgebra
   constructor ind-algebra
   field
     Carrier : IndCarrierᶜˢ D X ℓ
-    apply   : IndAlgᶜˢ D f Carrier
+    apply   : IndAlgᶜˢ D f Carrier lzero
 
 IndAlgebraᵖᵈ : ∀ (D : PDataD) ps {X : Carrierᵖᵈ D ps ℓˣ} (f : Algᵖᵈ D X) ℓ → Set _
 IndAlgebraᵖᵈ D ps f = IndAlgebra (PDataD.applyP D ps) f
