@@ -62,7 +62,6 @@ eqTerm   : (x y : Term)    → Bool
 eqPat    : (x y : Pattern) → Bool
 eqSort   : (x y : Sort)    → Bool
 eqClause : (x y : Clause)  → Bool
-
   
 eqArgTerm : (x y : Arg Term) → Bool
 eqArgTerm (arg i x) (arg i₁ x₁) = (i == i₁) ∧ eqTerm x x₁
@@ -137,3 +136,13 @@ instance
 
   EqClause : Eq Clause
   _==_ ⦃ EqClause ⦄ = eqClause
+
+eqErrorPart : ErrorPart → ErrorPart → Bool
+eqErrorPart (strErr s)  (strErr t)  = s == t
+eqErrorPart (termErr t) (termErr u) = t == u
+eqErrorPart (nameErr x) (nameErr y) = x == y
+eqErrorPart _           _           = false
+
+instance
+  EqErrorPart : Eq ErrorPart
+  _==_ ⦃ EqErrorPart ⦄ = eqErrorPart

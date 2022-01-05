@@ -9,6 +9,7 @@ open import Generics.Description
 open import Generics.Algebra
 open import Generics.Recursion
 
+open import Utils.Reflection.Print
 ------------------------------------------------------------------------------
 -- Data types
 

@@ -5,8 +5,15 @@ open import Prelude
 module Utils.Reflection.Print where
 
 open import Utils.Reflection.Core     
-open import Utils.Reflection.Term using (splitType)
+open import Utils.Reflection.Term
+  using (splitType)
+open import Utils.Reflection.Eq
 open import Utils.Reflection.Tactic
+
+private variable
+  A : Set _
+
+pattern space = strErr " "
 
 paren : Visibility → ErrorParts → ErrorParts
 paren v s = case v of λ where
@@ -14,8 +21,33 @@ paren v s = case v of λ where
   hidden    → [ strErr "{" ] <> s <> [ strErr "}" ]
   instance′ → [ strErr "⦃ "] <> s <> [ strErr " ⦄"]
 
-pattern space = strErr " "
+vcat : List String → String
+vcat []           = ""
+vcat (msg ∷ [])   = msg 
+vcat (msg ∷ msgs) = msg <> "\n" <> vcat msgs 
 
+sep : ErrorParts → ErrorParts
+sep []       = []
+sep (e ∷ []) = e ∷ []
+sep (e ∷ es) = e ∷ space ∷ sep es
+
+nest : List String → List String
+nest = map ("  " <>_) 
+
+mergeSpace : ErrorParts → ErrorParts
+mergeSpace []                     = []
+mergeSpace (space ∷ space ∷ msg)  = mergeSpace (space ∷ msg)
+mergeSpace (err   ∷ errs)         = err ∷ mergeSpace errs
+
+printArg : Arg A → (A → TC ErrorParts) → TC ErrorParts
+printArg x f = case getVisibility x of λ where
+  visible → do
+    err ← f (unArg x)
+    return $ if elem space err
+      then paren visible err
+      else err
+  v → paren v <$> f (unArg x)
+  
 printTelescope : Telescope → TC ErrorParts → TC ErrorParts
 printTelescope []             m = m
 printTelescope ((s , x) ∷ []) m = do
@@ -23,13 +55,13 @@ printTelescope ((s , x) ∷ []) m = do
   ts ← formatErrorPart (termErr $ unArg x)
   return $ paren (getVisibility x) (strErr s ∷ space ∷ strErr ":" ∷ space ∷ [ strErr ts ]) <> ss
 printTelescope ((s , x) ∷ tel) m = do
-  ss ← extendContext s x (printTelescope tel m)
+  ss ← extendContext s x $ printTelescope tel m
   ts ← formatErrorPart (termErr $ unArg x)
   return $ paren (getVisibility x) (strErr s ∷ space ∷ strErr ":" ∷ space ∷ strErr ts ∷ []) <> [ space ] <> ss
 
 printDataSignature : (tel : Telescope) → Type → TC ErrorParts
 printDataSignature tel a = printTelescope tel do
-    a ← formatErrorPart (termErr a)
+    a ← formatErrorPart $ termErr a
     return $ space ∷ strErr ":" ∷ space ∷ [ strErr a ]
 
 printCon : (pars : ℕ) → (c : Name) → TC String
@@ -40,19 +72,6 @@ printCon pars c = do
 
 printCons : (pars : ℕ) → (cs : Names) → TC (List String)
 printCons pars = mapM (printCon pars) 
-
-vcat : List String → String
-vcat []           = ""
-vcat (msg ∷ [])   = msg 
-vcat (msg ∷ msgs) = msg <> "\n" <> vcat msgs 
-
-nest : List String → List String
-nest = map ("  " <>_) 
-
-mergeSpace : ErrorParts → ErrorParts
-mergeSpace []                     = []
-mergeSpace (space ∷ space ∷ msg)  = mergeSpace (space ∷ msg)
-mergeSpace (err   ∷ errs)         = err ∷ mergeSpace errs
 
 printData : Name → TC ⊤
 printData d = do
@@ -65,34 +84,50 @@ printData d = do
     strErr "data" ∷ space ∷ nameErr d ∷ space ∷ [] <> sig <> space ∷ strErr "where" ∷ []  
 
   cons ← vcat ∘ nest <$> extend*Context tel (printCons pars cs)
-  debugPrint "meta" 5 $ [ strErr (vcat $ decl ∷ cons ∷ []) ]
+  debugPrint "meta" 10 $ [ strErr (vcat $ decl ∷ cons ∷ []) ]
+
+printPattern : Pattern → TC ErrorParts
+printPattern p@(con c (_ ∷ _)) = return $ strErr "(" ∷ pattErr p ∷ strErr ")" ∷ []
+printPattern p = return $ [ pattErr p ]
+
+printPatterns : Args Pattern → TC ErrorParts
+printPatterns []       = ⦇ [] ⦈
+printPatterns (p ∷ []) = printArg p printPattern
+printPatterns (p ∷ ps) = do
+  p  ← printArg p printPattern
+  ps ← printPatterns ps
+  return $ p <> space ∷ ps
+
+printClause : (f : Name) → Clause → TC String 
+printClause f (tel ⊢ ps `= t) = extend*Context tel do
+  ps  ← printPatterns ps
+  formatErrorParts $ (nameErr f ∷ space ∷ ps) <> space ∷ strErr "=" ∷ space ∷ termErr t ∷ []
+printClause f (absurd-clause tel ps) = extend*Context tel do
+  formatErrorParts =<< (λ ps → nameErr f ∷ space ∷ ps) <$> printPatterns ps      
+
+printClauses : Name → Clauses → TC (List String)
+printClauses f = mapM (printClause f)
+
+printSig : Name → TC ErrorParts
+printSig f = do
+  a ← getType f
+  return $ nameErr f ∷ space ∷ strErr ":" ∷ space ∷ termErr a ∷ []
+
+printFunction : Name → TC ⊤
+printFunction f = do
+  `A , cs ← getFunction f
+  css ← printClauses f cs
+  debugPrint "meta" 10 =<< printSig f
+  debugPrint "meta" 10 $ [ strErr (vcat css) ]
 
 macro
-  printDataT : Name → Tactic
-  printDataT d _ = printData d
+  print : Name → Tactic
+  print d hole = do
+    `dT ← getType d
+    caseM getDefinition d of λ where
+      (function _)        → printFunction d
+      (data-type pars cs) → printData d
+      (record-type c fs)  → typeError $
+        strErr "Printing the definition of a record type is currently not supported." ∷ []
+      _                   → printSig d >>= debugPrint "meta" 10
 
-{-
-printClause : Clause → TC ErrorParts 
-printClause = {!!}
-
-printClauses : Clauses → TC ErrorParts
-printClauses = {!!}
-
-printNameWithType : Name → TC ErrorParts
-printNameWithType d = (λ `dT → nameErr d ∷ strErr " : " ∷ termErr `dT ∷ []) <$> getType d
-
--}
-
--- printDef : Name → TC ErrorParts
--- printDef d = do
---   `dT ← getType d
---   caseM getDefinition d of λ where
---     (function cs)       → {!!}
---     (data-type pars cs) → do
---       {!!}
---     (record-type c fs)  → {!!}
---     (data-cons _)       → printNameWithType d
---     axiom               → do
---       eps ← printNameWithType d
---       return $ strErr "postualte\n  " ∷ eps
---     prim-fun            → {!!}
