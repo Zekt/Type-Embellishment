@@ -1,4 +1,4 @@
-{-# OPTIONS -v meta:10  #-}
+{-# OPTIONS -v meta:5  #-}
 open import Prelude
   hiding ([_,_])
 
@@ -33,11 +33,11 @@ data Rel (A : Set) : (xs ys : List A) → Set where
 `T-rel : Telescope × Type
 `T-rel = getTelescopeT Rel
 
-_ : evalT (fromTelescope $ fst `T-rel) ≡ [ B ∶ Set ] [ bs ∶ List B ] [ bs ∶ List B ] []
-_ = refl
-
-_ : evalT (fromTel $ [ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] []) ≡ (3 , fst `T-rel)
-_ = refl
+--_ : evalT (fromTelescope $ fst `T-rel) ≡ [ B ∶ Set ] [ bs ∶ List B ] [ bs ∶ List B ] []
+--_ = refl
+--
+--_ : evalT (fromTel $ [ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] []) ≡ (3 , fst `T-rel)
+--_ = refl
 
 
 ------------------------------------------------------------------------------
@@ -48,25 +48,25 @@ data Pointwise (A : Set) (B : Set) (R : A → B → Set) : (xs : List A) → (ys
 T-pointwise : Telescope
 T-pointwise = fst $ getTelescopeT Pointwise 
 
-_ : evalT (fromTelescope T-pointwise)
-  ≡ [ A ∶ Set ] [ B ∶ Set ] [ R ∶ (A → B → Set) ] [ as ∶ List A ] [ bs ∶ List B ] []
-_ = refl
-
-_ : evalT (fromTel $ [ A ∶ Set ] [ B ∶ Set ] [ R ∶ (A → B → Set) ] [ xs ∶ List A ] [ ys ∶ List B ] []) ≡ (5 , T-pointwise)
-_ = refl
+--_ : evalT (fromTelescope T-pointwise)
+--  ≡ [ A ∶ Set ] [ B ∶ Set ] [ R ∶ (A → B → Set) ] [ as ∶ List A ] [ bs ∶ List B ] []
+--_ = refl
+--
+--_ : evalT (fromTel $ [ A ∶ Set ] [ B ∶ Set ] [ R ∶ (A → B → Set) ] [ xs ∶ List A ] [ ys ∶ List B ] []) ≡ (5 , T-pointwise)
+--_ = refl
 
 -- Okay but unusual examples
-sort-is-not-normal : Tel _
-sort-is-not-normal = [ b ∶ if true then Bool else ⊥ ] [] 
+--sort-is-not-normal : Tel _
+--sort-is-not-normal = [ b ∶ if true then Bool else ⊥ ] [] 
 
-`sort-is-not-normal : ℕ × Telescope
-`sort-is-not-normal = evalT (fromTel sort-is-not-normal)
+--`sort-is-not-normal : ℕ × Telescope
+--`sort-is-not-normal = evalT (fromTel sort-is-not-normal)
 
-_ : sort-is-not-normal ≡ [ b ∶ Bool ] []
-_ = refl
+--_ : sort-is-not-normal ≡ [ b ∶ Bool ] []
+--_ = refl
 --
-_ : `sort-is-not-normal ≢ evalT (fromTel ([ b ∶ Bool ] []))
-_ = λ { () }
+--_ : `sort-is-not-normal ≢ evalT (fromTel ([ b ∶ Bool ] []))
+--_ = λ { () }
 
 ex₁ : Bool → Tel _
 ex₁ = λ b → []
@@ -75,8 +75,8 @@ ex₁ = λ b → []
 `ex₁ =  evalT (fromTel $ Bool ∷ ex₁)
 
 -- Not really a telescope: 
-bad : Tel _
-bad = [ b ∶ Bool ] (case b of λ { true → [ n ∶ ℕ ] [] ; false → [] })
+--bad : Tel _
+--bad = [ b ∶ Bool ] (case b of λ { true → [ n ∶ ℕ ] [] ; false → [] })
 
 data Len (A : Set ℓ) : List A → List A → Set ℓ where
   z : Len A [] []
@@ -126,36 +126,23 @@ DataD.applyL  pointwiseD (a , b , ℓ , _) = record
           ∷ []
       }
 
-macro
-  getDataD : Name → ℕ → List Name → Tactic
-  getDataD d pars cs hole = do
-    checkedHole ← checkType hole (quoteTerm DataD) 
-    unify checkedHole =<< describeData pars d cs
-
-describeLen : Name → TC _
-describeLen dname = do d ← describeData 1 (quote newLen) (quote newz ∷ quote news ∷ [])
-                       declareDef (vArg dname) (quoteTerm DataD)
-                       defineFun dname [ clause [] [] d ]
-
 newLenD : DataD
-newLenD = getDataD newLen 1 (quote newz ∷ quote news ∷ [])
-    
-natD' : DataD 
-natD' = getDataD ℕ 0 (quote ℕ.zero ∷ quote ℕ.suc ∷ []) 
+newLenD = getDataD newLen
 
--- unquoteDecl newDataD = test newDataD
+natD' : DataD
+natD' = getDataD ℕ
 
+-- translate a translation back
 unquoteDecl data newnewLen constructor newnewz newnews =
   defineByDataD newLenD newnewLen (newnewz ∷ newnews ∷ [])
 
--- translate a translation back
-newnewlen : newnewLen ℕ (2 ∷ 5 ∷ []) (1 ∷ 3 ∷ [])
-newnewlen = newnews 2 1 [ 5 ] [ 3 ] (newnews 5 3 [] [] newnewz)
-
-
+--newnewlen : newnewLen ℕ (2 ∷ 5 ∷ []) (1 ∷ 3 ∷ [])
+--newnewlen = newnews 2 1 [ 5 ] [ 3 ] (newnews 5 3 [] [] newnewz)
+--
+--
 NatDataC = genDataCT NatD ℕ
 PointwiseDataC = genDataCT pointwiseD Pointwise'
-
+--
 ListDataC : DataCᶜ ListD List
 ListDataC = genDataCT ListD List
 {- dataC
@@ -166,7 +153,6 @@ ListDataC = genDataCT ListD List
   (genToN-fromNT List)
   -- (λ { [] → refl ; (x ∷ xs) → refl })
 -}
-   
 LenDataC : DataCᶜ LenD Len
 LenDataC = genDataCT LenD Len 
 --   dataC

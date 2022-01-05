@@ -8,7 +8,7 @@ module Metalib.Datatype where
 open import Utils.Reflection
 open import Utils.Error          as Err
 
-open import Generics.Telescope   
+open import Generics.Telescope hiding (fromMTel)
 open import Generics.Levels      
 open import Generics.Description 
 
@@ -20,7 +20,7 @@ private
     cb  : ConB
     cbs : ConBs
     T   : MTel ℓ
-  
+
   pattern `ιʳ x  = con₁ (quote RecD.ι) x
   pattern `ιᶜ x  = con₁ (quote ConD.ι) x
   pattern `π x y = con₂ (quote π) x y
@@ -40,7 +40,7 @@ private
   idxToArgs {T = _ ++ _} (T₁ , T₂) = idxToArgs T₁ >>= λ x →
                                      idxToArgs T₂ >>= λ y →
                                      return $ x <> y
-    
+
   -- ... and back
   argsToIdx : Context → Term
   argsToIdx []       = `tt
@@ -62,7 +62,7 @@ private
   splitLevels t@((_ , arg _ a) ∷ tel) = if a == `Level
     then bimap suc id (splitLevels tel)
     else 0 , t
-    
+
   -- The fully applied datatype 
   typeOfData : (d : Name) (pars : ℕ)  → ⟦ T ⟧ᵐᵗ → TC Type 
   typeOfData d pars `x = do
@@ -79,11 +79,11 @@ private
 module _ {T : MTel ℓ} (`A : ⟦ T ⟧ᵐᵗ → TC Type) where
   RecDToType : (R : RecD ⟦ T ⟧ᵐᵗ rb) → TC Type
   RecDToType (ι i) = `A i
-  RecDToType (π A D) = extendContextT visible-relevant-ω A λ `A x →
+  RecDToType (π A D) = extendContextT "x" visible-relevant-ω A λ `A x →
       vΠ[ `A ]_ <$> RecDToType (D x)
   ConDToType : (D : ConD ⟦ T ⟧ᵐᵗ cb) → TC Type
   ConDToType (ι i) = `A i
-  ConDToType (σ A D) = extendContextT visible-relevant-ω A λ `A x →
+  ConDToType (σ A D) = extendContextT "x" visible-relevant-ω A λ `A x →
     vΠ[ `A ]_ <$>  ConDToType (D x)
   ConDToType (ρ R D) = do
     `R ← RecDToType R
@@ -94,16 +94,16 @@ module _ {T : MTel ℓ} (`A : ⟦ T ⟧ᵐᵗ → TC Type) where
   ConDsToTypes (D ∷ Ds) = ⦇ ConDToType D ∷ ConDsToTypes Ds ⦈
 
 getCons : Name → (pars : ℕ) → (`Param : Telescope) → PDataD → TC (List Type)
-getCons d pars `Param Dᵖ = extendContextTs (fromMTel Param) λ ⟦Ps⟧ →
+getCons d pars `Param Dᵖ = extendCxtMTel Param λ ⟦Ps⟧ →
   map (prefixToType `Param) <$>
-      ConDsToTypes (typeOfData d pars) (applyP (fromMTel-proj Param ⟦Ps⟧))
+      ConDsToTypes (typeOfData d pars) (applyP ⟦Ps⟧)
   where open PDataD Dᵖ
 {-# INLINE getCons #-}
 
 getSignature : PDataD → TC (ℕ × Telescope × Type)
 getSignature Dᵖ = do
-  pars  , `Param ← fromTel $ fromMTel Param
-  dT             ← fromTelType (fromMTel (Param ++ Index)) (Set dlevel)
+  pars  , `Param ← fromMTel Param
+  dT             ← fromMTelType (Param ++ Index) (Set dlevel)
   return $ pars , `Param , dT
   where open PDataD Dᵖ
 
@@ -124,8 +124,8 @@ defineByDataD dataD dataN conNs = extendContextℓs #levels λ ℓs → do
 
 module _ (dataName : Name) (#levels : ℕ) (parLen : ℕ) where
   pars : ℕ
-  pars = #levels + parLen 
-  
+  pars = #levels + parLen
+
   telescopeToRecD : Telescope → Type → TC Term
   telescopeToRecD ((s , arg _ `x) ∷ `tel) end = do
     rec ← telescopeToRecD `tel end
@@ -137,7 +137,7 @@ module _ (dataName : Name) (#levels : ℕ) (parLen : ℕ) where
 
   telescopeToConD : Telescope → Type → TC Term
   telescopeToConD ((s , (arg _ `x)) ∷ `tel) end = if endsIn `x dataName
-    then (do 
+    then (do
       recd ← uncurry telescopeToRecD (⇑ `x)
       cond ← telescopeToConD `tel end
     -- Indices in recursion in Description is different from those in native constructors! Should strengthen by one instead of abstracting.
@@ -167,16 +167,30 @@ describeData parLen dataName conNames = do
     conDefs  ← mapM (describeConstructor dataName #levels parLen) conNames
     `ℓ       ← getSetLevel end
     `#levels ← quoteTC! #levels
-    
+
     let applyBody = to`ConDs conDefs
         lenTel    = length tel
         `lamℓ     = strengthen lenTel lenTel `ℓ
-        `lampar   = strengthen lenTel lenTel $ to`Tel par
+        `lampar   = strengthen lenTel lenTel $ to`MTel par
         ℓtel      = duplicate #levels ("_" , vArg `Level)
     return $ `datad `#levels
-      (patLam ℓtel (`pdatad `lamℓ `refl `lampar (patLam par (to`Tel idx)) (patLam par applyBody)))
+      (patLam ℓtel (`pdatad `lamℓ
+                            `refl
+                            `lampar
+                            (patLam par (to`MTel idx))
+                            (patLam par applyBody)))
   where
     splitAcc : Telescope → Telescope → ℕ → (Telescope × Telescope)
     splitAcc tel₁ []   n = tel₁ , []
     splitAcc tel₁ tel₂ 0 = tel₁ , tel₂
     splitAcc tel₁ (x ∷ tel₂) (suc n) = splitAcc (tel₁ <> [ x ]) tel₂ n
+
+macro
+  getDataD : Name → Tactic
+  getDataD d hole = do
+    dataType ← getType d
+    pars , cs ← getDataDefinition d
+    let (tel     , _) = (⇑ dataType) ⦂ Telescope × Type
+        (#levels , _) = splitLevels tel
+    checkedHole ← checkType hole (quoteTerm DataD) 
+    unify checkedHole =<< describeData (pars ∸ #levels) d cs

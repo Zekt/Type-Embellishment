@@ -16,7 +16,7 @@ data Tel : Level → Set where
 ∷-syntax : (A : Set ℓ) (T : A → Tel ℓ') → Tel (ℓ ⊔ ℓ')
 ∷-syntax = _∷_
 
-syntax ∷-syntax A (λ x → T) = [ x ∶ A ] T
+--syntax ∷-syntax A (λ x → T) = [ x ∶ A ] T
 
 ⟦_⟧ᵗ : Tel ℓ → Set ℓ
 ⟦ []    ⟧ᵗ = ⊤
