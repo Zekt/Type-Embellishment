@@ -20,7 +20,7 @@ data Tel where
     _∷_  : (A : Set ℓ) (T : A → Tel ℓ') → Tel (ℓ ⊔ ℓ')
     _++_ : (T : Tel ℓ) (U : ⟦ T ⟧ᵗ → Tel ℓ') → Tel (ℓ ⊔ ℓ')
 
-⟦ []    ⟧ᵗ = ⊤
+⟦ []     ⟧ᵗ = ⊤
 ⟦ A ∷  T ⟧ᵗ = Σ A λ a → ⟦ T a ⟧ᵗ
 ⟦ T ++ U ⟧ᵗ = Σ ⟦ T ⟧ᵗ λ t → ⟦ U t ⟧ᵗ
 
