@@ -3,7 +3,7 @@
 module Generics.Safe.Recursion where
 
 open import Prelude
-open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵐᵗ
+open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵗ
 open import Generics.Safe.Description
 open import Generics.Safe.Algebra
 
@@ -40,7 +40,7 @@ Algebras : (D : DataD) → (DataD.Levels D → Level) → Setω
 Algebras D ℓf = ∀ ℓs ps → Algebraᵈ D ℓs ps (ℓf ℓs)
 
 Algebrasᵗ : (D : DataD) → (DataD.Levels D → Level) → Setω
-Algebrasᵗ D ℓf = ∀ℓ _ λ ℓs → ∀ᵐᵗ false _ λ ps → Algebraᵈ D ℓs ps (ℓf ℓs)
+Algebrasᵗ D ℓf = ∀ℓ _ λ ℓs → ∀ᵗ false _ λ ps → Algebraᵈ D ℓs ps (ℓf ℓs)
 
 FoldT : ∀ {D N} (_ : DataC D N) {ℓs ps ℓ} (alg : Algebraᵈ D ℓs ps ℓ) → Set _
 FoldT {D} {N} _ alg = ∀ {is} → N _ _ is → Algebra.Carrier alg is
@@ -49,7 +49,7 @@ FoldsT : ∀ {D N} (_ : DataC D N) {ℓf} → Algebras D ℓf → Setω
 FoldsT C alg = ∀ {ℓs ps} → FoldT C (alg ℓs ps)
 
 FoldsTᵗ : ∀ {D N} (_ : DataC D N) {ℓf} → Algebrasᵗ D ℓf → Setω
-FoldsTᵗ C alg = ∀ℓ _ λ ℓs → ∀ᵐᵗ false _ λ ps → FoldT C (alg $$ ℓs $$ ps)
+FoldsTᵗ C alg = ∀ℓ _ λ ℓs → ∀ᵗ false _ λ ps → FoldT C (alg $$ ℓs $$ ps)
 
 fold-base : ∀ {D N} (C : DataC D N) {ℓs ps} (alg : Algebraᵈ D ℓs ps ℓ)
           → FoldT C alg → FoldT C alg
@@ -86,7 +86,7 @@ IndAlgebras : ∀ {D N} (C : DataC D N) → (DataD.Levels D → Level) → Setω
 IndAlgebras C ℓf = ∀ ℓs ps → IndAlgebraᵈ C ℓs ps (ℓf ℓs)
 
 IndAlgebrasᵗ : ∀ {D N} (C : DataC D N) → (DataD.Levels D → Level) → Setω
-IndAlgebrasᵗ C ℓf = ∀ℓ _ λ ℓs → ∀ᵐᵗ false _ λ ps → IndAlgebraᵈ C ℓs ps (ℓf ℓs)
+IndAlgebrasᵗ C ℓf = ∀ℓ _ λ ℓs → ∀ᵗ false _ λ ps → IndAlgebraᵈ C ℓs ps (ℓf ℓs)
 
 IndT : ∀ {D N} (C : DataC D N) {ℓs ps ℓ} (alg : IndAlgebraᵈ C ℓs ps ℓ) → Set _
 IndT C alg = ∀ {is} n → IndAlgebra.Carrier alg is n
@@ -95,7 +95,7 @@ IndsT : ∀ {D N} (C : DataC D N) {ℓf} → IndAlgebras C ℓf → Setω
 IndsT C alg = ∀ {ℓs ps} → IndT C (alg ℓs ps)
 
 IndsTᵗ : ∀ {D N} (C : DataC D N) {ℓf} → IndAlgebrasᵗ C ℓf → Setω
-IndsTᵗ C alg = ∀ℓ _ λ ℓs → ∀ᵐᵗ false _ λ ps → IndT C (alg $$ ℓs $$ ps)
+IndsTᵗ C alg = ∀ℓ _ λ ℓs → ∀ᵗ false _ λ ps → IndT C (alg $$ ℓs $$ ps)
 
 ind-base : ∀ {D N} (C : DataC D N) {ℓs ps ℓ} (alg : IndAlgebraᵈ C ℓs ps ℓ)
          → IndT C alg → IndT C alg

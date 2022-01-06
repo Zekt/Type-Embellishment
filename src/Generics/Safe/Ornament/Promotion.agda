@@ -3,7 +3,7 @@
 module Generics.Safe.Ornament.Promotion where
 
 open import Prelude
-open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵐᵗ
+open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵗ
 open import Generics.Safe.Description
 open import Generics.Safe.Algebra
 open import Generics.Safe.Recursion
