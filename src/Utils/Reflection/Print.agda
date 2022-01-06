@@ -52,10 +52,12 @@ printTelescope : Telescope → TC ErrorParts → TC ErrorParts
 printTelescope []             m = m
 printTelescope ((s , x) ∷ []) m = do
   ss ← extendContext s x m
+  s  ← extendContext s x (formatErrorPart $ termErr (var₀ 0))
   ts ← formatErrorPart (termErr $ unArg x)
   return $ paren (getVisibility x) (strErr s ∷ space ∷ strErr ":" ∷ space ∷ [ strErr ts ]) <> ss
 printTelescope ((s , x) ∷ tel) m = do
   ss ← extendContext s x $ printTelescope tel m
+  s  ← extendContext s x (formatErrorPart $ termErr (var₀ 0))
   ts ← formatErrorPart (termErr $ unArg x)
   return $ paren (getVisibility x) (strErr s ∷ space ∷ strErr ":" ∷ space ∷ strErr ts ∷ []) <> [ space ] <> ss
 

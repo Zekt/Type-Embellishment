@@ -115,7 +115,7 @@ prefixToTerm ((s , `A) ∷ `T) `t =
 
 levels : ℕ → Telescope
 levels zero    = []
-levels (suc n) = ("_" , hArg `Level) ∷ levels n
+levels (suc n) = ("ℓ" , hArg `Level) ∷ levels n
 
 vUnknowns : ℕ → Args Term
 vUnknowns = flip duplicate (vArg unknown)
