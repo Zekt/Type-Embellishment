@@ -19,8 +19,10 @@ private
     rb  : RecB
     cb  : ConB
     cbs : ConBs
-    T   : Tel ℓ
+    T U : Tel ℓ
 
+  pattern `[]    = con₀ (quote ConDs.[])
+  pattern _`∷_ x y = con₂ (quote ConDs._∷_) x y
   pattern `ιʳ x  = con₁ (quote RecD.ι) x
   pattern `ιᶜ x  = con₁ (quote ConD.ι) x
   pattern `π x y = con₂ (quote π) x y
@@ -34,20 +36,18 @@ private
   pattern `pdatad x y z u v = con₅ (quote pdatad) x y z u v
 
   -- Translate the semantics of an object-level telescope to a context
-  idxToArgs : ⟦ T ⟧ᵗ → TC Context
-  idxToArgs {T = []}    tt      = ⦇ [] ⦈
-  idxToArgs {T = _ ∷ _} (x , Γ) = ⦇ (vArg <$> quoteTC x) ∷ (idxToArgs Γ) ⦈
-  idxToArgs {T = _ ++ _} (T₁ , T₂) = idxToArgs T₁ >>= λ x →
-                                     idxToArgs T₂ >>= λ y →
-                                     return $ x <> y
+  idxToArgs : ⟦ T ⟧ᵗ → TC (Args Term)
+  idxToArgs {T = []}     tt      = ⦇ [] ⦈
+  idxToArgs {T = _ ∷ _}  (x , Γ) = ⦇ (vArg <$> quoteTC x) ∷ (idxToArgs Γ) ⦈
+  idxToArgs {T = _ ++ _} (T , U) = ⦇ (idxToArgs T) <> (idxToArgs U) ⦈
 
   -- ... and back
-  argsToIdx : Context → Term
+  argsToIdx : Args Term → Term
   argsToIdx []       = `tt
   argsToIdx (x ∷ xs) = (unArg x) `, argsToIdx xs
 
   to`ConDs : Terms → Term
-  to`ConDs = foldr (con₀ (quote ConDs.[])) (con₂ (quote ConDs._∷_))
+  to`ConDs = foldr `[] _`∷_
 
   Σpat : Telescope → Pattern
   Σpat = snd ∘ foldr (0 , `tt) λ where
@@ -57,6 +57,11 @@ private
   patLam tel body = pat₁lam₀ tel (Σpat tel) body
 
   -- Some functions to parse the type signature of a datatype
+  splitAcc : Telescope → Telescope → ℕ → (Telescope × Telescope)
+  splitAcc tel₁ []   n = tel₁ , []
+  splitAcc tel₁ tel₂ 0 = tel₁ , tel₂
+  splitAcc tel₁ (x ∷ tel₂) (suc n) = splitAcc (tel₁ <> [ x ]) tel₂ n
+  
   splitLevels : Telescope → (ℕ × Telescope)
   splitLevels []                      = 0 , []
   splitLevels t@((_ , arg _ a) ∷ tel) = if a == `Level
@@ -64,10 +69,8 @@ private
     else 0 , t
 
   -- The fully applied datatype 
-  typeOfData : (d : Name) (pars : ℕ)  → ⟦ T ⟧ᵗ → TC Type 
-  typeOfData d pars `x = do
-    args ← (vUnknowns pars <>_) <$> idxToArgs `x
-    return $ def d args
+  typeOfData : (d : Name) (pars : ℕ) → ⟦ U ⟧ᵗ → ⟦ T ⟧ᵗ → TC Type 
+  typeOfData d pars ps is = ⦇ (def d) ⦇ (idxToArgs ps) <> (idxToArgs is) ⦈ ⦈ 
 
   endsIn : Type → Name → Bool
   endsIn (def f _)       u = f == u
@@ -79,15 +82,20 @@ private
 module _ {T : Tel ℓ} (`A : ⟦ T ⟧ᵗ → TC Type) where
   RecDToType : (R : RecD ⟦ T ⟧ᵗ rb) → TC Type
   RecDToType (ι i) = `A i
-  RecDToType (π A D) = extendContextT "x" visible-relevant-ω A λ `A x →
-      vΠ[ `A ]_ <$> RecDToType (D x)
+  RecDToType (π A D) = do
+    s ← getAbsName D
+    extendContextT s visible-relevant-ω A λ `A x →
+      vΠ[ s ∶ `A ]_ <$> RecDToType (D x)
+      
   ConDToType : (D : ConD ⟦ T ⟧ᵗ cb) → TC Type
   ConDToType (ι i) = `A i
-  ConDToType (σ A D) = extendContextT "x" visible-relevant-ω A λ `A x →
-    vΠ[ `A ]_ <$>  ConDToType (D x)
+  ConDToType (σ A D) = do
+    s ← getAbsName D
+    extendContextT s visible-relevant-ω A λ `A x →
+      vΠ[ s ∶ `A ]_ <$>  ConDToType (D x)
   ConDToType (ρ R D) = do
     `R ← RecDToType R
-    extendContext "x" (vArg (quoteTerm ⊤)) do
+    extendContext "_" (vArg `R) do
       vΠ[ `R ]_ <$> ConDToType D
   ConDsToTypes : (Ds : ConDs ⟦ T ⟧ᵗ cbs) → TC (List Type)
   ConDsToTypes []       = return []
@@ -96,14 +104,17 @@ module _ {T : Tel ℓ} (`A : ⟦ T ⟧ᵗ → TC Type) where
 getCons : Name → (pars : ℕ) → (`Param : Telescope) → PDataD → TC (List Type)
 getCons d pars `Param Dᵖ = extendCxtTel Param λ ⟦Ps⟧ →
   map (prefixToType `Param) <$>
-      ConDsToTypes (typeOfData d pars) (applyP ⟦Ps⟧)
+      ConDsToTypes (typeOfData d pars ⟦Ps⟧) (applyP ⟦Ps⟧)
   where open PDataD Dᵖ
 {-# INLINE getCons #-}
 
 getSignature : PDataD → TC (ℕ × Telescope × Type)
 getSignature Dᵖ = do
-  pars  , `Param ← fromTel Param
-  dT             ← fromTelType (Param ++ Index) (Set dlevel)
+  pars  , `Param   ← fromTel Param
+  _ , `Param+Index ← fromTel (Param ++ Index)
+  dT ← extend*Context `Param+Index do
+    `Setℓ ← quoteTC! (Set dlevel)
+    return $ ⇑ (`Param+Index , `Setℓ) ⦂ Type
   return $ pars , `Param , dT
   where open PDataD Dᵖ
 
@@ -172,25 +183,20 @@ describeData parLen dataName conNames = do
         lenTel    = length tel
         `lamℓ     = strengthen lenTel lenTel `ℓ
         `lampar   = strengthen lenTel lenTel $ to`Tel par
-        ℓtel      = duplicate #levels ("_" , vArg `Level)
+        ℓtel      = duplicate #levels ("ℓ" , vArg `Level)
     return $ `datad `#levels
       (patLam ℓtel (`pdatad `lamℓ
                             `refl
                             `lampar
                             (patLam par (to`Tel idx))
                             (patLam par applyBody)))
-  where
-    splitAcc : Telescope → Telescope → ℕ → (Telescope × Telescope)
-    splitAcc tel₁ []   n = tel₁ , []
-    splitAcc tel₁ tel₂ 0 = tel₁ , tel₂
-    splitAcc tel₁ (x ∷ tel₂) (suc n) = splitAcc (tel₁ <> [ x ]) tel₂ n
 
 macro
-  getDataD : Name → Tactic
-  getDataD d hole = do
-    dataType ← getType d
-    pars , cs ← getDataDefinition d
+  genDataD : Name → Tactic
+  genDataD d hole = do
+    checkedHole ← checkType hole (quoteTerm DataD) 
+    dataType   ← getType d
+    pars , cs  ← getDataDefinition d
     let (tel     , _) = (⇑ dataType) ⦂ Telescope × Type
         (#levels , _) = splitLevels tel
-    checkedHole ← checkType hole (quoteTerm DataD) 
     unify checkedHole =<< describeData (pars ∸ #levels) d cs
