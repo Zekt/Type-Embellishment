@@ -3,7 +3,7 @@ open import Prelude
 
 module Generics.Recursion where
 
-open import Generics.Telescope; open ∀ℓ; open ∀ᵐᵗ
+open import Generics.Telescope; open ∀ℓ; open ∀ᵗ
 open import Generics.Levels
 open import Generics.Description
 open import Generics.Algebra
@@ -18,7 +18,6 @@ PDataT Dᵖ = ∀ ps → Carrierᵖᵈ Dᵖ ps (PDataD.dlevel Dᵖ)
 
 DataT : DataD → Setω
 DataT D = ∀ ℓs → PDataT (DataD.applyL D ℓs)
-
 
 {-# NO_UNIVERSE_CHECK #-}
 record DataC (D : DataD) (N : DataT D) : Set where
@@ -60,7 +59,7 @@ IndAlgebras : ∀ {D N} (C : DataC D N) → (DataD.Levels D → Level) → Setω
 IndAlgebras C ℓf = ∀ ℓs ps → IndAlgebraᵈ C ℓs ps (ℓf ℓs)
 
 IndAlgebrasᵗ : ∀ {D N} (C : DataC D N) → (DataD.Levels D → Level) → Setω
-IndAlgebrasᵗ C ℓf = ∀ℓ _ λ ℓs → ∀ᵐᵗ false _ λ ps → IndAlgebraᵈ C ℓs ps (ℓf ℓs)
+IndAlgebrasᵗ C ℓf = ∀ℓ _ λ ℓs → ∀ᵗ false _ λ ps → IndAlgebraᵈ C ℓs ps (ℓf ℓs)
 
 IndT : ∀ {D N} (C : DataC D N) {ℓs ps ℓ} (alg : IndAlgebraᵈ C ℓs ps ℓ) → Set _
 IndT C alg = ∀ {is} n → IndAlgebra.Carrier alg is n
@@ -69,7 +68,7 @@ IndsT : ∀ {D N} (C : DataC D N) {ℓf} → IndAlgebras C ℓf → Setω
 IndsT C alg = ∀ {ℓs ps} → IndT C (alg ℓs ps)
 
 IndsTᵗ : ∀ {D N} (C : DataC D N) {ℓf} → IndAlgebrasᵗ C ℓf → Setω
-IndsTᵗ C alg = ∀ℓ _ λ ℓs → ∀ᵐᵗ false _ λ ps → IndT C (alg $$ ℓs $$ ps)
+IndsTᵗ C alg = ∀ℓ _ λ ℓs → ∀ᵗ false _ λ ps → IndT C (alg $$ ℓs $$ ps)
 
 ind-base : ∀ {D N} (C : DataC D N) {ℓs ps ℓ} (alg : IndAlgebraᵈ C ℓs ps ℓ)
          → IndT C alg → IndT C alg
@@ -98,8 +97,8 @@ IndAlgebrasCᵗ C alg ind = ∀ {ℓs ps} → IndAlgebraC C (alg $$ ℓs $$ ps) 
 
 -- Curried form of `DataT` 
 PDataTᶜ : (Dᵖ : PDataD) → Set _
-PDataTᶜ Dᵖ = Curriedᵐᵗ true Param      λ ps →
-             Curriedᵐᵗ true (Index ps) λ is →
+PDataTᶜ Dᵖ = Curriedᵗ true Param      λ ps →
+             Curriedᵗ true (Index ps) λ is →
              Set dlevel
   where open PDataD Dᵖ
 
@@ -107,7 +106,7 @@ DataTᶜ : DataD → Setω
 DataTᶜ D = ∀ {ℓs} → PDataTᶜ (DataD.applyL D ℓs)
 
 uncurryᵖᵈᵗ : {Dᵖ : PDataD} → PDataTᶜ Dᵖ → PDataT Dᵖ
-uncurryᵖᵈᵗ {Dᵖ} N ps = uncurryᵐᵗ (Index ps) _ (uncurryᵐᵗ Param _ N ps)
+uncurryᵖᵈᵗ {Dᵖ} N ps = uncurryᵗ (Index ps) _ (uncurryᵗ Param _ N ps)
   where open PDataD Dᵖ
 
 uncurryᵈᵗ : (D : DataD) → DataTᶜ D → DataT D
