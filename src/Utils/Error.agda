@@ -10,8 +10,10 @@ open import Utils.Reflection.Show
 private variable
   A : Set _
 
-notEndIn : Name → TC A
-notEndIn n = typeError (strErr "recursion does not end in "
+notEndIn : String → Name → TC A
+notEndIn s n = typeError (strErr "Type of"
+                       ∷ strErr s
+                       ∷ strErr "does not end in "
                        ∷ nameErr n
                        ∷ [])
 

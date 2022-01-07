@@ -67,6 +67,14 @@ instance
   MonoidList : Monoid (List A)
   mempty ⦃ MonoidList ⦄ = []
 
+head : List A →  Maybe A
+head (x ∷ _) = just x
+head [] = nothing
+
+last : List A → Maybe A
+last (_ ∷ xs) = last xs
+last [] = nothing
+
 filter : (A → Bool) → List A → List A
 filter p []       = []
 filter p (x ∷ xs) = if p x
