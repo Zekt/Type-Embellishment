@@ -69,8 +69,8 @@ private
     else 0 , t
 
   -- The fully applied datatype 
-  typeOfData : (d : Name) (pars : ℕ) → ⟦ U ⟧ᵗ → ⟦ T ⟧ᵗ → TC Type 
-  typeOfData d pars ps is = ⦇ (def d) ⦇ (idxToArgs ps) <> (idxToArgs is) ⦈ ⦈ 
+  typeOfData : (d : Name) (ps : ⟦ U ⟧ᵗ) (is : ⟦ T ⟧ᵗ) → TC Type 
+  typeOfData d ps is = ⦇ (def d) ⦇ (idxToArgs ps) <> (idxToArgs is) ⦈ ⦈ 
 
   endsIn : Type → Name → Bool
   endsIn (def f _)       u = f == u
@@ -101,31 +101,32 @@ module _ {T : Tel ℓ} (`A : ⟦ T ⟧ᵗ → TC Type) where
   ConDsToTypes []       = return []
   ConDsToTypes (D ∷ Ds) = ⦇ ConDToType D ∷ ConDsToTypes Ds ⦈
 
-getCons : Name → (pars : ℕ) → (`Param : Telescope) → PDataD → TC (List Type)
-getCons d pars `Param Dᵖ = extendCxtTel Param λ ⟦Ps⟧ →
+getCons : Name → (`Param : Telescope) → PDataD → TC (List Type)
+getCons d `Param Dᵖ = extendCxtTel Param λ ps →
   map (prefixToType `Param) <$>
-      ConDsToTypes (typeOfData d pars ⟦Ps⟧) (applyP ⟦Ps⟧)
+      ConDsToTypes (typeOfData d ps) (applyP ps)
   where open PDataD Dᵖ
 {-# INLINE getCons #-}
 
-getSignature : PDataD → TC (ℕ × Telescope × Type)
+getSignature : PDataD → TC (Telescope × Type)
 getSignature Dᵖ = do
-  pars  , `Param   ← fromTel Param
-  _ , `Param+Index ← fromTel (Param ++ Index)
+  `Param       ← fromTel Param
+  `Param+Index ← fromTel (Param ++ Index)
   dT ← extend*Context `Param+Index do
     `Setℓ ← quoteTC! (Set dlevel)
     return $ ⇑ (`Param+Index , `Setℓ) ⦂ Type
-  return $ pars , `Param , dT
+    
+  return $ `Param , dT
   where open PDataD Dᵖ
 
 defineByDataD : DataD → Name → List Name → TC _
 defineByDataD dataD dataN conNs = extendContextℓs #levels λ ℓs → do
   let `Levels = levels #levels
   let Dᵖ      = applyL ℓs
-  pars , `Param , dT ← getSignature Dᵖ
-  declareData dataN (#levels + pars) (prefixToType `Levels dT)
+  `Param , dT ← getSignature Dᵖ
+  declareData dataN (#levels + length `Param) (prefixToType `Levels dT)
 
-  conTs ← map (prefixToType `Levels) <$> getCons dataN pars `Param Dᵖ
+  conTs ← map (prefixToType `Levels) <$> getCons dataN `Param Dᵖ
   defineData dataN (zip conNs conTs)
   where open DataD dataD
 
