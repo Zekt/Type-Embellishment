@@ -1,7 +1,7 @@
 {-# OPTIONS --safe #-}
 
 open import Prelude
-open import Generics.Safe.Telescope hiding (∷-syntaxᵗ); open ∀ℓ; open ∀ᵗ; open ∀ᵐᵗ
+open import Generics.Safe.Telescope hiding (∷-syntaxᵗ); open ∀ℓ; open ∀ℓω; open ∀ᵐᵗ; open ∀ᵗ
 open import Generics.Safe.Description
 open import Generics.Safe.Description.FixedPoint
 open import Generics.Safe.Algebra
@@ -45,15 +45,15 @@ NatC = record
                   ; (suc n) → refl } }
 
 -- USER (specialising a generic library component)
-foldℕ-alg : ∀ {ℓ} → ∀ℓ 0 λ ℓs → ∀ᵐᵗ false [] λ ps →
+foldℕ-alg : ∀ {ℓ} → ∀ℓ _ λ ℓs → ∀ᵐᵗ false [] λ ps →
             {X : ∀ᵐᵗ false [] λ _ → Set ℓ} →
             ∀ᵐᵗ true ((X $$ tt) ∷ λ _ → (X $$ tt → X $$ tt) ∷ λ _ → []) λ _ →
-            Algebra (ι tt ∷ ρ (ι tt) (ι tt) ∷ []) ℓ
+            Algebra (ι tt ∷ (ρ (ι tt) (ι tt) ∷ [])) ℓ --(ι tt ∷ ρ (ι tt) (ι tt) ∷ []) ℓ
 -- foldℕ-alg : {! ∀ℓω _ λ ℓs → ∀ {ℓ} → ∀ᵗ false _ λ ps → FoldAlgTᵈ NatD ℓs ps ℓ !}
 foldℕ-alg = fold-alg NatD
 
 -- META
-foldℕ-wrapper : ∀ {ℓ} → ∀ℓ 0 λ ℓs → ∀ᵐᵗ false [] λ ps →
+foldℕ-wrapper : ∀ {ℓ} → ∀ℓ _ λ ℓs → ∀ᵐᵗ false [] λ ps →
                 {X : ∀ᵐᵗ false [] λ _ → Set ℓ} →
                 ∀ᵐᵗ true ((X $$ tt) ∷ λ _ → (X $$ tt → X $$ tt) ∷ λ _ → []) λ args →
                 FoldT NatC (foldℕ-alg $$ ℓs $$ ps $$ args)

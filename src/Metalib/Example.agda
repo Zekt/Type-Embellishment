@@ -7,9 +7,11 @@ module Metalib.Example where
 open import Utils.Reflection
 
 open import Generics.Description
-open import Generics.Telescope
+open import Generics.Telescope; open ∀ᵗ; open ∀ℓ
 open import Generics.Recursion
+open import Generics.RecursionScheme
 open import Generics.Example
+open import Generics.Algebra
 
 open import Metalib.Telescope
 open import Metalib.Datatype
@@ -160,3 +162,12 @@ LenDataC = genDataCT LenD Len
 --   (λ { z → inl refl ; (s {x} {y} {xs} {ys} p) → inr (inl (x , y , xs , ys , p , refl)) })
 --   (λ { (inl refl) → refl ; (inr (inl (x , y , xs , ys , p , refl))) → refl })
 --   λ { z → refl ; (s x) → refl }
+
+foldℕ-alg : ∀ {ℓ} → ∀ℓ _ λ ℓs → ∀ᵗ false [] λ ps →
+            {X : ∀ᵗ false [] λ _ → Set ℓ} →
+            ∀ᵗ true ((X $$ tt) ∷ λ _ → (X $$ tt → X $$ tt) ∷ λ _ → []) λ _ →
+            Algebra (ι tt ∷ (ρ (ι tt) (ι tt) ∷ [])) ℓ
+-- foldℕ-alg : {! ∀ℓω _ λ ℓs → ∀ {ℓ} → ∀ᵗ false _ λ ps → FoldAlgTᵈ NatD ℓs ps ℓ !}
+foldℕ-alg = fold-alg NatD
+foldList : ⊤
+foldList = genFoldT ListD List ListDataC fold-alg

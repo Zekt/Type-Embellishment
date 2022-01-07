@@ -4,15 +4,19 @@ open import Prelude
 module Metalib.Recursion where
 
 open import Utils.Reflection
+open import Utils.Error as Err
 
-open import Generics.Description as D
-open import Generics.Recursion   as D
+open import Generics.Description     as D
+open import Generics.Recursion       as D
+open import Generics.RecursionScheme as D
+open import Generics.Algebra         as D
 
 private
   pattern `inl x = con₁ (quote inl) x
   pattern `inr x = con₁ (quote inr) x
   pattern `refl  = con₀ (quote refl)
   pattern _`,_ x y = con₂ (quote Prelude._,_) x y
+  pattern `Algebra = quote Algebra
 
   -- c x₁ x₂ ⋯ xₙ can be represented as `Term` and `Pattern`
   cxtToVars : (Γ : Telescope) → (Term × Pattern) × (Args Term × Args Pattern)
@@ -75,3 +79,44 @@ macro
 
   genDataCT : (D : DataD) → (Nᶜ : DataTᶜ D) → Tactic
   genDataCT = genDataC
+
+genFold : (D : DataD) → (Nᶜ : DataTᶜ D) → (C : DataCᶜ D Nᶜ)→ Name → Tactic
+genFold D Nᶜ Cᶜ fun hole = do
+  --let N = DataCᶜ D Nᶜ
+  --algName ← freshName ""
+  --let curriedAlgT : Type
+  --    curriedAlgT = pi (hArg (quoteTerm Level))
+  --                     {!!}
+  --declareDef (vArg algName) {!!}
+  qD ← quoteTC D
+  `algT ← dontReduceDefs [ `Algebra ] $ inferType (def fun [ vArg qD ]) >>= normalise
+  debugPrint "meta" 5 [ termErr `algT  ]
+  unify hole (quoteTerm tt)
+  where
+    mutual
+      replaceAlgAcc : List (Arg Term) → List (Arg Term) → List Name → Type → TC (List (Arg Term))
+      replaceAlgAcc args [] ∀s taker = IMPOSSIBLE
+      replaceAlgAcc args [ arg i x ] ∀s taker = do
+        x' ← replaceAlg x ∀s taker
+        return (args <> [ arg i x' ])
+      replaceAlgAcc args (x ∷ xs) ∀s taker =
+        replaceAlgAcc (args <> [ x ]) xs ∀s taker
+
+      -- replace Algebra with FoldT in a function type,
+      -- thus generate a type of fold-wrapper
+      replaceAlg : Type → List Name → Type → TC Type
+      replaceAlg (def `Algebra args) ∀s taker =
+        let foldT = {!!}
+        in  return (def (quote FoldT) {!!})
+      replaceAlg (def m args) ∀s taker with elem m ∀s
+      ... | true = do
+        args' ← replaceAlgAcc [] args ∀s taker
+        return (def m args')
+      ... | _ = notEndIn "fold-alg" `Algebra
+      replaceAlg (`Π[ s ∶ a ] x) ∀s taker = do
+        x' ← replaceAlg x ∀s taker
+        return (`Π[ s ∶ a ] x')
+      replaceAlg _ _ _ = notEndIn "fold-alg" `Algebra
+
+macro
+  genFoldT = genFold
