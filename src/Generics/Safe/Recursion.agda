@@ -30,6 +30,27 @@ record Algebra {I : Set ℓⁱ} (D : ConDs I cbs) ℓ
     Carrier : Carrierᶜˢ D ℓ
     apply   : Algᶜˢ D Carrier
 
+record FoldP : Setω where
+  field
+    {Desc}   : DataD
+    {Native} : DataT Desc
+    Conv     : DataC Desc Native
+    #levels  : ℕ
+  Levels : Set
+  Levels = Level ^ #levels
+  field
+    levels   : Levels → DataD.Levels Desc
+    {plevel} : Levels → Level
+    Param    : ∀ ℓs → Tel (plevel ℓs)
+    param    : ∀ ℓs → ⟦ Param ℓs ⟧ᵗ → ⟦ PDataD.Param (DataD.applyL Desc (levels ℓs)) ⟧ᵗ
+    {clevel} : Levels → Level
+    Carrier  : ∀ ℓs (ps : ⟦ Param ℓs ⟧ᵗ)
+             → Carrierᶜˢ (PDataD.applyP (DataD.applyL Desc (levels ℓs)) (param ℓs ps))
+                         (clevel ℓs)
+    apply    : ∀ ℓs (ps : ⟦ Param ℓs ⟧ᵗ)
+             → Algᶜˢ (PDataD.applyP (DataD.applyL Desc (levels ℓs)) (param ℓs ps))
+                     (Carrier ℓs ps)
+
 Algebraᵖᵈ : ∀ (D : PDataD) ps ℓ → Set _
 Algebraᵖᵈ D ps = Algebra (PDataD.applyP D ps)
 
@@ -75,6 +96,27 @@ record IndAlgebra
   field
     Carrier : IndCarrierᶜˢ D X ℓ
     apply   : IndAlgᶜˢ D f Carrier lzero
+
+record IndP : Setω where
+  field
+    {Desc}   : DataD
+    {Native} : DataT Desc
+    Conv     : DataC Desc Native
+    #levels  : ℕ
+  Levels : Set
+  Levels = Level ^ #levels
+  field
+    levels   : Levels → DataD.Levels Desc
+    {plevel} : Levels → Level
+    Param    : ∀ ℓs → Tel (plevel ℓs)
+    param    : ∀ ℓs → ⟦ Param ℓs ⟧ᵗ → ⟦ PDataD.Param (DataD.applyL Desc (levels ℓs)) ⟧ᵗ
+    {clevel} : Levels → Level
+    Carrier  : ∀ ℓs (ps : ⟦ Param ℓs ⟧ᵗ)
+             → IndCarrierᶜˢ (PDataD.applyP (DataD.applyL Desc (levels ℓs)) (param ℓs ps))
+                            (Native (levels ℓs) (param ℓs ps)) (clevel ℓs)
+    apply    : ∀ ℓs (ps : ⟦ Param ℓs ⟧ᵗ)
+             → IndAlgᶜˢ (PDataD.applyP (DataD.applyL Desc (levels ℓs)) (param ℓs ps))
+                        (DataC.toN Conv) (Carrier ℓs ps) lzero
 
 IndAlgebraᵖᵈ : ∀ (D : PDataD) ps {X : Carrierᵖᵈ D ps ℓˣ} (f : Algᵖᵈ D X) ℓ → Set _
 IndAlgebraᵖᵈ D ps f = IndAlgebra (PDataD.applyP D ps) f
