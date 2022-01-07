@@ -10,7 +10,6 @@ open import Utils.Error as Err
 open import Generics.Telescope
 open import Generics.Description
 
-dprint = debugPrint "meta" 5
 
 -- Frequently used terms
 private

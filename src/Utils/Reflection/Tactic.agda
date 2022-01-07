@@ -12,6 +12,8 @@ import Utils.Error as Err
 private variable
   A : Set ℓ
 
+dprint = debugPrint "meta" 5
+
 give : Term → Tactic
 give v = λ hole → unify hole v
 
