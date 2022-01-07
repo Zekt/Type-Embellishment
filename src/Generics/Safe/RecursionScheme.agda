@@ -3,7 +3,7 @@
 module Generics.Safe.RecursionScheme where
 
 open import Prelude
-open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵗ
+open import Generics.Safe.Telescope
 open import Generics.Safe.Description
 open import Generics.Safe.Algebra
 open import Generics.Safe.Recursion
@@ -41,12 +41,30 @@ fold-alg {D} C = record
   ; levels  = snd
   ; Param   = λ (ℓ , ℓs) → let Dᵖ = DataD.applyL D ℓs in
       PDataD.Param Dᵖ
-      ++ λ ps → (Curriedᵗ false (PDataD.Index Dᵖ ps) (λ _ → Set ℓ) ∷ constω [])
+      ++ λ ps → (Curriedᵗ (PDataD.Index Dᵖ ps) (λ _ → Set ℓ) ∷ constω [])
       ++ λ (X , _) → FoldAlgTᶜˢ (PDataD.applyP Dᵖ ps) (λ is → uncurryᵗ _ _ X is)
   ; param   = λ _ (ps , _) → ps
   ; Carrier = λ _ (ps , (X , _) , args) → uncurryᵗ _ _ X
-  ; apply   = λ (ℓ , ℓs) (ps , (X , _) , args) →
-                fold-algᶜˢ (PDataD.applyP (DataD.applyL D ℓs) ps) args }
+  ; apply   = λ { (ℓ , ℓs) (ps , (X , _) , args) →
+                fold-algᶜˢ (PDataD.applyP (DataD.applyL D ℓs) ps) ? } }
+
+{-
+Failed to solve the following constraints:
+  foldr lzero _⊔_ (map (λ _ → ℓ) (PDataD.struct (DataD.applyL D ℓs)))
+  ⊔
+  foldr lzero _⊔_
+  (map (λ x → foldr lzero _⊔_ (map ρ-level x))
+   (PDataD.struct (DataD.applyL D ℓs)))
+  ⊔
+  foldr lzero _⊔_
+  (map (λ x → foldr lzero _⊔_ (map σ-level x))
+   (PDataD.struct (DataD.applyL D ℓs)))
+    = foldr lzero _⊔_ (map max-π (PDataD.struct (DataD.applyL D ℓs))) ⊔
+      foldr lzero _⊔_ (map max-σ (PDataD.struct (DataD.applyL D ℓs)))
+      ⊔
+      foldr lzero _⊔_ (map (λ _ → ℓ) (PDataD.struct (DataD.applyL D ℓs)))
+    (blocked on _ℓ_165)
+-}
 
 -- fold-alg : (D : DataD) → ∀ {ℓ} → ∀ℓ _ λ ℓs → ∀ᵗ false _ λ ps → FoldAlgTᵈ D ℓs ps ℓ
 -- fold-alg D $$ ℓs $$ ps $$ args =
