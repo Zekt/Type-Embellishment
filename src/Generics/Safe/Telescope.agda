@@ -24,22 +24,25 @@ mutual
 
 syntax ∷-syntaxᵗ A (λ x → T) = [ x ∶ A ] T
 
-Curriedᵗ : (T : Tel ℓ) (X : ⟦ T ⟧ᵗ → Set ℓ') → Set (ℓ ⊔ ℓ')
-Curriedᵗ []       X = X tt
-Curriedᵗ (A ∷  T) X = (a : A) → Curriedᵗ (T a) (curry X a)
-Curriedᵗ (T ++ U) X = Curriedᵗ T λ t → Curriedᵗ (U t) λ u → X (t , u)
+Curriedᵗ : (visible : Bool) (T : Tel ℓ) (X : ⟦ T ⟧ᵗ → Set ℓ') → Set (ℓ ⊔ ℓ')
+Curriedᵗ _     []       X = X tt
+Curriedᵗ false (A ∷  T) X = {a : A} → Curriedᵗ false (T a) (curry X a)
+Curriedᵗ true  (A ∷  T) X = (a : A) → Curriedᵗ true  (T a) (curry X a)
+Curriedᵗ v     (T ++ U) X = Curriedᵗ v T λ t → Curriedᵗ v (U t) λ u → X (t , u)
 
-curryᵗ : (T : Tel ℓ) (X : ⟦ T ⟧ᵗ → Set ℓ')
-       → ((t : ⟦ T ⟧ᵗ) → X t) → Curriedᵗ T X
-curryᵗ []       X f = f tt
-curryᵗ (A ∷  T) X f = λ a → curryᵗ (T a) (curry X a) (curry f a)
-curryᵗ (T ++ U) X f = curryᵗ T _ λ t → curryᵗ (U t) _ λ u → f (t , u)
+curryᵗ : {T : Tel ℓ} {X : ⟦ T ⟧ᵗ → Set ℓ'} {visible : Bool}
+       → ((t : ⟦ T ⟧ᵗ) → X t) → Curriedᵗ visible T X
+curryᵗ {T = []    } {X}         f = f tt
+curryᵗ {T = A ∷  T} {X} {false} f =       curryᵗ {T = T _} (curry f _)
+curryᵗ {T = A ∷  T} {X} {true } f = λ a → curryᵗ {T = T a} (curry f a)
+curryᵗ {T = T ++ U} {X}         f = curryᵗ {T = T} λ t → curryᵗ {T = U t} λ u → f (t , u)
 
-uncurryᵗ : (T : Tel ℓ) (X : ⟦ T ⟧ᵗ → Set ℓ')
-         → Curriedᵗ T X → (t : ⟦ T ⟧ᵗ) → X t
-uncurryᵗ []       X f tt      = f
-uncurryᵗ (A ∷  T) X f (a , t) = uncurryᵗ (T a) (curry X a) (f a) t
-uncurryᵗ (T ++ U) X f (t , u) = uncurryᵗ (U t) _ (uncurryᵗ T _ f t) u
+uncurryᵗ : {T : Tel ℓ} {X : ⟦ T ⟧ᵗ → Set ℓ'} {visible : Bool}
+         → Curriedᵗ visible T X → (t : ⟦ T ⟧ᵗ) → X t
+uncurryᵗ {T = []    } {X}         f tt      = f
+uncurryᵗ {T = A ∷  T} {X} {false} f (a , t) = uncurryᵗ {T = T a}  f    t
+uncurryᵗ {T = A ∷  T} {X} {true } f (a , t) = uncurryᵗ {T = T a} (f a) t
+uncurryᵗ {T = T ++ U} {X}         f (t , u) = uncurryᵗ {T = U t} (uncurryᵗ {T = T} f t) u
 
 _^_ : Set → ℕ → Set
 A ^ zero  = ⊤
