@@ -21,10 +21,12 @@ private
     (_ , arg i _) (n , (t , p) , (targs , pargs)) →
       suc n , ((var₀ n `, t) , (var n `, p)) , (arg i (var₀ n) ∷ targs) , (arg i (var n) ∷ pargs)
 
+  forgetTy : Telescope → Telescope
+  forgetTy = map $ bimap id (λ `A → arg (getArgInfo `A) unknown)
+
 module _ (pars : ℕ) where
   conToClause : (c : Name) → TC (Telescope × (Term × Pattern) × Args Term × Args Pattern)
   conToClause c = < forgetTy , cxtToVars > ∘ (λ `A → drop pars $ (⇑ `A) .fst) <$> getType c
-    where forgetTy = map $ bimap id (λ `A → arg (getArgInfo `A) unknown)
 
   consToClauses : (cs : Names) → TC (List (Telescope × (Term × Pattern) × Name × Args Term × Args Pattern))
   consToClauses []       = ⦇ [] ⦈

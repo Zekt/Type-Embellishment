@@ -37,18 +37,17 @@ extendContextℓs (suc n) c = extendContextT "ℓ" hidden-relevant-ω Level λ _
 
 -- ℕ is the length of (T : Tel ℓ)
 -- this may fail if `Tel` is not built by λ by pattern matching lambdas.
-fromTel : Tel ℓ → TC (ℕ × Telescope)
-fromTel []      = return (0 , [])
+fromTel : Tel ℓ → TC Telescope
+fromTel []      = return []
 fromTel (A ∷ T) = do
   s ← getAbsName T
   extendContextT s (visible-relevant-ω) A λ `A x → do
-    n , `Γ ← fromTel (T x) 
-    return $ (suc n) , (s , vArg `A) ∷ `Γ 
+    (s , vArg `A) ∷_ <$> fromTel (T x) 
 fromTel (T ++ U) = do
-  n , `Γ ← fromTel T
+  `Γ ← fromTel T
   extendCxtTel T λ x → do
-    m , `Δ ← fromTel (U x)
-    return (n + m , `Γ <> `Δ)
+    `Δ ← fromTel (U x)
+    return (`Γ <> `Δ)
 
 to`Tel : Telescope → Term
 to`Tel = foldr `[] λ where

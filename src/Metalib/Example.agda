@@ -22,7 +22,7 @@ open import Metalib.Recursion
 _ : evalT (fromTelescope $ fst `T-Nat) ≡ []
 _ = refl
 
-_ : (evalT (fromTel [])) ≡ (0 , fst `T-Nat)
+_ : (evalT (fromTel [])) ≡ (fst `T-Nat)
 _ = refl
 
 ------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ data Rel (A : Set) : (xs ys : List A) → Set where
 _ : evalT (fromTelescope $ fst `T-rel) ≡ [ B ∶ Set ] [ bs ∶ List B ] [ bs ∶ List B ] []
 _ = refl
 
-_ : evalT (fromTel $ [ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] []) ≡ (3 , fst `T-rel)
+_ : evalT (fromTel $ [ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] []) ≡ fst `T-rel
 _ = refl
 
 
@@ -47,7 +47,7 @@ _ = refl
 sort-is-not-normal : Tel _
 sort-is-not-normal = [ b ∶ if true then Bool else ⊥ ] [] 
 
-`sort-is-not-normal : ℕ × Telescope
+`sort-is-not-normal : Telescope
 `sort-is-not-normal = evalT (fromTel sort-is-not-normal)
 
 _ : sort-is-not-normal ≡ [ b ∶ Bool ] []
@@ -59,8 +59,8 @@ _ = λ { () }
 ex₁ : Bool → Tel _
 ex₁ = λ b → []
 
-`ex₁ : ℕ × Telescope
-`ex₁ =  evalT (fromTel $ Bool ∷ ex₁)
+`ex₁ : Telescope
+`ex₁ = evalT (fromTel $ Bool ∷ ex₁)
 
 -- Not really a telescope: 
 bad : Tel _
@@ -83,7 +83,7 @@ NatD = record
     }}
   }
 
-NatDataC = genDataC NatD ℕ
+NatC = genDataC NatD ℕ
 
 natD' : DataD
 natD' = genDataD ℕ
@@ -114,8 +114,8 @@ ListD' = genDataD List
 _ : ListD ≡ ListD'
 _ = refl
 
-ListDataC : DataCᶜ ListD List
-ListDataC =  genDataC ListD List 
+ListC : DataCᶜ ListD List
+ListC =  genDataC ListD List  
 
 unquoteDecl data List' constructor nil cons =
   defineByDataD ListD List' (nil ∷ cons ∷ [])
@@ -123,7 +123,7 @@ unquoteDecl data List' constructor nil cons =
 --
 data Len (A : Set ℓ) : List A → List A → Set ℓ where
   z : Len A [] []
-  s : ∀ {x y xs ys} → Len A xs ys → Len A (x ∷ xs) (y ∷ ys)
+  s : ∀ {x y xs ys} → (_ : Len A xs ys) → Len A (x ∷ xs) (y ∷ ys)
 
 LenD : DataD
 DataD.#levels LenD = 1
@@ -142,6 +142,14 @@ DataD.applyL  LenD (ℓ , _) = record
         Σ[ ys ∶ List A ] ρ (ι (xs , ys , _)) (ι (x ∷ xs , y ∷ ys , _))
       ∷ []
   }
+  
+LenC : DataCᶜ LenD Len
+LenC =  genDataC LenD Len  
+--   dataC
+--   (λ { (inl refl) → z {_} {_} ; (inr (inl (x , y , xs , ys , p , refl))) → s {_} {_} {x} {y} {xs} {ys} p })
+--   (λ { z → inl refl ; (s {x} {y} {xs} {ys} p) → inr (inl (x , y , xs , ys , p , refl)) })
+--   (λ { (inl refl) → refl ; (inr (inl (x , y , xs , ys , p , refl))) → refl })
+--   λ { z → refl ; (s x) → refl }
 
 unquoteDecl data Len' constructor newz news =
   defineByDataD LenD Len' (newz ∷ news ∷ [])
@@ -156,13 +164,6 @@ unquoteDecl data newnewLen constructor newnewz newnews =
 newnewlen : newnewLen ℕ (2 ∷ 5 ∷ []) (1 ∷ 3 ∷ [])
 newnewlen = newnews 2 1 [ 5 ] [ 3 ] (newnews 5 3 [] [] newnewz)
 
-LenDataC : DataCᶜ newLenD Len
-LenDataC = genDataC newLenD Len 
---   dataC
---   (λ { (inl refl) → z {_} {_} ; (inr (inl (x , y , xs , ys , p , refl))) → s {_} {_} {x} {y} {xs} {ys} p })
---   (λ { z → inl refl ; (s {x} {y} {xs} {ys} p) → inr (inl (x , y , xs , ys , p , refl)) })
---   (λ { (inl refl) → refl ; (inr (inl (x , y , xs , ys , p , refl))) → refl })
---   λ { z → refl ; (s x) → refl }
 
 -- 
 REL : {a b : Level} → Set a → Set b
@@ -177,76 +178,76 @@ pointwiseD     = genDataD Pointwise
 
 PointwiseDataC = genDataC pointwiseD Pointwise
 
-unquoteDecl data Pointwise' constructor just' nothing' = defineByDataD pointwiseD Pointwise' (just' ∷ nothing' ∷ [])
-{- dataC
-  (genToNT List)
-  (genFromNT List)
-  (genFromN-toNT List)
-  -- (λ { (inl refl) → refl ; (inr (inl (x , xs , refl))) → refl })
-  (genToN-fromNT List)
-  -- (λ { [] → refl ; (x ∷ xs) → refl })
--}
+-- unquoteDecl data Pointwise' constructor just' nothing' = defineByDataD pointwiseD Pointwise' (just' ∷ nothing' ∷ [])
+-- {- dataC
+--   (genToNT List)
+--   (genFromNT List)
+--   (genFromN-toNT List)
+--   -- (λ { (inl refl) → refl ; (inr (inl (x , xs , refl))) → refl })
+--   (genToN-fromNT List)
+--   -- (λ { [] → refl ; (x ∷ xs) → refl })
+-- -}
 
-------------------------------------------------------------------------------
--- Data types
+-- ------------------------------------------------------------------------------
+-- -- Data types
 
--- data List (A : Set ℓ) : Set ℓ where
---   []  : List A
---   _∷_ : A → List A → List A
+-- -- data List (A : Set ℓ) : Set ℓ where
+-- --   []  : List A
+-- --   _∷_ : A → List A → List A
 
 
-data Vec (A : Set ℓ) : ℕ → Set ℓ where
-  []  : Vec _ 0
-  _∷_ : (x : A) → {n : ℕ} → (xs : Vec A n) → Vec A (suc n)
+-- data Vec (A : Set ℓ) : ℕ → Set ℓ where
+--   []  : Vec _ 0
+--   _∷_ : (x : A) → {n : ℕ} → (xs : Vec A n) → Vec A (suc n)
 
-VecD : DataD
-VecD = record
-  { #levels = 1
-  ; applyL  = λ { (ℓ , tt) → record
-    { alevel = ℓ
-    ; level-pre-fixed-point = refl
-    ; Param                 = [ A ∶ Set ℓ ] []
-    ; Index                 = λ _ → [ _ ∶ Nat ] []
-    ; applyP                = λ where
-      (A , tt) →
-        ι (z , tt)
-        -- Vec A 0
-        ∷ Σ[ _ ∶ A ] Σ[ n ∶ Nat ] (ρ (ι (n , tt)) (ι (s n , tt)))
-        -- (x : A) → (n : ℕ) → Vec A n → Vec A (suc n)
-        ∷ []
-    } }
-  }
+-- VecD : DataD
+-- VecD = record
+--   { #levels = 1
+--   ; applyL  = λ { (ℓ , tt) → record
+--     { alevel = ℓ
+--     ; level-pre-fixed-point = refl
+--     ; Param                 = [ A ∶ Set ℓ ] []
+--     ; Index                 = λ _ → [ _ ∶ Nat ] []
+--     ; applyP                = λ where
+--       (A , tt) →
+--         ι (z , tt)
+--         -- Vec A 0
+--         ∷ Σ[ _ ∶ A ] Σ[ n ∶ Nat ] (ρ (ι (n , tt)) (ι (s n , tt)))
+--         -- (x : A) → (n : ℕ) → Vec A n → Vec A (suc n)
+--         ∷ []
+--     } }
+--   }
 
-VecD' : DataD
-VecD' = genDataD Vec
+-- VecD' : DataD
+-- VecD' = genDataD Vec
 
-unquoteDecl data Vec' constructor nil' cons' = defineByDataD VecD Vec' (nil' ∷ cons' ∷ [])
+-- unquoteDecl data Vec' constructor nil' cons' = defineByDataD VecD Vec' (nil' ∷ cons' ∷ [])
 
-data _∈_ {ℓ : Level} {A : Set ℓ} : (z : A) (l : List A) → Set ℓ where
-  zero : {x : A} {xs : List A} → x ∈ (x ∷ xs)
-  suc : {x y : A} {xs : List A} (z : x ∈ xs) → x ∈ (y ∷ xs)
+-- data _∈_ {ℓ : Level} {A : Set ℓ} : (z : A) (l : List A) → Set ℓ where
+--   zero : {x : A} {xs : List A} → x ∈ (x ∷ xs)
+--   suc : {x y : A} {xs : List A} (z : x ∈ xs) → x ∈ (y ∷ xs)
 
-∈D : DataD
-∈D = genDataD _∈_
+-- ∈D : DataD
+-- ∈D = genDataD _∈_
 
-unquoteDecl data ∈' constructor z' s' = defineByDataD ∈D ∈' (z' ∷ s' ∷ [])
+-- unquoteDecl data ∈' constructor z' s' = defineByDataD ∈D ∈' (z' ∷ s' ∷ [])
 
-data W (A : Set ℓ) (B : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
-  sup : (x : A) → ((t : B x) → W A B) → W A B
+-- data W (A : Set ℓ) (B : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
+--   sup : (x : A) → ((t : B x) → W A B) → W A B
 
-WD : DataD
-WD = record
-  { #levels = 2
-  ; applyL  = λ where
-    (ℓ , ℓ' , tt) → record
-      { alevel = ℓ ⊔ ℓ'
-      ; level-pre-fixed-point = refl
-      ; Param = [ A ∶ Set ℓ ] [ B ∶ (A → Set ℓ') ] []
-      ; Index = λ _ → []
-      ; applyP = λ where
-        (A , B , _) →
-          Σ[ x ∶ A ] ρ (Π[ t ∶ B x ] ι _) (ι _)
-          -- (x : A) → ((_ : B x) → W A B) → W A B
-          ∷ []
-      }
-  }
+-- WD : DataD
+-- WD = record
+--   { #levels = 2
+--   ; applyL  = λ where
+--     (ℓ , ℓ' , tt) → record
+--       { alevel = ℓ ⊔ ℓ'
+--       ; level-pre-fixed-point = refl
+--       ; Param = [ A ∶ Set ℓ ] [ B ∶ (A → Set ℓ') ] []
+--       ; Index = λ _ → []
+--       ; applyP = λ where
+--         (A , B , _) →
+--           Σ[ x ∶ A ] ρ (Π[ t ∶ B x ] ι _) (ι _)
+--           -- (x : A) → ((_ : B x) → W A B) → W A B
+--           ∷ []
+--       }
+--   }
