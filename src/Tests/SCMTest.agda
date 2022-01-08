@@ -155,7 +155,7 @@ foldIE-is-fold : ∀ {ℓ ℓs ps} {X : Set ℓ}
 foldIE-is-fold g f (inl (x , refl)) = refl
 foldIE-is-fold g f (inr (inl (y , t , u , refl))) = refl
 
-{-
+
 ---- Hand-Crafted Vectors
 
 -- META
@@ -169,6 +169,38 @@ VecD = record
       ; Index  = λ _ → ℕ ∷ (λ _ → [])
       ; applyP = λ ps → let (A , _) = ps
                         in (ι (zero , tt))
-                         ∷ (ρ (π ℕ (λ n → σ A λ _ → ρ (ι {!   !}) (ι {!   !}))))
+                         ∷ (σ A λ _ → σ ℕ λ n → ρ (ι (n , tt)) (ι (suc n , tt)))
                          ∷ [] } }
--}
+
+-- META
+
+data Vec {ℓ} (A : Set ℓ) : ℕ → Set ℓ where
+  []  : Vec A zero
+  _∷_ : A → {n : ℕ} → Vec A n → Vec A (suc n)
+
+Vec-wrapper : DataT VecD
+Vec-wrapper (ℓ , _) (A , _) (n , _) = Vec A n
+
+-- META
+VecC : DataC VecD Vec-wrapper
+VecC = record
+  { toN   = λ { (inl refl) → []
+              ; (inr (inl (x , n , xs , refl))) → x ∷ xs }
+  ; fromN = λ { []       → inl refl
+              ; (x ∷ xs) → inr (inl (x , _ , xs , refl)) }
+  ; fromN-toN = λ { (inl refl) → refl
+                  ; (inr (inl (x , n , xs , refl))) → refl }
+  ; toN-fromN = λ { []       → refl
+                  ; (x ∷ xs) → refl } }
+
+
+Vec-alg : ∀ {ℓ} → ∀ℓ 1 (λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ _ → [])) 
+           (λ ps →
+            {X : ∀ᵗ true (ℕ ∷ (λ _ → [])) (λ _ → Set ℓ)} →
+            ∀ᵗ true ((X $$ (zero , tt))
+                     ∷ (λ _ → (fst ps → (n : ℕ) → X $$ (n , tt) → X $$ (suc n , tt))
+                     ∷ (λ _ → []))) 
+            (λ _ → Algebra ((ι (zero , tt))
+                           ∷ (σ (fst ps) λ _ → σ ℕ λ n → ρ (ι (n , tt)) (ι (suc n , tt)))
+                           ∷ []) ℓ)))
+Vec-alg = fold-alg VecD
