@@ -10,7 +10,6 @@ open import Utils.Error as Err
 open import Generics.Telescope
 open import Generics.Description
 
-dprint = debugPrint "meta" 5
 
 -- Frequently used terms
 private
@@ -20,23 +19,35 @@ private
   `[] : Term
   `[] = quoteTerm Tel.[]
 
---
-fromTelType : Tel ℓ → Set ℓ′ → TC Type
-fromTelType []      B = quoteTC! B
-fromTelType (A ∷ T) B = caseM quoteTC! T of λ where
-  (lam v (abs s _)) → extendContextT (visible-relevant-ω) A λ `A x → do
-    vΠ[ s ∶ `A ]_ <$> fromTelType (T x) B
-  t                 → Err.notλ t
+-- extend the context in a TC computation 
+extendCxtTel : {A : Set ℓ′}
+  → (T : Tel ℓ) → (⟦ T ⟧ᵗ → TC A) → TC A
+extendCxtTel [] f      = f tt
+extendCxtTel (A ∷ T) f = do
+  s ← getAbsName T
+  extendContextT s visible-relevant-ω A λ _ x → extendCxtTel (T x) (curry f x)
+extendCxtTel (T ++ U) f = extendCxtTel T λ ⟦T⟧ →
+  extendCxtTel (U ⟦T⟧) λ x → curry f ⟦T⟧ x
+
+extendContextℓs : {A : Set ℓ}
+  → (#levels : ℕ) → (Level ^ #levels → TC A) → TC A
+extendContextℓs zero    c = c tt
+extendContextℓs (suc n) c = extendContextT "ℓ" hidden-relevant-ω Level λ _ ℓ →
+    extendContextℓs n (curry c ℓ)
 
 -- ℕ is the length of (T : Tel ℓ)
 -- this may fail if `Tel` is not built by λ by pattern matching lambdas.
-fromTel : (T : Tel ℓ) → TC (ℕ × Telescope)
-fromTel []      = return (0 , [])
-fromTel (A ∷ T) = caseM quoteTC! T of λ where
-  (lam v (abs s _)) → extendContextT (visible-relevant-ω) A λ `A x → do
-    n , `Γ ← fromTel (T x) 
-    return $ (suc n) , (s , vArg `A) ∷ `Γ 
-  t                 → Err.notλ t
+fromTel : Tel ℓ → TC Telescope
+fromTel []      = return []
+fromTel (A ∷ T) = do
+  s ← getAbsName T
+  extendContextT s (visible-relevant-ω) A λ `A x → do
+    (s , vArg `A) ∷_ <$> fromTel (T x) 
+fromTel (T ++ U) = do
+  `Γ ← fromTel T
+  extendCxtTel T λ x → do
+    `Δ ← fromTel (U x)
+    return (`Γ <> `Δ)
 
 to`Tel : Telescope → Term
 to`Tel = foldr `[] λ where
@@ -44,16 +55,3 @@ to`Tel = foldr `[] λ where
 
 fromTelescope : Telescope → TC (Tel ℓ)
 fromTelescope = unquoteTC ∘ to`Tel
-
--- extend the context in a TC computation 
-extendContextTs : {A : Set ℓ′}
-  → (T : Tel ℓ) → (⟦ T ⟧ᵗ → TC A) → TC A
-extendContextTs []      f = f tt
-extendContextTs (A ∷ T) f = extendContextT visible-relevant-ω A λ _ x →
-  extendContextTs (T x) (curry f x)
-
-extendContextℓs : {A : Set ℓ}
-  → (#levels : ℕ) → (Level ^ #levels → TC A) → TC A
-extendContextℓs zero    c = c tt
-extendContextℓs (suc n) c = extendContextT hidden-relevant-ω Level λ _ ℓ →
-    extendContextℓs n (curry c ℓ)

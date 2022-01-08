@@ -49,9 +49,9 @@ record PDataD : Set where
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
     level-pre-fixed-point : flevel dlevel ⊑ dlevel
-    Param  : MTel plevel
-    Index  : ⟦ Param ⟧ᵐᵗ → MTel ilevel
-    applyP : (p : ⟦ Param ⟧ᵐᵗ) → ConDs ⟦ Index p ⟧ᵐᵗ struct
+    Param  : Tel plevel
+    Index  : ⟦ Param ⟧ᵗ → Tel ilevel
+    applyP : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ struct
 open PDataD
 
 {-# NO_UNIVERSE_CHECK #-}
@@ -81,13 +81,13 @@ module _ {I : Set ℓⁱ} where
   ⟦ []     ⟧ᶜˢ X i = ⊥
   ⟦ D ∷ Ds ⟧ᶜˢ X i = ⟦ D ⟧ᶜ X i ⊎ ⟦ Ds ⟧ᶜˢ X i
 
-⟦_⟧ᵖᵈ : (D : PDataD) {p : ⟦ Param D ⟧ᵐᵗ}
-      → let I = ⟦ Index D p ⟧ᵐᵗ in (I → Set ℓ) → (I → Set (flevel D ℓ))
+⟦_⟧ᵖᵈ : (D : PDataD) {p : ⟦ Param D ⟧ᵗ}
+      → let I = ⟦ Index D p ⟧ᵗ in (I → Set ℓ) → (I → Set (flevel D ℓ))
 ⟦ D ⟧ᵖᵈ {p} = ⟦ PDataD.applyP D p ⟧ᶜˢ
 
 ⟦_⟧ᵈ : (D : DataD) {ℓs : Levels D} → let Dᵐ = applyL D ℓs in
-       {p : ⟦ Param Dᵐ ⟧ᵐᵗ}
-     → let I = ⟦ Index Dᵐ p ⟧ᵐᵗ in (I → Set ℓ) → (I → Set (flevel Dᵐ ℓ))
+       {p : ⟦ Param Dᵐ ⟧ᵗ}
+     → let I = ⟦ Index Dᵐ p ⟧ᵗ in (I → Set ℓ) → (I → Set (flevel Dᵐ ℓ))
 ⟦ D ⟧ᵈ {ℓs} = ⟦ applyL D ℓs ⟧ᵖᵈ
 
 fmapʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
@@ -106,13 +106,13 @@ fmapᶜˢ : {I : Set ℓ} (Ds : ConDs I cbs) {X : I → Set ℓˣ} {Y : I → Se
 fmapᶜˢ (D ∷ Ds) f (inl xs) = inl (fmapᶜ  D  f xs)
 fmapᶜˢ (D ∷ Ds) f (inr xs) = inr (fmapᶜˢ Ds f xs)
 
-fmapᵖᵈ : (D : PDataD) {p : ⟦ Param D ⟧ᵐᵗ} → let I = ⟦ Index D p ⟧ᵐᵗ in
+fmapᵖᵈ : (D : PDataD) {p : ⟦ Param D ⟧ᵗ} → let I = ⟦ Index D p ⟧ᵗ in
          {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
        → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵖᵈ X i → ⟦ D ⟧ᵖᵈ Y i
 fmapᵖᵈ D {p} = fmapᶜˢ (PDataD.applyP D p)
 
 fmapᵈ : (D : DataD) {ℓs : Levels D} → let Dᵐ = applyL D ℓs in
-        {p : ⟦ Param Dᵐ ⟧ᵐᵗ} → let I = ⟦ Index Dᵐ p ⟧ᵐᵗ in
+        {p : ⟦ Param Dᵐ ⟧ᵗ} → let I = ⟦ Index Dᵐ p ⟧ᵗ in
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈ X i → ⟦ D ⟧ᵈ Y i
 fmapᵈ D {ℓs} = fmapᵖᵈ (applyL D ℓs)

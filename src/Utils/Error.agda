@@ -1,12 +1,14 @@
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --without-K --safe #-}
 
 open import Prelude
-open import Utils.Reflection
 
 module Utils.Error where
 
-variable
-  A : Set ℓ
+open import Utils.Reflection.Core
+open import Utils.Reflection.Show
+
+private variable
+  A : Set _
 
 notEndIn : Name → TC A
 notEndIn n = typeError (strErr "recursion does not end in "
@@ -18,6 +20,15 @@ notEndIn n = typeError (strErr "recursion does not end in "
 
 notλ : Term → TC A
 notλ t = typeError $ strErr (show t) ∷ strErr " cannot be reduced further to a λ-abstraction" ∷ []
+
+notDef : Term → TC A
+notDef t = typeError $ termErr t ∷ strErr " is not a definition." ∷ []
+
+notFun : Name → TC A
+notFun d = typeError $ nameErr d ∷ [ strErr " is not a function." ]
+
+notData : Name → TC A
+notData d = typeError $ nameErr d ∷ [ strErr " is not a datatype." ]
 
 IMPOSSIBLE : TC A
 IMPOSSIBLE = typeError $ [ strErr "An impossible event occurs." ]

@@ -4,7 +4,7 @@ module Generics.Safe.Ornament.Algebraic where
 
 open import Prelude
 open import Prelude.List as List
-open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵐᵗ
+open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵗ
 open import Generics.Safe.Description
 open import Generics.Safe.Algebra
 open import Generics.Safe.Recursion

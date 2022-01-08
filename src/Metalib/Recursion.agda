@@ -4,6 +4,7 @@ open import Prelude
 module Metalib.Recursion where
 
 open import Utils.Reflection
+open import Utils.Error as Err
 
 open import Generics.Description as D
 open import Generics.Recursion   as D
@@ -20,10 +21,12 @@ private
     (_ , arg i _) (n , (t , p) , (targs , pargs)) →
       suc n , ((var₀ n `, t) , (var n `, p)) , (arg i (var₀ n) ∷ targs) , (arg i (var n) ∷ pargs)
 
+  forgetTy : Telescope → Telescope
+  forgetTy = map $ bimap id (λ `A → arg (getArgInfo `A) unknown)
+
 module _ (pars : ℕ) where
   conToClause : (c : Name) → TC (Telescope × (Term × Pattern) × Args Term × Args Pattern)
   conToClause c = < forgetTy , cxtToVars > ∘ (λ `A → drop pars $ (⇑ `A) .fst) <$> getType c
-    where forgetTy = map $ bimap id (λ `A → arg (getArgInfo `A) unknown)
 
   consToClauses : (cs : Names) → TC (List (Telescope × (Term × Pattern) × Name × Args Term × Args Pattern))
   consToClauses []       = ⦇ [] ⦈
@@ -37,29 +40,29 @@ module _ (pars : ℕ) where
     genFromCons :  (Telescope × (Term × Pattern) × Name × Args Term × Args Pattern → Clause) → TC Clauses
     genFromCons f = map f <$> consToClauses cs
 
-    genToN genFromN-toN genFromN genToN-fromN : TC Term
-    genToN = pat-lam₀ <$> genFromCons λ where
+    genToNT genFromN-toNT genFromNT genToN-fromNT : TC Term
+    genToNT = pat-lam₀ <$> genFromCons λ where
       (`Γ , (_ , p) , c , args , _) → `Γ ⊢ [ vArg p ] `=
         con c (hUnknowns pars <> args)
-    genFromN-toN = pat-lam₀ <$> genFromCons λ where
+    genFromN-toNT = pat-lam₀ <$> genFromCons λ where
       (Γ , (_ , p) , _ , _) → Γ ⊢ [ vArg p ] `= `refl
-    genFromN = pat-lam₀ <$> genFromCons λ where
+    genFromNT = pat-lam₀ <$> genFromCons λ where
       (Γ , (t , _) , c , _ , args) → Γ ⊢ [ vArg (con c args) ] `= t
-    genToN-fromN = pat-lam₀ <$> genFromCons λ where
+    genToN-fromNT = pat-lam₀ <$> genFromCons λ where
       (Γ , _ , c , _ , args) → Γ ⊢ [ vArg (con c args) ] `= `refl
   
-genDataC : (D : DataD) → (Nᶜ : DataTᶜ D) → Tactic
-genDataC D Nᶜ hole = do
+genDataCT : (D : DataD) → (Nᶜ : DataTᶜ D) → Tactic
+genDataCT D Nᶜ hole = do
   hole ← checkType hole =<< quoteTC (DataCᶜ D Nᶜ)
   
   hLam (abs "ℓs" t@(def d args)) ← quoteωTC (λ {ℓs} → Nᶜ {ℓs})
-    where t → typeError (termErr t ∷ strErr " is not a definition." ∷ [])
+    where t → Err.notDef t
   pars , cs ← getDataDefinition d
 
-  `toN       ← genToN       pars cs
-  `fromN     ← genFromN     pars cs 
-  `fromN-toN ← genFromN-toN pars cs 
-  `toN-fromN ← genToN-fromN pars cs 
+  `toN       ← genToNT       pars cs
+  `fromN     ← genFromNT     pars cs 
+  `fromN-toN ← genFromN-toNT pars cs 
+  `toN-fromN ← genToN-fromNT pars cs 
 
   unify hole $ con₄ (quote dataC) `toN `fromN `fromN-toN `toN-fromN
 
@@ -68,10 +71,10 @@ private
   fromData f d hole = getDataDefinition d >>= uncurry f >>= unify hole
 
 macro
-  genToNT       = fromData genToN
-  genFromN-toNT = fromData genFromN-toN
-  genFromNT     = fromData genFromN
-  genToN-fromNT = fromData genToN-fromN
+  genToN       = fromData genToNT
+  genFromN-toN = fromData genFromN-toNT
+  genFromN     = fromData genFromNT
+  genToN-fromN = fromData genToN-fromNT
 
-  genDataCT : (D : DataD) → (Nᶜ : DataTᶜ D) → Tactic
-  genDataCT = genDataC
+  genDataC : (D : DataD) → (Nᶜ : DataTᶜ D) → Tactic
+  genDataC = genDataCT

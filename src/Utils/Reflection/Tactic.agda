@@ -7,9 +7,12 @@ module Utils.Reflection.Tactic where
 open import Utils.Reflection.Core
 open import Utils.Reflection.Show
 open import Utils.Reflection.Term
+import Utils.Error as Err
 
 private variable
   A : Set ℓ
+
+dprint = debugPrint "meta" 5
 
 give : Term → Tactic
 give v = λ hole → unify hole v
@@ -61,25 +64,28 @@ macro
   evalT = evalTC
 
 -- Typed version of extendContext
-extendContextT : ArgInfo → (B : Set ℓ)
+extendContextT : String → ArgInfo → (B : Set ℓ)
   → (Type → B → TC A) → TC A
-extendContextT i B f = do
+extendContextT s i B f = do
   `B ← quoteTC B
-  extendContext "x" (arg i `B) do
+  extendContext s (arg i `B) do
     x ← unquoteTC {A = B} (var₀ 0)
     f `B x
+
+getAbsName : {A : Set ℓ} {B : A → Set ℓ′} → ((x : A) → B x) → TC String
+getAbsName f = caseM quoteTC! f of λ { (lam visible (abs s _)) → return s ; t → Err.notλ t }
 
 getFunction : Name → TC (Type × Clauses)
 getFunction d = do
   function cs ← getDefinition d
-    where t → typeError $ nameErr d ∷ [ strErr " is not a function." ]
+    where t → Err.notFun d
   t ← getType d
   return $ t , cs
 
 getDataDefinition : Name → TC (ℕ × Names)
 getDataDefinition d = do
   data-type pars cs ← getDefinition d
-    where _ → typeError $ nameErr d ∷ [ strErr " is not a datatype." ]
+    where _ → Err.notData d
   return $ pars , cs
 
 getTelescope : Name → TC (Telescope × Type)
@@ -88,7 +94,6 @@ getTelescope s = ⦇ ⇑ (getType s) ⦈
 macro
   getTelescopeT : Name → Tactic
   getTelescopeT s = evalTC $ getTelescope s
-
 
 getSetLevel : Type → TC Term
 getSetLevel (agda-sort (set t)) = return t
