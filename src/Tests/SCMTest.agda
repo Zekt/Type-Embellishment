@@ -2,7 +2,7 @@
 module Tests.SCMTest where
 
 open import Prelude
-open import Generics.Safe.Telescope hiding (∷-syntaxᵗ); open ∀ℓ; open ∀ℓω; open ∀ᵐᵗ; open ∀ᵗ
+open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵗ
 open import Generics.Safe.Description
 open import Generics.Safe.Description.FixedPoint
 open import Generics.Safe.Algebra
@@ -13,8 +13,10 @@ open import Generics.Safe.Ornament.Description
 open import Generics.Safe.Ornament.Algebraic
 open import Generics.Safe.Ornament.Algebraic.Isomorphism
 open import Generics.Safe.Ornament.Promotion
-open import Generics.Safe.InductiveEquality
 
+
+
+---- List 
 
 -- META
 ListD : DataD
@@ -47,10 +49,10 @@ ListC = record
                   ; (a ∷ as) → refl } }
 
 -- USER (specialising a generic library component)
-foldList-alg : ∀ {ℓ} → ∀ℓ 1 (λ ℓs → ∀ᵐᵗ false (Set (fst ℓs) ∷ (λ _ → [])) 
+foldList-alg : ∀ {ℓ} → ∀ℓ 1 (λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ _ → [])) 
            (λ ps →
-            {X : ∀ᵐᵗ false [] (λ _ → Set ℓ)} →
-            ∀ᵐᵗ true ((X $$ tt) ∷
+            {X : ∀ᵗ true [] (λ _ → Set ℓ)} →
+            ∀ᵗ true ((X $$ tt) ∷
                       (λ _ → (fst ps → X $$ tt → X $$ tt) ∷ (λ _ → []))) 
             (λ _ →
               Algebra ((ι tt) ∷ (σ (fst ps) (λ _ → ρ (ι tt) (ι tt)) ∷ [])) ℓ)))
@@ -62,10 +64,10 @@ foldList : {ℓ ℓ₁ : Level} {A : Set ℓ₁} {X : Set ℓ} → X → (A → 
 foldList e f [] = e
 foldList e f (x ∷ xs) = f x (foldList e f xs)
 
-foldList-wrapper : ∀ {ℓ} → ∀ℓ 1 λ ℓs → ∀ᵐᵗ false (Set (fst ℓs) ∷ (λ _ → [])) 
+foldList-wrapper : ∀ {ℓ} → ∀ℓ 1 λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ _ → [])) 
                (λ ps →
-                {X : ∀ᵐᵗ false [] (λ _ → Set ℓ)} →
-                ∀ᵐᵗ true ((X $$ tt) ∷ 
+                {X : ∀ᵗ false [] (λ _ → Set ℓ)} →
+                ∀ᵗ true ((X $$ tt) ∷ 
                           λ _ → (fst ps → X $$ tt → X $$ tt) ∷ λ _ → []) 
                 (λ args →
                  FoldT ListC (foldList-alg $$ ℓs $$ ps $$ args)))
@@ -80,7 +82,7 @@ foldList-is-fold : ∀ {ℓ ℓs ps} {X : Set ℓ}
 foldList-is-fold e f (inl refl)                  = refl
 foldList-is-fold e f (inr (inl (x , xs , refl))) = refl
 
-----
+---- Internally & Enternally Labelled Binary Tree
 
 data IETree {ℓ ℓ'} (A : Set ℓ) (B : Set ℓ') : Set (ℓ ⊔ ℓ') where
   tip : A → IETree A B
@@ -114,11 +116,11 @@ IETreeC = record
                   ; (bin y t u) → refl} }
 
 -- USER (specialising a generic library component)
-IETree-alg : ∀ {ℓ} → ∀ℓ 2 (λ ℓs → ∀ᵐᵗ false (Set (fst ℓs) ∷ (λ _ → Set (fst (snd ℓs)) ∷ (λ _ → []))) 
+IETree-alg : ∀ {ℓ} → ∀ℓ 2 (λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ _ → Set (fst (snd ℓs)) ∷ (λ _ → []))) 
            (λ ps →
-            {X : ∀ᵐᵗ false [] (λ _ → Set ℓ)} →
+            {X : ∀ᵗ false [] (λ _ → Set ℓ)} →
             let (A , B , _) = ps
-            in ∀ᵐᵗ true ( (A → (X $$ tt)) 
+            in ∀ᵗ true ( (A → (X $$ tt)) 
                         ∷ λ _ → (B → X $$ tt → X $$ tt → X $$ tt) 
                         ∷ λ _ → []) 
             (λ _ → Algebra ( (σ A λ _ → ι tt)
@@ -134,11 +136,11 @@ foldIE : {ℓ ℓ₁ ℓ₂ : Level} {A : Set ℓ₁} {B : Set ℓ₂} {X : Set 
 foldIE g f (tip x) = g x
 foldIE g f (bin y t u) = f y (foldIE g f t) (foldIE g f u)
 
-foldIE-wrapper : ∀ {ℓ} → ∀ℓ 2 λ ℓs → ∀ᵐᵗ false (Set (fst ℓs) ∷ (λ _ → Set (fst (snd ℓs)) ∷ (λ _ → []))) 
+foldIE-wrapper : ∀ {ℓ} → ∀ℓ 2 λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ _ → Set (fst (snd ℓs)) ∷ (λ _ → []))) 
                (λ ps →
-                {X : ∀ᵐᵗ false [] (λ _ → Set ℓ)} →
+                {X : ∀ᵗ false [] (λ _ → Set ℓ)} →
                 let (A , B , _) = ps
-                in ∀ᵐᵗ true ((A → X $$ tt) ∷ 
+                in ∀ᵗ true ((A → X $$ tt) ∷ 
                           λ _ → (B → X $$ tt → X $$ tt → X $$ tt) ∷ λ _ → []) 
                 (λ args →
                  FoldT IETreeC (IETree-alg $$ ℓs $$ ps $$ args)))
@@ -152,3 +154,21 @@ foldIE-is-fold : ∀ {ℓ ℓs ps} {X : Set ℓ}
                                          (foldIE-wrapper $$ ℓs $$ ps $$ (g , f , _))
 foldIE-is-fold g f (inl (x , refl)) = refl
 foldIE-is-fold g f (inr (inl (y , t , u , refl))) = refl
+
+{-
+---- Hand-Crafted Vectors
+
+-- META
+VecD : DataD
+VecD = record
+  { #levels = 1
+  ; applyL  = λ ℓs → let (ℓ , _) = ℓs in record
+      { alevel = ℓ
+      ; level-pre-fixed-point = refl
+      ; Param  = [ A ∶ Set ℓ ] []
+      ; Index  = λ _ → ℕ ∷ (λ _ → [])
+      ; applyP = λ ps → let (A , _) = ps
+                        in (ι (zero , tt))
+                         ∷ (ρ (π ℕ (λ n → σ A λ _ → ρ (ι {!   !}) (ι {!   !}))))
+                         ∷ [] } }
+-}
