@@ -173,5 +173,5 @@ Finitaryᶜˢ = All Finitaryᶜ
 Finitaryᵖᵈ : PDataD → Set
 Finitaryᵖᵈ D = Finitaryᶜˢ (PDataD.struct D)
 
-Finitaryᵈ : DataD → Set
-Finitaryᵈ D = ∀ ℓs → Finitaryᵖᵈ (DataD.applyL D ℓs)
+Finitary : DataD → Set
+Finitary D = ∀ ℓs → Finitaryᵖᵈ (DataD.applyL D ℓs)

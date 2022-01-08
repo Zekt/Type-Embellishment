@@ -31,29 +31,29 @@ record FoldP : Setω where
   Levels : Set
   Levels = Level ^ #levels
   field
-    levels   : Levels → DataD.Levels Desc
+    level    : Levels → DataD.Levels Desc
     {plevel} : Levels → Level
     Param    : ∀ ℓs → Tel (plevel ℓs)
-    param    : ∀ {ℓs} → ⟦ Param ℓs ⟧ᵗ → ⟦ PDataD.Param (DataD.applyL Desc (levels ℓs)) ⟧ᵗ
+    param    : ∀ {ℓs} → ⟦ Param ℓs ⟧ᵗ → ⟦ PDataD.Param (DataD.applyL Desc (level ℓs)) ⟧ᵗ
     {clevel} : Levels → Level
     Carrier  : ∀ ℓs (ps : ⟦ Param ℓs ⟧ᵗ)
-             → Carrierᶜˢ (PDataD.applyP (DataD.applyL Desc (levels ℓs)) (param ps))
+             → Carrierᶜˢ (PDataD.applyP (DataD.applyL Desc (level ℓs)) (param ps))
                          (clevel ℓs)
     algebra  : ∀ {ℓs} (ps : ⟦ Param ℓs ⟧ᵗ)
-             → Algᶜˢ (PDataD.applyP (DataD.applyL Desc (levels ℓs)) (param ps))
+             → Algᶜˢ (PDataD.applyP (DataD.applyL Desc (level ℓs)) (param ps))
                      (Carrier ℓs ps)
 
 FoldGT : FoldP → Setω
 FoldGT P = let open FoldP P in
-         ∀ {ℓs} → let open PDataD (DataD.applyL Desc (levels ℓs)) in
+         ∀ {ℓs} → let open PDataD (DataD.applyL Desc (level ℓs)) in
            (ps : ⟦ FoldP.Param P ℓs ⟧ᵗ) {is : ⟦ Index (param ps) ⟧ᵗ}
-         → Native (levels ℓs) (param ps) is → Carrier ℓs ps is
+         → Native (level ℓs) (param ps) is → Carrier ℓs ps is
 
 FoldNT : FoldP → Setω
 FoldNT P = let open FoldP P in
-         ∀ {ℓs} → let open PDataD (DataD.applyL Desc (levels ℓs)) in
+         ∀ {ℓs} → let open PDataD (DataD.applyL Desc (level ℓs)) in
            Curriedᵗ true (FoldP.Param P ℓs) λ ps → Curriedᵗ false (Index (param ps)) λ is
-         → Native (levels ℓs) (param ps) is → Carrier ℓs ps is
+         → Native (level ℓs) (param ps) is → Carrier ℓs ps is
 
 fold-wrapper : (P : FoldP) → FoldNT P → FoldGT P
 fold-wrapper P f ps {is} n = uncurryᵗ (uncurryᵗ f ps) is n
@@ -65,7 +65,7 @@ fold-base P rec = let open FoldP P in curryᵗ λ ps → curryᵗ λ is →
 record FoldC (P : FoldP) (f : FoldGT P) : Setω where
   field
     equation : let open FoldP P in
-             ∀ {ℓs ps is} (ns : ⟦ Desc ⟧ᵈ (Native (levels ℓs) (param ps)) is)
+             ∀ {ℓs ps is} (ns : ⟦ Desc ⟧ᵈ (Native (level ℓs) (param ps)) is)
              → f ps (DataC.toN Conv ns) ≡ algebra ps (fmapᵈ Desc (f ps) ns)
 
 record IndP : Setω where
@@ -77,29 +77,29 @@ record IndP : Setω where
   Levels : Set
   Levels = Level ^ #levels
   field
-    levels   : Levels → DataD.Levels Desc
+    level    : Levels → DataD.Levels Desc
     {plevel} : Levels → Level
     Param    : ∀ ℓs → Tel (plevel ℓs)
-    param    : ∀ {ℓs} → ⟦ Param ℓs ⟧ᵗ → ⟦ PDataD.Param (DataD.applyL Desc (levels ℓs)) ⟧ᵗ
+    param    : ∀ {ℓs} → ⟦ Param ℓs ⟧ᵗ → ⟦ PDataD.Param (DataD.applyL Desc (level ℓs)) ⟧ᵗ
     {clevel} : Levels → Level
     Carrier  : ∀ ℓs (ps : ⟦ Param ℓs ⟧ᵗ)
-             → IndCarrierᶜˢ (PDataD.applyP (DataD.applyL Desc (levels ℓs)) (param ps))
-                            (Native (levels ℓs) (param ps)) (clevel ℓs)
+             → IndCarrierᶜˢ (PDataD.applyP (DataD.applyL Desc (level ℓs)) (param ps))
+                            (Native (level ℓs) (param ps)) (clevel ℓs)
     algebra  : ∀ {ℓs} (ps : ⟦ Param ℓs ⟧ᵗ)
-             → IndAlgᶜˢ (PDataD.applyP (DataD.applyL Desc (levels ℓs)) (param ps))
+             → IndAlgᶜˢ (PDataD.applyP (DataD.applyL Desc (level ℓs)) (param ps))
                         (DataC.toN Conv) (Carrier ℓs ps) lzero
 
 IndGT : IndP → Setω
 IndGT P = let open IndP P in
-        ∀ {ℓs} → let open PDataD (DataD.applyL Desc (levels ℓs)) in
+        ∀ {ℓs} → let open PDataD (DataD.applyL Desc (level ℓs)) in
           (ps : ⟦ IndP.Param P ℓs ⟧ᵗ) {is : ⟦ Index (param ps) ⟧ᵗ}
-        → (n : Native (levels ℓs) (param ps) is) → Carrier ℓs ps is n
+        → (n : Native (level ℓs) (param ps) is) → Carrier ℓs ps is n
 
 IndNT : IndP → Setω
 IndNT P = let open IndP P in
-        ∀ {ℓs} → let open PDataD (DataD.applyL Desc (levels ℓs)) in
+        ∀ {ℓs} → let open PDataD (DataD.applyL Desc (level ℓs)) in
           Curriedᵗ true (IndP.Param P ℓs) λ ps → Curriedᵗ false (Index (param ps)) λ is
-        → (n : Native (levels ℓs) (param ps) is) → Carrier ℓs ps is n
+        → (n : Native (level ℓs) (param ps) is) → Carrier ℓs ps is n
 
 ind-wrapper : (P : IndP) → IndNT P → IndGT P
 ind-wrapper P f ps {is} n = uncurryᵗ (uncurryᵗ f ps) is n
@@ -112,5 +112,5 @@ ind-base P rec {ℓs} = let open IndP P in curryᵗ λ ps → curryᵗ λ is n �
 record IndC (P : IndP) (f : IndGT P) : Setω where
   field
     equation : let open IndP P in
-             ∀ {ℓs ps is} (ns : ⟦ Desc ⟧ᵈ (Native (levels ℓs) (param ps)) is)
+             ∀ {ℓs ps is} (ns : ⟦ Desc ⟧ᵈ (Native (level ℓs) (param ps)) is)
              → f ps (DataC.toN Conv ns) ≡ algebra ps _ (ind-fmapᵈ Desc (f ps) ns)

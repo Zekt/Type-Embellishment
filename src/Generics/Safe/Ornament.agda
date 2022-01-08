@@ -3,7 +3,7 @@
 module Generics.Safe.Ornament where
 
 open import Prelude
-open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵗ
+open import Generics.Safe.Telescope
 open import Generics.Safe.Description
 open import Generics.Safe.Algebra
 open import Generics.Safe.Recursion
@@ -95,10 +95,13 @@ eraseᵈ : {D E : DataD} (O : DataO D E) {ℓs : DataD.Levels D}
        → ⟦ D ⟧ᵈ (X ∘ index) is → ⟦ E ⟧ᵈ X (index is)
 eraseᵈ O {ℓs} = eraseᵖᵈ (DataO.applyL O ℓs)
 
-forget-alg : ∀ {D E} (O : DataO D E) {ℓf} {X : Carriers E ℓf} → Algs E X → Algebrasᵗ D _
-forget-alg O {_} {X} f $$ ℓs $$ ps = record
-  { Carrier = λ is → let Oᵖ = DataO.applyL O ℓs
-                     in  X (DataO.level  O  ℓs   )
-                           (PDataO.param Oᵖ ps   )
-                           (PDataO.index Oᵖ ps is)
-  ; apply = f ∘ eraseᵈ O }
+forget : ∀ {D M} → DataC D M → ∀ {E N} → DataC E N → DataO D E → FoldP
+forget {D} DC {N = N} EC O = record
+  { Conv    = DC
+  ; #levels = DataD.#levels D
+  ; level   = id
+  ; Param   = λ ℓs → PDataD.Param (DataD.applyL D ℓs)
+  ; param   = id
+  ; Carrier = λ ℓs ps is → let Oᵖ = DataO.applyL O ℓs in
+      N (DataO.level O ℓs) (PDataO.param Oᵖ ps) (PDataO.index Oᵖ ps is)
+  ; algebra = λ _ → DataC.toN EC ∘ eraseᵈ O }

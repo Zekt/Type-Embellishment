@@ -4,7 +4,7 @@ module Generics.Safe.Ornament.Algebraic where
 
 open import Prelude
 open import Prelude.List as List
-open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵗ
+open import Generics.Safe.Telescope
 open import Generics.Safe.Description
 open import Generics.Safe.Algebra
 open import Generics.Safe.Recursion
@@ -93,23 +93,20 @@ module _ (ℓ : Level) where
       ℓᵃ ⊔ ℓⁱ ⊔ ℓ
     ∎ where open ≡-Reasoning
 
-algODᵈ : ∀ (D : DataD) {ℓf} {X : Carriers D ℓf} → Algs D X → DataOD D
-algODᵈ D {ℓf} {X} f = record
-  { #levels = DataD.#levels D
-  ; level   = λ ℓs → ℓs
-  ; applyL  = λ ℓs → let Dᵖ = DataD.applyL D ℓs in record
+AlgOD : (P : FoldP) → DataOD (FoldP.Desc P)
+AlgOD P = let open FoldP P in record
+  { #levels = #levels
+  ; level   = level
+  ; applyL  = λ ℓs → let Dᵖ = DataD.applyL Desc (level ℓs) in record
       { alevel = PDataD.alevel Dᵖ
       ; level-pre-fixed-point = algOD-pfp-lemma
-          (ℓf ℓs) (PDataD.ilevel Dᵖ) (PDataD.dlevel Dᵖ) (PDataD.struct Dᵖ)
+          (clevel ℓs) (PDataD.ilevel Dᵖ) (PDataD.dlevel Dᵖ) (PDataD.struct Dᵖ)
           (PDataD.level-pre-fixed-point Dᵖ)
-      ; Param  = PDataD.Param Dᵖ
-      ; param  = id
-      ; Index  = λ ps → PDataD.Index Dᵖ ps ++ λ is → X ℓs ps is ∷ λ _ → []
+      ; Param  = Param ℓs
+      ; param  = param
+      ; Index  = λ ps → PDataD.Index Dᵖ (param ps) ++ λ is → Carrier ℓs ps is ∷ λ _ → []
       ; index  = λ _ → fst
-      ; applyP = λ ps → algODᶜˢ (PDataD.applyP Dᵖ ps) f } }
-
-algOD : ∀ (D : DataD) {ℓf} → Algebrasᵗ D ℓf → DataOD D
-algOD D alg = algODᵈ D (Algebra.apply (alg $$ _ $$ _))
+      ; applyP = λ ps → algODᶜˢ (PDataD.applyP Dᵖ (param ps)) (algebra ps) } }
 
 rememberʳ :
     {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ}
@@ -137,14 +134,16 @@ rememberᶜˢ :
 rememberᶜˢ (D ∷ Ds) f fold (inl ns) all = inl (rememberᶜ  D  (f ∘ inl) fold ns all)
 rememberᶜˢ (D ∷ Ds) f fold (inr ns) all = inr (rememberᶜˢ Ds (f ∘ inr) fold ns all)
 
-remember-alg :
-  ∀ {D N} (C : DataC D N) {ℓf : DataD.Levels D → Level}
-    (alg : Algebrasᵗ D ℓf) (fold : FoldsTᵗ C alg) → AlgebrasCᵗ C alg fold
-  → ∀ {N'} (C' : DataC ⌊ algOD D alg ⌋ᵈ N') → IndAlgebrasᵗ C _
-remember-alg {D} {N} C alg fold foldC {N'} C' $$ ℓs $$ ps = record
-  { Carrier = λ is n → N' ℓs ps (is , (fold $$ ℓs $$ ps) n , tt)
-  ; apply = let Dᶜˢ = PDataD.applyP (DataD.applyL D ℓs) ps in λ ns all →
-      DataC.toN C' (subst (λ x → ⟦ ⌊ algOD D alg ⌋ᵈ ⟧ᵈ (N' ℓs ps) (_ , x , tt))
-                          (sym (foldC ns))
-                          (rememberᶜˢ Dᶜˢ (Algebra.apply (alg $$ ℓs $$ ps))
-                             (fold $$ ℓs $$ ps) ns all)) }
+remember : ∀ {P} {f : FoldGT P} → FoldC P f → ∀ {N'} → DataC ⌊ AlgOD P ⌋ᵈ N' → IndP
+remember {P} {f} C {N'} C' = let open FoldP P in record
+  { Conv    = Conv
+  ; #levels = #levels
+  ; level   = level
+  ; Param   = Param
+  ; param   = param
+  ; Carrier = λ ℓs ps is n → N' ℓs ps (is , f ps n , tt)
+  ; algebra = λ ps ns all → DataC.toN C'
+      (subst (λ x → ⟦ ⌊ AlgOD P ⌋ᵈ ⟧ᵈ (N' _ ps) (_ , x , tt))
+             (sym (FoldC.equation C ns))
+             (rememberᶜˢ (PDataD.applyP (DataD.applyL Desc _) (param ps))
+               (algebra ps) (f ps) ns all)) }

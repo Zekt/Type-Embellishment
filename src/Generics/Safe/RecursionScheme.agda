@@ -37,7 +37,7 @@ fold-operator : ∀ {D N} → DataC D N → FoldP
 fold-operator {D} C = record
   { Conv    = C
   ; #levels = suc (DataD.#levels D)
-  ; levels  = snd
+  ; level   = snd
   ; Param   = λ (ℓ , ℓs) → let Dᵖ = DataD.applyL D ℓs in
       [[ ps ∶ PDataD.Param Dᵖ ]]
       [  X  ∶ Curriedᵗ true (PDataD.Index Dᵖ ps) (λ _ → Set ℓ) ]
@@ -99,18 +99,18 @@ fold-fusionᶜˢ (D ∷ Ds) (_ , fs) (_ , gs) fold-fs fold-gs h (_ , hom) (inr n
   fold-fusionᶜˢ Ds fs gs fold-fs fold-gs h hom ns all
 
 fold-fusion-theorem :
-  ∀ {D N} (C : DataC D N) → let p = fold-operator C in
-  {fold : FoldGT p} → FoldC p fold → IndP
+  ∀ {D N} (C : DataC D N) → let P = fold-operator C in
+  {fold : FoldGT P} → FoldC P fold → IndP
 fold-fusion-theorem {D} C {fold} foldC = record
   { Conv    = C
   ; #levels = suc (suc (DataD.#levels D))
-  ; levels  = snd ∘ snd
+  ; level   = snd ∘ snd
   ; Param   = λ (ℓˣ , ℓʸ , ℓs) → let Dᵖ = DataD.applyL D ℓs in
       [[ ps ∶ PDataD.Param Dᵖ ]]
-      let IT = PDataD.Index Dᵖ ps; Dᶜˢ = PDataD.applyP Dᵖ ps in
-      [  X  ∶ Curriedᵗ true  IT (λ _ → Set ℓˣ) ]
-      [  Y  ∶ Curriedᵗ true  IT (λ _ → Set ℓʸ) ]
-      [  h  ∶ Curriedᵗ false IT (λ is → uncurryᵗ X is → uncurryᵗ Y is) ]
+      let ITel = PDataD.Index Dᵖ ps; Dᶜˢ = PDataD.applyP Dᵖ ps in
+      [  X  ∶ Curriedᵗ true  ITel (λ _ → Set ℓˣ) ]
+      [  Y  ∶ Curriedᵗ true  ITel (λ _ → Set ℓʸ) ]
+      [  h  ∶ Curriedᵗ false ITel (λ is → uncurryᵗ X is → uncurryᵗ Y is) ]
       [[ fs ∶ FoldOpTelᶜˢ Dᶜˢ (uncurryᵗ X) ]]
       [[ gs ∶ FoldOpTelᶜˢ Dᶜˢ (uncurryᵗ Y) ]]
               Homᶜˢ Dᶜˢ fs gs (λ {is} → uncurryᵗ h is)
@@ -168,7 +168,7 @@ ind-operator : ∀ {D N} → DataC D N → IndP
 ind-operator {D} {N} C = record
   { Conv    = C
   ; #levels = suc (DataD.#levels D)
-  ; levels  = snd
+  ; level   = snd
   ; Param   = λ (ℓ , ℓs) → let Dᵖ = DataD.applyL D ℓs in
       [[ ps ∶ PDataD.Param Dᵖ ]] let Dᶜˢ = PDataD.applyP Dᵖ ps in
       [  P  ∶ Curriedᵗ false (PDataD.Index Dᵖ ps) (λ is → N ℓs ps is → Set ℓ) ]
