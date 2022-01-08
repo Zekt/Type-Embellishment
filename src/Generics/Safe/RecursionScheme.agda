@@ -40,13 +40,12 @@ fold-operator {D} C = record
   ; #levels = suc (DataD.#levels D)
   ; levels  = snd
   ; Param   = λ (ℓ , ℓs) → let Dᵖ = DataD.applyL D ℓs in
-      PDataD.Param Dᵖ
-      ++ λ ps → (Curriedᵗ true (PDataD.Index Dᵖ ps) (λ _ → Set ℓ) ∷ constω [])
-      ++ λ (X , _) → FoldOpTelᶜˢ (PDataD.applyP Dᵖ ps) (uncurryᵗ X)
+      PDataD.Param Dᵖ ++ λ ps →
+      Curriedᵗ true (PDataD.Index Dᵖ ps) (λ _ → Set ℓ) ∷ λ X →
+      FoldOpTelᶜˢ (PDataD.applyP Dᵖ ps) (uncurryᵗ X)
   ; param   = fst
-  ; Carrier = λ _ (_ , (X , _) , _) → uncurryᵗ X
-  ; algebra = λ (ps , _ , args) →
-                fold-opᶜˢ (PDataD.applyP (DataD.applyL D _) ps) args }
+  ; Carrier = λ _ (_ , X , _) → uncurryᵗ X
+  ; algebra = λ (ps , _ , args) → fold-opᶜˢ (PDataD.applyP (DataD.applyL D _) ps) args }
 
 Homᶜ : {I : Set ℓⁱ} (D : ConD I cb) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
      → FoldOpTᶜ D X → FoldOpTᶜ D Y → (∀ {i} → X i → Y i)
@@ -59,7 +58,7 @@ Homᶜ (ρ D E) {X} {Y} f g h (xs , xs') =
 Homᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ⟦ FoldOpTelᶜˢ D X ⟧ᵗ → ⟦ FoldOpTelᶜˢ D Y ⟧ᵗ → (∀ {i} → X i → Y i)
       → Tel (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓˣ) cbs ⊔
-              hasCon? ℓⁱ cbs ⊔ hasCon? ℓʸ cbs)
+             hasCon? ℓⁱ cbs ⊔ hasCon? ℓʸ cbs)
 Homᶜˢ [] fs gs h = []
 Homᶜˢ (D ∷ Ds) {X} (f , fs) (g , gs) h =
   (∀ {i} (xs : ⟦ D ⟧ᶜ X i) → Homᶜ D f g h xs) ∷ constω (Homᶜˢ Ds fs gs h)
@@ -102,32 +101,31 @@ fold-fusionᶜˢ (D ∷ Ds) (_ , fs) (_ , gs) fold-fs fold-gs h (_ , hom) (inr n
 
 fold-fusion-theorem :
   ∀ {D N} (C : DataC D N) → let p = fold-operator C in
-  {fold : FoldGT p} (foldC : FoldC p fold) → IndP
+  {fold : FoldGT p} → FoldC p fold → IndP
 fold-fusion-theorem {D} C {fold} foldC = record
   { Conv    = C
   ; #levels = suc (suc (DataD.#levels D))
   ; levels  = snd ∘ snd
   ; Param   = λ (ℓˣ , ℓʸ , ℓs) → let Dᵖ = DataD.applyL D ℓs in
-      PDataD.Param Dᵖ
-      ++ λ ps → let IT = PDataD.Index Dᵖ ps; Dᶜˢ = PDataD.applyP Dᵖ ps in
-           (Curriedᵗ true  IT (λ _ → Set ℓˣ) ∷ λ X →
-           (Curriedᵗ true  IT (λ _ → Set ℓʸ) ∷ λ Y →
-           (Curriedᵗ false IT (λ is → uncurryᵗ X is → uncurryᵗ Y is) ∷ constω [])))
-      ++ λ (X , Y , h , _) → FoldOpTelᶜˢ Dᶜˢ (uncurryᵗ X)
-      ++ λ fs → FoldOpTelᶜˢ Dᶜˢ (uncurryᵗ Y)
-      ++ λ gs → Homᶜˢ Dᶜˢ fs gs (λ {is} → uncurryᵗ h is) ++ constω []
+      PDataD.Param Dᵖ ++ λ ps → let IT = PDataD.Index Dᵖ ps; Dᶜˢ = PDataD.applyP Dᵖ ps in
+      Curriedᵗ true  IT (λ _ → Set ℓˣ) ∷ λ X →
+      Curriedᵗ true  IT (λ _ → Set ℓʸ) ∷ λ Y →
+      Curriedᵗ false IT (λ is → uncurryᵗ X is → uncurryᵗ Y is) ∷ λ h →
+      FoldOpTelᶜˢ Dᶜˢ (uncurryᵗ X) ++ λ fs →
+      FoldOpTelᶜˢ Dᶜˢ (uncurryᵗ Y) ++ λ gs →
+      Homᶜˢ Dᶜˢ fs gs (λ {is} → uncurryᵗ h is)
   ; param   = fst
-  ; Carrier = λ _ (ps , (X , Y , h , _) , fs , gs , _) is n →
-                uncurryᵗ h is (fold (ps , (X , _) , fs) n) ≡ fold (ps , (Y , _) , gs) n
-  ; algebra = λ (ps , (X , Y , h , _) , fs , gs , hom , _) {is} ns all →
+  ; Carrier = λ _ (ps , X , Y , h , fs , gs , _) is n →
+                uncurryᵗ h is (fold (ps , X , fs) n) ≡ fold (ps , Y , gs) n
+  ; algebra = λ (ps , X , Y , h , fs , gs , hom) {is} ns all →
       let Dᶜˢ = PDataD.applyP (DataD.applyL D _) ps in
       begin
-        uncurryᵗ h is (fold (ps , (X , _) , fs) (DataC.toN C ns))
+        uncurryᵗ h is (fold (ps , X , fs) (DataC.toN C ns))
           ≡⟨ cong (uncurryᵗ h is) (FoldC.equation foldC ns) ⟩
-        uncurryᵗ h is (fold-opᶜˢ Dᶜˢ fs (fmapᶜˢ Dᶜˢ (fold (ps , (X , _) , fs)) ns))
-          ≡⟨ fold-fusionᶜˢ Dᶜˢ fs gs (fold (ps , (X , _) , fs)) (fold (ps , (Y , _) , gs))
+        uncurryᵗ h is (fold-opᶜˢ Dᶜˢ fs (fmapᶜˢ Dᶜˢ (fold (ps , X , fs)) ns))
+          ≡⟨ fold-fusionᶜˢ Dᶜˢ fs gs (fold (ps , X , fs)) (fold (ps , Y , gs))
                (λ {is} → uncurryᵗ h is) hom ns all ⟩
-        fold-opᶜˢ Dᶜˢ gs (fmapᶜˢ Dᶜˢ (fold (ps , (Y , _) , gs)) ns)
+        fold-opᶜˢ Dᶜˢ gs (fmapᶜˢ Dᶜˢ (fold (ps , Y , gs)) ns)
           ≡⟨ sym (FoldC.equation foldC ns) ⟩
-        fold (ps , (Y , _) , gs) (DataC.toN C ns)
+        fold (ps , Y , gs) (DataC.toN C ns)
       ∎ } where open ≡-Reasoning
