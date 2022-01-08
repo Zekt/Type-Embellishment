@@ -30,7 +30,6 @@ fold-opᶜ (ρ D E) f (xs , xs') = fold-opᶜ  E    (f xs) xs'
 
 fold-opᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {X : Carrierᶜˢ D ℓ}
           → ⟦ FoldOpTelᶜˢ D X ⟧ᵗ → Algᶜˢ D X
-fold-opᶜˢ []       _        ()
 fold-opᶜˢ (D ∷ Ds) (f , fs) (inl xs) = fold-opᶜ  D  f  xs
 fold-opᶜˢ (D ∷ Ds) (f , fs) (inr xs) = fold-opᶜˢ Ds fs xs
 
@@ -130,3 +129,51 @@ fold-fusion-theorem {D} C {fold} foldC = record
           ≡⟨ sym (FoldC.equation foldC ns) ⟩
         fold (ps , Y , gs) (DataC.toN C ns)
       ∎ } where open ≡-Reasoning
+
+IndOpTʳ : {I : Set ℓⁱ} (D : RecD I rb) {N : I → Set ℓ} → ⟦ D ⟧ʳ N
+        → (∀ i → N i → Set ℓ') → Set (max-ℓ rb ⊔ ℓ')
+IndOpTʳ (ι i  ) n  P = P i n
+IndOpTʳ (π A D) ns P = (a : A) → IndOpTʳ (D a) (ns a) P
+
+IndOpTᶜ : {I : Set ℓⁱ} (D : ConD I cb) {N : Carrierᶜ D ℓ} → Algᶜ D N
+        → (P : IndCarrierᶜ D N ℓ') → Set (max-π cb ⊔ max-σ cb ⊔ hasRec? ℓ cb ⊔ ℓ')
+IndOpTᶜ (ι i  )     f P = P i (f refl)
+IndOpTᶜ (σ A D)     f P = (a : A) → IndOpTᶜ (D a) (curry f a) P
+IndOpTᶜ (ρ D E) {N} f P = (ns : ⟦ D ⟧ʳ N) → IndOpTʳ D ns P → IndOpTᶜ E (curry f ns) P
+
+IndOpTelᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {N : Carrierᶜˢ D ℓ} → Algᶜˢ D N
+           → (P : IndCarrierᶜˢ D N ℓ') → Tel (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔
+                                              maxMap (hasRec? ℓ) cbs ⊔ hasCon? ℓ' cbs)
+IndOpTelᶜˢ []       f P = []
+IndOpTelᶜˢ (D ∷ Ds) f P = IndOpTᶜ D (f ∘ inl) P ∷ constω (IndOpTelᶜˢ Ds (f ∘ inr) P)
+
+ind-opʳ : {I : Set ℓⁱ} (D : RecD I rb) {N : I → Set ℓ} (ns : ⟦ D ⟧ʳ N)
+          {P : ∀ i → N i → Set ℓ'} → Allʳ D P ns → IndOpTʳ D ns P
+ind-opʳ (ι i  ) n  p   = p
+ind-opʳ (π A D) ns all = λ a → ind-opʳ (D a) (ns a) (all a)
+
+ind-opᶜ : {I : Set ℓⁱ} (D : ConD I cb) {N : Carrierᶜ D ℓ} (f : Algᶜ D N)
+          {P : IndCarrierᶜ D N ℓ'} → IndOpTᶜ D f P → IndAlgᶜ D f P ℓ''
+ind-opᶜ (ι i  ) f p refl        all = p
+ind-opᶜ (σ A D) f g (a  , ns )  all = ind-opᶜ (D a) (curry f a) (g a) ns all
+ind-opᶜ (ρ D E) f g (ns , ns') (all , all') =
+  ind-opᶜ E (curry f ns) (g ns (ind-opʳ D ns all)) ns' all'
+
+ind-opᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {N : Carrierᶜˢ D ℓ} (f : Algᶜˢ D N)
+           {P : IndCarrierᶜˢ D N ℓ'} → ⟦ IndOpTelᶜˢ D f P ⟧ᵗ → IndAlgᶜˢ D f P ℓ''
+ind-opᶜˢ (D ∷ Ds) f (g , gs) (inl ps) = ind-opᶜ  D  (f ∘ inl) g  ps
+ind-opᶜˢ (D ∷ Ds) f (g , gs) (inr ps) = ind-opᶜˢ Ds (f ∘ inr) gs ps
+
+ind-operator : ∀ {D N} → DataC D N → IndP
+ind-operator {D} {N} C = record
+  { Conv    = C
+  ; #levels = suc (DataD.#levels D)
+  ; levels  = snd
+  ; Param   = λ (ℓ , ℓs) → let Dᵖ = DataD.applyL D ℓs in
+      [[ ps ∶ PDataD.Param Dᵖ ]] let Dᶜˢ = PDataD.applyP Dᵖ ps in
+      [  P  ∶ Curriedᵗ false (PDataD.Index Dᵖ ps) (λ is → N ℓs ps is → Set ℓ) ]
+              IndOpTelᶜˢ Dᶜˢ (DataC.toN C) (uncurryᵗ P)
+  ; param   = fst
+  ; Carrier = λ _ (_ , P , _) is n → uncurryᵗ P is n
+  ; algebra = λ (ps , P , fs) →
+      ind-opᶜˢ (PDataD.applyP (DataD.applyL D _) ps) (DataC.toN C) fs }
