@@ -1,7 +1,7 @@
 {-# OPTIONS --safe #-}
 
 open import Prelude
-open import Generics.Safe.Telescope hiding (∷-syntaxᵗ); open ∀ℓ; open ∀ᵗ
+open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵗ 
 open import Generics.Safe.Description
 open import Generics.Safe.Description.FixedPoint
 open import Generics.Safe.Algebra
@@ -46,7 +46,7 @@ NatC = record
 
 -- USER (specialising a generic library component)
 foldℕ-alg : ∀ {ℓ} → ∀ℓ 0 λ ℓs → ∀ᵗ false [] λ ps →
-            {X : ∀ᵗ false [] λ _ → Set ℓ} →
+            {X : ∀ᵗ true [] λ _ → Set ℓ} →
             ∀ᵗ true ((X $$ tt) ∷ λ _ → (X $$ tt → X $$ tt) ∷ λ _ → []) λ _ →
             Algebra (ι tt ∷ ρ (ι tt) (ι tt) ∷ []) ℓ
 -- foldℕ-alg : {! ∀ℓω _ λ ℓs → ∀ {ℓ} → ∀ᵗ false _ λ ps → FoldAlgTᵈ NatD ℓs ps ℓ !}
@@ -200,7 +200,7 @@ VecC = record
                   ; (a ∷ as) → refl } }
 
 -- USER
-Vec-remember-alg : ∀ℓ 1 λ ℓs → ∀ᵐᵗ false (Set (fst ℓs) ∷ (λ A → [])) λ ps
+Vec-remember-alg : ∀ℓ 1 λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ A → [])) λ ps
                  → IndAlgebraᵈ ListC ℓs ps (fst ℓs)
 Vec-remember-alg = remember-alg ListC length-alg length'-wrapper length'C VecC
 
