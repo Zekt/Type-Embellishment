@@ -88,11 +88,11 @@ module Finitary where
   remember-forget-invᶜˢ (D ∷ Ds) (_ ∷ fin) alg f r g (inr ns') all =
     cong (bimap id inr) (remember-forget-invᶜˢ Ds fin (alg ∘ inr) f r g ns' all)
 
-module FunExt (funext : FunExt) where
+choice : {A : Set ℓ} {B : A → Set ℓ'} {R : (a : A) → B a → Set ℓ''}
+      → ((a : A) → Σ[ b ∈ B a ] R a b) → Σ[ f ∈ ((a : A) → B a) ] ((a : A) → R a (f a))
+choice c = (λ a → fst (c a)) , (λ a → snd (c a))
 
-  choice : {A : Set ℓ} {B : A → Set ℓ'} {R : (a : A) → B a → Set ℓ''}
-        → ((a : A) → Σ[ b ∈ B a ] R a b) → Σ[ f ∈ ((a : A) → B a) ] ((a : A) → R a (f a))
-  choice c = (λ a → fst (c a)) , (λ a → snd (c a))
+module FunExt (funext : FunExt) where
 
   forget-remember-invʳ :
       {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ} {N : I → Set ℓ}
@@ -266,7 +266,7 @@ remember-forget-inv {P} {f} C {N'} C' {r} rC {g} gC cond = let open FoldP P in r
           ≡⟨ cong (λ n → f ps n , r ps n) (FoldC.equation gC ns') ⟩
         let ns = eraseᵈ ⌈ AlgOD P ⌉ᵈ (fmapᵈ ⌊ AlgOD P ⌋ᵈ (g ps) ns')
             n  = DataC.toN Conv ns in
-      (f ps n , r ps n
+       (f ps n , r ps n
           ≡⟨ cong (λ m → f ps (DataC.toN Conv ns) , m) (IndC.equation rC _) ⟩
         f ps n ,
         DataC.toN C'

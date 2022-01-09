@@ -208,6 +208,54 @@ Vec-rememberC : IndC Vec-rememberP Vec-remember-wrapper
 IndC.equation Vec-rememberC (inl               refl  ) = refl
 IndC.equation Vec-rememberC (inr (inl (_ , _ , refl))) = refl
 
+-- USER
+fromVecP : FoldP
+fromVecP = forget VecC ListC ⌈ VecOD ⌉ᵈ
+
+-- META & USER
+fromVec : {A : Set ℓ} {n : ℕ} → Vec A n → List A
+fromVec []       = []
+fromVec (x ∷ xs) = x ∷ fromVec xs
+
+-- META
+fromVec-wrapper : FoldGT fromVecP
+fromVec-wrapper (A , _) = fromVec
+
+fromVecC : FoldC fromVecP fromVec-wrapper
+FoldC.equation fromVecC (inl                   refl  ) = refl
+FoldC.equation fromVecC (inr (inl (_ , _ , _ , refl))) = refl
+
+-- USER
+inverseP : IndP
+inverseP = remember-forget-inv length'C VecC Vec-rememberC fromVecC
+             (inl (λ ℓs → [] ∷ (tt ∷ refl ∷ []) ∷ []))
+
+-- META & USER
+inverse : {A : Set ℓ} {n : ℕ} (xs : Vec A n)
+        → (length' (fromVec xs) , Vec-remember (fromVec xs))
+        ≡ ((n , xs) ⦂ Σ ℕ (Vec A))  -- manual type annotation
+                                    -- (Agda normalisation may not preserve types!)
+inverse []       = refl
+inverse (x ∷ xs) =
+  trans
+   (cong
+    (bimap (λ x → x) (DataC.toN VecC))  -- requires manual definition-folding
+    (cong (bimap (λ x → x) inr)
+     (cong (bimap (λ x → x) inl)
+      (cong (bimap (λ x → x) (λ section → x , section))
+       (trans
+        (cong (λ p → suc (fst p) , fst p , snd p , refl) (inverse xs))
+        refl)))))
+   refl
+
+-- META
+inverse-wrapper : IndGT inverseP
+inverse-wrapper (A , _) = inverse
+
+inverseC : IndC inverseP inverse-wrapper
+IndC.equation inverseC (inl                   refl  ) = refl
+IndC.equation inverseC (inr (inl (_ , _ , _ , refl))) = refl
+
 data W {ℓ ℓ'} (A : Set ℓ) (B : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
   sup : (a : A) → (B a → W A B) → W A B
 
