@@ -47,3 +47,7 @@ module ≡-Reasoning {A : Set a} where
 
   syntax step-≡  x y≡z x≡y = x ≡⟨  x≡y ⟩ y≡z
   syntax step-≡˘ x y≡z y≡x = x ≡˘⟨ y≡x ⟩ y≡z
+
+FunExt : Setω
+FunExt = ∀ {ℓ ℓ'} {A : Set ℓ} {B : A → Set ℓ'} {f g : (a : A) → B a}
+         → (∀ a → f a ≡ g a) → f ≡ g
