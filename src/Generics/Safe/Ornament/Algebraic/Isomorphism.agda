@@ -58,7 +58,7 @@ module Finitary where
       rememberᶜ {ℓ'' = ℓ'''} D alg f
         (eraseᶜ ⌈ algODᶜ D alg ⌉ᶜ (fmapᶜ ⌊ algODᶜ D alg ⌋ᶜ g ns'))
           (ind-fmapᶜ D r (eraseᶜ ⌈ algODᶜ D alg ⌉ᶜ (fmapᶜ ⌊ algODᶜ D alg ⌋ᶜ g ns'))))
-    ≡ ((x , ns') ⦂ Σ[ x' ∈ X i ] (⟦ ⌊ algODᶜ D alg ⌋ᶜ ⟧ᶜ N' (i , x' , tt)))
+    ≡ ((x , ns') ⦂ Σ[ x' ∈ X i ] ⟦ ⌊ algODᶜ D alg ⌋ᶜ ⟧ᶜ N' (i , x' , tt))
   remember-forget-invᶜ (ι i) fin alg f r g refl all = refl
   remember-forget-invᶜ (σ A D) (_ ∷ fin) alg f r g (a , ns') all =
     cong (bimap id (a ,_))
@@ -82,7 +82,7 @@ module Finitary where
           (eraseᶜˢ ⌈ algODᶜˢ D alg ⌉ᶜˢ (fmapᶜˢ ⌊ algODᶜˢ D alg ⌋ᶜˢ g ns'))
             (ind-fmapᶜˢ D r
               (eraseᶜˢ ⌈ algODᶜˢ D alg ⌉ᶜˢ (fmapᶜˢ ⌊ algODᶜˢ D alg ⌋ᶜˢ g ns'))))
-    ≡ ((x , ns') ⦂ Σ[ x' ∈ X i ] (⟦ ⌊ algODᶜˢ D alg ⌋ᶜˢ ⟧ᶜˢ N' (i , x' , tt)))
+    ≡ ((x , ns') ⦂ Σ[ x' ∈ X i ] ⟦ ⌊ algODᶜˢ D alg ⌋ᶜˢ ⟧ᶜˢ N' (i , x' , tt))
   remember-forget-invᶜˢ (D ∷ Ds) (fin ∷ _) alg f r g (inl ns') all =
     cong (bimap id inl) (remember-forget-invᶜ  D  fin (alg ∘ inl) f r g ns' all)
   remember-forget-invᶜˢ (D ∷ Ds) (_ ∷ fin) alg f r g (inr ns') all =
@@ -114,7 +114,7 @@ module FunExt (funext : FunExt) where
       (r : ∀ {i} (n : N i) → N' (i , f n , tt))
     → ∀ {i} (ns : ⟦ D ⟧ᶜ N i) → Allᶜ D (λ _ n → g (r n) ≡ n) ns ℓ''
     → eraseᶜ ⌈ algODᶜ D alg ⌉ᶜ (fmapᶜ ⌊ algODᶜ D alg ⌋ᶜ g
-            (rememberᶜ {ℓ'' = ℓ'''} D alg f {N'} ns (ind-fmapᶜ D r ns))) ≡ ns
+        (rememberᶜ {ℓ'' = ℓ'''} D alg f {N'} ns (ind-fmapᶜ D r ns))) ≡ ns
   forget-remember-invᶜ (ι i) alg f g r refl all = refl
   forget-remember-invᶜ (σ A D) alg f g r (a , ns) all =
     cong (a ,_) (forget-remember-invᶜ (D a) (curry alg a) f g r ns all)
@@ -129,7 +129,7 @@ module FunExt (funext : FunExt) where
       (r : ∀ {i} (n : N i) → N' (i , f n , tt))
     → ∀ {i} (ns : ⟦ D ⟧ᶜˢ N i) → Allᶜˢ D (λ _ n → g (r n) ≡ n) ns ℓ''
     → eraseᶜˢ ⌈ algODᶜˢ D alg ⌉ᶜˢ (fmapᶜˢ ⌊ algODᶜˢ D alg ⌋ᶜˢ g
-      (rememberᶜˢ {ℓ'' = ℓ'''} D alg f {N'} ns (ind-fmapᶜˢ D r ns))) ≡ ns
+        (rememberᶜˢ {ℓ'' = ℓ'''} D alg f {N'} ns (ind-fmapᶜˢ D r ns))) ≡ ns
   forget-remember-invᶜˢ (D ∷ Ds) alg f g r (inl ns) all =
     cong inl (forget-remember-invᶜ  D  (alg ∘ inl) f g r ns all)
   forget-remember-invᶜˢ (D ∷ Ds) alg f g r (inr ns) all =
@@ -142,10 +142,10 @@ module FunExt (funext : FunExt) where
       (g : ∀ {i x} → N' (i , x , tt) → N i)
     → (xs : ⟦ D ⟧ʳ X) (ns' : ⟦ ⌊ algODʳ D xs ⌋ʳ ⟧ʳ N')
     → Allʳ ⌊ algODʳ D xs ⌋ʳ (λ is n' → let (i' , x' , _) = is in
-          (f (g n') , r (g n')) ≡ ((x' , n') ⦂ Σ[ x'' ∈ X i' ] N' (i' , x'' , tt))) ns'
+        (f (g n') , r (g n')) ≡ ((x' , n') ⦂ Σ[ x'' ∈ X i' ] N' (i' , x'' , tt))) ns'
     → let ns = eraseʳ ⌈ algODʳ D xs ⌉ʳ (fmapʳ ⌊ algODʳ D xs ⌋ʳ g ns') in
       (fmapʳ D f ns , rememberʳ D f {N'} ns (ind-fmapʳ D r ns))
-    ≡ ((xs , ns') ⦂ Σ[ xs' ∈ ⟦ D ⟧ʳ X ] (⟦ ⌊ algODʳ D xs' ⌋ʳ ⟧ʳ N'))
+    ≡ ((xs , ns') ⦂ Σ[ xs' ∈ ⟦ D ⟧ʳ X ] ⟦ ⌊ algODʳ D xs' ⌋ʳ ⟧ʳ N')
   remember-forget-invʳ (ι i  ) f r g x  n'  eq  = eq
   remember-forget-invʳ (π A D) f r g xs ns' all = cong choice
     (funext λ a → remember-forget-invʳ (D a) f r g (xs a) (ns' a) (all a))
@@ -162,7 +162,7 @@ module FunExt (funext : FunExt) where
       rememberᶜ {ℓ'' = ℓ'''} D alg f
         (eraseᶜ ⌈ algODᶜ D alg ⌉ᶜ (fmapᶜ ⌊ algODᶜ D alg ⌋ᶜ g ns'))
           (ind-fmapᶜ D r (eraseᶜ ⌈ algODᶜ D alg ⌉ᶜ (fmapᶜ ⌊ algODᶜ D alg ⌋ᶜ g ns'))))
-    ≡ ((x , ns') ⦂ Σ[ x' ∈ X i ] (⟦ ⌊ algODᶜ D alg ⌋ᶜ ⟧ᶜ N' (i , x' , tt)))
+    ≡ ((x , ns') ⦂ Σ[ x' ∈ X i ] ⟦ ⌊ algODᶜ D alg ⌋ᶜ ⟧ᶜ N' (i , x' , tt))
   remember-forget-invᶜ (ι i) alg f r g refl all = refl
   remember-forget-invᶜ (σ A D) alg f r g (a , ns') all =
     cong (bimap id (a ,_)) (remember-forget-invᶜ (D a) (curry alg a) f r g ns' all)
@@ -185,7 +185,7 @@ module FunExt (funext : FunExt) where
        rememberᶜˢ {ℓ'' = ℓ′} D alg f
          (eraseᶜˢ ⌈ algODᶜˢ D alg ⌉ᶜˢ (fmapᶜˢ ⌊ algODᶜˢ D alg ⌋ᶜˢ g ns'))
            (ind-fmapᶜˢ D r (eraseᶜˢ ⌈ algODᶜˢ D alg ⌉ᶜˢ (fmapᶜˢ ⌊ algODᶜˢ D alg ⌋ᶜˢ g ns'))))
-    ≡ ((x , ns') ⦂ Σ[ x' ∈ X i ] (⟦ ⌊ algODᶜˢ D alg ⌋ᶜˢ ⟧ᶜˢ N' (i , x' , tt)))
+    ≡ ((x , ns') ⦂ Σ[ x' ∈ X i ] ⟦ ⌊ algODᶜˢ D alg ⌋ᶜˢ ⟧ᶜˢ N' (i , x' , tt))
   remember-forget-invᶜˢ (D ∷ Ds) alg f r g (inl ns') all =
     cong (bimap id inl) (remember-forget-invᶜ  D  (alg ∘ inl) f r g ns' all)
   remember-forget-invᶜˢ (D ∷ Ds) alg f r g (inr ns') all =
@@ -209,17 +209,17 @@ forget-remember-inv {P} {f} C {N'} C' {g} gC {r} rC cond = let open FoldP P in r
           ≡⟨ cong (g ps) (IndC.equation rC ns) ⟩
         g ps (DataC.toN C'
           (subst (λ x → ⟦ ⌊ AlgOD P ⌋ᵈ ⟧ᵈ (N' _ ps) (_ , x , tt))
-                  (sym (FoldC.equation C ns))
-                  (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (algebra ps) (f ps) ns
-                    (ind-fmapᶜˢ Dᶜˢ (r ps) ns))))
+                 (sym (FoldC.equation C ns))
+                 (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (algebra ps) (f ps) ns
+                   (ind-fmapᶜˢ Dᶜˢ (r ps) ns))))
           ≡⟨ FoldC.equation gC _ ⟩
         DataC.toN Conv
           (eraseᶜˢ ⌈ algODᶜˢ Dᶜˢ (algebra ps) ⌉ᶜˢ
             (fmapᶜˢ ⌊ algODᶜˢ Dᶜˢ (algebra ps) ⌋ᶜˢ (g ps)
               (subst (λ x → ⟦ ⌊ algODᶜˢ Dᶜˢ (algebra ps) ⌋ᶜˢ ⟧ᶜˢ (N' _ ps) (_ , x , tt))
-                      (sym (FoldC.equation C ns))
-                      (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (algebra ps) (f ps) ns
-                        (ind-fmapᶜˢ Dᶜˢ (r ps) ns)))))
+                     (sym (FoldC.equation C ns))
+                     (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (algebra ps) (f ps) ns
+                       (ind-fmapᶜˢ Dᶜˢ (r ps) ns)))))
           ≡⟨ cong (DataC.toN Conv)
                   (erase-fmap-subst-lemma ⌈ algODᶜˢ Dᶜˢ (algebra ps) ⌉ᶜˢ (g ps) _ _) ⟩
         DataC.toN Conv
@@ -259,7 +259,7 @@ remember-forget-inv {P} {f} C {N'} C' {r} rC {g} gC cond = let open FoldP P in r
   ; param   = id
   ; Carrier = λ ℓs ps (is , x , _) n' →
         (f ps (g ps n') , r ps (g ps n'))
-      ≡ ((x , n') ⦂ (Σ[ x' ∈ Carrier ℓs ps is ] N' ℓs ps (is , x' , tt)))
+      ≡ ((x , n') ⦂ Σ[ x' ∈ Carrier ℓs ps is ] N' ℓs ps (is , x' , tt))
   ; algebra = λ ps ns' all → let Dᶜˢ = PDataD.applyP (DataD.applyL Desc _) (param ps) in
       begin
         (let n = g ps (DataC.toN C' ns') in f ps n , r ps n)
@@ -271,8 +271,8 @@ remember-forget-inv {P} {f} C {N'} C' {r} rC {g} gC cond = let open FoldP P in r
         f ps n ,
         DataC.toN C'
           (subst (λ x → ⟦ ⌊ AlgOD P ⌋ᵈ ⟧ᵈ (N' _ ps) (_ , x , tt))
-                  (sym (FoldC.equation C _))
-                  (rememberᶜˢ Dᶜˢ (algebra ps) (f ps) _ (ind-fmapᵈ Desc (r ps) ns)))
+                 (sym (FoldC.equation C _))
+                 (rememberᶜˢ Dᶜˢ (algebra ps) (f ps) _ (ind-fmapᵈ Desc (r ps) ns)))
           ≡⟨ pair-subst-lemma (DataC.toN C') (sym (FoldC.equation C _)) ⟩
         algebra ps (fmapᵈ Desc (f ps) ns) ,
         DataC.toN C' (rememberᶜˢ Dᶜˢ (algebra ps) (f ps) _ (ind-fmapᵈ Desc (r ps) ns))
