@@ -2,19 +2,12 @@
 module Tests.SCMTest where
 
 open import Prelude
-open import Generics.Safe.Telescope; open ∀ℓ; open ∀ᵗ
+open import Generics.Safe.Telescope
 open import Generics.Safe.Description
 open import Generics.Safe.Description.FixedPoint
 open import Generics.Safe.Algebra
 open import Generics.Safe.Recursion
 open import Generics.Safe.RecursionScheme
-open import Generics.Safe.Ornament
-open import Generics.Safe.Ornament.Description
-open import Generics.Safe.Ornament.Algebraic
-open import Generics.Safe.Ornament.Algebraic.Isomorphism
-open import Generics.Safe.Ornament.Promotion
-
-
 
 ---- List 
 
@@ -49,45 +42,32 @@ ListC = record
                   ; (a ∷ as) → refl } }
 
 -- USER (specialising a generic library component)
-foldList-alg : ∀ {ℓ} → ∀ℓ 1 (λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ _ → [])) 
-           (λ ps →
-            {X : ∀ᵗ true [] (λ _ → Set ℓ)} →
-            ∀ᵗ true ((X $$ tt) ∷
-                      (λ _ → (fst ps → X $$ tt → X $$ tt) ∷ (λ _ → []))) 
-            (λ _ →
-              Algebra ((ι tt) ∷ (σ (fst ps) (λ _ → ρ (ι tt) (ι tt)) ∷ [])) ℓ)))
-foldList-alg = fold-alg ListD
+foldListP : FoldP
+foldListP = fold-operator ListC
 
 -- META
 
-foldList : {ℓ ℓ₁ : Level} {A : Set ℓ₁} {X : Set ℓ} → X → (A → X → X) → List A → X
+foldList : {ℓs : (Level × Level × ⊤)} 
+         → {A : Set (fst ℓs)} {X : Set (fst (snd ℓs))} 
+         → X → (A → X → X) → List A → X
 foldList e f [] = e
 foldList e f (x ∷ xs) = f x (foldList e f xs)
 
-foldList-wrapper : ∀ {ℓ} → ∀ℓ 1 λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ _ → [])) 
-               (λ ps →
-                {X : ∀ᵗ false [] (λ _ → Set ℓ)} →
-                ∀ᵗ true ((X $$ tt) ∷ 
-                          λ _ → (fst ps → X $$ tt → X $$ tt) ∷ λ _ → []) 
-                (λ args →
-                 FoldT ListC (foldList-alg $$ ℓs $$ ps $$ args)))
-foldList-wrapper $$ _ $$ (A , _) $$ (e , f , _) = foldList e f
- 
--- META
+foldList-wrapper : FoldGT foldListP
+foldList-wrapper ((A , tt) , X , e , f , tt) = foldList e f 
 
-foldList-is-fold : ∀ {ℓ ℓs ps} {X : Set ℓ} 
-                 → (e : X) (f : fst ps →  X → X)
-                 → AlgebraC ListC (foldList-alg     $$ ℓs $$ ps $$ (e , f , _))
-                                  (foldList-wrapper $$ ℓs $$ ps $$ (e , f , _))
-foldList-is-fold e f (inl refl)                  = refl
-foldList-is-fold e f (inr (inl (x , xs , refl))) = refl
+foldList-is-fold : FoldC foldListP foldList-wrapper
+FoldC.equation foldList-is-fold (inl refl) = refl
+FoldC.equation foldList-is-fold (inr (inl (x , xs , refl))) = refl
 
 ---- Internally & Enternally Labelled Binary Tree
 
 data IETree {ℓ ℓ'} (A : Set ℓ) (B : Set ℓ') : Set (ℓ ⊔ ℓ') where
   tip : A → IETree A B
   bin : B → IETree A B → IETree A B → IETree A B
-  
+
+-- META
+
 IETreeD : DataD
 IETreeD = record
   { #levels = 2
@@ -100,7 +80,7 @@ IETreeD = record
                         in (σ A λ _ → ι tt)
                          ∷ (σ B λ _ → ρ (ι tt) (ρ (ι tt) (ι tt)))
                          ∷ [] } }
-                        
+
 IETree-wrapper : DataT IETreeD
 IETree-wrapper (ℓ , ℓ' , _) (A , B , _) _ = IETree A B
 
@@ -115,45 +95,26 @@ IETreeC = record
   ; toN-fromN = λ { (tip x) → refl
                   ; (bin y t u) → refl} }
 
--- USER (specialising a generic library component)
-IETree-alg : ∀ {ℓ} → ∀ℓ 2 (λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ _ → Set (fst (snd ℓs)) ∷ (λ _ → []))) 
-           (λ ps →
-            {X : ∀ᵗ false [] (λ _ → Set ℓ)} →
-            let (A , B , _) = ps
-            in ∀ᵗ true ( (A → (X $$ tt)) 
-                        ∷ λ _ → (B → X $$ tt → X $$ tt → X $$ tt) 
-                        ∷ λ _ → []) 
-            (λ _ → Algebra ( (σ A λ _ → ι tt)
-                           ∷ (σ B λ _ → ρ (ι tt) (ρ (ι tt) (ι tt)))
-                           ∷ []) ℓ)))
-IETree-alg $$ ℓs $$ ps $$ fs = fold-alg IETreeD $$ ℓs $$ ps $$ fs
--- IETree-alg = fold-alg IETreeD
+-- USER
+
+foldIEP : FoldP
+foldIEP = fold-operator IETreeC
 
 -- META
 
-foldIE : {ℓ ℓ₁ ℓ₂ : Level} {A : Set ℓ₁} {B : Set ℓ₂} {X : Set ℓ} 
-       → (A → X) → (B → X → X → X) → IETree A B → X
+foldIE : {ℓs : (Level × Level × Level × ⊤)}  
+       → let (ℓ , ℓ₁ , ℓ₂ , _) = ℓs
+         in {A : Set ℓ₁} {B : Set ℓ₂} {X : Set ℓ} 
+            → (A → X) → (B → X → X → X) → IETree A B → X
 foldIE g f (tip x) = g x
 foldIE g f (bin y t u) = f y (foldIE g f t) (foldIE g f u)
 
-foldIE-wrapper : ∀ {ℓ} → ∀ℓ 2 λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ _ → Set (fst (snd ℓs)) ∷ (λ _ → []))) 
-               (λ ps →
-                {X : ∀ᵗ false [] (λ _ → Set ℓ)} →
-                let (A , B , _) = ps
-                in ∀ᵗ true ((A → X $$ tt) ∷ 
-                          λ _ → (B → X $$ tt → X $$ tt → X $$ tt) ∷ λ _ → []) 
-                (λ args →
-                 FoldT IETreeC (IETree-alg $$ ℓs $$ ps $$ args)))
-foldIE-wrapper $$ _ $$ (A , B , _) $$ (g , f , _) = foldIE g f
+foldIE-wrapper : FoldGT foldIEP
+foldIE-wrapper ((A , B , _) , X , g , f , tt) = foldIE g f
 
--- META
-
-foldIE-is-fold : ∀ {ℓ ℓs ps} {X : Set ℓ} 
-                 → (g : fst ps → X) (f : fst (snd ps) → X → X → X)
-                      → AlgebraC IETreeC (IETree-alg     $$ ℓs $$ ps $$ (g , f , _))
-                                         (foldIE-wrapper $$ ℓs $$ ps $$ (g , f , _))
-foldIE-is-fold g f (inl (x , refl)) = refl
-foldIE-is-fold g f (inr (inl (y , t , u , refl))) = refl
+foldIE-is-fold : FoldC foldIEP foldIE-wrapper
+FoldC.equation foldIE-is-fold (inl (x , refl)) = refl
+FoldC.equation foldIE-is-fold (inr (inl (y , t , u , refl))) = refl
 
 
 ---- Hand-Crafted Vectors
@@ -193,14 +154,23 @@ VecC = record
   ; toN-fromN = λ { []       → refl
                   ; (x ∷ xs) → refl } }
 
+-- USER
 
-Vec-alg : ∀ {ℓ} → ∀ℓ 1 (λ ℓs → ∀ᵗ false (Set (fst ℓs) ∷ (λ _ → [])) 
-           (λ ps →
-            {X : ∀ᵗ true (ℕ ∷ (λ _ → [])) (λ _ → Set ℓ)} →
-            ∀ᵗ true ((X $$ (zero , tt))
-                     ∷ (λ _ → (fst ps → (n : ℕ) → X $$ (n , tt) → X $$ (suc n , tt))
-                     ∷ (λ _ → []))) 
-            (λ _ → Algebra ((ι (zero , tt))
-                           ∷ (σ (fst ps) λ _ → σ ℕ λ n → ρ (ι (n , tt)) (ι (suc n , tt)))
-                           ∷ []) ℓ)))
-Vec-alg = fold-alg VecD
+foldVecP : FoldP
+foldVecP = fold-operator VecC
+
+-- META
+
+foldVec : {ℓs : (Level × Level × ⊤)} 
+         → {A : Set (fst ℓs)} {X : ℕ → Set (fst (snd ℓs))} 
+         → X zero → (A → ∀ n → X n → X (suc n)) 
+         → ∀ {n} → Vec A n → X n
+foldVec e f [] = e
+foldVec e f (x ∷ xs) = f x _ (foldVec e f xs)
+
+foldVec-wrapper : FoldGT foldVecP
+foldVec-wrapper ((A , tt) , X , e , f , tt) {(n , tt)} = foldVec e f {n}
+
+foldVec-is-fold : FoldC foldVecP foldVec-wrapper
+FoldC.equation foldVec-is-fold (inl refl) = refl
+FoldC.equation foldVec-is-fold (inr (inl (x , n , xs , refl))) = refl
