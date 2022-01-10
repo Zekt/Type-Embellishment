@@ -10,8 +10,8 @@ open import Generics.Description as D
 open import Generics.Recursion   as D
 
 private
-  pattern `inl x = con₁ (quote inl) x
-  pattern `inr x = con₁ (quote inr) x
+  pattern `inl x = con₁ (quote _⊎_.inl) x
+  pattern `inr x = con₁ (quote _⊎_.inr) x
   pattern `refl  = con₀ (quote refl)
   pattern _`,_ x y = con₂ (quote Prelude._,_) x y
 
