@@ -1,7 +1,7 @@
 {-# OPTIONS --without-K #-}
 open import Prelude
 
-module Metalib.Recursion where
+module Metalib.Connection where
 
 open import Utils.Reflection
 open import Utils.Error as Err
