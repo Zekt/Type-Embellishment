@@ -101,9 +101,9 @@ ListD = record
     ; Index = λ _ → []
     ; applyP = λ where
       (A , tt) →
-        ι tt
+        (ι tt)
         -- List A
-        ∷ Σ[ x ∶ A ] (ρ (ι tt) (ι tt))
+        ∷ (Σ[ x ∶ A ] (ρ (ι tt) (ι tt)))
         -- (_ : A) → List A → List A
         ∷ []
     }}

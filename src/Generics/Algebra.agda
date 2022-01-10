@@ -1,9 +1,8 @@
 {-# OPTIONS --without-K #-}
-open import Prelude
 
 module Generics.Algebra where
 
-open import Generics.Levels
+open import Prelude
 open import Generics.Description
 
 private variable
@@ -23,6 +22,9 @@ Carrierᵖᵈ D ps ℓ = Carrierᶜˢ (PDataD.applyP D ps) ℓ
 Carrierᵈ : ∀ (D : DataD) ℓs ps ℓ → Set _
 Carrierᵈ D ℓs = Carrierᵖᵈ (DataD.applyL D ℓs)
 
+Carriers : (D : DataD) (ℓf : DataD.Levels D → Level) → Setω
+Carriers D ℓf = ∀ ℓs ps → Carrierᵈ D ℓs ps (ℓf ℓs)
+
 Algᶜ : {I : Set ℓⁱ} (D : ConD I cb) → Carrierᶜ D ℓ → Set _
 Algᶜ D X = ∀ {i} → ⟦ D ⟧ᶜ X i → X i
 
@@ -35,19 +37,8 @@ Algᵖᵈ D X = ∀ {is} → ⟦ D ⟧ᵖᵈ X is → X is
 Algᵈ : ∀ (D : DataD) {ℓs ps} → Carrierᵈ D ℓs ps ℓ → Set _
 Algᵈ D X = ∀ {is} → ⟦ D ⟧ᵈ X is → X is
 
-record Algebra {I : Set ℓⁱ} (D : ConDs I cbs) ℓ
-     : Set (ℓⁱ ⊔ maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓ) cbs ⊔
-            hasCon? ℓⁱ cbs ⊔ lsuc ℓ) where
-  constructor algebra
-  field
-    Carrier : Carrierᶜˢ D ℓ
-    apply   : Algᶜˢ D Carrier
-
-Algebraᵖᵈ : ∀ (D : PDataD) ps ℓ → Set _
-Algebraᵖᵈ D ps = Algebra (PDataD.applyP D ps)
-
-Algebraᵈ : ∀ (D : DataD) ℓs ps ℓ → Set _
-Algebraᵈ D ℓs = Algebraᵖᵈ (DataD.applyL D ℓs)
+Algs : (D : DataD) → ∀ {ℓf} → Carriers D ℓf → Setω
+Algs D X = ∀ {ℓs ps} → Algᵈ D (X ℓs ps)
 
 Coalgᶜ : {I : Set ℓⁱ} (D : ConD I cb) → Carrierᶜ D ℓ → Set _
 Coalgᶜ D X = ∀ {i} → X i → ⟦ D ⟧ᶜ X i
@@ -60,6 +51,9 @@ Coalgᵖᵈ D X = ∀ {is} → X is → ⟦ D ⟧ᵖᵈ X is
 
 Coalgᵈ : ∀ (D : DataD) {ℓs ps} → Carrierᵈ D ℓs ps ℓ → Set _
 Coalgᵈ D X = ∀ {is} → X is → ⟦ D ⟧ᵈ X is
+
+Coalgs : (D : DataD) → ∀ {ℓf} → Carriers D ℓf → Setω
+Coalgs D X = ∀ {ℓs ps} → Coalgᵈ D (X ℓs ps)
 
 IndCarrierʳ : {I : Set ℓⁱ} (D : RecD I rb) (X : I → Set ℓˣ) (ℓ : Level) → Set _
 IndCarrierʳ D X ℓ = ∀ i → X i → Set ℓ
@@ -75,6 +69,9 @@ IndCarrierᵖᵈ D {ps} X ℓ = IndCarrierᶜˢ (PDataD.applyP D ps) X ℓ
 
 IndCarrierᵈ : ∀ (D : DataD) {ℓs ps} (X : Carrierᵈ D ℓs ps ℓˣ) ℓ → Set _
 IndCarrierᵈ D {ℓs} = IndCarrierᵖᵈ (DataD.applyL D ℓs)
+
+IndCarriers : ∀ (D : DataD) {ℓf} (X : Carriers D ℓf) (ℓg : DataD.Levels D → Level) → Setω
+IndCarriers D X ℓg = ∀ {ℓs ps} → IndCarrierᵈ D (X ℓs ps) (ℓg ℓs)
 
 Allʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ} (Y : IndCarrierʳ D X ℓʸ)
        (xs : ⟦ D ⟧ʳ X) → Set (max-ℓ rb ⊔ ℓʸ)
@@ -104,12 +101,12 @@ Allᵈ : ∀ (D : DataD) {ℓs ps} {X : Carrierᵈ D ℓs ps ℓˣ} (Y : IndCarr
 Allᵈ D {ℓs} Y xs = Allᵖᵈ (DataD.applyL D ℓs) Y xs
 
 IndAlgᶜ : {I : Set ℓⁱ} (D : ConD I cb) {X : Carrierᶜ D ℓˣ}
-        → Algᶜ D X → IndCarrierᶜ D X ℓʸ → Set _
-IndAlgᶜ D f Y = ∀ {i} xs → Allᶜ D Y xs lzero → Y i (f xs)
+        → Algᶜ D X → IndCarrierᶜ D X ℓʸ → (ℓ : Level) → Set _
+IndAlgᶜ D f Y ℓ = ∀ {i} xs → Allᶜ D Y xs ℓ → Y i (f xs)
 
 IndAlgᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {X : Carrierᶜˢ D ℓˣ}
-         → Algᶜˢ D X → IndCarrierᶜˢ D X ℓʸ → Set _
-IndAlgᶜˢ D f Y = ∀ {i} xs → Allᶜˢ D Y xs lzero → Y i (f xs)
+         → Algᶜˢ D X → IndCarrierᶜˢ D X ℓʸ → (ℓ : Level) → Set _
+IndAlgᶜˢ D f Y ℓ = ∀ {i} xs → Allᶜˢ D Y xs ℓ → Y i (f xs)
 
 IndAlgᵖᵈ : ∀ (D : PDataD) {ps} {X : Carrierᵖᵈ D ps ℓˣ}
          → Algᵖᵈ D X → IndCarrierᵖᵈ D X ℓʸ → Set _
@@ -118,6 +115,10 @@ IndAlgᵖᵈ D f Y = ∀ {is} xs → Allᵖᵈ D Y xs → Y is (f xs)
 IndAlgᵈ : ∀ (D : DataD) {ℓs ps} {X : Carrierᵈ D ℓs ps ℓˣ}
         → Algᵈ D X → IndCarrierᵈ D X ℓ → Set _
 IndAlgᵈ D f Y = ∀ {is} xs → Allᵈ D Y xs → Y is (f xs)
+
+IndAlgs : ∀ (D : DataD) {ℓf} {X : Carriers D ℓf}
+        → Algs D X → ∀ {ℓg} → IndCarriers D X ℓg → Setω
+IndAlgs D f Y = ∀ {ℓs ps} → IndAlgᵈ D {ℓs} {ps} f Y
 
 ind-fmapʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ} {Y : IndCarrierʳ D X ℓʸ}
           → (∀ {i} x → Y i x) → (xs : ⟦ D ⟧ʳ X) → Allʳ D Y xs

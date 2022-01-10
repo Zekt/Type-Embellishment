@@ -9,7 +9,6 @@ open import Utils.Reflection
 open import Utils.Error          as Err
 
 open import Generics.Telescope
-open import Generics.Levels      
 open import Generics.Description 
 
 open import Metalib.Telescope as Tel
