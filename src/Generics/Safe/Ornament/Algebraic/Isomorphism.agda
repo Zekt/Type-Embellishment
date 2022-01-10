@@ -62,7 +62,7 @@ module Finitary where
   remember-forget-invᶜ (ι i) fin alg f r g refl all = refl
   remember-forget-invᶜ (σ A D) (_ ∷ fin) alg f r g (a , ns') all =
     cong (bimap id (a ,_))
-          (remember-forget-invᶜ (D a) fin (curry alg a) f r g ns' all)
+         (remember-forget-invᶜ (D a) fin (curry alg a) f r g ns' all)
   remember-forget-invᶜ (ρ (ι i) E) (refl ∷ fin) alg f r g (x , n' , ns') (eq , all) =
     trans (cong (λ p → (alg (fst p , _) , fst p , snd p ,
                         rememberᶜ E (λ y → alg (fst p , y)) f _ (ind-fmapᶜ E r _))) eq)

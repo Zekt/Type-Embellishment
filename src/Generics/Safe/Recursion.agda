@@ -56,11 +56,11 @@ FoldNT P = let open FoldP P in
          → Native (level ℓs) (param ps) is → Carrier ℓs ps is
 
 fold-wrapper : (P : FoldP) → FoldNT P → FoldGT P
-fold-wrapper P f ps {is} n = uncurryᵗ (uncurryᵗ f ps) is n
+fold-wrapper P f ps {is} = uncurryᵗ (uncurryᵗ f ps) is
 
 fold-base : (P : FoldP) → FoldNT P → FoldNT P
 fold-base P rec = let open FoldP P in curryᵗ λ ps → curryᵗ λ is →
-  algebra ps {is} ∘ fmapᵈ Desc (λ {is} → uncurryᵗ (uncurryᵗ rec ps) is) ∘ DataC.fromN Conv
+  algebra ps {is} ∘ fmapᵈ Desc (fold-wrapper P rec ps) ∘ DataC.fromN Conv
 
 record FoldC (P : FoldP) (f : FoldGT P) : Setω where
   field
@@ -102,13 +102,12 @@ IndNT P = let open IndP P in
         → (n : Native (level ℓs) (param ps) is) → Carrier ℓs ps is n
 
 ind-wrapper : (P : IndP) → IndNT P → IndGT P
-ind-wrapper P f ps {is} n = uncurryᵗ (uncurryᵗ f ps) is n
+ind-wrapper P f ps {is} = uncurryᵗ (uncurryᵗ f ps) is
 
 ind-base : (P : IndP) → IndNT P → IndNT P
 ind-base P rec {ℓs} = let open IndP P in curryᵗ λ ps → curryᵗ λ is n →
   subst (Carrier ℓs ps is) (DataC.toN-fromN Conv n)
-        (algebra ps _ (ind-fmapᵈ Desc (λ {is} → uncurryᵗ (uncurryᵗ rec ps) is)
-                        (DataC.fromN Conv n)))
+        (algebra ps _ (ind-fmapᵈ Desc (ind-wrapper P rec ps) (DataC.fromN Conv n)))
 
 record IndC (P : IndP) (f : IndGT P) : Setω where
   field

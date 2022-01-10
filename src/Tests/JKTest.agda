@@ -57,8 +57,8 @@ foldℕ : {ℓs : Σ Level (λ _ → ⊤)} (a : Set (fst ℓs)) (a₁ : a) (a₂
 -- META
 foldℕ X z s  zero   = z
 foldℕ X z s (suc n) = s (foldℕ X z s n)
--- foldℕ X z s  zero   = {! ind-base foldℕP foldℕ X z s zero    !}
--- foldℕ X z s (suc n) = {! ind-base foldℕP foldℕ X z s (suc n) !}
+-- foldℕ X z s  zero   = {! fold-base foldℕP foldℕ X z s zero    !}
+-- foldℕ X z s (suc n) = {! fold-base foldℕP foldℕ X z s (suc n) !}
 
 -- USER (changing the form)
 -- foldℕ : ∀ {ℓ} {X : Set ℓ} → (X → X) → X → ℕ → X
