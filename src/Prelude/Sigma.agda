@@ -49,8 +49,8 @@ infixr 4 _,ω_
 record Σω {a} (A : Set a) (B : A → Setω) : Setω where
   constructor _,ω_
   field
-    fst : A
-    snd : B fst
+    fstω : A
+    sndω : B fstω
 
 open Σω public
 
@@ -66,8 +66,8 @@ infixr 4 _,ωω_
 record Σωω (A : Setω) (B : A → Setω) : Setω where
   constructor _,ωω_
   field
-    fst : A
-    snd : B fst
+    fstωω : A
+    sndωω : B fstωω
 
 open Σωω public
 
@@ -83,8 +83,8 @@ infixr 4 _,ℓ_
 record Σℓ {ℓf : Level → Level} (B : ∀ ℓ → Set (ℓf ℓ)) : Setω where
   constructor _,ℓ_
   field
-    fst : Level
-    snd : B fst
+    fstℓ : Level
+    sndℓ : B fstℓ
 
 open Σℓ public
 
