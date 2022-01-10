@@ -51,3 +51,14 @@ module ≡-Reasoning {A : Set a} where
 FunExt : Setω
 FunExt = ∀ {ℓ ℓ'} {A : Set ℓ} {B : A → Set ℓ'} {f g : (a : A) → B a}
          → (∀ a → f a ≡ g a) → f ≡ g
+
+infix 4 _≡ω_
+
+data _≡ω_ {A : Setω} (x : A) : A → Setω where
+  refl : x ≡ω x
+
+substω₁ : {A : Setω} (P : A → Setω₁) {x y : A} → x ≡ω y → P x → P y
+substω₁ P refl p = p
+
+symω : {A : Setω} {x y : A} → x ≡ω y → y ≡ω x
+symω refl = refl

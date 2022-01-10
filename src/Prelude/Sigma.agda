@@ -43,3 +43,54 @@ uncurry : ∀ {ℓᵃ} {A : Set ℓᵃ} {ℓᵇ} {B : A → Set ℓᵇ} {ℓᶜ}
           ((x : A) → (y : B x) → C (x , y)) →
           ((p : Σ A B) → C p)
 uncurry f (x , y) = f x y
+
+infixr 4 _,ω_
+
+record Σω {a} (A : Set a) (B : A → Setω) : Setω where
+  constructor _,ω_
+  field
+    fst : A
+    snd : B fst
+
+open Σω public
+
+infix 2 Σω-syntax
+
+Σω-syntax : ∀ {a} (A : Set a) → (A → Setω) → Setω
+Σω-syntax = Σω
+
+syntax Σω-syntax A (λ x → B) = Σω[ x ∈ A ] B
+
+infixr 4 _,ωω_
+
+record Σωω (A : Setω) (B : A → Setω) : Setω where
+  constructor _,ωω_
+  field
+    fst : A
+    snd : B fst
+
+open Σωω public
+
+infix 2 Σωω-syntax
+
+Σωω-syntax : (A : Setω) → (A → Setω) → Setω
+Σωω-syntax = Σωω
+
+syntax Σωω-syntax A (λ x → B) = Σωω[ x ∈ A ] B
+
+infixr 4 _,ℓ_
+
+record Σℓ {ℓf : Level → Level} (B : ∀ ℓ → Set (ℓf ℓ)) : Setω where
+  constructor _,ℓ_
+  field
+    fst : Level
+    snd : B fst
+
+open Σℓ public
+
+infix 2 Σℓ-syntax
+
+Σℓ-syntax : {ℓf : Level → Level} → (∀ ℓ → Set (ℓf ℓ)) → Setω
+Σℓ-syntax = Σℓ
+
+syntax Σℓ-syntax (λ ℓ → B) = Σℓ[ ℓ ] B

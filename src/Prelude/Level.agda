@@ -22,6 +22,12 @@ record Lift {a} ℓ (A : Set a) : Set (a ⊔ ℓ) where
 
 open Lift public
 
+record Liftω {a} (A : Set a) : Setω where
+  constructor lift
+  field lower : A
+
+open Liftω public
+
 -- Synonyms
 
 0ℓ 1ℓ 2ℓ : Level

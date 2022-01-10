@@ -29,6 +29,12 @@ idFun A x = x
 -- syntax idFun A x = x of A
 syntax idFun A x = x ⦂ A
 
+infix -10 idFunω
+idFunω : (A : Setω) → A → A
+idFunω A x = x
+
+syntax idFunω A x = x ⦂ω A
+
 flip : ∀ {A : Set a} {B : Set b} {C : A → B → Set c} →
        ((x : A) (y : B) → C x y) → ((y : B) (x : A) → C x y)
 flip f = λ y x → f x y
@@ -60,4 +66,3 @@ case x of f = case x return _ of f
 
 typeOf : {A : Set a} → A → Set a
 typeOf {A = A} _ = A
-
