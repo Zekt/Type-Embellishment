@@ -1,4 +1,4 @@
-{-# OPTIONS --safe -v meta:10  #-}
+{-# OPTIONS --safe --without-K -v meta:10  #-}
 open import Prelude
   hiding ([_,_])
 
