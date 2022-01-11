@@ -203,3 +203,7 @@ instance
 data All {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') where
   []  : All P []
   _∷_ : {x : A} → P x → {xs : List A} → All P xs → All P (x ∷ xs)
+
+allToList : {A : Set ℓ} {P : A → Set ℓ'} {xs : List A} → All P xs → List (Σ A P)
+allToList []        = []
+allToList (p ∷ all) = (_ , p) ∷ allToList all

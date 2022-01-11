@@ -41,6 +41,10 @@ module _ (I : Set ℓⁱ) {J : Set ℓʲ} (e : I → J) where
     ∺_  : {E : ConD J cb} {Es : ConDs J cbs}
           (ODs : ConODs Es cbs') → ConODs (E ∷ Es) cbs'
 
+idRecOD : {I : Set ℓⁱ} (D : RecD I rb) → RecOD I id D
+idRecOD (ι i  ) = ι i refl
+idRecOD (π A D) = π λ a → idRecOD (D a)
+
 record PDataOD (E : PDataD) : Setω where
   field
     alevel   : Level

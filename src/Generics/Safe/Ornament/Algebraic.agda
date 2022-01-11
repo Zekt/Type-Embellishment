@@ -75,7 +75,7 @@ module _ (ℓ : Level) where
       hasCon? (ℓⁱ ⊔ ℓ) (List.map (algConB ℓ) cbs) ⊔ ℓᵃ ⊔ ℓⁱ ⊔ ℓ
         ≡⟨ -- eliminating algConB; boundedness of level-conditionals
           (let cbs' = List.map (algConB ℓ) cbs
-            in  cong₂ _⊔_ (cong₂ _⊔_ (cong₂ _⊔_
+           in  cong₂ _⊔_ (cong₂ _⊔_ (cong₂ _⊔_
               (algConB-lemma₁ cbs)
               (algConB-lemma₃ cbs))
               (maxMap-bound (hasRec? (ℓᵃ ⊔ ℓⁱ ⊔ ℓ)) _
@@ -83,7 +83,7 @@ module _ (ℓ : Level) where
               (hasCon?-bound (ℓⁱ ⊔ ℓ) cbs')) ⟩
       maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓ) cbs ⊔ ℓᵃ ⊔ ℓ ⊔ ℓⁱ
         ≡⟨ -- boundedness of level-conditionals
-            cong (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔_) (cong₂ _⊔_ (cong₂ _⊔_
+           cong (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔_) (cong₂ _⊔_ (cong₂ _⊔_
           (maxMap-bound (hasRec? ℓ) _ (hasRec?-bound ℓ) cbs)
           (sym (maxMap-bound (hasRec? (ℓᵃ ⊔ ℓⁱ)) _ (hasRec?-bound (ℓᵃ ⊔ ℓⁱ)) cbs)))
           (sym (hasCon?-bound ℓⁱ cbs))) ⟩

@@ -13,7 +13,7 @@ open import Generics.Safe.Ornament
 open import Generics.Safe.Ornament.Description
 open import Generics.Safe.Ornament.Algebraic
 open import Generics.Safe.Ornament.Algebraic.Isomorphism
-open import Generics.Safe.SimplyParametric
+open import Generics.Safe.SimpleContainer
 
 -- USER: ℕ
 
@@ -256,10 +256,11 @@ inverseC : IndC inverseP inverse-wrapper
 IndC.equation inverseC (inl                   refl  ) = refl
 IndC.equation inverseC (inr (inl (_ , _ , _ , refl))) = refl
 
-VecSP : SP VecD
-VecSP = λ _ → sp refl λ (A , _) →
-  tt ,ω lift tt ,ωω
-  (true , false , tt) ,ω (refl ,ωω λ _ _ → lift tt) ,ωω lift tt
+VecSC : SCᵈ VecD
+VecSC = λ (ℓ , _) → record
+  { El  = λ (A , _) → A
+  ; pos = tt ∷ (true , false , tt) ∷ []
+  ; coe = λ _ → lift tt ,ωω (refl ,ωω λ _ _ → lift tt) ,ωω lift tt }
 
 data W {ℓ ℓ'} (A : Set ℓ) (B : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
   sup : (a : A) → (B a → W A B) → W A B
