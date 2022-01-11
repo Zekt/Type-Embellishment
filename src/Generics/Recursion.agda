@@ -1,11 +1,11 @@
 {-# OPTIONS --safe --without-K #-}
 
-module Generics.Safe.Recursion where
-
 open import Prelude
-open import Generics.Safe.Telescope
-open import Generics.Safe.Description
-open import Generics.Safe.Algebra
+
+module Generics.Recursion where
+open import Generics.Telescope
+open import Generics.Description
+open import Generics.Algebra
 
 private variable
   rb  : RecB

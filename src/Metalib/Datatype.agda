@@ -4,12 +4,11 @@ open import Prelude
   hiding (T)
 
 module Metalib.Datatype where
-
 open import Utils.Reflection
 open import Utils.Error          as Err
 
-open import Generics.Safe.Telescope
-open import Generics.Safe.Description 
+open import Generics.Telescope
+open import Generics.Description 
 
 open import Metalib.Telescope as Tel
 

@@ -3,11 +3,10 @@
 open import Prelude hiding (length)
 
 module Metalib.Telescope where
-
 open import Utils.Reflection
 open import Utils.Error as Err
 
-open import Generics.Safe.Telescope
+open import Generics.Telescope
 
 -- Frequently used terms
 private

@@ -1,10 +1,10 @@
 {-# OPTIONS --safe --without-K #-}
 
-module Generics.Safe.Description.FixedPoint where
-
 open import Prelude
-open import Generics.Safe.Telescope
-open import Generics.Safe.Description
+
+module Generics.Description.FixedPoint where
+open import Generics.Telescope
+open import Generics.Description
 
 data μ (D : DataD)
        (ℓs : DataD.Levels D)

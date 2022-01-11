@@ -3,17 +3,17 @@
 module Tests.JKTest where
 
 open import Prelude
-open import Generics.Safe.Telescope
-open import Generics.Safe.Description
-open import Generics.Safe.Description.FixedPoint
-open import Generics.Safe.Algebra
-open import Generics.Safe.Recursion
-open import Generics.Safe.RecursionScheme
-open import Generics.Safe.Ornament
-open import Generics.Safe.Ornament.Description
-open import Generics.Safe.Ornament.Algebraic
-open import Generics.Safe.Ornament.Algebraic.Isomorphism
-open import Generics.Safe.SimpleContainer
+open import Generics.Telescope
+open import Generics.Description
+open import Generics.Description.FixedPoint
+open import Generics.Algebra
+open import Generics.Recursion
+open import Generics.RecursionScheme
+open import Generics.Ornament
+open import Generics.Ornament.Description
+open import Generics.Ornament.Algebraic
+open import Generics.Ornament.Algebraic.Isomorphism
+open import Generics.SimpleContainer
 
 -- USER: ℕ
 

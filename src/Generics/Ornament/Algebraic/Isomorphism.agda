@@ -1,15 +1,16 @@
 {-# OPTIONS --safe #-}
 
-module Generics.Safe.Ornament.Algebraic.Isomorphism where
-
 open import Prelude
-open import Generics.Safe.Telescope
-open import Generics.Safe.Description
-open import Generics.Safe.Algebra
-open import Generics.Safe.Recursion
-open import Generics.Safe.Ornament
-open import Generics.Safe.Ornament.Description
-open import Generics.Safe.Ornament.Algebraic
+
+module Generics.Ornament.Algebraic.Isomorphism where
+
+open import Generics.Telescope
+open import Generics.Description
+open import Generics.Algebra
+open import Generics.Recursion
+open import Generics.Ornament
+open import Generics.Ornament.Description
+open import Generics.Ornament.Algebraic
 
 private variable
   rb : RecB

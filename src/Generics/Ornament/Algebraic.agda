@@ -1,15 +1,15 @@
 {-# OPTIONS --safe #-}
 
-module Generics.Safe.Ornament.Algebraic where
-
 open import Prelude
+
+module Generics.Ornament.Algebraic where
 open import Prelude.List as List
-open import Generics.Safe.Telescope
-open import Generics.Safe.Description
-open import Generics.Safe.Algebra
-open import Generics.Safe.Recursion
-open import Generics.Safe.Ornament
-open import Generics.Safe.Ornament.Description
+open import Generics.Telescope
+open import Generics.Description
+open import Generics.Algebra
+open import Generics.Recursion
+open import Generics.Ornament
+open import Generics.Ornament.Description
 
 private variable
   rb  : RecB

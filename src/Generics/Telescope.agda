@@ -1,8 +1,8 @@
 {-# OPTIONS --safe --without-K #-}
 
-module Generics.Safe.Telescope where
-
 open import Prelude
+
+module Generics.Telescope where
 
 infixr 5 _∷_
 infixr 4 _++_

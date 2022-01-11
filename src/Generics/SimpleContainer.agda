@@ -1,14 +1,14 @@
 {-# OPTIONS --safe #-}
 
-module Generics.Safe.SimpleContainer where
-
 open import Prelude
-open import Generics.Safe.Telescope
-open import Generics.Safe.Description
-open import Generics.Safe.Algebra
-open import Generics.Safe.Recursion
-open import Generics.Safe.Ornament
-open import Generics.Safe.Ornament.Description
+
+module Generics.SimpleContainer where
+open import Generics.Telescope
+open import Generics.Description
+open import Generics.Algebra
+open import Generics.Recursion
+open import Generics.Ornament
+open import Generics.Ornament.Description
 
 private variable
   cb  : ConB

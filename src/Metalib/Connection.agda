@@ -6,8 +6,8 @@ module Metalib.Connection where
 open import Utils.Reflection
 open import Utils.Error as Err
 
-open import Generics.Safe.Description as D
-open import Generics.Safe.Recursion   as D
+open import Generics.Description
+open import Generics.Recursion  
 
 private
   pattern `inl x = con₁ (quote _⊎_.inl) x

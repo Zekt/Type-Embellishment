@@ -1,9 +1,9 @@
 {-# OPTIONS --safe --without-K #-}
 
-module Generics.Safe.Algebra where
-
 open import Prelude
-open import Generics.Safe.Description
+
+module Generics.Algebra where
+open import Generics.Description
 
 private variable
   rb  : RecB

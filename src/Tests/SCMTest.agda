@@ -2,12 +2,12 @@
 module Tests.SCMTest where
 
 open import Prelude
-open import Generics.Safe.Telescope
-open import Generics.Safe.Description
-open import Generics.Safe.Description.FixedPoint
-open import Generics.Safe.Algebra
-open import Generics.Safe.Recursion
-open import Generics.Safe.RecursionScheme
+open import Generics.Telescope
+open import Generics.Description
+open import Generics.Description.FixedPoint
+open import Generics.Algebra
+open import Generics.Recursion
+open import Generics.RecursionScheme
 
 ---- List 
 

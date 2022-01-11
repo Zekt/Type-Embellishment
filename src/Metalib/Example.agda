@@ -6,9 +6,9 @@ module Metalib.Example where
 
 open import Utils.Reflection
 
-open import Generics.Safe.Telescope
-open import Generics.Safe.Description
-open import Generics.Safe.Recursion
+open import Generics.Telescope
+open import Generics.Description
+open import Generics.Recursion
 
 open import Metalib.Telescope
 open import Metalib.Datatype

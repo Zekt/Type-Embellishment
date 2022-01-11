@@ -1,12 +1,12 @@
 {-# OPTIONS --safe #-}
 
-module Generics.Safe.Ornament where
-
 open import Prelude
-open import Generics.Safe.Telescope
-open import Generics.Safe.Description
-open import Generics.Safe.Algebra
-open import Generics.Safe.Recursion
+
+module Generics.Ornament where
+open import Generics.Telescope
+open import Generics.Description
+open import Generics.Algebra
+open import Generics.Recursion
 
 private variable
   A : Set ℓ

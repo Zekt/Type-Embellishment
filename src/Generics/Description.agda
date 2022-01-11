@@ -1,11 +1,12 @@
 {-# OPTIONS --safe --without-K #-}
 
-module Generics.Safe.Description where
-
 open import Prelude
+
+module Generics.Description where
 open import Prelude.List as List
-open import Prelude.Sum as Sum
-open import Generics.Safe.Telescope
+open import Prelude.Sum  as Sum
+
+open import Generics.Telescope
 
 RecB : Set
 RecB = List Level

@@ -1,11 +1,11 @@
 {-# OPTIONS --safe #-}
 
-module Generics.Safe.Ornament.Description where
-
 open import Prelude
-open import Generics.Safe.Telescope
-open import Generics.Safe.Description
-open import Generics.Safe.Ornament
+
+module Generics.Ornament.Description where
+open import Generics.Telescope
+open import Generics.Description
+open import Generics.Ornament
 
 private variable
   A : Set ℓ
