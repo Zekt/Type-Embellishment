@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --safe --without-K #-}
 open import Prelude
 
 module Metalib.Connection where
@@ -6,8 +6,8 @@ module Metalib.Connection where
 open import Utils.Reflection
 open import Utils.Error as Err
 
-open import Generics.Description as D
-open import Generics.Recursion   as D
+open import Generics.Safe.Description as D
+open import Generics.Safe.Recursion   as D
 
 private
   pattern `inl x = con₁ (quote _⊎_.inl) x
@@ -56,7 +56,9 @@ module _ (pars : ℕ) where
   
 genDataCT : (D : DataD) → (Nᶜ : DataTᶜ D) → Tactic
 genDataCT D Nᶜ hole = do
-  hole ← checkType hole =<< quoteTC (DataCᶜ D Nᶜ)
+  `D ← quoteωTC D
+  `N ← quoteωTC {A = ∀ {ℓs} → PDataTᶜ (DataD.applyL D ℓs)} Nᶜ
+  hole ← checkType hole (def₂ (quote DataCᶜ) `D `N) -- =<< quoteωTC (DataCᶜ D Nᶜ)
   
   hLam (abs "ℓs" t@(def d args)) ← quoteωTC (λ {ℓs} → Nᶜ {ℓs})
     where t → Err.notDef t
@@ -67,7 +69,7 @@ genDataCT D Nᶜ hole = do
   `fromN-toN ← genFromN-toNT pars cs 
   `toN-fromN ← genToN-fromNT pars cs 
 
-  unify hole $ con₄ (quote dataC) `toN `fromN `fromN-toN `toN-fromN
+  unify hole $ con₄ (quote datac) `toN `fromN `fromN-toN `toN-fromN
 
 private
   fromData : (f : ℕ → Names → TC Term) → Name → Tactic

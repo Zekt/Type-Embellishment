@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --safe --without-K #-}
 
 open import Prelude hiding (length)
 
@@ -7,9 +7,7 @@ module Metalib.Telescope where
 open import Utils.Reflection
 open import Utils.Error as Err
 
-open import Generics.Telescope
-open import Generics.Description
-
+open import Generics.Safe.Telescope
 
 -- Frequently used terms
 private
@@ -24,7 +22,7 @@ extendCxtTel : {A : Set ℓ′}
   → (T : Tel ℓ) → (⟦ T ⟧ᵗ → TC A) → TC A
 extendCxtTel [] f      = f tt
 extendCxtTel (A ∷ T) f = do
-  s ← getAbsName T
+  s ← getAbsNameω T
   extendContextT s visible-relevant-ω A λ _ x → extendCxtTel (T x) (curry f x)
 extendCxtTel (T ++ U) f = extendCxtTel T λ ⟦T⟧ →
   extendCxtTel (U ⟦T⟧) λ x → curry f ⟦T⟧ x
@@ -37,12 +35,14 @@ extendContextℓs (suc n) c = extendContextT "ℓ" hidden-relevant-ω Level λ _
 
 -- ℕ is the length of (T : Tel ℓ)
 -- this may fail if `Tel` is not built by λ by pattern matching lambdas.
-fromTel : Tel ℓ → TC Telescope
+fromTel : {ℓ : Level}
+  → Tel ℓ → TC Telescope
 fromTel []      = return []
 fromTel (A ∷ T) = do
-  s ← getAbsName T
+  s ← getAbsNameω T
   extendContextT s (visible-relevant-ω) A λ `A x → do
-    (s , vArg `A) ∷_ <$> fromTel (T x) 
+    Γ ← fromTel (T x)
+    return $ (s , vArg `A) ∷ Γ
 fromTel (T ++ U) = do
   `Γ ← fromTel T
   extendCxtTel T λ x → do
@@ -53,5 +53,9 @@ to`Tel : Telescope → Term
 to`Tel = foldr `[] λ where
   (s , arg _ `A) `T →  `A `∷ vLam (abs s `T)
 
-fromTelescope : Telescope → TC (Tel ℓ)
-fromTelescope = unquoteTC ∘ to`Tel
+macro
+  genTel : Telescope → Tactic
+  genTel Γ hole = do
+    `ℓ ← newMeta `Level
+    checkedHole ← checkType hole (def₁ (quote Tel) `ℓ)
+    unify checkedHole (to`Tel Γ)

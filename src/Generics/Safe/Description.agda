@@ -70,6 +70,7 @@ module _ (I : Set ℓⁱ) where
     ι : (i : I) → RecD []
     π : (A : Set ℓ) (D : A → RecD rb) → RecD (ℓ ∷ rb)
 
+
   data ConD : ConB → Setω where
     ι : (i : I) → ConD []
     σ : (A : Set ℓ) (D : A → ConD cb) → ConD (inl ℓ  ∷ cb)
@@ -79,7 +80,11 @@ module _ (I : Set ℓⁱ) where
     []  : ConDs []
     _∷_ : (D : ConD cb) (Ds : ConDs cbs) → ConDs (cb ∷ cbs)
 
+  syntax π A (λ x → R) = Π[ x ∶ A ] R
+  syntax σ A (λ x → D) = Σ[ x ∶ A ] D
+
 record PDataD : Setω where
+  constructor pdatad
   field
     alevel   : Level
     {plevel} : Level
@@ -97,6 +102,7 @@ record PDataD : Setω where
     applyP : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ struct
 
 record DataD : Setω where
+  constructor datad
   field
     #levels : ℕ
   Levels : Set

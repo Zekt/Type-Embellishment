@@ -33,6 +33,9 @@ extend*Context ((s , a) ∷ tel) m = extendContext s a (extend*Context tel m)
 quoteTC! : A → TC Term
 quoteTC! a = withNormalisation true (quoteTC a)
 
+quoteωTC! : {A : Setω} → A → TC Term
+quoteωTC! a = withNormalisation true (quoteωTC a)
+
 newMeta : Type → TC Term
 newMeta = checkType unknown
 
@@ -74,6 +77,9 @@ extendContextT s i B f = do
 
 getAbsName : {A : Set ℓ} {B : A → Set ℓ′} → ((x : A) → B x) → TC String
 getAbsName f = caseM quoteTC! f of λ { (lam visible (abs s _)) → return s ; t → Err.notλ t }
+
+getAbsNameω : {A : Set ℓ} {B : A → Setω} → ((x : A) → B x) → TC String
+getAbsNameω f = caseM quoteωTC! f of λ { (lam visible (abs s _)) → return s ; t → Err.notλ t }
 
 getFunction : Name → TC (Type × Clauses)
 getFunction d = do

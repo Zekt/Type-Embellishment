@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --safe --without-K #-}
 
 open import Prelude
   hiding (T)
@@ -8,8 +8,8 @@ module Metalib.Datatype where
 open import Utils.Reflection
 open import Utils.Error          as Err
 
-open import Generics.Telescope
-open import Generics.Description 
+open import Generics.Safe.Telescope
+open import Generics.Safe.Description 
 
 open import Metalib.Telescope as Tel
 
@@ -85,14 +85,14 @@ module _ {T : Tel ℓ} (`A : ⟦ T ⟧ᵗ → TC Type) where
   RecDToType : (R : RecD ⟦ T ⟧ᵗ rb) → TC Type
   RecDToType (ι i) = `A i
   RecDToType (π A D) = do
-    s ← getAbsName D
+    s ← getAbsNameω D
     extendContextT s visible-relevant-ω A λ `A x →
       vΠ[ s ∶ `A ]_ <$> RecDToType (D x)
       
   ConDToType : (D : ConD ⟦ T ⟧ᵗ cb) → TC Type
   ConDToType (ι i) = `A i
   ConDToType (σ A D) = do
-    s ← getAbsName D
+    s ← getAbsNameω D
     extendContextT s visible-relevant-ω A λ `A x →
       vΠ[ s ∶ `A ]_ <$>  ConDToType (D x)
   ConDToType (ρ R D) = do
