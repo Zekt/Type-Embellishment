@@ -1,0 +1,52 @@
+{-# OPTIONS --rewriting --guardedness --sized-types #-}
+
+module Everything where
+import Generics.Algebra
+import Generics.Description
+import Generics.Description.FixedPoint
+import Generics.Ornament
+import Generics.Ornament.Algebraic
+import Generics.Ornament.Algebraic.Isomorphism
+import Generics.Ornament.Description
+import Generics.Recursion
+import Generics.RecursionScheme
+import Generics.SimpleContainer
+import Generics.Telescope
+import Metalib.Connection
+import Metalib.Datatype
+import Metalib.Example
+import Metalib.Telescope
+import Prelude
+import Prelude.Alternative
+import Prelude.Applicative
+import Prelude.Bool
+import Prelude.Coercion
+import Prelude.Empty
+import Prelude.Eq
+import Prelude.Function
+import Prelude.Functor
+import Prelude.Level
+import Prelude.List
+import Prelude.Maybe
+import Prelude.Monad
+import Prelude.Monoid
+import Prelude.Nat
+import Prelude.Relation
+import Prelude.Relation.Dec
+import Prelude.Relation.PropositionalEquality
+import Prelude.Show
+import Prelude.Sigma
+import Prelude.String
+import Prelude.Sum
+import Tests.JKTest
+import Tests.SCMTest
+import Utils.Error
+import Utils.Reflection
+import Utils.Reflection.Eq
+import Utils.Reflection.Print
+import Utils.Reflection.Properties
+import Utils.Reflection.Show
+import Utils.Reflection.Tactic
+import Utils.Reflection.Term
+import Utils.String
+
