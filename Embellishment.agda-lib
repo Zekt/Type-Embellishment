@@ -4,4 +4,4 @@ include:
 depend: 
 
 flags:
-  --auto-inline
+  --auto-inline -v print:10 -v meta:10
