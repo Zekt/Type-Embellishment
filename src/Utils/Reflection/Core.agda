@@ -36,9 +36,10 @@ pattern `Set n = agda-sort (lit n)
 pattern `Set?  = agda-sort unknown
 
 pattern relevant-ω              = modality relevant quantity-ω
-pattern relevant-erased         = modality relevant quantity-0
 pattern visible-relevant-ω      = arg-info visible  relevant-ω
 pattern hidden-relevant-ω       = arg-info hidden   relevant-ω
+
+pattern relevant-erased         = modality relevant quantity-0
 pattern visible-relevant-erased = arg-info visible  relevant-erased
 pattern hidden-relevant-erased  = arg-info hidden   relevant-erased
 

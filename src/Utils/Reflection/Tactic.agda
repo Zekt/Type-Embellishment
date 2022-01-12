@@ -113,3 +113,16 @@ getSetLevel (def (quote Set) [ arg _ x ]) = return x
 getSetLevel t = quoteTC t >>= λ t →
                   typeError [ strErr $ showTerm t <> " level error!" ]
 
+
+
+-- Rename names in a telescope to the first letter of the given type,
+-- if no name is given
+renameUnderscore : Telescope → TC Telescope
+renameUnderscore []        = return []
+renameUnderscore (("_" , x@(arg visible-relevant-ω `A)) ∷ as) = do
+  s ← formatErrorPart $ termErr `A
+  let s = ⇑ [ maybe′ toLower 'x' $ head (⇑ s) ]
+  extendContext s x $ ((s , x) ∷_) <$> renameUnderscore as
+renameUnderscore (a@(s , x) ∷ as) = do
+  extendContext s (arg (arg-info (getVisibility x) (modality (getRelevance x) quantity-ω)) (unArg x))
+    $ a ∷_ <$> renameUnderscore as

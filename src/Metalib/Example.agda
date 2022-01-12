@@ -1,6 +1,6 @@
-{-# OPTIONS --safe --without-K -v meta:10  #-}
+{-# OPTIONS --safe --without-K #-}
 open import Prelude
-  hiding ([_,_])
+--  hiding ([_,_])
 
 module Metalib.Example where
 
@@ -85,6 +85,17 @@ NatC = genDataC NatD ℕ
 
 unquoteDecl data Nat constructor z s = defineByDataD NatD Nat (z ∷ s ∷ [])
 
+TreeD : DataD
+TreeD = datad 1 λ where
+  (ℓ , ⊤) → pdatad ℓ refl ([ A ∶ Set ℓ ] []) (λ ps → []) λ where
+    (A , tt) →
+      ι tt
+      ∷ (Σ[ _ ∶ A ] ρ (ι tt) (ρ (ι tt) (ι tt)))
+      ∷ []
+
+unquoteDecl data Tree constructor leaf node = defineByDataD TreeD Tree (leaf ∷ node ∷ [])
+
+TreeC = genDataC TreeD Tree
 --
 ListD : DataD
 ListD = record
@@ -118,7 +129,7 @@ unquoteDecl data List' constructor nil cons =
 --
 data Len (A : Set ℓ) : List A → List A → Set ℓ where
   z : Len A [] []
-  s : ∀ {x y xs ys} → (_ : Len A xs ys) → Len A (x ∷ xs) (y ∷ ys)
+  s : ∀ {x y xs ys} → (len : Len A xs ys) → Len A (x ∷ xs) (y ∷ ys)
 
 LenD : DataD
 DataD.#levels LenD = 1
@@ -168,9 +179,8 @@ data Pointwise {a b ℓ} (A : Set a) (B : Set b) (R : REL A B ℓ) : REL (Maybe 
   just    : ∀ {x y} → R x y → Pointwise A B R (just x) (just y)
   nothing : Pointwise A B R nothing nothing
 
-pointwiseD     = genDataD Pointwise
-
-PointwiseDataC = genDataC pointwiseD Pointwise
+pointwiseD = genDataD Pointwise
+PointwiseC = genDataC pointwiseD Pointwise
 
 unquoteDecl data Pointwise' constructor just' nothing' = defineByDataD pointwiseD Pointwise' (just' ∷ nothing' ∷ [])
 

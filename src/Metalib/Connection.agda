@@ -29,7 +29,10 @@ private
 
 module _ (pars : ℕ) where
   conToClause : (c : Name) → TC (Telescope × (Term × Pattern) × Args Term × Args Pattern)
-  conToClause c = < forgetTy , cxtToVars > ∘ (λ `A → drop pars $ (⇑ `A) .fst) <$> getType c
+  conToClause c = do
+    `A  ← getType c
+    tel ← drop pars <$> renameUnderscore ((⇑ `A) .fst)
+    return $ < forgetTy , cxtToVars > tel
 
   consToClauses : (cs : Names) → TC (List (Telescope × (Term × Pattern) × Name × Args Term × Args Pattern))
   consToClauses []       = ⦇ [] ⦈
@@ -58,7 +61,7 @@ genDataCT : (D : DataD) → (Nᶜ : DataTᶜ D) → Tactic
 genDataCT D Nᶜ hole = do
   `D ← quoteωTC D
   `N ← quoteωTC {A = ∀ {ℓs} → PDataTᶜ (DataD.applyL D ℓs)} Nᶜ
-  hole ← checkType hole (def₂ (quote DataCᶜ) `D `N) -- =<< quoteωTC (DataCᶜ D Nᶜ)
+  hole ← checkType hole (def₂ (quote DataCᶜ) `D `N)
   
   hLam (abs "ℓs" t@(def d args)) ← quoteωTC (λ {ℓs} → Nᶜ {ℓs})
     where t → Err.notDef t

@@ -21,6 +21,7 @@ open import Prelude.Alternative           public
 
 -- Data Types
 open import Prelude.Empty                 public
+open import Prelude.Char                  public
 open import Prelude.String                public
 open import Prelude.Bool                  public
 open import Prelude.Nat                   public

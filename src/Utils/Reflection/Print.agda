@@ -1,4 +1,4 @@
-{-# OPTIONS --safe --without-K -v meta:10 #-}
+{-# OPTIONS --safe --without-K #-}
 open import Prelude
   hiding ([_,_])
 
@@ -10,10 +10,14 @@ open import Utils.Reflection.Term
 open import Utils.Reflection.Eq
 open import Utils.Reflection.Tactic
 
-private variable
-  A : Set _
+infoName = "print"
+verbosity = 5 
 
-pattern space = strErr " "
+private
+  variable
+    A : Set _
+
+  pattern space     = strErr " "
 
 paren : Visibility → ErrorParts → ErrorParts
 paren v s = case v of λ where
@@ -49,7 +53,7 @@ printArg x f = case getVisibility x of λ where
   v → paren v <$> f (unArg x)
   
 printTelescope : Telescope → TC ErrorParts → TC ErrorParts
-printTelescope []             m = m
+printTelescope []                m = m
 printTelescope ((s , x) ∷ []) m = do
   ss ← extendContext s x m
   s  ← extendContext s x (formatErrorPart $ termErr (var₀ 0))
@@ -86,11 +90,11 @@ printData d = do
     strErr "data" ∷ space ∷ nameErr d ∷ space ∷ [] <> sig <> space ∷ strErr "where" ∷ []  
 
   cons ← vcat ∘ nest <$> extend*Context tel (printCons pars cs)
-  debugPrint "meta" 10 $ [ strErr (vcat $ decl ∷ cons ∷ []) ]
+  debugPrint infoName verbosity $ [ strErr (vcat $ decl ∷ cons ∷ []) ]
 
 printPattern : Pattern → TC ErrorParts
-printPattern p@(con c (_ ∷ _)) = return $ strErr "(" ∷ pattErr p ∷ strErr ")" ∷ []
-printPattern p = return $ [ pattErr p ]
+printPattern p@(con c (_ ∷ _)) = return $ paren visible [ pattErr p ]
+printPattern p                 = return $ [ pattErr p ]
 
 printPatterns : Args Pattern → TC ErrorParts
 printPatterns []       = ⦇ [] ⦈
@@ -119,8 +123,10 @@ printFunction : Name → TC ⊤
 printFunction f = do
   `A , cs ← getFunction f
   css ← printClauses f cs
-  debugPrint "meta" 10 =<< printSig f
-  debugPrint "meta" 10 $ [ strErr (vcat css) ]
+  debugPrint infoName verbosity =<< printSig f
+  debugPrint infoName verbosity $ [ strErr (vcat css) ]
+  return tt
+
 
 macro
   print : Name → Tactic
@@ -131,5 +137,6 @@ macro
       (data-type pars cs) → printData d
       (record-type c fs)  → typeError $
         strErr "Printing the definition of a record type is currently not supported." ∷ []
-      _                   → printSig d >>= debugPrint "meta" 10
+      _                   → printSig d >>= debugPrint infoName verbosity
+    return tt
 
