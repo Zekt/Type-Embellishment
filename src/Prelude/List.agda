@@ -72,6 +72,7 @@ head (x ∷ _) = just x
 head [] = nothing
 
 last : List A → Maybe A
+last [ x ] = just x
 last (_ ∷ xs) = last xs
 last [] = nothing
 

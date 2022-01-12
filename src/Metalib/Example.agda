@@ -13,6 +13,7 @@ open import Generics.Recursion
 open import Metalib.Telescope
 open import Metalib.Datatype
 open import Metalib.Connection
+open import Metalib.Recursion
 
 ------------------------------------------------------------------------------
 -- 
@@ -177,6 +178,32 @@ data Pointwise {a b ℓ} (A : Set a) (B : Set b) (R : REL A B ℓ) : REL (Maybe 
 pointwiseD     = genDataD Pointwise
 
 PointwiseDataC = genDataC pointwiseD Pointwise
+
+open import Generics.RecursionScheme
+
+foldℕP : FoldP
+foldℕP = fold-operator NatC
+
+lenP : FoldP
+lenP = fold-operator LenC
+
+{- Fail
+unquoteDecl foldName = genFold lenP foldName
+-}
+
+{- Success
+foldLen : ∀ {ℓ ℓ'} →
+        (A : Set ℓ) (R : List A → List A → Set ℓ')
+        (Z : R [] [])
+        (f : (x y : A) (xs ys : List A) → R xs ys → R (x ∷ xs) (y ∷ ys))
+        {a : List A} {b : List A} →
+        Len A a b → R a b
+foldLen A R Z f {a} {b} z = {! fold-base lenP foldLen A R Z f z !}
+foldLen A R Z f (s L) = {! fold-base lenP foldLen A R Z f (s L) !}
+-}
+
+--k : ℕ
+--k = {! foldName ℕ 2 (_+_ 2) 5 !}
 
 -- unquoteDecl data Pointwise' constructor just' nothing' = defineByDataD pointwiseD Pointwise' (just' ∷ nothing' ∷ [])
 -- {- dataC
