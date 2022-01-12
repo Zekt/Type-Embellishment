@@ -99,10 +99,10 @@ fold-fusionᶜˢ (D ∷ Ds) (f , _ ) (g , _ ) fold-fs fold-gs h (hom , _) (inl n
 fold-fusionᶜˢ (D ∷ Ds) (_ , fs) (_ , gs) fold-fs fold-gs h (_ , hom) (inr ns) all =
   fold-fusionᶜˢ Ds fs gs fold-fs fold-gs h hom ns all
 
-fold-fusion-theorem :
+fold-fusion :
   ∀ {D N} (C : DataC D N) → let P = fold-operator C in
   {fold : FoldGT P} → FoldC P fold → IndP
-fold-fusion-theorem {D} C {fold} foldC = record
+fold-fusion {D} C {fold} foldC = record
   { Conv    = C
   ; #levels = suc (suc (DataD.#levels D))
   ; level   = snd ∘ snd

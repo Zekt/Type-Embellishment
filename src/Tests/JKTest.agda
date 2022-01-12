@@ -14,6 +14,7 @@ open import Generics.Ornament.Description
 open import Generics.Ornament.Algebraic
 open import Generics.Ornament.Algebraic.Isomorphism
 open import Generics.SimpleContainer
+open import Generics.SimpleContainer.All
 
 -- USER: ℕ
 
@@ -52,9 +53,6 @@ foldℕP = fold-operator NatC
 
 -- META
 foldℕ : {ℓs : Σ Level (λ _ → ⊤)} (a : Set (fst ℓs)) (a₁ : a) (a₂ : a → a) → ℕ → a
--- foldℕ : {! FoldNT foldℕP !}
-
--- META
 foldℕ X z s  zero   = z
 foldℕ X z s (suc n) = s (foldℕ X z s n)
 -- foldℕ X z s  zero   = {! fold-base foldℕP foldℕ X z s zero    !}
@@ -69,9 +67,25 @@ foldℕ X z s (suc n) = s (foldℕ X z s n)
 foldℕ-wrapper : FoldGT foldℕP
 foldℕ-wrapper (_ , X , z , s , _) = foldℕ X z s
 
-foldℕ-is-fold : FoldC foldℕP foldℕ-wrapper
-FoldC.equation foldℕ-is-fold (inl           refl  ) = refl
-FoldC.equation foldℕ-is-fold (inr (inl (_ , refl))) = refl
+foldℕC : FoldC foldℕP foldℕ-wrapper
+FoldC.equation foldℕC (inl           refl  ) = refl
+FoldC.equation foldℕC (inr (inl (_ , refl))) = refl
+
+-- META (specialising ‘fold-fusion NatC foldℕC’)
+foldℕ-fusion : {ℓs : Σ Level (λ _ → Σ Level (λ _ → ⊤))} (a : Set (fst ℓs))
+  (a₁ : Set (fst (snd ℓs))) (a₂ : a → a₁) (a₃ : a) (a₄ : a → a)
+  (a₅ : a₁) (a₆ : a₁ → a₁) (a₇ : {i : ⊤} (xs : tt ≡ i) → a₂ a₃ ≡ a₅)
+  (a₈
+  : {i : ⊤} (xs : Σ a (λ _ → tt ≡ i)) (ys : a₁) →
+    ys ≡ a₂ (fst xs) → a₂ (a₄ (fst xs)) ≡ a₆ ys)
+  (n : ℕ) →
+  a₂ (foldℕ a a₃ a₄ n) ≡ foldℕ a₁ a₅ a₆ n
+foldℕ-fusion a a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ zero = trans (a₇ refl) refl
+foldℕ-fusion a a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ (suc n) =
+  trans
+   (a₈ (foldℕ a a₃ a₄ n , refl) (foldℕ a₁ a₅ a₆ n)
+    (sym (foldℕ-fusion a a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ n)))
+   refl
 
 -- USER (specialising a generic library component)
 indℕP : IndP
@@ -81,7 +95,6 @@ indℕP = ind-operator NatC
 indℕ : {ℓs : Σ Level (λ _ → ⊤)} (a : ℕ → Set (fst ℓs))
        (a₁ : a 0) (a₂ : (ns : ℕ) → a ns → a (suc ns)) (n : ℕ) → a n
 -- indℕ : {! IndNT indℕP !}
-
 indℕ P z s  zero   = z
 indℕ P z s (suc n) = s n (indℕ P z s n)
 -- indℕ P z s  zero   = {! ind-base indℕP indℕ P z s  zero   !}
@@ -257,9 +270,9 @@ IndC.equation inverseC (inl                   refl  ) = refl
 IndC.equation inverseC (inr (inl (_ , _ , _ , refl))) = refl
 
 VecSC : SCᵈ VecD
-VecSC = λ (ℓ , _) → record
+VecSC = λ _ → record
   { El  = λ (A , _) → A
-  ; pos = tt ∷ (true , false , tt) ∷ []
+  ; pos = [] ∷ (true ∷ false ∷ tt ∷ []) ∷ []
   ; coe = λ _ → lift tt ,ωω (refl ,ωω λ _ _ → lift tt) ,ωω lift tt }
 
 data W {ℓ ℓ'} (A : Set ℓ) (B : A → Set ℓ') : Set (ℓ ⊔ ℓ') where

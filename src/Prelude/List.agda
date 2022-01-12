@@ -207,3 +207,11 @@ data All {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') wher
 allToList : {A : Set ℓ} {P : A → Set ℓ'} {xs : List A} → All P xs → List (Σ A P)
 allToList []        = []
 allToList (p ∷ all) = (_ , p) ∷ allToList all
+
+data Any {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') where
+  here  : ∀ {x xs} (px  : P x)      → Any P (x ∷ xs)
+  there : ∀ {x xs} (pxs : Any P xs) → Any P (x ∷ xs)
+
+lookupAny : {A : Set ℓ} {P : A → Set ℓ'} {xs : List A} → Any P xs → Σ[ x ∈ A ] P x
+lookupAny (here  px ) = _ , px
+lookupAny (there pxs) = lookupAny pxs

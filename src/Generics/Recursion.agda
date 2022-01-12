@@ -116,7 +116,7 @@ record IndC (P : IndP) (f : IndGT P) : Setω where
              ∀ {ℓs ps is} (ns : ⟦ Desc ⟧ᵈ (Native (level ℓs) (param ps)) is)
              → f ps (DataC.toN Conv ns) ≡ algebra ps _ (ind-fmapᵈ Desc (f ps) ns)
 
--- Curried form of `DataT` 
+-- Curried form of `DataT`
 PDataTᶜ : (Dᵖ : PDataD) → Set _
 PDataTᶜ Dᵖ = Curriedᵗ true Param      λ ps →
              Curriedᵗ true (Index ps) λ is →

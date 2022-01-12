@@ -61,9 +61,9 @@ hasCon?-bound : ∀ ℓ cbs → hasCon? ℓ cbs ⊑ ℓ
 hasCon?-bound ℓ = maxMap-bound (λ _ → ℓ) ℓ (λ _ → refl)
 
 private variable
-    rb  : RecB
-    cb  : ConB
-    cbs : ConBs
+    rb : RecB
+    cb : ConB
+    cbs cbs' : ConBs
 
 module _ (I : Set ℓⁱ) where
 
@@ -162,6 +162,10 @@ fmapᵈ : (D : DataD) {ℓs : DataD.Levels D} → let Dᵖ = DataD.applyL D ℓs
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈ X i → ⟦ D ⟧ᵈ Y i
 fmapᵈ D {ℓs} = fmapᵖᵈ (DataD.applyL D ℓs)
+
+_++ᶜˢ_ : {I : Set ℓⁱ} → ConDs I cbs → ConDs I cbs' → ConDs I (cbs <> cbs')
+[]       ++ᶜˢ Es = Es
+(D ∷ Ds) ++ᶜˢ Es = D ∷ (Ds ++ᶜˢ Es)
 
 ExtEqʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ}
          (xs xs' : ⟦ D ⟧ʳ X) → Set (max-ℓ rb ⊔ ℓˣ)
