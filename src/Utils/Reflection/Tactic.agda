@@ -115,6 +115,7 @@ getSetLevel t = quoteTC t >>= λ t →
 
 
 
+
 -- Rename names in a telescope to the first letter of the given type,
 -- if no name is given
 renameUnderscore : Telescope → TC Telescope
@@ -123,6 +124,11 @@ renameUnderscore (("_" , x@(arg visible-relevant-ω `A)) ∷ as) = do
   s ← formatErrorPart $ termErr `A
   let s = ⇑ [ maybe′ toLower 'x' $ head (⇑ s) ]
   extendContext s x $ ((s , x) ∷_) <$> renameUnderscore as
-renameUnderscore (a@(s , x) ∷ as) = do
-  extendContext s (arg (arg-info (getVisibility x) (modality (getRelevance x) quantity-ω)) (unArg x))
-    $ a ∷_ <$> renameUnderscore as
+renameUnderscore (a@(s , x) ∷ as) = extendContext s x $ a ∷_ <$> renameUnderscore as
+
+-- Hack
+erasedToω : Telescope → Telescope
+erasedToω = foldr [] λ where
+  (s , arg (arg-info v (modality r quantity-0)) x) Γ →
+    (s , arg (arg-info v (modality r quantity-ω)) x) ∷ Γ
+  x Γ → x ∷ Γ
