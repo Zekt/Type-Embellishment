@@ -48,11 +48,8 @@ private
   to`ConDs = foldr `[] _`∷_
 
   Σpat : Telescope → Pattern
-  Σpat = snd ∘ foldPat
-    where
-      foldPat : Telescope → ℕ × Pattern
-      foldPat = foldr (0 , `tt) λ where
-        _ (n , p) → suc n , (var n `, p)
+  Σpat = snd ∘ foldr (0 , `tt) λ where
+     _ (n , p) → suc n , (var n `, p)
 
   patLam : Telescope → Term → Term
   patLam tel body = pat₁lam₀ tel (Σpat tel) body

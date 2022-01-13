@@ -17,12 +17,10 @@ private
 
   -- c x₁ x₂ ⋯ xₙ can be represented as `Term` and `Pattern`
   cxtToVars : (Γ : Telescope) → (Term × Pattern) × (Args Term × Args Pattern)
-  cxtToVars = snd ∘ foldΓ
-    where
-      foldΓ : Telescope → ℕ × (Term × Pattern) × (Args Term × Args Pattern)
-      foldΓ = foldr ((0 , (`refl , `refl) , ([] , []))) λ where
+  cxtToVars = snd ∘ foldr emptyVar λ where
         (_ , arg i _) (n , (t , p) , (targs , pargs)) →
           suc n , ((var₀ n `, t) , (var n `, p)) , (arg i (var₀ n) ∷ targs) , (arg i (var n) ∷ pargs)
+    where emptyVar = 0 , (`refl , `refl) , ([] , [])
 
   forgetTy : Telescope → Telescope
   forgetTy = map $ bimap id (λ `A → arg (getArgInfo `A) unknown)

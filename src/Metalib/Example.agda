@@ -93,7 +93,11 @@ TreeD = datad 1 λ where
       ∷ (Σ[ _ ∶ A ] ρ (ι tt) (ρ (ι tt) (ι tt)))
       ∷ []
 
-unquoteDecl data Tree constructor leaf node = defineByDataD TreeD Tree (leaf ∷ node ∷ [])
+data Tree {ℓ : Level} (A : Set ℓ) : Set ℓ where
+  leaf : Tree A
+  node : (x : A) → Tree A → Tree A → Tree A
+
+-- unquoteDecl data Tree constructor leaf node = defineByDataD TreeD Tree (leaf ∷ node ∷ [])
 
 TreeC = genDataC TreeD Tree
 --
