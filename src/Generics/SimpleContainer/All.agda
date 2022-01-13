@@ -57,47 +57,29 @@ module _ (ℓ : Level) where
   scConB-lemma₃ [] [] = refl
   scConB-lemma₃ (cb ∷ cbs) (s ∷ ss) = cong₂ _⊔_ (scConB-lemma₂ cb s) (scConB-lemma₃ cbs ss)
 
-  PredOD-pfp-lemma :
-      (ℓⁱ ℓᵃ : Level) (cbs : ConBs) (ss : All SCᵇ cbs)
-    → maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔
-      maxMap (hasRec? (ℓᵃ ⊔ ℓⁱ)) cbs ⊔ hasCon? ℓⁱ cbs ⊔ ℓᵃ ⊔ ℓⁱ
-    ≡ ℓᵃ ⊔ ℓⁱ
+  PredOD-level-inequality :
+      (ℓᵈ : Level) (cbs : ConBs) (ss : All SCᵇ cbs)
+    → maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ ℓᵈ ≡ ℓᵈ
     → maxMap max-π (map (uncurry (scConB ℓ)) (allToList ss)) ⊔
       maxMap max-σ (map (uncurry (scConB ℓ)) (allToList ss)) ⊔
-      maxMap (hasRec? (ℓᵃ ⊔ maxMap (uncurry (hasEl? ℓ)) (allToList ss) ⊔ ℓⁱ))
-             (map (uncurry (scConB ℓ)) (allToList ss)) ⊔
-      hasCon? ℓⁱ (map (uncurry (scConB ℓ)) (allToList ss)) ⊔
-      ℓᵃ ⊔ maxMap (uncurry (hasEl? ℓ)) (allToList ss) ⊔ ℓⁱ
-    ≡ ℓᵃ ⊔ maxMap (uncurry (hasEl? ℓ)) (allToList ss) ⊔ ℓⁱ
-  PredOD-pfp-lemma ℓⁱ ℓᵃ cbs ss pfp =
+      ℓᵈ ⊔ maxMap (uncurry (hasEl? ℓ)) (allToList ss)
+    ≡ ℓᵈ ⊔ maxMap (uncurry (hasEl? ℓ)) (allToList ss)
+  PredOD-level-inequality ℓᵈ cbs ss ineq =
     let ℓᵉ   = maxMap (uncurry (hasEl? ℓ)) (allToList ss)
         cbs' = map (uncurry (scConB ℓ)) (allToList ss) in
     begin
-      maxMap max-π cbs' ⊔ maxMap max-σ cbs' ⊔
-      maxMap (hasRec? (ℓᵃ ⊔ ℓᵉ ⊔ ℓⁱ)) cbs' ⊔ hasCon? ℓⁱ cbs' ⊔
-      ℓᵃ ⊔ ℓᵉ ⊔ ℓⁱ
-        ≡⟨ -- eliminating algConB; boundedness of level-conditionals
-           cong₂ _⊔_ (cong₂ _⊔_ (cong₂ _⊔_
-          (scConB-lemma₁ cbs ss) (scConB-lemma₃ cbs ss))
-          (maxMap-bound (hasRec? (ℓᵃ ⊔ ℓᵉ ⊔ ℓⁱ)) _ (hasRec?-bound (ℓᵃ ⊔ ℓᵉ ⊔ ℓⁱ)) cbs'))
-          (hasCon?-bound ℓⁱ cbs') ⟩  --
-      maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ ℓᵃ ⊔ ℓᵉ ⊔ ℓⁱ
-        ≡⟨ -- boundedness of level-conditionals
-           cong (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ ℓᵉ ⊔_) (cong₂ _⊔_
-          (sym (maxMap-bound (hasRec? (ℓᵃ ⊔ ℓⁱ)) _ (hasRec?-bound (ℓᵃ ⊔ ℓⁱ)) cbs))
-          (sym (hasCon?-bound ℓⁱ cbs))) ⟩
-      maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔
-      maxMap (hasRec? (ℓᵃ ⊔ ℓⁱ)) cbs ⊔ hasCon? ℓⁱ cbs ⊔
-      ℓᵃ ⊔ ℓᵉ ⊔ ℓⁱ
-        ≡⟨ cong (ℓᵉ ⊔_) pfp ⟩
-      ℓᵃ ⊔ ℓᵉ ⊔ ℓⁱ
+      maxMap max-π cbs' ⊔ maxMap max-σ cbs' ⊔ ℓᵈ ⊔ ℓᵉ
+        ≡⟨ cong (ℓᵈ ⊔ ℓᵉ ⊔_) (cong₂ _⊔_ (scConB-lemma₁ cbs ss) (scConB-lemma₃ cbs ss)) ⟩
+      maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ ℓᵈ ⊔ ℓᵉ
+        ≡⟨ cong (ℓᵉ ⊔_) ineq ⟩
+      ℓᵈ ⊔ ℓᵉ
     ∎ where open ≡-Reasoning
 
 PredODᵖᵈ : (D : PDataD) → SC D → Level → PDataOD D
 PredODᵖᵈ D S ℓ = record
   { alevel = PDataD.alevel D ⊔ maxMap (uncurry (hasEl? ℓ)) (allToList (SC.pos S))
-  ; level-pre-fixed-point = PredOD-pfp-lemma ℓ (PDataD.ilevel D) (PDataD.alevel D)
-      (PDataD.struct D) (SC.pos S) (PDataD.level-pre-fixed-point D)
+  ; level-inequality = PredOD-level-inequality
+      ℓ (PDataD.dlevel D) (PDataD.struct D) (SC.pos S) (PDataD.level-inequality D)
   ; Param = [[ ps ∶ PDataD.Param D ]] [ P ∶ (SC.El S ps → Set ℓ) ] []
   ; param = fst
   ; Index = λ (ps , _) → PDataD.Index D ps

@@ -24,7 +24,7 @@ NatD = record
   { #levels = 0
   ; applyL  = λ _ → record
       { alevel = lzero
-      ; level-pre-fixed-point = refl
+      ; level-inequality = refl
       ; Param  = []
       ; Index  = λ _ → []
       ; applyP = λ _ → ι tt
@@ -119,7 +119,7 @@ ListD = record
   { #levels = 1
   ; applyL  = λ ℓs → let (ℓ , _) = ℓs in record
       { alevel = ℓ
-      ; level-pre-fixed-point = refl
+      ; level-inequality = refl
       ; Param  = [ A ∶ Set ℓ ] []
       ; Index  = λ _ → []
       ; applyP = λ ps → let (A , _) = ps
@@ -282,7 +282,8 @@ WD : DataD
 WD = record
   { #levels = 2
   ; applyL  = λ ℓs → let (ℓ , ℓ' , _) = ℓs in record
-      { alevel = ℓ ⊔ ℓ'; level-pre-fixed-point = refl
+      { alevel = ℓ ⊔ ℓ'
+      ; level-inequality = refl
       ; Param  = [ A ∶ Set ℓ ] [ _ ∶ (A → Set ℓ') ] []
       ; Index  = λ _ → []
       ; applyP = λ ps → let (A , B , _) = ps

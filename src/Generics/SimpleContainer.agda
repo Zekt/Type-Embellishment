@@ -26,6 +26,21 @@ hasEl? ℓ (inl _ ∷ cb) (false ∷ s) = hasEl? ℓ cb s
 hasEl? ℓ (inl _ ∷ cb) (true  ∷ s) = ℓ ⊔ hasEl? ℓ cb s
 hasEl? ℓ (inr _ ∷ cb) (_     ∷ s) = hasEl? ℓ cb s
 
+hasEl?-bound : (ℓ : Level) (cb : ConB) (sb : SCᵇ cb) {ℓ' : Level}
+             → ℓ ⊑ ℓ' → hasEl? ℓ cb sb ⊑ ℓ'
+hasEl?-bound ℓ []           []           ℓ⊑ℓ' = refl
+hasEl?-bound ℓ (inl _ ∷ cb) (false ∷ sb) ℓ⊑ℓ' = hasEl?-bound ℓ cb sb ℓ⊑ℓ'
+hasEl?-bound ℓ (inl _ ∷ cb) (true  ∷ sb) ℓ⊑ℓ' = trans (cong (ℓ ⊔_)
+                                               (hasEl?-bound ℓ cb sb ℓ⊑ℓ')) ℓ⊑ℓ'
+hasEl?-bound ℓ (inr _ ∷ cb) (_     ∷ sb) ℓ⊑ℓ' = hasEl?-bound ℓ cb sb ℓ⊑ℓ'
+
+hasEl?-dist-⊔ : (ℓ ℓ' : Level) (cb : ConB) (sb : SCᵇ cb)
+              → hasEl? (ℓ ⊔ ℓ') cb sb ≡ hasEl? ℓ cb sb ⊔ hasEl? ℓ' cb sb
+hasEl?-dist-⊔ ℓ ℓ' []           []           = refl
+hasEl?-dist-⊔ ℓ ℓ' (inl _ ∷ cb) (false ∷ sb) = hasEl?-dist-⊔ ℓ ℓ' cb sb
+hasEl?-dist-⊔ ℓ ℓ' (inl _ ∷ cb) (true  ∷ sb) = cong (ℓ ⊔ ℓ' ⊔_) (hasEl?-dist-⊔ ℓ ℓ' cb sb)
+hasEl?-dist-⊔ ℓ ℓ' (inr _ ∷ cb) (_     ∷ sb) = hasEl?-dist-⊔ ℓ ℓ' cb sb
+
 SCᶜ : {I : Set ℓⁱ} (D : ConD I cb) → SCᵇ cb → Set ℓ → Setω
 SCᶜ (ι i  ) _           X = Liftω ⊤
 SCᶜ (σ A D) (false ∷ s) X = (a : A) → SCᶜ (D a) s X

@@ -12,6 +12,6 @@ data μ (D : DataD)
      : let Dᵖ = DataD.applyL D ℓs
        in  ⟦ PDataD.Index Dᵖ ps ⟧ᵗ → Set (PDataD.dlevel Dᵖ) where
   con : let Dᵖ = DataD.applyL D ℓs in ∀ {is}
-      → rewriteLevel (PDataD.level-pre-fixed-point Dᵖ)
+      → rewriteLevel (level-pre-fixed-point Dᵖ)
           (Lift (PDataD.dlevel Dᵖ) (⟦ D ⟧ᵈ (μ D ℓs ps) is))
       → μ D ℓs ps is

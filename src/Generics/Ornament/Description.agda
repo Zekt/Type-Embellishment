@@ -1,8 +1,9 @@
 {-# OPTIONS --safe --with-K #-}
 
-open import Prelude
 
 module Generics.Ornament.Description where
+
+open import Prelude
 open import Generics.Telescope
 open import Generics.Description
 open import Generics.Ornament
@@ -57,7 +58,7 @@ record PDataOD (E : PDataD) : Setω where
   flevel ℓ = maxMap max-π struct ⊔ maxMap max-σ struct ⊔
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
-    level-pre-fixed-point : flevel dlevel ⊑ dlevel
+    level-inequality : maxMap max-π struct ⊔ maxMap max-σ struct ⊑ dlevel
     Param  : Tel plevel
     param  : ⟦ Param ⟧ᵗ → ⟦ PDataD.Param E ⟧ᵗ
     Index  : ⟦ Param ⟧ᵗ → Tel ilevel
@@ -111,7 +112,7 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 ⌊_⌋ᵖᵈ : ∀ {E} → PDataOD E → PDataD
 ⌊ OD ⌋ᵖᵈ = record
   { alevel = PDataOD.alevel OD
-  ; level-pre-fixed-point = PDataOD.level-pre-fixed-point OD
+  ; level-inequality = PDataOD.level-inequality OD
   ; Param  = PDataOD.Param OD
   ; Index  = PDataOD.Index OD
   ; applyP = λ ps → ⌊ PDataOD.applyP OD ps ⌋ᶜˢ }

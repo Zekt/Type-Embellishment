@@ -47,10 +47,15 @@ hasRec? ℓ = maxMap (has-ρ? ℓ)
 hasCon? : Level → ConBs → Level
 hasCon? ℓ = maxMap (λ _ → ℓ)
 
-maxMap-bound : {A : Set} (f : A → Level) (ℓ : Level)
+maxMap-bound : {A : Set} (f : A → Level) {ℓ : Level}
              → (∀ a → f a ⊑ ℓ) → ∀ as → maxMap f as ⊑ ℓ
-maxMap-bound f ℓ eq []       = refl
-maxMap-bound f ℓ eq (a ∷ as) = cong₂ _⊔_ (eq a) (maxMap-bound f ℓ eq as)
+maxMap-bound f ineq []       = refl
+maxMap-bound f ineq (a ∷ as) = cong₂ _⊔_ (ineq a) (maxMap-bound f ineq as)
+
+maxMap-<> : {A : Set} (f : A → Level) → ∀ xs ys
+          → maxMap f (xs <> ys) ≡ maxMap f xs ⊔ maxMap f ys
+maxMap-<> f []       ys = refl
+maxMap-<> f (x ∷ xs) ys = cong (f x ⊔_) (maxMap-<> f xs ys)
 
 hasRec?-bound : ∀ ℓ cb → hasRec? ℓ cb ⊑ ℓ
 hasRec?-bound ℓ []            = refl
@@ -58,7 +63,7 @@ hasRec?-bound ℓ (inl ℓ' ∷ cb) = hasRec?-bound ℓ cb
 hasRec?-bound ℓ (inr rb ∷ cb) = hasRec?-bound ℓ cb
 
 hasCon?-bound : ∀ ℓ cbs → hasCon? ℓ cbs ⊑ ℓ
-hasCon?-bound ℓ = maxMap-bound (λ _ → ℓ) ℓ (λ _ → refl)
+hasCon?-bound ℓ = maxMap-bound (λ _ → ℓ) (λ _ → refl)
 
 private variable
     rb : RecB
@@ -70,7 +75,6 @@ module _ (I : Set ℓⁱ) where
   data RecD : RecB → Setω where
     ι : (i : I) → RecD []
     π : (A : Set ℓ) (D : A → RecD rb) → RecD (ℓ ∷ rb)
-
 
   data ConD : ConB → Setω where
     ι : (i : I) → ConD []
@@ -97,10 +101,24 @@ record PDataD : Setω where
   flevel ℓ = maxMap max-π struct ⊔ maxMap max-σ struct ⊔
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
-    level-pre-fixed-point : flevel dlevel ⊑ dlevel
+    level-inequality : maxMap max-π struct ⊔ maxMap max-σ struct ⊑ dlevel
     Param  : Tel plevel
     Index  : ⟦ Param ⟧ᵗ → Tel ilevel
     applyP : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ struct
+
+level-pre-fixed-point : (D : PDataD) → PDataD.flevel D (PDataD.dlevel D) ⊑ PDataD.dlevel D
+level-pre-fixed-point D =
+  let cbs = PDataD.struct D; ℓᵃ = PDataD.alevel D; ℓⁱ = PDataD.ilevel D in
+  begin
+    maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔
+    maxMap (hasRec? (ℓᵃ ⊔ ℓⁱ)) cbs ⊔ hasCon? ℓⁱ cbs ⊔ ℓᵃ ⊔ ℓⁱ
+      ≡⟨ cong (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔_) (cong₂ _⊔_
+        (maxMap-bound (hasRec? (ℓᵃ ⊔ ℓⁱ)) (hasRec?-bound (ℓᵃ ⊔ ℓⁱ)) cbs)
+        (hasCon?-bound ℓⁱ cbs)) ⟩
+    maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ ℓᵃ ⊔ ℓⁱ
+      ≡⟨ PDataD.level-inequality D ⟩
+    ℓᵃ ⊔ ℓⁱ
+  ∎ where open ≡-Reasoning
 
 record DataD : Setω where
   constructor datad
