@@ -15,6 +15,7 @@ open import Generics.Ornament.Algebraic
 open import Generics.Ornament.Algebraic.Isomorphism
 open import Generics.SimpleContainer
 open import Generics.SimpleContainer.All
+open import Generics.SimpleContainer.Any
 
 -- USER: ℕ
 

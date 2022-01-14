@@ -92,9 +92,9 @@ thereDᶜ (ρ D E) toN (here (rb , refl)) =
 thereDᶜ (ρ D E) toN (there i) = σ (⟦ D ⟧ʳ _) λ ns → thereDᶜ  E (curry toN ns) i
 
 thereConBs' : ConB → ConB → Level → ConBs
-thereConBs' []             cb ℓᵈ = []
-thereConBs' (inl ℓ' ∷ cb') cb ℓᵈ = thereConBs' cb' cb ℓᵈ
-thereConBs' (inr rb ∷ cb') cb ℓᵈ = thereConB cb ℓᵈ rb ∷ thereConBs' cb' cb ℓᵈ
+thereConBs' []            cb' ℓᵈ = []
+thereConBs' (inl ℓ' ∷ cb) cb' ℓᵈ = thereConBs' cb cb' ℓᵈ
+thereConBs' (inr rb ∷ cb) cb' ℓᵈ = thereConB cb' ℓᵈ rb ∷ thereConBs' cb cb' ℓᵈ
 
 thereDᶜˢ' : (cb' : ConB) {I : Set ℓⁱ} {N : I → Set ℓᵈ}
           → ((i : Any (λ x → Σ[ rb ∈ RecB ] (Sum.[ const ⊥ , rb ≡_ ] x)) cb')
@@ -179,24 +179,95 @@ max-σ-hereConBs (cb ∷ cbs) (sb ∷ sbs) ℓᵈ ℓ =
     rhs
   ∎ where open ≡-Reasoning
 
+max-π-thereConB : (cb : ConB) (ℓᵈ : Level) (rb' : RecB)
+                → max-π (thereConB cb ℓᵈ rb') ≡ max-ℓ rb'
+max-π-thereConB []            ℓᵈ rb' = refl
+max-π-thereConB (inl ℓ' ∷ cb) ℓᵈ rb' = max-π-thereConB cb ℓᵈ rb'
+max-π-thereConB (inr rb ∷ cb) ℓᵈ rb' = max-π-thereConB cb ℓᵈ rb'
+
+max-π-thereConBs' : (cb cb' : ConB) (ℓᵈ : Level)
+                  → maxMap max-π (thereConBs' cb cb' ℓᵈ) ≡ max-π cb
+max-π-thereConBs' []            cb' ℓᵈ = refl
+max-π-thereConBs' (inl ℓ' ∷ cb) cb' ℓᵈ = max-π-thereConBs' cb cb' ℓᵈ
+max-π-thereConBs' (inr rb ∷ cb) cb' ℓᵈ =
+  cong₂ _⊔_ (max-π-thereConB cb' ℓᵈ rb) (max-π-thereConBs' cb cb' ℓᵈ)
+
+max-π-thereConBs : (cbs : ConBs) (ℓᵈ : Level)
+                 → maxMap max-π (thereConBs cbs ℓᵈ) ≡ maxMap max-π cbs
+max-π-thereConBs []         ℓᵈ = refl
+max-π-thereConBs (cb ∷ cbs) ℓᵈ =
+  begin
+    maxMap max-π (thereConBs (cb ∷ cbs) ℓᵈ)
+      ≡⟨⟩
+    maxMap max-π (thereConBs' cb cb ℓᵈ <> thereConBs cbs ℓᵈ)
+      ≡⟨ maxMap-<> max-π (thereConBs' cb cb ℓᵈ) (thereConBs cbs ℓᵈ) ⟩
+    maxMap max-π (thereConBs' cb cb ℓᵈ) ⊔ maxMap max-π (thereConBs cbs ℓᵈ)
+      ≡⟨ cong₂ _⊔_ (max-π-thereConBs' cb cb ℓᵈ) (max-π-thereConBs cbs ℓᵈ) ⟩
+    max-π cb ⊔ maxMap max-π cbs
+      ≡⟨⟩
+    maxMap max-π (cb ∷ cbs)
+  ∎ where open ≡-Reasoning
+
+max-σ-thereConB : (cb : ConB) (ℓᵈ : Level) (rb' : RecB)
+               → max-σ (thereConB cb ℓᵈ rb') ≡ max-π cb ⊔ max-σ cb ⊔ hasRec? ℓᵈ cb
+max-σ-thereConB []            ℓᵈ rb' = refl
+max-σ-thereConB (inl ℓ' ∷ cb) ℓᵈ rb' = cong (ℓ' ⊔_) (max-σ-thereConB cb ℓᵈ rb')
+max-σ-thereConB (inr rb ∷ cb) ℓᵈ rb' = cong (max-ℓ rb ⊔ ℓᵈ ⊔_) (max-σ-thereConB cb ℓᵈ rb')
+
+max-σ-thereConBs' : (cb cb' : ConB) (ℓᵈ : Level)
+                  → maxMap max-σ (thereConBs' cb cb' ℓᵈ) ⊑ max-π cb' ⊔ max-σ cb' ⊔ ℓᵈ
+max-σ-thereConBs' []            cb' ℓᵈ = refl
+max-σ-thereConBs' (inl ℓ' ∷ cb) cb' ℓᵈ = max-σ-thereConBs' cb cb' ℓᵈ
+max-σ-thereConBs' (inr rb ∷ cb) cb' ℓᵈ =
+  begin
+    maxMap max-σ (thereConBs' (inr rb ∷ cb) cb' ℓᵈ) ⊔ max-π cb' ⊔ max-σ cb' ⊔ ℓᵈ
+      ≡⟨⟩
+    max-σ (thereConB cb' ℓᵈ rb) ⊔ maxMap max-σ (thereConBs' cb cb' ℓᵈ) ⊔
+    max-π cb' ⊔ max-σ cb' ⊔ ℓᵈ
+      ≡⟨ cong₂ _⊔_ (max-σ-thereConB cb' ℓᵈ rb) (max-σ-thereConBs' cb cb' ℓᵈ) ⟩
+    hasRec? ℓᵈ cb' ⊔ max-π cb' ⊔ max-σ cb' ⊔ ℓᵈ
+      ≡⟨ cong (max-π cb' ⊔ max-σ cb' ⊔_) (hasRec?-bound ℓᵈ cb') ⟩
+    max-π cb' ⊔ max-σ cb' ⊔ ℓᵈ
+  ∎ where open ≡-Reasoning
+
+max-σ-thereConBs : (cbs : ConBs) (ℓᵈ : Level)
+                 → maxMap max-σ (thereConBs cbs ℓᵈ)
+                 ⊑ maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ ℓᵈ
+max-σ-thereConBs []         ℓᵈ = refl
+max-σ-thereConBs (cb ∷ cbs) ℓᵈ =
+  let rhs = max-π cb ⊔ max-σ cb ⊔ maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ ℓᵈ in
+  begin
+    maxMap max-σ (thereConBs (cb ∷ cbs) ℓᵈ) ⊔ rhs
+      ≡⟨⟩
+    maxMap max-σ (thereConBs' cb cb ℓᵈ <> thereConBs cbs ℓᵈ) ⊔ rhs
+      ≡⟨ cong (rhs ⊔_) (maxMap-<> max-σ (thereConBs' cb cb ℓᵈ) (thereConBs cbs ℓᵈ)) ⟩
+    maxMap max-σ (thereConBs' cb cb ℓᵈ) ⊔ maxMap max-σ (thereConBs cbs ℓᵈ) ⊔ rhs
+      ≡⟨ cong₂ _⊔_ (max-σ-thereConBs' cb cb ℓᵈ) (max-σ-thereConBs cbs ℓᵈ) ⟩
+    rhs
+  ∎ where open ≡-Reasoning
+
 AnyD-level-inequality :
     (ℓ ℓᵈ : Level) (cbs : ConBs) (sbs : All SCᵇ cbs)
-  → maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ ℓᵈ ≡ ℓᵈ
+  → maxMap max-π cbs ⊔ maxMap max-σ cbs ⊑ ℓᵈ
   → maxMap max-π (hereConBs cbs sbs ℓᵈ ℓ <> thereConBs cbs ℓᵈ) ⊔
-    maxMap max-σ (hereConBs cbs sbs ℓᵈ ℓ <> thereConBs cbs ℓᵈ) ⊔
-    ℓᵈ ⊔ maxMap (uncurry (hasEl? ℓ)) (allToList sbs)
-  ≡ ℓᵈ ⊔ maxMap (uncurry (hasEl? ℓ)) (allToList sbs)
+    maxMap max-σ (hereConBs cbs sbs ℓᵈ ℓ <> thereConBs cbs ℓᵈ)
+  ⊑ ℓᵈ ⊔ maxMap (uncurry (hasEl? ℓ)) (allToList sbs)
 AnyD-level-inequality ℓ ℓᵈ cbs sbs ineq =
   let hcbs = hereConBs cbs sbs ℓᵈ ℓ
       tcbs = thereConBs cbs ℓᵈ
       ℓᵉ   = maxMap (uncurry (hasEl? ℓ)) (allToList sbs) in
   begin
     maxMap max-π (hcbs <> tcbs) ⊔ maxMap max-σ (hcbs <> tcbs) ⊔ ℓᵈ ⊔ ℓᵉ
-      ≡⟨ cong (ℓᵈ ⊔ ℓᵉ ⊔_) (cong₂ _⊔_
-        (maxMap-<> max-π hcbs tcbs) (maxMap-<> max-σ hcbs tcbs)) ⟩
+      ≡⟨ cong (ℓᵈ ⊔ ℓᵉ ⊔_) (cong₂ _⊔_ (cong₂ _⊔_
+        (maxMap-<> max-π hcbs tcbs) (maxMap-<> max-σ hcbs tcbs)) (sym ineq)) ⟩
     maxMap max-π hcbs ⊔ maxMap max-π tcbs ⊔
-    maxMap max-σ hcbs ⊔ maxMap max-σ tcbs ⊔ ℓᵈ ⊔ ℓᵉ
-      ≡⟨ {!   !} ⟩
+    maxMap max-σ hcbs ⊔ maxMap max-σ tcbs ⊔
+    maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ ℓᵈ ⊔ ℓᵉ
+      ≡⟨ cong₂ _⊔_ (cong₂ _⊔_ (cong₂ _⊔_
+        (max-π-hereConBs cbs sbs ℓᵈ ℓ) (max-π-thereConBs cbs ℓᵈ))
+        (max-σ-hereConBs cbs sbs ℓᵈ ℓ)) (max-σ-thereConBs cbs ℓᵈ) ⟩
+    maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ ℓᵈ ⊔ ℓᵉ
+      ≡⟨ cong (ℓᵉ ⊔_) ineq ⟩
     ℓᵈ ⊔ ℓᵉ
   ∎ where open ≡-Reasoning
 
