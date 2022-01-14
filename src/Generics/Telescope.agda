@@ -16,7 +16,7 @@ mutual
 
   ⟦_⟧ᵗ : Tel ℓ → Set ℓ
   ⟦ []     ⟧ᵗ = ⊤
-  ⟦ A ∷  T ⟧ᵗ = Σ A λ a → ⟦ T a ⟧ᵗ
+  ⟦ A ∷  T ⟧ᵗ = Σ A λ x → ⟦ T x ⟧ᵗ
   ⟦ T ++ U ⟧ᵗ = Σ ⟦ T ⟧ᵗ λ t → ⟦ U t ⟧ᵗ
 
 ∷-syntaxᵗ : (A : Set ℓ) (T : A → Tel ℓ') → Tel (ℓ ⊔ ℓ')

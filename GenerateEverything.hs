@@ -40,6 +40,8 @@ isUnsafeModule fp =
 withKModules :: [FilePath]
 withKModules = map modToFile
   [ "Generics.SimpleContainer"
+  , "Generics.SimpleContainer.All"
+  , "Generics.SimpleContainer.Any"
   , "Generics.Ornament"
   , "Generics.Ornament.Algebraic"
   , "Generics.Ornament.Algebraic.Isomorphism"

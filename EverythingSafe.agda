@@ -11,6 +11,8 @@ import Generics.Ornament.Description
 import Generics.Recursion
 import Generics.RecursionScheme
 import Generics.SimpleContainer
+import Generics.SimpleContainer.All
+import Generics.SimpleContainer.Any
 import Generics.Telescope
 import Metalib.Connection
 import Metalib.Datatype
@@ -20,6 +22,7 @@ import Prelude
 import Prelude.Alternative
 import Prelude.Applicative
 import Prelude.Bool
+import Prelude.Char
 import Prelude.Coercion
 import Prelude.Empty
 import Prelude.Eq
