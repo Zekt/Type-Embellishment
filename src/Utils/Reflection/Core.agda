@@ -90,14 +90,9 @@ pattern _`,_ t u = con₂ (quote Prelude._,_) t u
 
 infixr 20 `vλ_`→_ `hλ_`→_ `iλ_`→_
 
-`vλ_`→_ : String → Term → Term
-`vλ s `→ b = vLam (abs s b)
-
-`hλ_`→_ : String → Term → Term
-`hλ s `→ b = hLam (abs s b)
-
-`iλ_`→_ : String → Term → Term
-`iλ s `→ b = iLam (abs s b)
+pattern `vλ_`→_ s b = vLam (abs s b)
+pattern `hλ_`→_ s b = hLam (abs s b)
+pattern `iλ_`→_ s b = iLam (abs s b)
 
 unArg : Arg A → A
 unArg (arg _ x) = x

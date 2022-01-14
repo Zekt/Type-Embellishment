@@ -67,7 +67,7 @@ NatD = record
   { #levels = 0
   ; applyL  = λ { tt → record
     { alevel  = 0ℓ
-    ; level-pre-fixed-point = refl
+    ; level-inequality = refl
     ; Param  = []
     ; Index  = λ _ → []
     ; applyP = λ where
@@ -106,7 +106,7 @@ ListD = record
   { #levels = 1
   ; applyL  = λ { (ℓ , _) → record
     { alevel = ℓ
-    ; level-pre-fixed-point = refl
+    ; level-inequality = refl
     ; Param = [ A ∶ Set ℓ ] []
     ; Index = λ _ → []
     ; applyP = λ where
@@ -139,7 +139,7 @@ LenD : DataD
 DataD.#levels LenD = 1
 DataD.applyL  LenD (ℓ , _) = record
   { alevel = ℓ
-  ; level-pre-fixed-point = refl
+  ; level-inequality = refl
   ; Param = [ A ∶ Set ℓ ] []
   ; Index = λ where
     (A , tt) → [ xs ∶ List {ℓ} A ] [ ys ∶ List {ℓ} A ] []
@@ -210,7 +210,7 @@ VecD = record
   { #levels = 1
   ; applyL  = λ { (ℓ , tt) → record
     { alevel = ℓ
-    ; level-pre-fixed-point = refl
+    ; level-inequality = refl
     ; Param                 = [ A ∶ Set ℓ ] []
     ; Index                 = λ _ → [ _ ∶ Nat ] []
     ; applyP                = λ where
@@ -228,6 +228,27 @@ VecD' = genDataD Vec
 
 VecC : DataCᶜ VecD' Vec
 VecC = genDataC VecD' Vec
+
+-- generated DataC
+VecC′ : DataC VecD' λ { ℓs (A , tt) (n , tt) → Vec A n }
+VecC′  = datac
+        (λ { {ℓs} {ps} {.(0 , tt)} (inl refl) → []
+           ; {ℓs} {ps} {.(suc n , tt)} (inr (inl (x , n , xs , refl)))
+               → x ∷ xs
+           ; {ℓs} {ps} {is} (inr (inr ()))
+           })
+        (λ { {ℓs} {ps} {.0 , snd} [] → inl refl
+           ; {ℓs} {ps} {suc n , snd} (_∷_ x {.n} xs)
+               → inr (inl (x , n , xs , refl))
+           })
+        (λ { {ℓs} {ps} {.(0 , tt)} (inl refl) → refl
+           ; {ℓs} {ps} {.(suc n , tt)} (inr (inl (x , n , xs , refl))) → refl
+           ; {ℓs} {ps} {is} (inr (inr ()))
+           })
+        (λ { {ℓs} {ps} {.0 , snd} [] → refl
+           ; {ℓs} {ps} {suc n , snd} (_∷_ x {.n} xs) → refl
+           })
+
 
 unquoteDecl data Vec' constructor nil' cons' = defineByDataD VecD Vec' (nil' ∷ cons' ∷ [])
 
@@ -249,7 +270,7 @@ WD = record
   ; applyL  = λ where
     (ℓ , ℓ' , tt) → record
       { alevel = ℓ ⊔ ℓ'
-      ; level-pre-fixed-point = refl
+      ; level-inequality = refl
       ; Param = [ A ∶ Set ℓ ] [ B ∶ (A → Set ℓ') ] []
       ; Index = λ _ → []
       ; applyP = λ where

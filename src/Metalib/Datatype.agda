@@ -36,7 +36,7 @@ private
   -- Translate the semantics of an object-level telescope to a context
   idxToArgs : ⟦ T ⟧ᵗ → TC (Args Term)
   idxToArgs {T = []}     tt      = ⦇ [] ⦈
-  idxToArgs {T = _ ∷ _}  (x , Γ) = ⦇ (vArg <$> quoteTC x) ∷ (idxToArgs Γ) ⦈
+  idxToArgs {T = _ ∷ _}  (x , Γ) = ⦇ ⦇ vArg (quoteTC x) ⦈ ∷ (idxToArgs Γ) ⦈
   idxToArgs {T = _ ++ _} (T , U) = ⦇ (idxToArgs T) <> (idxToArgs U) ⦈
 
   -- ... and back
@@ -55,9 +55,9 @@ private
   patLam tel body = pat₁lam₀ tel (Σpat tel) body
 
   -- Some functions to parse the type signature of a datatype
-  splitAcc : Telescope → Telescope → ℕ → (Telescope × Telescope)
-  splitAcc tel₁ []   n = tel₁ , []
-  splitAcc tel₁ tel₂ 0 = tel₁ , tel₂
+  splitAcc : Telescope → Telescope → ℕ → Telescope × Telescope
+  splitAcc tel₁ []         n = tel₁ , []
+  splitAcc tel₁ tel₂       0 = tel₁ , tel₂
   splitAcc tel₁ (x ∷ tel₂) (suc n) = splitAcc (tel₁ <> [ x ]) tel₂ n
   
   splitLevels : Telescope → (ℕ × Telescope)
@@ -139,14 +139,14 @@ module _ (dataName : Name) (#levels : ℕ) (parLen : ℕ) where
   telescopeToRecD : Telescope → Type → TC Term
   telescopeToRecD ((s , arg _ `x) ∷ `tel) end = do
     rec ← telescopeToRecD `tel end
-    return $ `π `x (vLam (abs s rec))
+    return $ `π `x (`vλ s `→ rec)
   telescopeToRecD [] (def f args) = if f == dataName
     then return $ `ιʳ (argsToIdx $ drop pars args)
     else Err.notEndIn "telescope" dataName
   telescopeToRecD [] _ = Err.notEndIn "telescope" dataName
 
   telescopeToConD : Telescope → Type → TC Term
-  telescopeToConD ((s , (arg _ `x)) ∷ `tel) end = if endsIn `x dataName
+  telescopeToConD ((s , arg _ `x) ∷ `tel) end = if endsIn `x dataName
     then (do
       recd ← uncurry telescopeToRecD (⇑ `x)
       cond ← telescopeToConD `tel end
