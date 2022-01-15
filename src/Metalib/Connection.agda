@@ -29,7 +29,7 @@ module _ (pars : ℕ) where
   conToClause : (c : Name) → TC (Telescope × (Term × Pattern) × Args Term × Args Pattern)
   conToClause c = do
     `A  ← getType c
-    tel ← drop pars <$> (renameUnderscore $ erasedToω $ (⇑ `A) .fst)
+    tel ← drop pars <$> (renameUnderscore $ (⇑ `A) .fst)
     return $ < forgetTy , cxtToVars > tel
 
   consToClauses : (cs : Names) → TC (List (Telescope × (Term × Pattern) × Name × Args Term × Args Pattern))
