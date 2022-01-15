@@ -55,13 +55,24 @@ Homᶜ (σ A D) f g h (a , xs) = Homᶜ (D a) (f a) (g a) h xs
 Homᶜ (ρ D E) {X} {Y} f g h (xs , xs') =
   (ys : ⟦ D ⟧ʳ Y) → ExtEqʳ D ys (fmapʳ D h xs) → Homᶜ E (f xs) (g ys) h xs'
 
+∀ᶜ : {I : Set ℓⁱ} (D : ConD I cb) {X : Carrierᶜ D ℓˣ}
+   → (∀ {i} → ⟦ D ⟧ᶜ X i → Set ℓʸ) → Set (max-π cb ⊔ max-σ cb ⊔ hasRec? ℓˣ cb ⊔ ℓʸ)
+∀ᶜ (ι i  )     Y = Y refl
+∀ᶜ (σ A D)     Y = (a : A) → ∀ᶜ (D a) (curry Y a)
+∀ᶜ (ρ D E) {X} Y = (xs : ⟦ D ⟧ʳ X) → ∀ᶜ E (curry Y xs)
+
+∀ᶜ-apply : {I : Set ℓⁱ} (D : ConD I cb)
+           {X : Carrierᶜ D ℓˣ} {Y : ∀ {i} → ⟦ D ⟧ᶜ X i → Set ℓʸ}
+         → ∀ᶜ D Y → ∀ {i} (xs : ⟦ D ⟧ᶜ X i) → Y xs
+∀ᶜ-apply (ι i  ) y refl       = y
+∀ᶜ-apply (σ A D) f (a ,  xs ) = ∀ᶜ-apply (D a) (f a) xs
+∀ᶜ-apply (ρ D E) f (xs , xs') = ∀ᶜ-apply E (f xs) xs'
+
 Homᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ⟦ FoldOpTelᶜˢ D X ⟧ᵗ → ⟦ FoldOpTelᶜˢ D Y ⟧ᵗ → (∀ {i} → X i → Y i)
-      → Tel (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓˣ) cbs ⊔
-             hasCon? ℓⁱ cbs ⊔ hasCon? ℓʸ cbs)
-Homᶜˢ [] fs gs h = []
-Homᶜˢ (D ∷ Ds) {X} (f , fs) (g , gs) h =
-  (∀ {i} (xs : ⟦ D ⟧ᶜ X i) → Homᶜ D f g h xs) ∷ constω (Homᶜˢ Ds fs gs h)
+      → Tel (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓˣ) cbs ⊔ hasCon? ℓʸ cbs)
+Homᶜˢ []       _        _        h = []
+Homᶜˢ (D ∷ Ds) (f , fs) (g , gs) h = ∀ᶜ D (Homᶜ D f g h) ∷ constω (Homᶜˢ Ds fs gs h)
 
 fold-fusionʳ :
     {I : Set ℓⁱ} (D : RecD I rb) {N : I → Set ℓ} {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
@@ -95,7 +106,7 @@ fold-fusionᶜˢ :
   → ∀ {i} (ns : ⟦ D ⟧ᶜˢ N i) → Allᶜˢ D (λ _ n → h (fold-fs n) ≡ fold-gs n) ns ℓ'
   → h (fold-opᶜˢ D fs (fmapᶜˢ D fold-fs ns)) ≡ fold-opᶜˢ D gs (fmapᶜˢ D fold-gs ns)
 fold-fusionᶜˢ (D ∷ Ds) (f , _ ) (g , _ ) fold-fs fold-gs h (hom , _) (inl ns) all =
-  fold-fusionᶜ  D  f  g  fold-fs fold-gs h hom ns all
+  fold-fusionᶜ  D  f  g  fold-fs fold-gs h (∀ᶜ-apply D hom) ns all
 fold-fusionᶜˢ (D ∷ Ds) (_ , fs) (_ , gs) fold-fs fold-gs h (_ , hom) (inr ns) all =
   fold-fusionᶜˢ Ds fs gs fold-fs fold-gs h hom ns all
 

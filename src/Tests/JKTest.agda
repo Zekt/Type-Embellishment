@@ -61,16 +61,14 @@ FoldC.equation foldℕC (inr (inl (_ , refl))) = refl
 -- META (specialising ‘fold-fusion NatC foldℕC’)
 foldℕ-fusion : {ℓs : Σ Level (λ _ → Σ Level (λ _ → ⊤))} (a : Set (fst ℓs))
   (a₁ : Set (fst (snd ℓs))) (a₂ : a → a₁) (a₃ : a) (a₄ : a → a)
-  (a₅ : a₁) (a₆ : a₁ → a₁) (a₇ : {i : ⊤} (xs : tt ≡ i) → a₂ a₃ ≡ a₅)
-  (a₈
-  : {i : ⊤} (xs : Σ a (λ _ → tt ≡ i)) (ys : a₁) →
-    ys ≡ a₂ (fst xs) → a₂ (a₄ (fst xs)) ≡ a₆ ys)
+  (a₅ : a₁) (a₆ : a₁ → a₁) (a₇ : a₂ a₃ ≡ a₅)
+  (a₈ : (xs : a) (ys : a₁) → ys ≡ a₂ xs → a₂ (a₄ xs) ≡ a₆ ys)
   (n : ℕ) →
   a₂ (foldℕ a a₃ a₄ n) ≡ foldℕ a₁ a₅ a₆ n
-foldℕ-fusion a a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ zero = trans (a₇ refl) refl
+foldℕ-fusion a a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ zero = trans a₇ refl
 foldℕ-fusion a a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ (suc n) =
   trans
-   (a₈ (foldℕ a a₃ a₄ n , refl) (foldℕ a₁ a₅ a₆ n)
+   (a₈ (foldℕ a a₃ a₄ n) (foldℕ a₁ a₅ a₆ n)
     (sym (foldℕ-fusion a a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ n)))
    refl
 
