@@ -33,14 +33,14 @@ hereODᶜ : {I : Set ℓⁱ} (D : ConD I cb) (sb : SCᵇ cb) {El : Set ℓᵉ} (
           {N : Carrierᶜ D ℓᵈ} (toN : Algᶜ D N) (P : El → Set ℓ)
         → Any (λ x → Σ[ ℓ' ∈ Level ] x ≡ (inl ℓ' , true)) (allToList sb)
         → ConOD (Σ[ i ∈ I ] N i × ⊤) (const tt) (ι tt) (hereConB cb ℓᵈ ℓ)
-hereODᶜ (σ A D) (false ∷ sb) sc toN P (there i) =
-  Δ A λ a → hereODᶜ (D a) sb (sc a) (curry toN a) P i
+hereODᶜ (σ A D) (false ∷ sb) sc toN P (there j) =
+  Δ A λ a → hereODᶜ (D a) sb (sc a) (curry toN a) P j
 hereODᶜ (σ A D) (true ∷ sb) (refl ,ωω sc) toN P (here  _) =
   Δ A λ a → hereODᶜ' (D a) (curry toN a) (P a)
-hereODᶜ (σ A D) (true ∷ sb) (refl ,ωω sc) toN P (there i) =
-  Δ A λ a → hereODᶜ (D a) sb (sc a) (curry toN a) P i
-hereODᶜ (ρ D E) (_ ∷ sb) sc toN P (there i) =
-  Δ (⟦ D ⟧ʳ _) λ ns → hereODᶜ E sb sc (curry toN ns) P i
+hereODᶜ (σ A D) (true ∷ sb) (refl ,ωω sc) toN P (there j) =
+  Δ A λ a → hereODᶜ (D a) sb (sc a) (curry toN a) P j
+hereODᶜ (ρ D E) (_ ∷ sb) sc toN P (there j) =
+  Δ (⟦ D ⟧ʳ _) λ ns → hereODᶜ E sb sc (curry toN ns) P j
 
 hereConBs' : (cb : ConB) → SCᵇ cb → ConB → ConBs → ConBs
 hereConBs' []           _           cb' tl = tl
@@ -76,8 +76,7 @@ thereRecB : RecB → ConB
 thereRecB []       = inr [] ∷ []
 thereRecB (ℓ ∷ rb) = inl ℓ ∷ thereRecB rb
 
-thereODʳ : {I : Set ℓⁱ} (D : RecD I rb) {N : I → Set ℓ}
-         → ⟦ D ⟧ʳ N → ∀ {i} → N i
+thereODʳ : {I : Set ℓⁱ} (D : RecD I rb) {N : I → Set ℓᵈ} → ⟦ D ⟧ʳ N → ∀ {i} → N i
          → ConOD (Σ[ i ∈ I ] N i × ⊤) (const tt) (ρ (ι tt) (ι tt)) (thereRecB rb)
 thereODʳ (ι i  ) n  n' = ρ (ι (_ , n , tt) refl) (ι (_ , n' , tt) refl)
 thereODʳ (π A D) ns n' = Δ A λ a → thereODʳ (D a) (ns a) n'
@@ -322,3 +321,126 @@ AnyOD {D} C S = record
 
 AnyD : ∀ {D N} → DataC D N → SCᵈ D → DataD
 AnyD C S = ⌊ AnyOD C S ⌋ᵈ
+
+lookupAny-hereᶜ' :
+    {I : Set ℓⁱ} (D : ConD I cb) {N : Carrierᶜ D ℓᵈ} (toN : Algᶜ D N) (X : Set ℓ)
+   → {Y : Σ[ i ∈ I ] N i × ⊤ → Set ℓʸ} → ∀ {is} → ⟦ ⌊ hereODᶜ' D toN X ⌋ᶜ ⟧ᶜ Y is → X
+lookupAny-hereᶜ' (ι i  ) toN X (x  ,  _) = x
+lookupAny-hereᶜ' (σ A D) toN X (a  , ys) = lookupAny-hereᶜ' (D a) (curry toN a) X ys
+lookupAny-hereᶜ' (ρ D E) toN X (ns , ys) = lookupAny-hereᶜ' E (curry toN ns) X ys
+
+lookupAny-hereᶜ :
+    {I : Set ℓⁱ} (D : ConD I cb) (sb : SCᵇ cb) {El : Set ℓᵉ} (sc : SCᶜ D sb El)
+    {N : Carrierᶜ D ℓᵈ} (toN : Algᶜ D N) (P : El → Set ℓ)
+  → (j : Any (λ x → Σ[ ℓ' ∈ Level ] x ≡ (inl ℓ' , true)) (allToList sb))
+  → Algᶜ ⌊ hereODᶜ D sb sc toN P j ⌋ᶜ (const (Σ El P))
+lookupAny-hereᶜ (σ A D) (false ∷ sb) sc toN P (there j) (a , eps) =
+  lookupAny-hereᶜ (D a) sb (sc a) (curry toN a) P j eps
+lookupAny-hereᶜ (σ A D) (true ∷ sb) (refl ,ωω sc) toN P (here  _) (a , eps) =
+  _ , lookupAny-hereᶜ' (D a) (curry toN a) (P a) eps
+lookupAny-hereᶜ (σ A D) (true ∷ sb) (refl ,ωω sc) toN P (there j) (a , eps) =
+  lookupAny-hereᶜ (D a) sb (sc a) (curry toN a) P j eps
+lookupAny-hereᶜ (ρ D E) (_ ∷ sb) sc toN P (there j) (ns , eps) =
+  lookupAny-hereᶜ E sb sc (curry toN ns) P j eps
+
+lookupAny-hereᶜˢ' :
+    (cb : ConB) (sb : SCᵇ cb) {I : Set ℓⁱ} {N : I → Set ℓᵈ}
+    {ODs : Any (λ x → Σ[ ℓ' ∈ Level ] x ≡ (inl ℓ' , true)) (allToList sb)
+         → ConOD (Σ[ i ∈ I ] N i × ⊤) (const tt) (ι tt) cb'}
+    {El : Set ℓᵉ} (P : El → Set ℓ)
+    (algs : (j : Any (λ x → Σ[ ℓ' ∈ Level ] x ≡ (inl ℓ' , true)) (allToList sb))
+          → Algᶜ ⌊ ODs j ⌋ᶜ (const (Σ El P)))
+    {E : ConDs ⊤ cbs'} {Tl : ConODs (Σ[ i ∈ I ] N i × ⊤) (const tt) (ι tt ∷ E) cbs}
+  → Algᶜˢ ⌊ Tl ⌋ᶜˢ (const (Σ El P))
+  → Algᶜˢ ⌊ hereODᶜˢ' cb sb ODs Tl ⌋ᶜˢ (const (Σ El P))
+lookupAny-hereᶜˢ' [] sb P algs tl-alg eps = tl-alg eps
+lookupAny-hereᶜˢ' (inl _ ∷ cb) (false ∷ sb) P algs tl-alg eps =
+  lookupAny-hereᶜˢ' cb sb P (λ j → algs (there j)) tl-alg eps
+lookupAny-hereᶜˢ' (inl _ ∷ cb) (true ∷ sb) P algs tl-alg (inl eps) =
+  algs (here (_ , refl)) eps
+lookupAny-hereᶜˢ' (inl _ ∷ cb) (true ∷ sb) P algs tl-alg (inr eps) =
+  lookupAny-hereᶜˢ' cb sb P (λ j → algs (there j)) tl-alg eps
+lookupAny-hereᶜˢ' (inr _ ∷ cb) (_ ∷ sb) P algs tl-alg eps =
+  lookupAny-hereᶜˢ' cb sb P (λ j → algs (there j)) tl-alg eps
+
+lookupAny-hereᶜˢ :
+    {I : Set ℓⁱ} (D : ConDs I cbs) (sbs : All SCᵇ cbs) {El : Set ℓᵉ}
+    (scs : SCᶜˢ D sbs El) {N : Carrierᶜˢ D ℓᵈ} (toN : Algᶜˢ D N) (P : El → Set ℓ)
+  → {E : ConDs ⊤ cbs''} {Acc : ConODs (Σ[ i ∈ I ] N i × ⊤) (const tt) E cbs'}
+  → Algᶜˢ ⌊ Acc ⌋ᶜˢ (const (Σ El P))
+  → Algᶜˢ ⌊ hereODᶜˢ D sbs scs toN P Acc ⌋ᶜˢ (const (Σ El P))
+lookupAny-hereᶜˢ []             sbs          scs  toN P acc-alg = acc-alg
+lookupAny-hereᶜˢ (D ∷ Ds) (sb ∷ sbs) (sc ,ωω scs) toN P acc-alg =
+  lookupAny-hereᶜˢ' _ sb P (lookupAny-hereᶜ  D  sb  sc  (toN ∘ inl) P)
+                           (lookupAny-hereᶜˢ Ds sbs scs (toN ∘ inr) P acc-alg)
+
+lookupAny-thereʳ :
+    {I : Set ℓⁱ} (D : RecD I rb) {N : I → Set ℓᵈ} (ns : ⟦ D ⟧ʳ N) → ∀ {i} (n' : N i)
+  → {El : Set ℓᵉ} (P : El → Set ℓ) → Algᶜ ⌊ thereODʳ D ns n' ⌋ᶜ (const (Σ El P))
+lookupAny-thereʳ (ι i  ) n  n' P (ep , refl) = ep
+lookupAny-thereʳ (π A D) ns n' P (a , eps)   = lookupAny-thereʳ (D a) (ns a) n' P eps
+
+lookupAny-thereᶜ' :
+    {I : Set ℓⁱ} (D : ConD I cb) {N : I → Set ℓᵈ} (toN : Algᶜ D N)
+    (R : RecD I rb) (ns : ⟦ R ⟧ʳ N) {El : Set ℓᵉ} (P : El → Set ℓ)
+  → Algᶜ ⌊ thereODᶜ' D toN R ns ⌋ᶜ (const (Σ El P))
+lookupAny-thereᶜ' (ι i  ) toN R ns P eps =
+  lookupAny-thereʳ R ns (toN refl) P eps
+lookupAny-thereᶜ' (σ A D) toN R ns P (a , eps) =
+  lookupAny-thereᶜ' (D a) (curry toN a) R ns P eps
+lookupAny-thereᶜ' (ρ D E) toN R ns P (ns' , eps) =
+  lookupAny-thereᶜ' E (curry toN ns') R ns P eps
+
+lookupAny-thereᶜ :
+    {I : Set ℓⁱ} (D : ConD I cb) {N : I → Set ℓᵈ} (toN : Algᶜ D N)
+    {El : Set ℓᵉ} (P : El → Set ℓ)
+    (j : Any (λ x → Σ[ rb ∈ RecB ] (Sum.[ const ⊥ , rb ≡_ ] x)) cb)
+  → Algᶜ ⌊ thereODᶜ D toN j ⌋ᶜ (const (Σ El P))
+lookupAny-thereᶜ (σ A D) toN P (there j) (a , eps) =
+  lookupAny-thereᶜ (D a) (curry toN a) P j eps
+lookupAny-thereᶜ (ρ D E) toN P (here (rb , refl)) (ns , eps) =
+  lookupAny-thereᶜ' E (curry toN ns) D ns P eps
+lookupAny-thereᶜ (ρ D E) toN P (there j) (ns , eps) =
+  lookupAny-thereᶜ E (curry toN ns) P j eps
+
+lookupAny-thereᶜˢ' :
+    (cb : ConB) {I : Set ℓⁱ} {N : I → Set ℓᵈ}
+    {ODs : (j : Any (λ x → Σ[ rb ∈ RecB ] (Sum.[ const ⊥ , rb ≡_ ] x)) cb)
+         → ConOD (Σ[ i ∈ I ] N i × ⊤) (const tt) (ρ (ι tt) (ι tt))
+                 (thereConB cb' ℓᵈ (fst (snd (List.lookupAny j))))}
+    {El : Set ℓᵉ} (P : El → Set ℓ)
+    (algs : (j : Any (λ x → Σ[ rb ∈ RecB ] (Sum.[ const ⊥ , rb ≡_ ] x)) cb)
+          → Algᶜ ⌊ ODs j ⌋ᶜ (const (Σ El P)))
+    {E : ConDs ⊤ cbs'}
+    {Tl : ConODs (Σ[ i ∈ I ] N i × ⊤) (const tt) (ρ (ι tt) (ι tt) ∷ E) cbs}
+  → Algᶜˢ ⌊ Tl ⌋ᶜˢ (const (Σ El P))
+  → Algᶜˢ ⌊ thereODᶜˢ' {cb' = cb'} cb ODs Tl ⌋ᶜˢ (const (Σ El P))
+lookupAny-thereᶜˢ' []            P algs tl-alg = tl-alg
+lookupAny-thereᶜˢ' (inl ℓ' ∷ cb) P algs tl-alg =
+  lookupAny-thereᶜˢ' cb P (λ j → algs (there j)) tl-alg
+lookupAny-thereᶜˢ' (inr rb ∷ cb) P algs tl-alg (inl eps) = algs (here (rb , refl)) eps
+lookupAny-thereᶜˢ' (inr rb ∷ cb) P algs tl-alg (inr eps) =
+  lookupAny-thereᶜˢ' cb P (λ j → algs (there j)) tl-alg eps
+
+lookupAny-thereᶜˢ :
+    {I : Set ℓⁱ} (D : ConDs I cbs) {N : Carrierᶜˢ D ℓᵈ} (toN : Algᶜˢ D N)
+    {El : Set ℓᵉ} (P : El → Set ℓ)
+  → {E : ConDs ⊤ cbs'} {Acc : ConODs (Σ[ i ∈ I ] N i × ⊤) (const tt) E cbs'}
+  → Algᶜˢ ⌊ Acc ⌋ᶜˢ (const (Σ El P))
+  → Algᶜˢ ⌊ thereODᶜˢ D toN Acc ⌋ᶜˢ (const (Σ El P))
+lookupAny-thereᶜˢ []       toN P acc-alg = acc-alg
+lookupAny-thereᶜˢ (D ∷ Ds) toN P acc-alg =
+  lookupAny-thereᶜˢ' _ P (lookupAny-thereᶜ  D  (toN ∘ inl) P)
+                         (lookupAny-thereᶜˢ Ds (toN ∘ inr) P acc-alg)
+
+lookupAny : ∀ {D N} (C : DataC D N) (S : SCᵈ D) → ∀ {N'} → DataC (AnyD C S) N' → FoldP
+lookupAny {D} C S C' = record
+  { Conv    = C'
+  ; #levels = DataD.#levels (AnyD C S)
+  ; level   = id
+  ; Param   = λ ℓs → PDataD.Param (DataD.applyL (AnyD C S) ℓs)
+  ; param   = id
+  ; Carrier = λ (_ , ℓs) (ps , P , _) _ → Σ (SC.El (S ℓs) ps) P
+  ; algebra = λ (ps , P , _) → let Dᶜˢ = PDataD.applyP (DataD.applyL D _) ps in
+      lookupAny-hereᶜˢ  Dᶜˢ (SC.pos (S _)) (SC.coe (S _) ps) (DataC.toN C) P
+     (lookupAny-thereᶜˢ Dᶜˢ (DataC.toN C) P (λ ())) }
