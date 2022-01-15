@@ -104,7 +104,7 @@ ListD = record
   { #levels = 1
   ; applyL  = λ ℓs → let (ℓ , _) = ℓs in record
       { alevel = ℓ
-      ; level-inequality = refl
+--      ; level-inequality = refl
       ; Param  = [ A ∶ Set ℓ ] []
       ; Index  = λ _ → []
       ; applyP = λ ps → let (A , _) = ps
@@ -268,7 +268,7 @@ WD = record
   { #levels = 2
   ; applyL  = λ ℓs → let (ℓ , ℓ' , _) = ℓs in record
       { alevel = ℓ ⊔ ℓ'
-      ; level-inequality = refl
+--      ; level-inequality = refl
       ; Param  = [ A ∶ Set ℓ ] [ _ ∶ (A → Set ℓ') ] []
       ; Index  = λ _ → []
       ; applyP = λ ps → let (A , B , _) = ps
@@ -338,7 +338,7 @@ WD = record
 --   { #levels = 3
 --   ; applyL  = λ ℓs → let (ℓᵃ , ℓᵇ , ℓʳ , _) = ℓs in record
 --       { alevel = ℓᵃ ⊔ ℓᵇ ⊔ ℓʳ
---       ; level-pre-fixed-point = refl
+-- --       ; level-pre-fixed-point = refl
 --       ; Param  = [ A ∶ Set ℓᵃ ] [ B ∶ Set ℓᵇ ] [ _ ∶ (A → B → Set ℓʳ) ] []
 --       ; Index  = λ p → let (A , B , R , _) = p
 --                        in [ _ ∶ List A ] [ _ ∶ List B ] []
@@ -379,7 +379,7 @@ WD = record
 --   ; LevelO  = ε
 --   ; applyL  = λ _ → record
 --       { alevel  = lzero
---       ; level-pre-fixed-point = refl
+-- --       ; level-pre-fixed-point = refl
 --       ; ParamOD = ε
 --       ; IndexOD = λ _ → ε
 --       ; applyP  = λ _ → (ι _ refl)

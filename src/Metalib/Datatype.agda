@@ -31,7 +31,8 @@ private
   pattern pat₁lam₀ Γ p t = pat-lam₀ [ Γ ⊢ [ vArg p ] `= t ]
 
   pattern `datad x y        = con₂ (quote datad) x y
-  pattern `pdatad x y z u v = con₅ (quote pdatad) x y z u v
+  pattern `pdatad x y z u v = con (quote pdatad)
+    (vArg x ∷ iArg y ∷ vArg z ∷ vArg u ∷ vArg v ∷ [])
 
   -- Translate the semantics of an object-level telescope to a context
   idxToArgs : ⟦ T ⟧ᵗ → TC (Args Term)

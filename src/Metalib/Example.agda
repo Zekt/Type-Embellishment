@@ -67,7 +67,7 @@ NatD = record
   { #levels = 0
   ; applyL  = λ { tt → record
     { alevel  = 0ℓ
-    ; level-inequality = refl
+--    ; level-inequality = refl
     ; Param  = []
     ; Index  = λ _ → []
     ; applyP = λ where
@@ -87,7 +87,7 @@ unquoteDecl data Nat constructor z s = defineByDataD NatD Nat (z ∷ s ∷ [])
 
 TreeD : DataD
 TreeD = datad 1 λ where
-  (ℓ , ⊤) → pdatad ℓ refl ([ A ∶ Set ℓ ] []) (λ ps → []) λ where
+  (ℓ , ⊤) → pdatad ℓ ([ A ∶ Set ℓ ] []) (λ ps → []) λ where
     (A , tt) →
       ι tt
       ∷ (Σ[ _ ∶ A ] ρ (ι tt) (ρ (ι tt) (ι tt)))
@@ -106,7 +106,7 @@ ListD = record
   { #levels = 1
   ; applyL  = λ { (ℓ , _) → record
     { alevel = ℓ
-    ; level-inequality = refl
+--    ; level-inequality = refl
     ; Param = [ A ∶ Set ℓ ] []
     ; Index = λ _ → []
     ; applyP = λ where
@@ -139,7 +139,7 @@ LenD : DataD
 DataD.#levels LenD = 1
 DataD.applyL  LenD (ℓ , _) = record
   { alevel = ℓ
-  ; level-inequality = refl
+--  ; level-inequality = refl
   ; Param = [ A ∶ Set ℓ ] []
   ; Index = λ where
     (A , tt) → [ xs ∶ List {ℓ} A ] [ ys ∶ List {ℓ} A ] []
@@ -210,7 +210,7 @@ VecD = record
   { #levels = 1
   ; applyL  = λ { (ℓ , tt) → record
     { alevel = ℓ
-    ; level-inequality = refl
+--    ; level-inequality = refl
     ; Param                 = [ A ∶ Set ℓ ] []
     ; Index                 = λ _ → [ _ ∶ Nat ] []
     ; applyP                = λ where
@@ -270,7 +270,7 @@ WD = record
   ; applyL  = λ where
     (ℓ , ℓ' , tt) → record
       { alevel = ℓ ⊔ ℓ'
-      ; level-inequality = refl
+--      ; level-inequality = refl
       ; Param = [ A ∶ Set ℓ ] [ B ∶ (A → Set ℓ') ] []
       ; Index = λ _ → []
       ; applyP = λ where

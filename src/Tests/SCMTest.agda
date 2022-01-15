@@ -17,7 +17,7 @@ ListD = record
   { #levels = 1
   ; applyL  = λ ℓs → let (ℓ , _) = ℓs in record
       { alevel = ℓ
-      ; level-pre-fixed-point = refl
+--      ; level-inequality = refl
       ; Param  = [ A ∶ Set ℓ ] []
       ; Index  = λ _ → []
       ; applyP = λ ps → let (A , _) = ps
@@ -73,7 +73,7 @@ IETreeD = record
   { #levels = 2
   ; applyL  = λ ℓs → let (ℓ , ℓ' , _) = ℓs in record
       { alevel = ℓ ⊔ ℓ'
-      ; level-pre-fixed-point = refl
+ --     ; level-inequality = refl
       ; Param  = [ A ∶ Set ℓ ] [ B ∶ Set ℓ' ] []
       ; Index  = λ _ → []
       ; applyP = λ ps → let (A , B , _) = ps
@@ -125,7 +125,7 @@ VecD = record
   { #levels = 1
   ; applyL  = λ ℓs → let (ℓ , _) = ℓs in record
       { alevel = ℓ
-      ; level-pre-fixed-point = refl
+--      ; level-inequality = refl
       ; Param  = [ A ∶ Set ℓ ] []
       ; Index  = λ _ → ℕ ∷ (λ _ → [])
       ; applyP = λ ps → let (A , _) = ps

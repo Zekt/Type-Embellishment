@@ -96,7 +96,7 @@ record PDataD : Setω where
   flevel ℓ = maxMap max-π struct ⊔ maxMap max-σ struct ⊔
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
-    level-inequality : maxMap max-π struct ⊔ maxMap max-σ struct ⊑ dlevel
+    ⦃ level-inequality ⦄ : maxMap max-π struct ⊔ maxMap max-σ struct ⊑ dlevel
     Param  : Tel plevel
     Index  : ⟦ Param ⟧ᵗ → Tel ilevel
     applyP : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ struct
