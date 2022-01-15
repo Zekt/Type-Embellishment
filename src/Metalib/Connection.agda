@@ -10,20 +10,23 @@ open import Generics.Description
 open import Generics.Recursion  
 
 private
-  pattern `inl x = con₁ (quote _⊎_.inl) x
-  pattern `inr x = con₁ (quote _⊎_.inr) x
-  pattern `refl  = con₀ (quote _≡_.refl)
+  pattern `inl x   = con₁ (quote _⊎_.inl) x
+  pattern `inr x   = con₁ (quote _⊎_.inr) x
+  pattern `refl    = con₀ (quote _≡_.refl)
   pattern _`,_ x y = con₂ (quote Prelude._,_) x y
 
-  -- c x₁ x₂ ⋯ xₙ can be represented as `Term` and `Pattern`
-  cxtToVars : (Γ : Telescope) → (Term × Pattern) × (Args Term × Args Pattern)
-  cxtToVars = snd ∘ foldr emptyVar λ where
-        (_ , arg i _) (n , (t , p) , (targs , pargs)) →
-          suc n , ((var₀ n `, t) , (var n `, p)) , (arg i (var₀ n) ∷ targs) , (arg i (var n) ∷ pargs)
-    where emptyVar = 0 , (`refl , `refl) , ([] , [])
+------------------------------------------------------------------------
+-- Each constructor `c : (x₁ : A₁) → (x₂ : A₂ x₁) → ⋯ → T`
+-- can be represented as a pattern on the LHS `c x₁ x₂ ⋯ xₙ` or as a term on the RHS
+-- They can be also uncurried described by ⟦ ConD ⟧. Thus, there are 4 types of constructor representations. 
+cxtToVars : (Γ : Telescope) → (Term × Pattern) × (Args Term × Args Pattern)
+cxtToVars = snd ∘ foldr emptyVar λ where
+      (_ , arg i _) (n , (t , p) , (targs , pargs)) →
+        suc n , ((var₀ n `, t) , (var n `, p)) , (arg i (var₀ n) ∷ targs) , (arg i (var n) ∷ pargs)
+  where emptyVar = 0 , (`refl , `refl) , ([] , [])
 
-  forgetTy : Telescope → Telescope
-  forgetTy = map $ bimap id (λ `A → arg (getArgInfo `A) unknown)
+forgetTy : Telescope → Telescope
+forgetTy = map $ bimap id (λ `A → arg (getArgInfo `A) unknown)
 
 module _ (pars : ℕ) where
   conToClause : (c : Name) → TC (Telescope × (Term × Pattern) × Args Term × Args Pattern)
