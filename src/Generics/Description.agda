@@ -52,11 +52,6 @@ maxMap-bound : {A : Set} (f : A → Level) {ℓ : Level}
 maxMap-bound f ineq []       = refl
 maxMap-bound f ineq (a ∷ as) = cong₂ _⊔_ (ineq a) (maxMap-bound f ineq as)
 
-maxMap-<> : {A : Set} (f : A → Level) → ∀ xs ys
-          → maxMap f (xs <> ys) ≡ maxMap f xs ⊔ maxMap f ys
-maxMap-<> f []       ys = refl
-maxMap-<> f (x ∷ xs) ys = cong (f x ⊔_) (maxMap-<> f xs ys)
-
 hasRec?-bound : ∀ ℓ cb → hasRec? ℓ cb ⊑ ℓ
 hasRec?-bound ℓ []            = refl
 hasRec?-bound ℓ (inl ℓ' ∷ cb) = hasRec?-bound ℓ cb
@@ -180,10 +175,6 @@ fmapᵈ : (D : DataD) {ℓs : DataD.Levels D} → let Dᵖ = DataD.applyL D ℓs
         {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
       → ({i : I} → X i → Y i) → {i : I} → ⟦ D ⟧ᵈ X i → ⟦ D ⟧ᵈ Y i
 fmapᵈ D {ℓs} = fmapᵖᵈ (DataD.applyL D ℓs)
-
-_++ᶜˢ_ : {I : Set ℓⁱ} → ConDs I cbs → ConDs I cbs' → ConDs I (cbs <> cbs')
-[]       ++ᶜˢ Es = Es
-(D ∷ Ds) ++ᶜˢ Es = D ∷ (Ds ++ᶜˢ Es)
 
 ExtEqʳ : {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ}
          (xs xs' : ⟦ D ⟧ʳ X) → Set (max-ℓ rb ⊔ ℓˣ)

@@ -16,21 +16,7 @@ open import Generics.Ornament.Algebraic.Isomorphism
 open import Generics.SimpleContainer
 open import Generics.SimpleContainer.All
 open import Generics.SimpleContainer.Any
-
--- USER: ℕ
-
--- META
-NatD : DataD
-NatD = record
-  { #levels = 0
-  ; applyL  = λ _ → record
-      { alevel = lzero
-      ; level-inequality = refl
-      ; Param  = []
-      ; Index  = λ _ → []
-      ; applyP = λ _ → ι tt
-                     ∷ ρ (ι tt) (ι tt)
-                     ∷ [] } }
+open import Examples.Nat
 
 -- META
 ℕ-wrapper : DataT NatD
