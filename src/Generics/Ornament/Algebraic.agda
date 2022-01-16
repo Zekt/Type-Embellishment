@@ -18,7 +18,7 @@ private variable
 
 algODʳ : {I : Set ℓⁱ} (D : RecD I rb)
          {X : I → Set ℓ} (xs : ⟦ D ⟧ʳ X) → RecOD (Σ[ i ∈ I ] X i × ⊤) fst D
-algODʳ (ι i  ) x  = ι (_ , x , tt) refl
+algODʳ (ι i  ) x  = ι (_ , x , tt)
 algODʳ (π A D) xs = π λ a → algODʳ (D a) (xs a)
 
 algConB : Level → ConB → ConB
@@ -28,7 +28,7 @@ algConB ℓ (inr rb ∷ cb) = inl (max-ℓ rb ⊔ ℓ) ∷ inr rb ∷ algConB �
 
 algODᶜ : {I : Set ℓⁱ} (D : ConD I cb) {X : I → Set ℓ}
        → Algᶜ D X → ConOD (Σ[ i ∈ I ] X i × ⊤) fst D (algConB ℓ cb)
-algODᶜ (ι i  ) f = ι (_ , f refl , tt) refl
+algODᶜ (ι i  ) f = ι (_ , f refl , tt)
 algODᶜ (σ A D) f = σ λ a → algODᶜ (D a) λ xs → f (a , xs)
 algODᶜ (ρ D E) f = Δ (⟦ D ⟧ʳ _) λ xs →
                    ρ (algODʳ D xs) (algODᶜ E (λ xs' → f (xs , xs')))

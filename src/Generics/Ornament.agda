@@ -21,12 +21,12 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} (e : I → J) where
   infix  5 ∺_
 
   data RecO : RecD I rb → RecD J rb' → Setω where
-    ι : ∀ {i j} (eq : e i ≡ j) → RecO (ι i) (ι j)
+    ι : ∀ {i j} ⦃ eq : e i ≡ j ⦄ → RecO (ι i) (ι j)
     π : {D : A → RecD I rb} {E : A → RecD J rb}
         (O : (a : A) → RecO (D a) (E a)) → RecO (π A D) (π A E)
 
   data ConO : ConD I cb → ConD J cb' → Setω where
-    ι : ∀ {i j} (eq : e i ≡ j) → ConO (ι i) (ι j)
+    ι : ∀ {i j} ⦃ eq : e i ≡ j ⦄ → ConO (ι i) (ι j)
     σ : {D : A → ConD I cb} {E : A → ConD J cb'}
         (O : (a : A) → ConO (D a) (E a)) → ConO (σ A D) (σ A E)
     Δ : {D : A → ConD I cb} {E : ConD J cb'}
@@ -48,12 +48,12 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 
   eraseʳ : {D : RecD I rb} {E : RecD J rb} (O : RecO e D E)
            {X : J → Set ℓ} → ⟦ D ⟧ʳ (X ∘ e) → ⟦ E ⟧ʳ X
-  eraseʳ (ι eq) x  = subst _ eq x
-  eraseʳ (π  O) xs = λ a → eraseʳ (O a) (xs a)
+  eraseʳ (ι ⦃ eq ⦄) x = subst _ eq x
+  eraseʳ (π O) xs = λ a → eraseʳ (O a) (xs a)
 
   eraseᶜ : {D : ConD I cb} {E : ConD J cb'} (O : ConO e D E)
            {X : J → Set ℓˣ} {i : I} → ⟦ D ⟧ᶜ (X ∘ e) i → ⟦ E ⟧ᶜ X (e i)
-  eraseᶜ (ι eq  ) eq'      = trans (sym eq) (cong _ eq')
+  eraseᶜ (ι ⦃ eq ⦄) eq'    = trans (sym eq) (cong _ eq')
   eraseᶜ (σ   O ) (a , xs) = a , eraseᶜ (O a) xs
   eraseᶜ (Δ   O ) (a , xs) =     eraseᶜ (O a) xs
   eraseᶜ (∇ a O )      xs  = a , eraseᶜ  O    xs

@@ -21,11 +21,11 @@ module _ (I : Set ℓⁱ) {J : Set ℓʲ} (e : I → J) where
   infix  5 ∺_
 
   data RecOD : RecD J rb → Setω where
-    ι : ∀ i {j} (eq : e i ≡ j) → RecOD (ι j)
+    ι : ∀ i {j} ⦃ eq : e i ≡ j ⦄ → RecOD (ι j)
     π : {E : A → RecD J rb} (OD : (a : A) → RecOD (E a)) → RecOD (π A E)
 
   data ConOD : ConD J cb → ConB → Setω where
-    ι : ∀ i {j} (eq : e i ≡ j) → ConOD (ι j) []
+    ι : ∀ i {j} ⦃ eq : e i ≡ j ⦄ → ConOD (ι j) []
     σ : {A : Set ℓ} {E : A → ConD J cb}
         (OD : (a : A) → ConOD (E a) cb') → ConOD (σ A E) (inl ℓ ∷ cb')
     Δ : (A : Set ℓ) {E : ConD J cb}
@@ -43,7 +43,7 @@ module _ (I : Set ℓⁱ) {J : Set ℓʲ} (e : I → J) where
           (ODs : ConODs Es cbs') → ConODs (E ∷ Es) cbs'
 
 idRecOD : {I : Set ℓⁱ} (D : RecD I rb) → RecOD I id D
-idRecOD (ι i  ) = ι i refl
+idRecOD (ι i  ) = ι i
 idRecOD (π A D) = π λ a → idRecOD (D a)
 
 record PDataOD (E : PDataD) : Setω where
@@ -58,7 +58,7 @@ record PDataOD (E : PDataD) : Setω where
   flevel ℓ = maxMap max-π struct ⊔ maxMap max-σ struct ⊔
              maxMap (hasRec? ℓ) struct ⊔ hasCon? ilevel struct
   field
-    level-inequality : maxMap max-π struct ⊔ maxMap max-σ struct ⊑ dlevel
+    ⦃ level-inequality ⦄ : maxMap max-π struct ⊔ maxMap max-σ struct ⊑ dlevel
     Param  : Tel plevel
     param  : ⟦ Param ⟧ᵗ → ⟦ PDataD.Param E ⟧ᵗ
     Index  : ⟦ Param ⟧ᵗ → Tel ilevel
@@ -78,22 +78,22 @@ record DataOD (E : DataD) : Setω where
 module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 
   ⌊_⌋ʳ : {E : RecD J rb} → RecOD I e E → RecD I rb
-  ⌊ ι i eq ⌋ʳ = ι i
-  ⌊ π OD   ⌋ʳ = π _ λ a → ⌊ OD a ⌋ʳ
+  ⌊ ι i  ⌋ʳ = ι i
+  ⌊ π OD ⌋ʳ = π _ λ a → ⌊ OD a ⌋ʳ
 
   ⌈_⌉ʳ : {E : RecD J rb} (OD : RecOD I e E) → RecO e ⌊ OD ⌋ʳ E
-  ⌈ ι i eq ⌉ʳ = ι eq
-  ⌈ π OD   ⌉ʳ = π λ a → ⌈ OD a ⌉ʳ
+  ⌈ ι i  ⌉ʳ = ι
+  ⌈ π OD ⌉ʳ = π λ a → ⌈ OD a ⌉ʳ
 
   ⌊_⌋ᶜ : {E : ConD J cb} → ConOD I e E cb' → ConD I cb'
-  ⌊ ι i eq   ⌋ᶜ = ι i
+  ⌊ ι i      ⌋ᶜ = ι i
   ⌊ ρ OD OD' ⌋ᶜ = ρ ⌊ OD ⌋ʳ ⌊ OD' ⌋ᶜ
   ⌊ σ    OD  ⌋ᶜ = σ _ λ a → ⌊ OD a ⌋ᶜ
   ⌊ Δ A  OD  ⌋ᶜ = σ A λ a → ⌊ OD a ⌋ᶜ
   ⌊ ∇ a  OD  ⌋ᶜ = ⌊ OD ⌋ᶜ
 
   ⌈_⌉ᶜ : {E : ConD J cb} (OD : ConOD I e E cb') → ConO e ⌊ OD ⌋ᶜ E
-  ⌈ ι i eq   ⌉ᶜ = ι eq
+  ⌈ ι i      ⌉ᶜ = ι
   ⌈ ρ OD OD' ⌉ᶜ = ρ ⌈ OD ⌉ʳ ⌈ OD' ⌉ᶜ
   ⌈ σ    OD  ⌉ᶜ = σ λ a → ⌈ OD a ⌉ᶜ
   ⌈ Δ A  OD  ⌉ᶜ = Δ λ a → ⌈ OD a ⌉ᶜ
@@ -112,7 +112,6 @@ module _ {I : Set ℓⁱ} {J : Set ℓʲ} {e : I → J} where
 ⌊_⌋ᵖᵈ : ∀ {E} → PDataOD E → PDataD
 ⌊ OD ⌋ᵖᵈ = record
   { alevel = PDataOD.alevel OD
-  ; level-inequality = PDataOD.level-inequality OD
   ; Param  = PDataOD.Param OD
   ; Index  = PDataOD.Index OD
   ; applyP = λ ps → ⌊ PDataOD.applyP OD ps ⌋ᶜˢ }

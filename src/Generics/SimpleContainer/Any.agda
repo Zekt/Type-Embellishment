@@ -25,7 +25,7 @@ hereConB (inr rb ∷ cb) ℓᵈ ℓ = inl (max-ℓ rb ⊔ ℓᵈ) ∷ hereConB c
 
 hereODᶜ' : {I : Set ℓⁱ} (D : ConD I cb) {N : Carrierᶜ D ℓᵈ} (toN : Algᶜ D N) (X : Set ℓ)
          → ConOD (Σ[ i ∈ I ] N i × ⊤) (const tt) (ι tt) (hereConB cb ℓᵈ ℓ)
-hereODᶜ' (ι i  ) toN X = Δ X λ _ → ι (i , toN refl , tt) refl
+hereODᶜ' (ι i  ) toN X = Δ X λ _ → ι (i , toN refl , tt)
 hereODᶜ' (σ A D) toN X = Δ A λ a → hereODᶜ' (D a) (curry toN a) X
 hereODᶜ' (ρ D E) toN X = Δ (⟦ D ⟧ʳ _) λ ns → hereODᶜ' E (curry toN ns) X
 
@@ -78,7 +78,7 @@ thereRecB (ℓ ∷ rb) = inl ℓ ∷ thereRecB rb
 
 thereODʳ : {I : Set ℓⁱ} (D : RecD I rb) {N : I → Set ℓᵈ} → ⟦ D ⟧ʳ N → ∀ {i} → N i
          → ConOD (Σ[ i ∈ I ] N i × ⊤) (const tt) (ρ (ι tt) (ι tt)) (thereRecB rb)
-thereODʳ (ι i  ) n  n' = ρ (ι (_ , n , tt) refl) (ι (_ , n' , tt) refl)
+thereODʳ (ι i  ) n  n' = ρ (ι (_ , n , tt)) (ι (_ , n' , tt))
 thereODʳ (π A D) ns n' = Δ A λ a → thereODʳ (D a) (ns a) n'
 
 thereConB : ConB → Level → RecB → ConB
@@ -304,7 +304,7 @@ AnyD-level-inequality ℓ ℓᵈ cbs sbs ineq =
   ∎ where open ≡-Reasoning
 
 AnyODᵖᵈ : (D : PDataD) → SC D → {N : ∀ ps → Carrierᵖᵈ D ps (PDataD.dlevel D)}
-        → (∀ {ps} → Algᵖᵈ D (N ps)) → Level → PDataOD NatPD
+        → (∀ {ps} → Algᵖᵈ D (N ps)) → Level → PDataOD (DataD.applyL NatD tt)
 AnyODᵖᵈ D S {N} toN ℓ = record
   { alevel = maxMap (uncurry (hasEl? ℓ)) (allToList (SC.pos S))
   ; level-inequality = AnyD-level-inequality

@@ -18,7 +18,7 @@ private variable
 PredODᶜ : {I : Set ℓⁱ} (D : ConD I cb) (El : Set ℓᵉ) (P : El → Set ℓ)
           (sb : SCᵇ cb) → SCᶜ D sb El
         → ConOD I id D (scConB ℓ cb sb)
-PredODᶜ (ι i  ) El P _            sc = ι i refl
+PredODᶜ (ι i  ) El P _            sc = ι i
 PredODᶜ (σ A D) El P (false ∷ sb) sc = σ λ a → PredODᶜ (D a) El P sb (sc a)
 PredODᶜ (σ A D) .A P (true  ∷ sb) (refl ,ωω sc) =
   σ λ a → Δ (P a) λ _ → PredODᶜ (D a) A P sb (sc a)
@@ -93,6 +93,12 @@ PredOD D S = record
   ; level   = snd
   ; applyL  = λ (ℓ , ℓs) → PredODᵖᵈ (DataD.applyL D ℓs) (S ℓs) ℓ }
 
-AllOD : ∀ {D N} → DataC D N → (S : SCᵈ D) → ∀ {N'} → DataC ⌊ PredOD D S ⌋ᵈ N'
-      → DataOD ⌊ PredOD D S ⌋ᵈ
+PredD : (D : DataD) → SCᵈ D → DataD
+PredD D S = ⌊ PredOD D S ⌋ᵈ
+
+AllOD : ∀ {D N} → DataC D N → (S : SCᵈ D) → ∀ {N'} → DataC (PredD D S) N'
+      → DataOD (PredD D S)
 AllOD {D} C S C' = AlgOD (forget C' C ⌈ PredOD D S ⌉ᵈ)
+
+AllD : ∀ {D N} → DataC D N → (S : SCᵈ D) → ∀ {N'} → DataC (PredD D S) N' → DataD
+AllD C S C' = ⌊ AllOD C S C' ⌋ᵈ

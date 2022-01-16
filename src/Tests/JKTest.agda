@@ -17,6 +17,10 @@ open import Generics.SimpleContainer
 open import Generics.SimpleContainer.All
 open import Generics.SimpleContainer.Any
 open import Examples.Nat
+open import Examples.List
+open import Examples.W
+open import Examples.STLC
+open import Examples.BST
 
 -- META
 ℕ-wrapper : DataT NatD
@@ -135,9 +139,7 @@ ListD/NatD = record
   ; applyL = λ ℓs → let (ℓ , _) = ℓs in record
       { param  = λ _ → tt
       ; index  = λ _ _ → tt
-      ; applyP = λ _ → (ι refl)
-                   ∷ ∺ (Δ λ _ → ρ (ι refl) (ι refl))
-                   ∷ ∺ [] } }
+      ; applyP = λ _ → ι ∷ ∺ (Δ λ _ → ρ ι ι) ∷ ∺ [] } }
 
 -- USER
 length'P : FoldP
@@ -260,15 +262,11 @@ VecSC = λ _ → record
   ; pos = [] ∷ (true ∷ false ∷ tt ∷ []) ∷ []
   ; coe = λ _ → lift tt ,ωω (refl ,ωω λ _ _ → lift tt) ,ωω lift tt }
 
-data W {ℓ ℓ'} (A : Set ℓ) (B : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
-  sup : (a : A) → (B a → W A B) → W A B
-
 WD : DataD
 WD = record
   { #levels = 2
   ; applyL  = λ ℓs → let (ℓ , ℓ' , _) = ℓs in record
       { alevel = ℓ ⊔ ℓ'
---      ; level-inequality = refl
       ; Param  = [ A ∶ Set ℓ ] [ _ ∶ (A → Set ℓ') ] []
       ; Index  = λ _ → []
       ; applyP = λ ps → let (A , B , _) = ps

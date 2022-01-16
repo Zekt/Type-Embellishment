@@ -6,15 +6,12 @@ open import Prelude
 open import Generics.Telescope
 open import Generics.Description
 
-NatPD : PDataD
-NatPD = record
-  { alevel = 0ℓ
-  ; level-inequality = refl
-  ; Param  = []
-  ; Index  = λ _ → []
-  ; applyP = λ _ → ι tt ∷ ρ (ι tt) (ι tt) ∷ [] }
-
+-- [ＭＥＴＡ]
 NatD : DataD
 NatD = record
   { #levels = 0
-  ; applyL  = λ _ → NatPD }
+  ; applyL  = λ _ → record
+      { alevel = 0ℓ
+      ; Param  = []
+      ; Index  = λ _ → []
+      ; applyP = λ _ → ι tt ∷ ρ (ι tt) (ι tt) ∷ [] } }
