@@ -10,11 +10,11 @@ open import Utils.Reflection.Show
 private variable
   A : Set _
 
-notEndIn : String → Name → TC A
+notEndIn : ErrorPart → ErrorPart → TC A
 notEndIn s n = typeError (strErr "Type of"
-                       ∷ strErr s
+                       ∷ s
                        ∷ strErr "does not end in "
-                       ∷ nameErr n
+                       ∷ n
                        ∷ [])
 
 #idxNotMatch : TC A
@@ -25,6 +25,9 @@ notλ t = typeError $ strErr (show t) ∷ strErr " cannot be reduced further to 
 
 notDef : Term → TC A
 notDef t = typeError $ termErr t ∷ strErr " is not a definition." ∷ []
+
+notApp : Term → TC A
+notApp t = typeError $ termErr t ∷ strErr " is not an application witha name." ∷ []
 
 notFun : Name → TC A
 notFun d = typeError $ nameErr d ∷ [ strErr " is not a function." ]

@@ -14,6 +14,7 @@ open import Metalib.Telescope
 open import Metalib.Datatype
 open import Metalib.Connection
 open import Metalib.Uncurrying
+open import Metalib.Recursion
 
 ------------------------------------------------------------------------------
 -- 
@@ -281,3 +282,17 @@ WD = record
           ∷ []
       }
   }
+
+open import Generics.RecursionScheme
+
+foldℕP : FoldP
+foldℕP = fold-operator NatC
+
+lenP : FoldP
+lenP = fold-operator LenC
+
+pointwiseP : FoldP
+pointwiseP = fold-operator PointwiseC
+
+
+unquoteDecl foldPW = defineFold pointwiseP foldPW

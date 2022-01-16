@@ -50,18 +50,20 @@ FoldGT P = let open FoldP P in
            (ps : ⟦ FoldP.Param P ℓs ⟧ᵗ) {is : ⟦ Index (param ps) ⟧ᵗ}
          → Native (level ℓs) (param ps) is → Carrier ℓs ps is
 
-FoldNT : FoldP → Setω
-FoldNT P = let open FoldP P in
-         ∀ {ℓs} → let open PDataD (DataD.applyL Desc (level ℓs)) in
-           Curriedᵗ true (FoldP.Param P ℓs) λ ps → Curriedᵗ false (Index (param ps)) λ is
+FoldNT : (P : FoldP)   → let open FoldP P in
+         (ℓs : Levels) → let open PDataD (DataD.applyL Desc (level ℓs)) in
+         Set (alevel ⊔ ilevel ⊔ FoldP.plevel P ℓs ⊔ clevel ℓs)
+FoldNT P ℓs = Curriedᵗ true (FoldP.Param P ℓs) λ ps → Curriedᵗ false (Index (param ps)) λ is
          → Native (level ℓs) (param ps) is → Carrier ℓs ps is
+  where open FoldP P
+        open PDataD (DataD.applyL Desc (level ℓs))
 
-fold-wrapper : (P : FoldP) → FoldNT P → FoldGT P
+fold-wrapper : (P : FoldP) → (∀ {ℓs} → FoldNT P ℓs) → FoldGT P
 fold-wrapper P f ps {is} = uncurryᵗ (uncurryᵗ f ps) is
 
-fold-base : (P : FoldP) → FoldNT P → FoldNT P
-fold-base P rec = let open FoldP P in curryᵗ λ ps → curryᵗ λ is →
-  algebra ps {is} ∘ fmapᵈ Desc (fold-wrapper P rec ps) ∘ DataC.fromN Conv
+fold-base : (P : FoldP) → ∀ {ℓs} → FoldNT P ℓs → FoldNT P ℓs
+fold-base P {ℓs} rec = let open FoldP P in curryᵗ λ ps → curryᵗ λ is →
+     algebra ps {is} ∘ fmapᵈ Desc (λ {is} → uncurryᵗ (uncurryᵗ rec ps) is) ∘ DataC.fromN Conv
 
 record FoldC (P : FoldP) (f : FoldGT P) : Setω where
   field
@@ -128,8 +130,6 @@ DataTᶜ D = ∀ {ℓs} → PDataTᶜ (DataD.applyL D ℓs)
 
 uncurryᵈᵗ : (D : DataD) → DataTᶜ D → DataT D
 uncurryᵈᵗ D N ℓs ps = uncurryᵗ (uncurryᵗ N ps)
-  where open DataD D
-        open PDataD (applyL ℓs)
 
 DataCᶜ : (D : DataD) (Nᶜ : DataTᶜ D) → Setω
 DataCᶜ D Nᶜ = DataC D (uncurryᵈᵗ D Nᶜ)

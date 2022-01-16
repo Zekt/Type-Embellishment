@@ -97,6 +97,18 @@ module _ (actions : Actions) where
   traverseTel Γ [] = []
   traverseTel Γ ((s , t) ∷ tel) = (s , traverseArg Γ t) ∷ traverseTel ((s , t) ∷cxt Γ) tel
 
+weaken : ℕ → ℕ → Term → Term
+weaken from by = traverseTerm (record defaultActions
+                                      {onVar = λ Γ x →
+                                         if x <? (Cxt.len Γ + from)
+                                           then x
+                                           else x + by}) (0 , [])
+
+weakenTel : ℕ → ℕ → Telescope → Telescope
+weakenTel from by [] = []
+weakenTel from by (x ∷ tel) = bimap id (fmap (weaken from by)) x ∷
+                              weakenTel (suc from) by tel
+
 strengthen : ℕ → ℕ → Term → Term
 strengthen from by = traverseTerm (record defaultActions
                                       {onVar = λ Γ x →

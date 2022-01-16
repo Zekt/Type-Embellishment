@@ -142,8 +142,8 @@ module _ (dataName : Name) (#levels : ℕ) (parLen : ℕ) where
     return $ `π `x (`vλ s `→ rec)
   telescopeToRecD [] (def f args) = if f == dataName
     then return $ `ιʳ (argsToIdx $ drop pars args)
-    else Err.notEndIn "telescope" dataName
-  telescopeToRecD [] _ = Err.notEndIn "telescope" dataName
+    else Err.notEndIn (strErr "telescope") (nameErr dataName)
+  telescopeToRecD [] _ = Err.notEndIn (strErr "telescope") (nameErr dataName)
 
   telescopeToConD : Telescope → Type → TC Term
   telescopeToConD ((s , arg _ `x) ∷ `tel) end = if endsIn `x dataName
@@ -158,8 +158,8 @@ module _ (dataName : Name) (#levels : ℕ) (parLen : ℕ) where
     )
   telescopeToConD [] (def f args) = if f == dataName
     then (return $ `ιᶜ (argsToIdx $ drop pars args))
-    else (Err.notEndIn "telescope" dataName)
-  telescopeToConD [] _ = Err.notEndIn "telescope" dataName
+    else (Err.notEndIn (strErr "telescope")  (nameErr dataName))
+  telescopeToConD [] _ = Err.notEndIn (strErr "telescope") (nameErr dataName)
 
   describeConstructor : Name → TC Term
   describeConstructor conName = do
