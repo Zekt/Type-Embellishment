@@ -9,12 +9,6 @@ open import Utils.Error as Err
 open import Generics.Description
 open import Generics.Recursion  
 
-private
-  pattern `inl x   = con₁ (quote _⊎_.inl) x
-  pattern `inr x   = con₁ (quote _⊎_.inr) x
-  pattern `refl    = con₀ (quote _≡_.refl)
-  pattern _`,_ x y = con₂ (quote Prelude._,_) x y
-
 ------------------------------------------------------------------------
 -- Each constructor `c : (x₁ : A₁) → (x₂ : A₂ x₁) → ⋯ → T`
 -- can be represented as a pattern on the LHS `c x₁ x₂ ⋯ xₙ` or as a term on the RHS

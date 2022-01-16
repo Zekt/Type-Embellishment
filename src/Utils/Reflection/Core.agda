@@ -72,8 +72,8 @@ pattern iLam x = lam instance′ x
 
 pattern pat-lam₀ cs = pat-lam cs []
 
-pattern `Π[_∶_]_ s a ty  = pi a (abs s ty)
-pattern `Π[_]_ a ty      = `Π[ "_" ∶ a ] ty
+pattern `Π[_∶_]_ s a ty = pi a (abs s ty)
+pattern `Π[_]_ a ty     = `Π[ "_" ∶ a ] ty
 pattern vΠ[_∶_]_ s a ty = `Π[ s ∶ (vArg a) ] ty
 pattern hΠ[_∶_]_ s a ty = `Π[ s ∶ (hArg a) ] ty
 pattern iΠ[_∶_]_ s a ty = `Π[ s ∶ (iArg a) ] ty
@@ -83,16 +83,21 @@ pattern iΠ[_]_ a ty     = `Π[ iArg a ] ty
 
 pattern _⊢_`=_ tel ps t = clause tel ps t 
 
-pattern `lzero   = def₀ (quote lzero)
-pattern `Level   = def₀ (quote Level)
-pattern `tt      = con₀ (quote tt)
-pattern _`,_ t u = con₂ (quote Prelude._,_) t u
-
 infixr 20 `vλ_`→_ `hλ_`→_ `iλ_`→_
-
 pattern `vλ_`→_ s b = vLam (abs s b)
 pattern `hλ_`→_ s b = hLam (abs s b)
 pattern `iλ_`→_ s b = iLam (abs s b)
+
+pattern `lzero    = def₀ (quote lzero)
+pattern `Level    = def₀ (quote Level)
+pattern `tt       = con₀ (quote tt)
+pattern _`,_ t u  = con₂ (quote Prelude._,_) t u
+pattern `inl x    = con₁ (quote _⊎_.inl) x
+pattern `inr x    = con₁ (quote _⊎_.inr) x
+pattern `refl     = con₀ (quote _≡_.refl)
+pattern _`$_ x y  = def₂ (quote Prelude._$_)  x y
+pattern _`$ᵢ_ x y = def₂ (quote Prelude._$ᵢ_) x y
+pattern _`$ₕ_ x y = def₂ (quote Prelude._$ₕ_) x y
 
 unArg : Arg A → A
 unArg (arg _ x) = x
@@ -103,6 +108,13 @@ getArgInfo (arg i _) = i
 getVisibility : Arg A → Visibility
 getVisibility (arg (arg-info v _) _) = v
 
+_`$$_ : Term → Args Term → Term
+t `$$ []       = t
+t `$$ (a ∷ as) = case getVisibility a of λ where
+  visible   → (t `$ unArg a)  `$$ as
+  hidden    → (t `$ₕ unArg a) `$$ as
+  instance′ → (t `$ᵢ unArg a) `$$ as
+  
 getModality : Arg A → Modality
 getModality (arg (arg-info _ m) _) = m
 

@@ -27,7 +27,6 @@ private
   pattern `σ x y = con₂ (quote σ) x y
   pattern `ρ x y = con₂ (quote ρ) x y
 
-  pattern `refl          = con (quote _≡_.refl) (hArg `lzero ∷ hArg `Level ∷ hArg unknown ∷ [])
   pattern pat₁lam₀ Γ p t = pat-lam₀ [ Γ ⊢ [ vArg p ] `= t ]
 
   pattern `datad x y        = con₂ (quote datad) x y

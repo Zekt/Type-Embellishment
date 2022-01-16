@@ -51,6 +51,16 @@ _$_ : {B : A → Set b} →
 f $ x = f x
 {-# INLINE _$_ #-}
 
+_$ₕ_ : {B : A → Set b} →
+      ({x : A} → B x) → ((x : A) → B x)
+f $ₕ x = f {x}
+{-# INLINE _$_ #-}
+
+_$ᵢ_ : {B : A → Set b} →
+      (⦃ x : A ⦄ → B x) → ((x : A) → B x)
+f $ᵢ x = f ⦃ x ⦄
+{-# INLINE _$_ #-}
+
 case_return_of_ : ∀ {A : Set a} (x : A) (B : A → Set b) →
                   ((x : A) → B x) → B x
 case x return B of f = f x
