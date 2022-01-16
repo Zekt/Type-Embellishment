@@ -122,13 +122,6 @@ renameUnderscore : Telescope → TC Telescope
 renameUnderscore []        = return []
 renameUnderscore (("_" , x@(arg visible-relevant-ω `A)) ∷ as) = do
   s ← formatErrorPart $ termErr `A
-  let s = ⇑ [ maybe′ toLower 'x' $ head (⇑ s) ]
-  extendContext s x $ ((s , x) ∷_) <$> renameUnderscore as
+  -- let s = ⇑ [ maybe′ toLower 'x' $ head (⇑ s ⦂ List Char) ]
+  extendContext s x $ (("x" , x) ∷_) <$> renameUnderscore as
 renameUnderscore (a@(s , x) ∷ as) = extendContext s x $ a ∷_ <$> renameUnderscore as
-
--- Hack
-erasedToω : Telescope → Telescope
-erasedToω = foldr [] λ where
-  (s , arg (arg-info v (modality r quantity-0)) x) Γ →
-    (s , arg (arg-info v (modality r quantity-ω)) x) ∷ Γ
-  x Γ → x ∷ Γ
