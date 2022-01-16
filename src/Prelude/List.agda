@@ -5,6 +5,7 @@ open import Agda.Primitive
 open import Agda.Builtin.Nat using (zero; suc; _+_; _*_)
   renaming (Nat to ℕ)
 
+open import Prelude.Nat
 open import Prelude.Function
 open import Prelude.Eq
 open import Prelude.Monoid
@@ -132,6 +133,14 @@ product = foldr 1 _*_
 
 length : List A → ℕ
 length = foldr 0 (const suc)
+
+removeLast : ∀ {A : Set ℓ} → ℕ → List A → List A
+removeLast n [] = []
+removeLast n (x ∷ xs) = if (length xs <? n) then
+                          []
+                        else if (length xs == n) then
+                          [ x ]
+                        else x ∷ removeLast n xs
 
 elem : ⦃ Eq A ⦄ → A → List A → Bool
 elem x = any (x ==_)

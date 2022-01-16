@@ -62,9 +62,9 @@ FoldNT P ℓs = Curriedᵗ true (FoldP.Param P ℓs) λ ps → Curriedᵗ false 
 fold-wrapper : (P : FoldP) → (∀ {ℓs} → FoldNT P ℓs) → FoldGT P
 fold-wrapper P f ps {is} = uncurryᵗ (uncurryᵗ f ps) is
 
-fold-base : (P : FoldP) → (∀ {ℓs} → FoldNT P ℓs) → (∀ {ℓs} → FoldNT P ℓs)
-fold-base P rec = let open FoldP P in curryᵗ λ ps → curryᵗ λ is →
-  algebra ps {is} ∘ fmapᵈ Desc (fold-wrapper P rec ps) ∘ DataC.fromN Conv
+fold-base : (P : FoldP) → ∀ {ℓs} → FoldNT P ℓs → FoldNT P ℓs
+fold-base P {ℓs} rec = let open FoldP P in curryᵗ λ ps → curryᵗ λ is →
+     algebra ps {is} ∘ fmapᵈ Desc (λ {is} → uncurryᵗ (uncurryᵗ rec ps) is) ∘ DataC.fromN Conv
 
 record FoldC (P : FoldP) (f : FoldGT P) : Setω where
   field

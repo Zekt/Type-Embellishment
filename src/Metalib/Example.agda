@@ -187,23 +187,26 @@ foldℕP = fold-operator NatC
 lenP : FoldP
 lenP = fold-operator LenC
 
-{- Fail
-unquoteDecl foldName = genFold lenP foldName
--}
+pointwiseP : FoldP
+pointwiseP = fold-operator PointwiseDataC
 
-{- Success
-foldLen : ∀ {ℓ ℓ'} →
-        (A : Set ℓ) (R : List A → List A → Set ℓ')
-        (Z : R [] [])
-        (f : (x y : A) (xs ys : List A) → R xs ys → R (x ∷ xs) (y ∷ ys))
-        {a : List A} {b : List A} →
-        Len A a b → R a b
-foldLen A R Z f {a} {b} z = {! fold-base lenP foldLen A R Z f z !}
-foldLen A R Z f (s L) = {! fold-base lenP foldLen A R Z f (s L) !}
--}
 
---k : ℕ
---k = {! foldName ℕ 2 (_+_ 2) 5 !}
+--unquoteDecl foldPW = defineFold pointwiseP foldPW
+
+{-
+foldLen : {ℓ ℓ₁ : Level} (A : Set ℓ₁)
+           (R : List A → List A → Set ℓ) (Z : R [] [])
+           (S
+            : (x y : A) (xs ys : List A) (z₁ : R xs ys) →
+              R (x ∷ xs) (y ∷ ys))
+           {Z = a : List A} {Z = b : List A} (l : Len A a b) →
+           R a b
+foldLen {ℓ} {ℓ₁} A R Z S  z = Z
+foldLen {ℓ} {ℓ₁} A R Z S (s {x} {y} {xs} {ys} L) = S x y xs ys (foldLen A R Z S L)
+
+k : ℕ
+k = {! foldLen ℕ 2 (_+_ 2) 5 !}
+-}
 
 -- unquoteDecl data Pointwise' constructor just' nothing' = defineByDataD pointwiseD Pointwise' (just' ∷ nothing' ∷ [])
 -- {- dataC

@@ -4,6 +4,7 @@ open import Prelude
 module Metalib.Recursion where
 
 open import Utils.Reflection
+
 open import Utils.Error as Err
 
 open import Generics.Description as D
@@ -11,29 +12,29 @@ open import Generics.Recursion   as D
 
 open import Metalib.Telescope
 
-genFold : FoldP → Name → TC _
-genFold P &fold = extendContextℓs #levels λ ℓs → do
-  t' ← quoteTC (FoldNT P ℓs) >>= normalise
-  let t = prependLevels t' #levels
-  dprint [ strErr "Type of Fold:" ]
-  dprint [ termErr $ t ]
-  declareDef (vArg &fold) t
-  -- Assuming that the last argument to fold is always the target datatype
-  -- tel is without levels since levels of FoldP is uncurried but the native should be curried.
-  let tel = fst $ ⇑ t'
-  foldLast ← maybe′ (return ∘ unArg ∘ snd)
-                    (Err.notEndIn (nameErr &fold) (strErr "datatype"))
-                    (last tel)
-  dprint [ strErr $ "Last argument to the generated fold function:" ]
-  dprint [ strErr $ showTerm foldLast ]
-  pars , conNames ← getDataDefinition =<< getTermName foldLast
-  let tel' = fst $ splitAt (length tel ∸ 1) tel
-  cxt ← getContext
-  dprint [ strErr "Context before defining function clauses:" ]
-  dprint [ strErr (showTel cxt) ]
-  cls ← mapM (conClause pars tel') conNames
+defineFold : FoldP → Name → TC _
+defineFold P &fold = extendContextℓs #levels λ ℓs → do
+  foldT' ← quoteTC! (FoldNT P ℓs)
+  let foldT = prependLevels foldT' #levels
+  -- dprint [ strErr "Type of Fold:" ]
+  -- dprint [ termErr $ foldT ]
+  declareDef (vArg &fold) foldT
+  -- Assuming that the last parameter of fold is always the target datatype
+  -- telescope is without levels since levels are uncurried in FoldP but should be curried in native.
+  foldLast ← case (last ∘ fst $ ⇑ foldT) of λ where
+               (just x) → return ∘ unArg ∘ snd $ x
+               nothing  → Err.notEndIn (nameErr &fold) (strErr "datatype")
+
+  -- dprint [ strErr $ "Last argument to the generated fold function:" ]
+  -- dprint [ strErr $ showTerm foldLast ]
+  parTel ← withNormalisation true $ fromTel (Param ℓs)
+  -- dprint [ strErr $ "Parameter telecsope: " ]
+  -- dprint [ strErr $ "length: " <> show (length parTel) ]
+  -- dprint [ strErr $ showTel parTel ]
+  -- npars already include number of levels
+  npars , conNames ← getDataDefinition =<< (getTermName foldLast)
+  cls ← mapM (conClause npars ℓs parTel) conNames
   defineFun &fold cls
-  return tt
   where
     open FoldP P
     prependLevels : Type → ℕ → Type
@@ -46,36 +47,40 @@ genFold P &fold = extendContextℓs #levels λ ℓs → do
     getTermName (def f args) = return f
     getTermName t = Err.notApp t
 
-    conClause : ℕ → Telescope → Name → TC Clause
-    conClause pars cxt conName = do
+    -- Generate the corresponding clause of a given constructor name
+    conClause : ℕ → Levels → Telescope → Name → TC Clause
+    conClause npars ℓs parCxt conName = do
       conType ← getType conName
-      let conCxt = drop pars $ fst (⇑ conType)
-      -- dummy function for application
-      foldP  ← quoteωTC (fold-base P)
-      foldPT ← inferType foldP >>= normalise
-      &foldP ← freshName ""
-      dprint [ termErr foldPT ]
-
-      declareDef (vArg &foldP) foldPT
-      defineFun &foldP [ [] ⊢ [] `= foldP ]
-      foldBody ← extend*Context (cxt <> conCxt) $ do
-                   let term = (def &foldP $ [ vArg (def₀ &fold) ]                          <>
-                                            foldVars cxt (λ n → var₀ (n + length conCxt))  <>
-                                            [ vArg (con conName (foldVars conCxt var₀)) ])
-                   cxt ← getContext
-                   dprint (strErr "Context before clause generation:" ∷ [ strErr $ showTel cxt ])
-                   dprint [ strErr "Generated term of a clause:" ]
-                   dprint [ strErr $ showTerm term ]
-                   dprint [ termErr term ]
+      let preConCxt = fst (⇑ conType)
+          conCxt = drop npars preConCxt
+          args = foldVars parCxt (λ n → var₀ (n + length conCxt))
+      -- dprint [ strErr "Given argumets to fold-base:" ]
+      -- dprint [ strErr $ showTerms args ]
+      let conCxt' = weakenTel 0 (length parCxt ∸ npars + DataD.#levels Desc) conCxt
+      -- dprint [ strErr "Context to be extended with:" ]
+      -- dprint [ strErr $ showTel $ parCxt <> conCxt' ]
+      let conArgs = foldVars conCxt var₀
+      foldBody ← extend*Context (parCxt <> conCxt') $ do
+                   qP ← quoteωTC P
+                   let term = (def (quote fold-base) $
+                                    [ vArg qP ]
+                                 <> [ vArg (def₀ &fold) ]
+                                 <> args
+                                 <> [ vArg (con conName (hUnknowns npars <> conArgs)) ])
+                   -- dprint [ strErr "Generated term of a clause:" ]
+                   -- dprint [ strErr $ showTerm term ]
                    normalise term
-      dprint [ strErr $ showTerm foldBody ]
-      let cxt' = duplicate #levels ("ℓ" , (hArg (quoteTerm Level))) <> cxt
-      dprint [ strErr $ showTel cxt' ]
-      return $ (cxt' <> conCxt)
-             ⊢ foldVars cxt' (λ n → var (n + length conCxt)) <> [ vArg (con conName (foldVars conCxt var)) ]
+      -- dprint [ strErr $ showTerm foldBody ]
+      -- levels that should be in the telescope of pattern
+      let ℓparCxt = duplicate #levels ("ℓ" , (hArg (quoteTerm Level))) <> parCxt
+      -- dprint [ strErr $ showTel ℓparCxt ]
+      return $ (ℓparCxt <> conCxt')
+             ⊢ foldVars ℓparCxt (λ n → var (n + length conCxt')) <>
+               [ vArg (con conName (foldVars conCxt' var)) ]
             `= foldBody
       where
-        -- would be better if it's typeclass
+        -- generate variable terms that should refer to the given context,
+        -- would be better if there's a typeclass
         foldVars : ∀ {X : Set} → Telescope → (ℕ → X) → List (Arg X)
         foldVars [] _ = []
         foldVars ((s , arg i x) ∷ tel) f =
