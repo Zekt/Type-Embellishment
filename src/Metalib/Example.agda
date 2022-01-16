@@ -13,6 +13,7 @@ open import Generics.Recursion
 open import Metalib.Telescope
 open import Metalib.Datatype
 open import Metalib.Connection
+open import Metalib.Uncurrying
 
 ------------------------------------------------------------------------------
 -- 
