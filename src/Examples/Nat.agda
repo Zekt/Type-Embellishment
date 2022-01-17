@@ -5,13 +5,16 @@ module Examples.Nat where
 open import Prelude
 open import Generics.Telescope
 open import Generics.Description
+open import Generics.RecursionScheme
+open import Metalib.Datatype
+open import Metalib.Connection
+open import Metalib.Recursion
+open import Utils.Reflection
 
--- [ＭＥＴＡ]
-NatD : DataD
-NatD = record
-  { #levels = 0
-  ; applyL  = λ _ → record
-      { alevel = 0ℓ
-      ; Param  = []
-      ; Index  = λ _ → []
-      ; applyP = λ _ → ι tt ∷ ρ (ι tt) (ι tt) ∷ [] } }
+NatD = genDataD ℕ
+NatC = genDataC NatD ℕ
+-- [TODO] datatype wrapper
+
+-- [TODO] print function definitions directly
+-- [TODO] fold wrapper & connection
+unquoteDecl foldℕ = defineFold (fold-operator NatC) foldℕ
