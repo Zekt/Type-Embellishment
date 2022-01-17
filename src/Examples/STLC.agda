@@ -6,7 +6,12 @@ open import Prelude
 open import Generics.Telescope
 open import Generics.Description
 open import Generics.Ornament
+open import Generics.RecursionScheme
 open import Generics.SimpleContainer.Any
+open import Metalib.Datatype
+open import Metalib.Connection
+open import Metalib.Recursion
+open import Utils.Reflection hiding (Term)
 
 infixr 5 _⇒_
 infix  3 _⊢_
@@ -42,3 +47,8 @@ data _⊢_ : List Ty → Ty → Set where
   lam : τ ∷ Γ ⊢ τ'
       → ----------
         Γ ⊢ τ ⇒ τ'
+
+TermD = genDataD _⊢_
+TermC = genDataC TermD _⊢_
+
+unquoteDecl foldTerm = defineFold (fold-operator TermC) foldTerm
