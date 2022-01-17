@@ -49,26 +49,29 @@ defineFold P &fold = extendContextℓs #levels λ ℓs → do
     -- Generate the corresponding clause of a given constructor name
     conClause : ℕ → Levels → Telescope → Name → TC Clause
     conClause npars ℓs parCxt conName = do
+      qP ← quoteωTC P
       conType ← getType conName
       let preConCxt = fst (⇑ conType)
           conCxt = drop npars preConCxt
-          conCxt' = weakenTel 0 (length parCxt ∸ npars + DataD.#levels Desc) conCxt
+          conCxt' = map (λ (s , A) → (s , arg (getArgInfo A) unknown)) conCxt
           conArgs = foldVars conCxt var₀
           args = foldVars parCxt (λ n → var₀ (n + length conCxt))
       -- dprint [ strErr "Given argumets to fold-base:" ]
       -- dprint [ strErr $ showTerms args ]
+      -- dprint [ strErr $ "Current context:" ]
+      cxt ← getContext
+      -- dprint [ strErr $ show cxt ]
       -- dprint [ strErr "Context to be extended with:" ]
       -- dprint [ strErr $ showTel $ parCxt <> conCxt' ]
       foldBody ← extend*Context (parCxt <> conCxt') $ do
-                   qP ← quoteωTC P
-                   let term = (def (quote fold-base) $
-                                    [ vArg qP ]
-                                 <> [ vArg (def₀ &fold) ]
-                                 <> args
-                                 <> [ vArg (con conName (hUnknowns npars <> conArgs)) ])
-                   -- dprint [ strErr "Generated term of a clause:" ]
-                   -- dprint [ strErr $ showTerm term ]
-                   normalise term
+                  let term = (def (quote fold-base) $
+                                   [ vArg qP ]
+                                <> [ vArg (def₀ &fold) ]
+                                <> args
+                                <> [ vArg (con conName (hUnknowns npars <> conArgs)) ])
+                  -- dprint [ strErr "Generated term of a clause:" ]
+                  -- dprint [ strErr $ showTerm term ]
+                  normalise term
       -- dprint [ strErr $ showTerm foldBody ]
       -- levels that should be in the telescope of pattern
       let ℓparCxt = duplicate #levels ("ℓ" , (hArg (quoteTerm Level))) <> parCxt
