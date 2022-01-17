@@ -93,7 +93,7 @@ module _ {T : Tel ℓ} (`A : ⟦ T ⟧ᵗ → TC Type) where
       vΠ[ s ∶ `A ]_ <$>  ConDToType (D x)
   ConDToType (ρ R D) = do
     `R ← RecDToType R
-    extendContext "_" (vArg `R) do
+    extendContext "_" (vArg (quoteTerm ⊤)) do
       vΠ[ `R ]_ <$> ConDToType D
   ConDsToTypes : (Ds : ConDs ⟦ T ⟧ᵗ cbs) → TC (List Type)
   ConDsToTypes []       = return []
@@ -121,10 +121,12 @@ defineByDataD : DataD → Name → List Name → TC _
 defineByDataD dataD dataN conNs = extendContextℓs #levels λ ℓs → do
   let `Levels = levels #levels
   let Dᵖ      = applyL ℓs
-  `Param , dT ← getSignature Dᵖ
+  `Param , dT ← withNormalisation true $ getSignature Dᵖ
+  -- dprint (strErr "`Param:\n" ∷ strErr (show `Param) ∷ [])
+  -- dprint (strErr "Type:\n" ∷ termErr dT ∷ [])
   declareData dataN (#levels + length `Param) (prefixToType `Levels dT)
 
-  conTs ← map (prefixToType `Levels) <$> getCons dataN `Param Dᵖ
+  conTs ← withNormalisation true $ map (prefixToType `Levels) <$> getCons dataN `Param Dᵖ
   defineData dataN (zip conNs conTs)
   where open DataD dataD
 
