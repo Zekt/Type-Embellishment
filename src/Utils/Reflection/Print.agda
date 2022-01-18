@@ -105,9 +105,11 @@ printPatterns (p ∷ ps) = do
   return $ p <> space ∷ ps
 
 printClause : (f : Name) → Clause → TC String 
-printClause f (tel ⊢ ps `= t) = extend*Context tel do
-  ps  ← printPatterns ps
-  formatErrorParts $ (nameErr f ∷ space ∷ ps) <> space ∷ strErr "=" ∷ space ∷ termErr t ∷ []
+printClause f (tel ⊢ ps `= t) = do
+  tel ← renameUnderscore tel
+  extend*Context tel do
+    ps  ← printPatterns ps
+    formatErrorParts $ (nameErr f ∷ space ∷ ps) <> space ∷ strErr "=" ∷ space ∷ termErr t ∷ []
 printClause f (absurd-clause tel ps) = extend*Context tel do
   formatErrorParts =<< (λ ps → nameErr f ∷ space ∷ ps) <$> printPatterns ps      
 

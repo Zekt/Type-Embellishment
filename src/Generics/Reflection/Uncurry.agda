@@ -39,7 +39,7 @@ uncurryᵗTC : (T : Tel ℓ) → Term → TC Term
 uncurryᵗTC T t = do
   Γ   ← fromTel T 
   `A  ← inferNormalisedType t
-  Γ   ← renameUnderscore =<< cmpTelWithType Γ `A
+  Γ   ← cmpTelWithType Γ `A
   let ((_ , p) , (args , _)) = cxtToVars (`tt , `tt) Γ 
   return $ pat-lam [ Γ ⊢ [ vArg p ] `= (t `$$ args) ] []
 
@@ -58,7 +58,7 @@ UncurriedℓsTC n = vΠ[ "ℓs" ∶_] unknown <$> quoteTC! (Level ^ n)
 uncurryℓsTC : (#levels : ℕ) → Term → TC Term
 uncurryℓsTC n t = do
   `A ← inferNormalisedType t
-  Γ  ← renameUnderscore =<< cmpTelWithType (duplicate n $ "ℓ" , vArg `Level) `A 
+  Γ  ← cmpTelWithType (duplicate n $ "ℓ" , vArg `Level) `A 
   let (_ , p) , (args , _) = cxtToVars (`tt , `tt) Γ
   return $ pat-lam [ Γ ⊢ [ vArg p ] `= (t `$$ args) ] []
 
