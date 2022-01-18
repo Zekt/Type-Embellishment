@@ -151,6 +151,12 @@ span p (x ∷ xs) with p x
 ... | true  = bimap (x ∷_) id (span p xs)
 ... | false = [] , x ∷ xs
 
+takeWhile : (A → Bool) → List A → List A
+takeWhile p = fst ∘ span p
+
+dropWhile : (A → Bool) → List A → List A
+dropWhile p = snd ∘ span p
+
 break : (A → Bool) → List A → (List A × List A)
 break p = span (not ∘ p)
 

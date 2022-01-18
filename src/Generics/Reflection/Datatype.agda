@@ -22,9 +22,6 @@ private
   pattern `datad x y        = con₂ (quote datad) x y
   pattern `pdatad x y z u v = con (quote pdatad)
     (vArg x ∷ iArg y ∷ vArg z ∷ vArg u ∷ vArg v ∷ [])
-    
-  splitLevels : Telescope → ℕ × Telescope
-  splitLevels = bimap length id ∘ span λ (_ , `A) → unArg `A == `Level
 ------------------------------------------------------------------------
 -- Translate an object-level datatype description `DataD` to the meta-level
 -- declaration 
@@ -85,16 +82,15 @@ defineByDataD dataD dataN conNs = extendContextℓs #levels λ ℓs → do
 -- Translate an meta-level datatype declaration to the its object-level
 -- description
 
-module _ (dataName : Name) (#levels : ℕ) (parLen : ℕ) where
-  pars : ℕ
-  pars = #levels + parLen
-
+module _ (dataName : Name) (pars : ℕ) where
+  idxArgs = argsToIdx ∘ drop pars
+  
   telescopeToRecD : Telescope → Type → TC Term
   telescopeToRecD ((s , arg _ `x) ∷ `tel) end = do
     rec ← telescopeToRecD `tel end
     return $ `π `x (`vλ s `→ rec)
   telescopeToRecD [] (def f args) = if f == dataName
-    then return $ `ιʳ (argsToIdx $ drop pars args)
+    then return $ `ιʳ (idxArgs args)
     else Err.notEndIn (strErr "telescope") (nameErr dataName)
   telescopeToRecD [] _ = Err.notEndIn (strErr "telescope") $ nameErr dataName
 
@@ -110,7 +106,7 @@ module _ (dataName : Name) (#levels : ℕ) (parLen : ℕ) where
       return $ `σ `x  (vLam (abs s cond))
     )
   telescopeToConD [] (def f args) = if f == dataName
-    then (return $ `ιᶜ (argsToIdx $ drop pars args))
+    then (return $ `ιᶜ (idxArgs args))
     else (Err.notEndIn (strErr "telescope")  (nameErr dataName))
   telescopeToConD [] _ = Err.notEndIn (strErr "telescope") (nameErr dataName)
 
@@ -120,29 +116,31 @@ module _ (dataName : Name) (#levels : ℕ) (parLen : ℕ) where
     let (tel , end) = (⇑ conType) ⦂ Telescope × Type
     telescopeToConD (drop pars tel) end
 
-reifyData : ℕ → Name → List Name → TC Term
-reifyData parLen dataName conNames = do
-    dataType ← getType dataName
+reifyData : Name → TC Term
+reifyData d = do
+    dataType ← getType d
+    pars , cs ← getDataDefinition d
 
-    let (tel     , end) = (⇑ dataType) ⦂ Telescope × Type
-        (#levels , tel) = splitLevels tel
-        (par     , idx) = splitAt parLen tel
-    conDefs  ← mapM (reifyConstructor dataName #levels parLen) conNames
-    `ℓ       ← getSetLevel end
-    `#levels ← quoteTC! #levels
+    -- Assumption: the type of a datatype consists of
+    --   ℓs : a telescope of Levels
+    --   Γ  : a telescope of parameter types
+    --   Δ  : a telescope of index types
+    let (ℓsΓΔ , end) = (⇑ dataType) ⦂ Telescope × Type
+        (ℓsΓ  , Δ)   = splitAt pars ℓsΓΔ
+        (ℓtel , Γ)   = span (λ (_ , `A) → unArg `A == `Level) ℓsΓ
+        lenΓΔ        = length Γ + length Δ
+        strengthenByΓΔ = strengthen lenΓΔ lenΓΔ
 
-    let applyBody = to`ConDs conDefs
-        lenTel    = length tel
-        `lamℓ     = strengthen lenTel lenTel `ℓ
-        `lampar   = strengthen lenTel lenTel $ to`Tel par
-        ℓtel      = duplicate #levels ("ℓ" , vArg `Level)
-        (_ , p) , _ = cxtToVars (`tt , `tt) par
+    let `#levels     = lit (nat (length ℓtel))
+
+    `ℓ      ← getSetLevel end
+    conDs ← to`ConDs <$> mapM (reifyConstructor d pars) cs
+
     return $ `datad `#levels
-      (patLam ℓtel (`pdatad `lamℓ
-                            `refl
-                            `lampar
-                            (patLam par (to`Tel idx))
-                            (patLam par applyBody)))
+      (patLam ℓtel
+        (`pdatad (strengthenByΓΔ `ℓ) `refl (strengthenByΓΔ $ to`Tel Γ)
+          (patLam Γ $ to`Tel Δ)
+          (patLam Γ conDs)))
   where
     patLam : Telescope → Term → Term
     patLam Γ body = let (_ , p) , _ = cxtToVars (`tt , `tt) Γ in
@@ -152,8 +150,4 @@ macro
   genDataD : Name → Tactic
   genDataD d hole = do
     checkedHole ← checkType hole (quoteTerm DataD) 
-    dataType   ← getType d
-    pars , cs  ← getDataDefinition d
-    let (tel     , _) = (⇑ dataType) ⦂ Telescope × Type
-        (#levels , _) = splitLevels tel
-    unify checkedHole =<< reifyData (pars ∸ #levels) d cs
+    unify checkedHole =<< reifyData d

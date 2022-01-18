@@ -1,6 +1,5 @@
 {-# OPTIONS --safe --without-K #-}
 open import Prelude
---  hiding ([_,_])
 
 module Examples.Example where
 
