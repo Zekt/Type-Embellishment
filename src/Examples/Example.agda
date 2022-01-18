@@ -289,5 +289,16 @@ lenP = fold-operator LenC
 pointwiseP : FoldP
 pointwiseP = fold-operator PointwiseC
 
-
 unquoteDecl foldPW = defineFold pointwiseP foldPW
+
+indℕP : IndP
+indℕP = ind-operator NatC
+
+unquoteDecl indℕ = defineInd indℕP indℕ
+
+listP : IndP
+listP = ind-operator ListC
+
+unquoteDecl indList = defineInd listP indList
+
+
