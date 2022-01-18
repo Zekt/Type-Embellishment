@@ -22,7 +22,7 @@ m <? n = suc m ≤? n
 infix 4 _≤_ _<_
 
 _≤_ : ℕ → ℕ → Set
-m ≤ n = T (m ≤? n)
+m ≤ n = Truth (m ≤? n)
 
 _<_ : ℕ → ℕ → Set
 m < n = suc m ≤ n

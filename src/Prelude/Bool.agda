@@ -39,6 +39,6 @@ if_then_else_ : ∀ {a} {A : Set a}
 if true  then t else f = t
 if false then t else f = f
 
-T : Bool → Set
-T false = ⊥
-T true  = ⊤
+Truth : Bool → Set
+Truth false = ⊥
+Truth true  = ⊤
