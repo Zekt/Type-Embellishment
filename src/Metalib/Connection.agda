@@ -13,11 +13,11 @@ open import Generics.Recursion
 -- Each constructor `c : (x₁ : A₁) → (x₂ : A₂ x₁) → ⋯ → T`
 -- can be represented as a pattern on the LHS `c x₁ x₂ ⋯ xₙ` or as a term on the RHS
 -- They can be also uncurried described by ⟦ ConD ⟧. Thus, there are 4 types of constructor representations. 
-cxtToVars : (Γ : Telescope) → (Term × Pattern) × (Args Term × Args Pattern)
-cxtToVars = snd ∘ foldr emptyVar λ where
+cxtToVars : (base : Term × Pattern) → (Γ : Telescope) → (Term × Pattern) × (Args Term × Args Pattern)
+cxtToVars base = snd ∘ foldr emptyVar λ where
       (_ , arg i _) (n , (t , p) , (targs , pargs)) →
         suc n , ((var₀ n `, t) , (var n `, p)) , (arg i (var₀ n) ∷ targs) , (arg i (var n) ∷ pargs)
-  where emptyVar = 0 , (`refl , `refl) , ([] , [])
+  where emptyVar = 0 , base , ([] , [])
 
 forgetTy : Telescope → Telescope
 forgetTy = map $ bimap id (λ `A → arg (getArgInfo `A) unknown)
@@ -26,8 +26,7 @@ module _ (pars : ℕ) where
   conToClause : (c : Name) → TC (Telescope × (Term × Pattern) × Args Term × Args Pattern)
   conToClause c = do
     `A  ← getType c
-    tel ← drop pars <$> (renameUnderscore $ (⇑ `A) .fst)
-    return $ < forgetTy , cxtToVars > tel
+    return $ < forgetTy , cxtToVars (`refl , `refl) > $ drop pars $ fst $ ⇑ `A
 
   consToClauses : (cs : Names) → TC (List (Telescope × (Term × Pattern) × Name × Args Term × Args Pattern))
   consToClauses []       = ⦇ [] ⦈
