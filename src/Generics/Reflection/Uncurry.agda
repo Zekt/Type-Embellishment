@@ -7,7 +7,7 @@ open import Utils.Reflection
 open import Utils.Error as Err
 
 open import Generics.Telescope
-open import Generics.Reflection.Connection using (cxtToVars)
+open import Generics.Reflection.Constructor
 open import Generics.Reflection.Telescope
 
 ------------------------------------------------------------------------

@@ -4,6 +4,7 @@ open import Prelude
 module Utils.Reflection.Term where
 
 open import Utils.Reflection.Core
+open import Utils.Reflection.Eq
 
 ------------------------------------------------------------------------
 -- Context representation
@@ -159,3 +160,11 @@ splitType zero    x               = [] , x
 splitType (suc n) (`Π[ s ∶ a ] b) =
   let tel , c = splitType n b in (s , a) ∷ tel , c
 splitType _       a               = [] , a
+
+forgetType : Telescope → Telescope
+forgetType = map $ bimap id (λ `A → arg (getArgInfo `A) unknown)
+
+endsIn : Type → Name → Bool
+endsIn (def f _)       u = f == u
+endsIn (`Π[ _ ∶ _ ] b) u = endsIn b u
+endsIn _               u = false
