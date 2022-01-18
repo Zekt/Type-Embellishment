@@ -6,9 +6,8 @@ open import Prelude
 open import Generics.Telescope
 open import Generics.Description
 open import Generics.RecursionScheme
-open import Metalib.Datatype
-open import Metalib.Connection
-open import Metalib.Recursion
+open import Generics.Reflection
+
 open import Utils.Reflection
 
 NatD = genDataD ℕ

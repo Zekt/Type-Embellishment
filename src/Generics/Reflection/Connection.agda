@@ -1,7 +1,7 @@
 {-# OPTIONS --safe --without-K #-}
 open import Prelude
 
-module Metalib.Connection where
+module Generics.Reflection.Connection where
 
 open import Utils.Reflection
 open import Utils.Error as Err

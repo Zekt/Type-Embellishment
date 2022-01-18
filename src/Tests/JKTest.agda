@@ -17,7 +17,9 @@ open import Generics.SimpleContainer
 open import Generics.SimpleContainer.All
 open import Generics.SimpleContainer.Any
 open import Examples.Nat
+  hiding (NatC; foldℕ)
 open import Examples.List
+  hiding (ListD; ListC; VecOD; VecD; Vec; VecC; fromVecP; fromVec)
 open import Examples.W
 open import Examples.STLC
 open import Examples.BST

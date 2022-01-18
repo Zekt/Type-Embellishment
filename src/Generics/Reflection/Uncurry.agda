@@ -1,22 +1,17 @@
 {-# OPTIONS --safe --without-K --show-implicit #-}
 open import Prelude
 
-module Metalib.Uncurrying where
+module Generics.Reflection.Uncurry where
 
 open import Utils.Reflection
 open import Utils.Error as Err
 
 open import Generics.Telescope
-open import Metalib.Telescope
+open import Generics.Reflection.Connection using (cxtToVars)
+open import Generics.Reflection.Telescope
 
 ------------------------------------------------------------------------
 -- Meta-level currying operations
-
-cxtToVars : (Γ : Telescope) → (Term × Pattern) × (Args Term × Args Pattern)
-cxtToVars = snd ∘ foldr base λ where
-      (_ , arg i _) (n , (t , p) , (targs , pargs)) →
-        suc n , ((var₀ n `, t) , (var n `, p)) , (arg i (var₀ n) ∷ targs) , (arg i (var n) ∷ pargs)
-  where base = 0 , (`tt , `tt) , ([] , [])
 
 private
 -- Check if the given telescope is a prefix of a telescope up to arg-info 
@@ -45,7 +40,7 @@ uncurryᵗTC T t = do
   Γ   ← fromTel T 
   `A  ← inferNormalisedType t
   Γ   ← renameUnderscore =<< cmpTelWithType Γ `A
-  let ((_ , p) , (args , _)) = cxtToVars Γ
+  let ((_ , p) , (args , _)) = cxtToVars (`tt , `tt) Γ 
   return $ pat-lam [ Γ ⊢ [ vArg p ] `= (t `$$ args) ] []
 
 macro
@@ -64,7 +59,7 @@ uncurryℓsTC : (#levels : ℕ) → Term → TC Term
 uncurryℓsTC n t = do
   `A ← inferNormalisedType t
   Γ  ← renameUnderscore =<< cmpTelWithType (duplicate n $ "ℓ" , vArg `Level) `A 
-  let (_ , p) , (args , _) = cxtToVars Γ
+  let (_ , p) , (args , _) = cxtToVars (`tt , `tt) Γ
   return $ pat-lam [ Γ ⊢ [ vArg p ] `= (t `$$ args) ] []
 
 macro

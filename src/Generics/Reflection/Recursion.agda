@@ -1,16 +1,15 @@
 {-# OPTIONS --without-K --safe #-}
 open import Prelude
 
-module Metalib.Recursion where
+module Generics.Reflection.Recursion where
 
 open import Utils.Reflection
-
 open import Utils.Error as Err
 
 open import Generics.Description as D
 open import Generics.Recursion   as D
 
-open import Metalib.Telescope
+open import Generics.Reflection.Telescope
 
 defineFold : FoldP → Name → TC _
 defineFold P &fold = extendContextℓs #levels λ ℓs → do

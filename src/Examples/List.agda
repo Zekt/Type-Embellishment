@@ -11,9 +11,8 @@ open import Generics.Ornament
 open import Generics.Ornament.Description
 open import Generics.Ornament.Algebraic
 open import Generics.Ornament.Algebraic.Isomorphism
-open import Metalib.Datatype
-open import Metalib.Connection
-open import Metalib.Recursion
+open import Generics.Reflection
+
 open import Utils.Reflection
 open import Examples.Nat
 

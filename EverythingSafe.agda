@@ -1,6 +1,12 @@
 {-# OPTIONS --safe --guardedness #-}
 
 module EverythingSafe where
+import Examples.BST
+import Examples.Example
+import Examples.List
+import Examples.Nat
+import Examples.STLC
+import Examples.W
 import Generics.Algebra
 import Generics.Description
 import Generics.Description.FixedPoint
@@ -10,14 +16,16 @@ import Generics.Ornament.Algebraic.Isomorphism
 import Generics.Ornament.Description
 import Generics.Recursion
 import Generics.RecursionScheme
+import Generics.Reflection
+import Generics.Reflection.Connection
+import Generics.Reflection.Datatype
+import Generics.Reflection.Recursion
+import Generics.Reflection.Telescope
+import Generics.Reflection.Uncurry
 import Generics.SimpleContainer
 import Generics.SimpleContainer.All
 import Generics.SimpleContainer.Any
 import Generics.Telescope
-import Metalib.Connection
-import Metalib.Datatype
-import Metalib.Example
-import Metalib.Telescope
 import Prelude
 import Prelude.Alternative
 import Prelude.Applicative

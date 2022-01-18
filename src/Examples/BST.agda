@@ -10,9 +10,8 @@ open import Generics.Ornament.Description
 open import Generics.SimpleContainer
 open import Generics.SimpleContainer.Any
 open import Generics.RecursionScheme
-open import Metalib.Datatype
-open import Metalib.Connection
-open import Metalib.Recursion
+
+open import Generics.Reflection
 open import Utils.Reflection hiding (Term)
 open import Examples.Nat
 

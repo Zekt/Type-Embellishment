@@ -48,6 +48,10 @@ withKModules = map modToFile
   , "Generics.Ornament.Description"
   , "Tests.JKTest"
   , "Tests.SCMTest"
+  , "Examples.List"
+  , "Examples.BST"
+  , "Examples.STLC"
+  , "Examples.W"
   ]
 
 isWithKModule :: FilePath -> Bool

@@ -2,7 +2,7 @@
 open import Prelude
 --  hiding ([_,_])
 
-module Metalib.Example where
+module Examples.Example where
 
 open import Utils.Reflection
 
@@ -10,11 +10,7 @@ open import Generics.Telescope
 open import Generics.Description
 open import Generics.Recursion
 
-open import Metalib.Telescope
-open import Metalib.Datatype
-open import Metalib.Connection
-open import Metalib.Uncurrying
-open import Metalib.Recursion
+open import Generics.Reflection
 
 ------------------------------------------------------------------------------
 -- 

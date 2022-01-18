@@ -2,7 +2,7 @@
 
 open import Prelude hiding (length)
 
-module Metalib.Telescope where
+module Generics.Reflection.Telescope where
 open import Utils.Reflection
 open import Utils.Error as Err
 
