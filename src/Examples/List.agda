@@ -73,6 +73,7 @@ data Vec (A : Set ℓ) : ℕ → Set ℓ where
   []  : Vec A 0
   _∷_ : (a : A) {n : ℕ} (as : Vec A n) → Vec A (suc n)
 
+VecD′ = genDataD Vec
 VecC = genDataC VecD Vec  -- [FIXME]
 
 -- [TODO] generate datatype wrappers (allowing visibility changes)

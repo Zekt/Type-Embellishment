@@ -6,7 +6,6 @@ import Examples.Example
 import Examples.List
 import Examples.Nat
 import Examples.STLC
-import Examples.W
 import Generics.Algebra
 import Generics.Description
 import Generics.Description.FixedPoint

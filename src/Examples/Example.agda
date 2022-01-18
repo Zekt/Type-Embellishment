@@ -87,7 +87,7 @@ TreeD = datad 1 λ where
   (ℓ , ⊤) → pdatad ℓ ([ A ∶ Set ℓ ] []) (λ ps → []) λ where
     (A , tt) →
       ι tt
-      ∷ (Σ[ _ ∶ A ] ρ (ι tt) (ρ (ι tt) (ι tt)))
+      ∷ (σ[ _ ∶ A ] ρ (ι tt) (ρ (ι tt) (ι tt)))
       ∷ []
 
 data Tree {ℓ : Level} (A : Set ℓ) : Set ℓ where
@@ -110,7 +110,7 @@ ListD = record
       (A , tt) →
         (ι tt)
         -- List A
-        ∷ (Σ[ x ∶ A ] (ρ (ι tt) (ι tt)))
+        ∷ (σ[ x ∶ A ] (ρ (ι tt) (ι tt)))
         -- (_ : A) → List A → List A
         ∷ []
     }}
@@ -143,10 +143,10 @@ DataD.applyL  LenD (ℓ , _) = record
   ; applyP = λ where
     (A , tt) →
       ι ([] , [] , tt)
-      ∷ Σ[ x ∶ A ]
-        Σ[ y ∶ A ]
-        Σ[ xs ∶ List A ]
-        Σ[ ys ∶ List A ] ρ (ι (xs , ys , _)) (ι (x ∷ xs , y ∷ ys , _))
+      ∷ σ[ x ∶ A ]
+        σ[ y ∶ A ]
+        σ[ xs ∶ List A ]
+        σ[ ys ∶ List A ] ρ (ι (xs , ys , _)) (ι (x ∷ xs , y ∷ ys , _))
       ∷ []
   }
   
@@ -214,7 +214,7 @@ VecD = record
       (A , tt) →
         ι (z , tt)
         -- Vec A 0
-        ∷ Σ[ _ ∶ A ] Σ[ n ∶ Nat ] (ρ (ι (n , tt)) (ι (s n , tt)))
+        ∷ σ[ _ ∶ A ] σ[ n ∶ Nat ] (ρ (ι (n , tt)) (ι (s n , tt)))
         -- (x : A) → (n : ℕ) → Vec A n → Vec A (suc n)
         ∷ []
     } }
@@ -272,7 +272,7 @@ WD = record
       ; Index = λ _ → []
       ; applyP = λ where
         (A , B , _) →
-          Σ[ x ∶ A ] ρ (Π[ t ∶ B x ] ι _) (ι _)
+          σ[ x ∶ A ] ρ (π[ t ∶ B x ] ι _) (ι _)
           -- (x : A) → ((_ : B x) → W A B) → W A B
           ∷ []
       }
