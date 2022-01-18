@@ -42,6 +42,20 @@
 
 \usepackage[color=yellow,textsize=footnotesize]{todonotes}
 
+\newcommand{\arXiv}[1]{\href{http://arxiv.org/abs/#1}{arXiv:\nolinkurl{#1}}}
+
+\let\Bbbk\relax
+%include agda.fmt
+
+\newcommand{\identifier}{\mathit}
+
+%format Set = "\Keyword{Set}"
+%format X = "\identifier{X}"
+%format z = "\identifier{z}"
+%format s = "\identifier{s}"
+%format n = "\identifier{n}"
+
+
 %%
 %% end of the preamble, start of the body of the document source.
 \begin{document}
@@ -49,7 +63,7 @@
 %%
 %% The "title" command has an optional parameter,
 %% allowing the author to define a "short title" to be used in page headers.
-\title{Datatype-Genericity Meets Typed Metaprogramming}
+\title{Datatype-Generic Programming Meets Metaprogramming}
 
 %%
 %% The "author" command and its associated commands are used to define
@@ -58,13 +72,13 @@
 %% "authornote" and "authornotemark" commands
 %% used to denote shared contribution to the research.
 \author{Hsiang-Shang Ko}
-\email{joshko@iis.sinica.edu.tw}
+\email{joshko@@iis.sinica.edu.tw}
 \orcid{0000-0002-2439-1048}
 \author{Tzu-Chi Lin}
 \orcid{0000-0000-0000-0000}
-\email{vik@iis.sinica.edu.tw}
+\email{vik@@iis.sinica.edu.tw}
 \author{Liang-Ting Chen}
-\email{liang.ting.chen.tw@gmail.com}
+\email{liang.ting.chen.tw@@gmail.com}
 \orcid{0000-0002-3250-1331}
 \affiliation{%
   \institution{Institute of Information Science, Academia Sinica}
@@ -113,18 +127,37 @@
 \ccsdesc[300]{Theory of computation~Type theory}
 \ccsdesc[300]{Software and its engineering~Data types and structures}
 
-\keywords{typed metaprogramming, datatype generic programming, inductive families, ornaments}
+\keywords{typed metaprogramming, datatype-generic programming, inductive families, ornaments}
 \maketitle
 
 \section{Introduction}
 
-\citet{Gibbons-DGP, Altenkirch-GP-within-DTP, Pickering-staged-SoP, Chapman-type-theory-should-eat-itself}
+\citet{Gibbons-DGP, Altenkirch-GP-within-DTP, Pickering-staged-SoP, Yallop-staged-generic-programming, de-Vries-masters-thesis, Jones-partial-evaluation, Chapman-type-theory-should-eat-itself, Christiansen-elaborator-reflection, Kovacs-universe-hierarchies, Allais-binding-syntax-universe-JFP, McBride-ornaments, Ko-OAOAOO, Chen-Mtac-Agda}
+
+\begin{itemize}
+\item Encoding of universe-polymorphic and parametrised inductive families (precise calculation of universe levels)
+\item Interoperability with native datatypes and functions (generating new native datatypes and functions, and connecting with existing ones for which generic constructions can be specialised)
+\item A new use case of elaborator reflection where traditional datatype-generic programs are simply normalised to yield native programs (and do not need more radical adaptations like staging)
+\item Simpler and less error-prone `object-level' binder-manipulating techniques with (Agda's) elaborator reflection (bypassing the manipulation of de Bruijn indices; a tutorial for Agda's reflection mechanism)
+\end{itemize}
 
 \section{A First Taste of Datatype-Generic Programming}
 
 \todo[inline]{Sums-of-products datatypes and inductive functions (as predicate algebras); `exotic' fixed points (and their problems); parametrisation}
 
+\citet{de-Vries-true-SoP}
+
 \section{Datatype-Generic Programming with Inductive Families}
+
+\begin{code}
+data Nat : Set where
+  zero  : Nat
+  suc   : Nat -> Nat
+  
+foldNat : {X : Set} -> X -> (X -> X) -> Nat -> X
+foldNat z s    zero    = z
+foldNat z s (  suc n)  = s (foldNat z s n)
+\end{code}
 
 \section{Native Fixed Points}
 
