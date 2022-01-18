@@ -80,8 +80,8 @@ module _ (I : Set ℓⁱ) where
     []  : ConDs []
     _∷_ : (D : ConD cb) (Ds : ConDs cbs) → ConDs (cb ∷ cbs)
 
-  syntax π A (λ x → R) = Π[ x ∶ A ] R
-  syntax σ A (λ x → D) = Σ[ x ∶ A ] D
+  syntax π A (λ a → D) = π[ a ∶ A ] D
+  syntax σ A (λ a → D) = σ[ a ∶ A ] D
 
 record PDataD : Setω where
   constructor pdatad

@@ -16,13 +16,16 @@ open import Generics.Ornament.Algebraic.Isomorphism
 open import Generics.SimpleContainer
 open import Generics.SimpleContainer.All
 open import Generics.SimpleContainer.Any
-open import Examples.Nat
-  hiding (NatC; foldℕ)
-open import Examples.List
-  hiding (ListD; ListC; VecOD; VecD; Vec; VecC; fromVecP; fromVec)
-open import Examples.W
-open import Examples.STLC
-open import Examples.BST
+
+-- META
+NatD : DataD
+NatD = record
+  { #levels = 0
+  ; applyL  = λ _ → record
+      { alevel = 0ℓ
+      ; Param  = []
+      ; Index  = λ _ → []
+      ; applyP = λ _ → ι tt ∷ ρ (ι tt) (ι tt) ∷ [] } }
 
 -- META
 ℕ-wrapper : DataT NatD

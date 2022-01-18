@@ -34,6 +34,10 @@ module _ (I : Set ℓⁱ) {J : Set ℓʲ} (e : I → J) where
     ρ : {S : RecD J rb} {E : ConD J cb}
         (OD : RecOD S) (OD' : ConOD E cb') → ConOD (ρ S E) (inr rb ∷ cb')
 
+  syntax π (λ a → D) = π[ a ] D
+  syntax σ (λ a → D) = σ[ a ] D
+  syntax Δ A (λ a → D) = Δ[ a ∶ A ] D
+
   data ConODs : ConDs J cbs → ConBs → Setω where
     []  : ConODs [] []
     _∷_ : {E : ConD J cb} {Es : ConDs J cbs}
