@@ -18,10 +18,6 @@ private
     cbs : ConBs
     t u : Tel ℓ
 
-private
-  pattern `datad x y        = con₂ (quote datad) x y
-  pattern `pdatad x y z u v = con (quote pdatad)
-    (vArg x ∷ iArg y ∷ vArg z ∷ vArg u ∷ vArg v ∷ [])
 ------------------------------------------------------------------------
 -- Translate an object-level datatype description `DataD` to the meta-level
 -- declaration 
@@ -79,8 +75,11 @@ defineByDataD dataD dataN conNs = extendContextℓs #levels λ ℓs → do
   where open DataD dataD
 
 ------------------------------------------------------------------------
--- Translate an meta-level datatype declaration to the its object-level
--- description
+-- Reification of datatypes
+
+private
+  pattern `datad  x y     = con₂ (quote datad)  x y
+  pattern `pdatad x z u v = con₄ (quote pdatad) x z u v
 
 module _ (dataName : Name) (pars : ℕ) where
   idxArgs = argsToIdx ∘ drop pars
@@ -99,7 +98,8 @@ module _ (dataName : Name) (pars : ℕ) where
     then (do
       recd ← uncurry telescopeToRecD (⇑ `x)
       cond ← telescopeToConD `tel end
-    -- Indices in recursion in Description is different from those in native constructors! Should strengthen by one instead of abstracting.
+    -- Indices in recursion in Description is different from those in native constructors!
+    -- Should strengthen by one instead of abstracting.
       return $ `ρ recd (strengthen 0 1 cond)
     ) else (do
       cond ← telescopeToConD `tel end
@@ -116,31 +116,32 @@ module _ (dataName : Name) (pars : ℕ) where
     let (tel , end) = (⇑ conType) ⦂ Telescope × Type
     telescopeToConD (drop pars tel) end
 
+------------------------------------------------------------------------
+-- `reifyData` takes a name and generates a term of `DataD`
+-- Assumption: the type of a datatype consists of
+--   ℓs : a telescope of Levels
+--   Γ  : a telescope of parameter types
+--   Δ  : a telescope of index types
 reifyData : Name → TC Term
 reifyData d = do
-    dataType ← getType d
-    pars , cs ← getDataDefinition d
+  (ℓsΓΔ , end) ← coerce'_to (Telescope × Type) <$> getType d
+  pars , cs    ← getDataDefinition d
 
-    -- Assumption: the type of a datatype consists of
-    --   ℓs : a telescope of Levels
-    --   Γ  : a telescope of parameter types
-    --   Δ  : a telescope of index types
-    let (ℓsΓΔ , end) = (⇑ dataType) ⦂ Telescope × Type
-        (ℓsΓ  , Δ)   = splitAt pars ℓsΓΔ
-        (ℓtel , Γ)   = span (λ (_ , `A) → unArg `A == `Level) ℓsΓ
-        lenΓΔ        = length Γ + length Δ
-        strengthenByΓΔ = strengthen lenΓΔ lenΓΔ
+  let (ℓsΓ  , Δ) = splitAt pars ℓsΓΔ
+      (ℓtel , Γ) = span (λ (_ , `A) → unArg `A == `Level) ℓsΓ
+      `#levels   = lit (nat (length ℓtel))
 
-    let `#levels     = lit (nat (length ℓtel))
+  `ℓ    ← getSetLevel end
+  conDs ← to`ConDs <$> mapM (reifyConstructor d pars) cs
 
-    `ℓ      ← getSetLevel end
-    conDs ← to`ConDs <$> mapM (reifyConstructor d pars) cs
-
-    return $ `datad `#levels
-      (patLam ℓtel
-        (`pdatad (strengthenByΓΔ `ℓ) `refl (strengthenByΓΔ $ to`Tel Γ)
-          (patLam Γ $ to`Tel Δ)
-          (patLam Γ conDs)))
+  return $ `datad `#levels
+    (patLam ℓtel
+      (`pdatad
+        -- [FIX] Check if `ℓ depends on parameters other than Level
+        (strengthen 0 (length Γ + length Δ) `ℓ)
+        (to`Tel Γ)
+        (patLam Γ $ to`Tel Δ)
+        (patLam Γ conDs)))
   where
     patLam : Telescope → Term → Term
     patLam Γ body = let (_ , p) , _ = cxtToVars (`tt , `tt) Γ in
