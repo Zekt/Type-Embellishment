@@ -9,7 +9,6 @@ open import Utils.Error          as Err
 open import Generics.Telescope
 open import Generics.Description 
 open import Generics.Reflection.Telescope
-open import Generics.Reflection.Constructor
 
 private
   variable
@@ -18,6 +17,16 @@ private
     cbs : ConBs
     t u : Tel ℓ
 
+  pattern `[]      = con₀ (quote ConDs.[])
+  pattern _`∷_ x y = con₂ (quote ConDs._∷_) x y
+  pattern `ιʳ  x   = con₁ (quote RecD.ι)    x
+  pattern `π   x y = con₂ (quote RecD.π)    x y
+  pattern `ιᶜ  x   = con₁ (quote ConD.ι)    x
+  pattern `σ   x y = con₂ (quote ConD.σ)    x y
+  pattern `ρ   x y = con₂ (quote ConD.ρ)    x y
+
+to`ConDs : Terms → Term
+to`ConDs = foldr `[] _`∷_
 ------------------------------------------------------------------------
 -- Translate an object-level datatype description `DataD` to the meta-level
 -- declaration 
@@ -144,7 +153,7 @@ reifyData d = do
         (patLam Γ conDs)))
   where
     patLam : Telescope → Term → Term
-    patLam Γ body = let (_ , p) , _ = cxtToVars (`tt , `tt) Γ in
+    patLam Γ body = let (_ , p) , _ = cxtToVars 0 (`tt , `tt) Γ in
       pat-lam₀ [ Γ ⊢ [ vArg p ] `= body ]
       
 macro

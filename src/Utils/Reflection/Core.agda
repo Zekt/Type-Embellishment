@@ -108,6 +108,7 @@ getArgInfo (arg i _) = i
 getVisibility : Arg A → Visibility
 getVisibility (arg (arg-info v _) _) = v
 
+infixl 20 _`$$_
 _`$$_ : Term → Args Term → Term
 t `$$ []       = t
 t `$$ (a ∷ as) = case getVisibility a of λ where

@@ -1,4 +1,4 @@
-{-# OPTIONS --safe --without-K #-}
+{-# OPTIONS --safe --without-K --show-implicit #-}
 
 module Examples.Nat where
 
@@ -20,7 +20,6 @@ NatC = genDataC NatD ℕ  -- [FIXME]
 
 -- [TODO] fold wrapper & connection
 unquoteDecl foldℕ = defineFold (fold-operator NatC) foldℕ  -- [FIXME]
-
 -- [TODO] fold fusion
 
 -- [TODO] induction operator

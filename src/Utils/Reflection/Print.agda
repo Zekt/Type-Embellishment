@@ -18,6 +18,7 @@ private
     A : Set _
 
   pattern space     = strErr " "
+  pattern colon     = strErr " : "
 
 paren : Visibility → ErrorParts → ErrorParts
 paren v s = case v of λ where
@@ -53,17 +54,17 @@ printArg x f = case getVisibility x of λ where
   v → paren v <$> f (unArg x)
   
 printTelescope : Telescope → TC ErrorParts → TC ErrorParts
-printTelescope []                m = m
+printTelescope []             m = m
 printTelescope ((s , x) ∷ []) m = do
   ss ← extendContext s x m
   s  ← extendContext s x (formatErrorPart $ termErr (var₀ 0))
   ts ← formatErrorPart (termErr $ unArg x)
-  return $ paren (getVisibility x) (strErr s ∷ space ∷ strErr ":" ∷ space ∷ [ strErr ts ]) <> ss
+  return $ paren (getVisibility x) (strErr s ∷ colon ∷ [ strErr ts ]) <> ss
 printTelescope ((s , x) ∷ tel) m = do
   ss ← extendContext s x $ printTelescope tel m
   s  ← extendContext s x (formatErrorPart $ termErr (var₀ 0))
   ts ← formatErrorPart (termErr $ unArg x)
-  return $ paren (getVisibility x) (strErr s ∷ space ∷ strErr ":" ∷ space ∷ strErr ts ∷ []) <> [ space ] <> ss
+  return $ paren (getVisibility x) (strErr s ∷ space ∷ strErr ":" ∷ space ∷ [ strErr ts ]) <> space ∷ ss
 
 printDataSignature : (tel : Telescope) → Type → TC ErrorParts
 printDataSignature tel a = printTelescope tel do

@@ -161,8 +161,11 @@ splitType (suc n) (`Π[ s ∶ a ] b) =
   let tel , c = splitType n b in (s , a) ∷ tel , c
 splitType _       a               = [] , a
 
-forgetType : Telescope → Telescope
-forgetType = map $ bimap id (λ `A → arg (getArgInfo `A) unknown)
+dropType : ℕ → Type → Type
+dropType n = snd ∘ splitType n 
+
+forgetTypes : Telescope → Telescope
+forgetTypes = map $ bimap id (λ `A → arg (getArgInfo `A) unknown)
 
 endsIn : Type → Name → Bool
 endsIn (def f _)       u = f == u

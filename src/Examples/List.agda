@@ -1,4 +1,4 @@
-{-# OPTIONS --safe --with-K #-}
+{-# OPTIONS --safe --with-K --show-implicit #-}
 
 module Examples.List where
 
@@ -123,10 +123,14 @@ ListS _ = record
 ListAnyOD : DataOD NatD
 ListAnyOD = AnyOD ListC ListS
 
+open import Utils.Reflection
 -- [FIXME]
 unquoteDecl data ListAny constructor c₀ c₁ = defineByDataD ⌊ ListAnyOD ⌋ᵈ ListAny (c₀ ∷ c₁ ∷ [])
 
-ListAnyC = genDataC ⌊ ListAnyOD ⌋ᵈ ListAny
+ListAnyT : DataT ⌊ ListAnyOD ⌋ᵈ
+ListAnyT = (`uncurry ⌊ ListAnyOD ⌋ᵈ ListAny)
+
+ListAnyC = genDataC ⌊ ListAnyOD ⌋ᵈ  ListAny 
 
 _∋_ : {A : Set ℓ} → List A → A → Set ℓ
 xs ∋ x = ListAny _ (x ≡_) xs  -- [FIXME]

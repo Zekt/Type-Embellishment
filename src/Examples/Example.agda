@@ -32,8 +32,8 @@ data Rel (A : Set) : (xs ys : List A) → Set where
 _ : genTel `T-rel ≡ω [ B ∶ Set ] [ bs ∶ List B ] [ bs ∶ List B ] []
 _ = refl
 
-_ : evalT (fromTel ([ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] [])) ≡ `T-rel
-_ = refl
+_ : evalT (fromTel ([ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] [])) ≢ `T-rel
+_ = λ { () }
 
 ------------------------------------------------------------------------------
 -- 
@@ -49,8 +49,8 @@ sort-is-not-normal = [ b ∶ if true then Bool else ⊥ ] []
 _ : sort-is-not-normal ≡ω [ b ∶ Bool ] []
 _ = refl
 
-_ : `sort-is-not-normal ≢ evalT (fromTel ([ b ∶ Bool ] []))
-_ = λ { () }
+_ : `sort-is-not-normal ≡ evalT (fromTel ([ b ∶ Bool ] []))
+_ = refl
 
 ex₁ : Bool → Tel _
 ex₁ = λ b → []

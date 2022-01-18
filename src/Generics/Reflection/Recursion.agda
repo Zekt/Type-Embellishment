@@ -34,20 +34,17 @@ private
     conType ← getType conName
     let preConCxt = fst (⇑ conType)
         conCxt    = drop npars preConCxt
-        conCxt'   = map (λ (s , A) → (s , arg (getArgInfo A) unknown)) conCxt
+        conCxt'   = (λ (s , A) → (s , arg (getArgInfo A) unknown)) <$> conCxt
         conArgs   = foldVars conCxt var₀
         args      = foldVars parCxt (λ n → var₀ (n + length conCxt))
         -- dprint [ strErr "Given argumets to base:" ]
         -- dprint [ strErr $ showTerms args ]
+    let term = def base $ vArg qP ∷ vArg (def₀ &fun) ∷ args
+                 <> [ vArg (con conName (hUnknowns npars <> conArgs)) ]
     term ← extend*Context (parCxt <> conCxt') $ do
-             let term = (def base $
-                              [ vArg qP ]
-                           <> [ vArg (def₀ &fun) ]
-                           <> args
-                           <> [ vArg (con conName (hUnknowns npars <> conArgs)) ])
              normalise term
     -- levels that should be in the telescope of pattern
-    let ℓparCxt = duplicate #levels ("ℓ" , (hArg (quoteTerm Level))) <> parCxt
+    let ℓparCxt = duplicate #levels ("ℓ" , (hArg `Level)) <> parCxt
         cxt = ℓparCxt <> conCxt'
         pat = foldVars ℓparCxt (λ n → var (n + length conCxt')) <>
               [ vArg (con conName (foldVars conCxt' var)) ]
@@ -56,6 +53,8 @@ private
 defineFold : FoldP → Name → TC _
 defineFold P &fold = extendContextℓs #levels λ ℓs → do
   foldT' ← quoteTC! (FoldNT P ℓs)
+  dprint [ strErr "Type of Fold:" ]
+  dprint $ termErr foldT' ∷ []
   let foldT = prependLevels foldT' #levels
   -- dprint [ strErr "Type of Fold:" ]
   -- dprint [ termErr $ foldT ]
@@ -65,12 +64,13 @@ defineFold P &fold = extendContextℓs #levels λ ℓs → do
                (just x) → return ∘ unArg ∘ snd $ x
                nothing  → Err.notEndIn (nameErr &fold) (strErr "datatype")
 
-  parTel ← withNormalisation true $ fromTel (Param ℓs)
+  parTel ← fromTel (Param ℓs)
   -- dprint [ strErr $ "Parameter telecsope: " ]
   -- dprint [ strErr $ showTel parTel ]
   -- npars is the number of parameters including levels
   npars , conNames ← getDataDefinition =<< (getTermName foldLast)
   qP ← quoteωTC P
+  dprint $ strErr "FoldP : " ∷ termErr qP ∷ []
   cls ← mapM (conClause &fold qP npars #levels parTel (quote fold-base)) conNames
   defineFun &fold cls
   where

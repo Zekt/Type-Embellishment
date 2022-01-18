@@ -70,7 +70,7 @@ macro
 extendContextT : String → ArgInfo → (B : Set ℓ)
   → (Type → B → TC A) → TC A
 extendContextT s i B f = do
-  `B ← quoteTC B
+  `B ← quoteTC! B
   extendContext s (arg i `B) do
     x ← unquoteTC {A = B} (var₀ 0)
     f `B x
@@ -112,8 +112,6 @@ getSetLevel (def (quote Set) []) = return (quoteTerm lzero)
 getSetLevel (def (quote Set) [ arg _ x ]) = return x
 getSetLevel t = quoteTC t >>= λ t →
                   typeError [ strErr $ showTerm t <> " level error!" ]
-
-
 
 
 -- Rename names in a telescope to the first letter of the given type,
