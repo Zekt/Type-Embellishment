@@ -6,88 +6,84 @@ module Generics.Reflection.Recursion where
 open import Utils.Reflection
 open import Utils.Error as Err
 
-open import Generics.Description as D
-open import Generics.Recursion   as D
+open import Generics.Telescope
+open import Generics.Algebra
+open import Generics.Description 
+open import Generics.Recursion   
 
 open import Generics.Reflection.Telescope
 
+FoldPToNativeName : FoldP → TC Name
+FoldPToNativeName P = do
+  extendContextℓs (DataD.#levels Desc) λ ℓs →
+    extendCxtTel (PDataD.Param (DataD.applyL Desc ℓs)) λ ps → 
+      extendCxtTel (PDataD.Index (DataD.applyL Desc ℓs) ps) λ is → do
+        (def d _) ← quoteTC! $ Native ℓs ps is
+          where t → IMPOSSIBLE
+        return d
+  where open FoldP P
+
+IndPToNativeName : IndP → TC Name
+IndPToNativeName P = do
+  extendContextℓs (DataD.#levels Desc) λ ℓs →
+    extendCxtTel (PDataD.Param (DataD.applyL Desc ℓs)) λ ps → 
+      extendCxtTel (PDataD.Index (DataD.applyL Desc ℓs) ps) λ is → do
+        (def d _) ← quoteTC! $ Native ℓs ps is
+          where t → IMPOSSIBLE
+        return d
+  where open IndP P
+
 private
-  prependLevels : Type → ℕ → Type
-  prependLevels t zero = t
-  prependLevels t (suc n) = pi (hArg (quoteTerm Level))
-                               (abs "ℓ" $ prependLevels t n)
+  prependLevels : ℕ → Type → Type
+  prependLevels n = prependToType (`Levels n)
 
-  getTermName : Term → TC Name
-  getTermName (con c args) = return c
-  getTermName (def f args) = return f
-  getTermName t = Err.notApp t
-
-  -- generate variable terms that should refer to the given context,
-  foldVars : ∀ {X : Set} → Telescope → (ℕ → X) → List (Arg X)
-  foldVars [] _ = []
-  foldVars ((s , arg i x) ∷ tel) f =
-    arg i (f (length tel)) ∷ foldVars tel f
+  pattern `fold-base = quote fold-base
+  pattern `ind-base  = quote ind-base
 
   -- Generate the corresponding clause of a given constructor name
   conClause : Name → Term → ℕ → ℕ → Telescope → Name → Name → TC Clause
-  conClause &fun qP npars #levels parCxt base conName = do
+  conClause &fun `P pars #levels parCxt base conName = do
     conType ← getType conName
     let preConCxt = fst (⇑ conType)
-        conCxt    = drop npars preConCxt
-        conCxt'   = (λ (s , A) → (s , arg (getArgInfo A) unknown)) <$> conCxt
-        conArgs   = foldVars conCxt var₀
-        args      = foldVars parCxt (λ n → var₀ (n + length conCxt))
-        -- dprint [ strErr "Given argumets to base:" ]
-        -- dprint [ strErr $ showTerms args ]
-    let term = def base $ vArg qP ∷ vArg (def₀ &fun) ∷ args
-                 <> [ vArg (con conName (hUnknowns npars <> conArgs)) ]
-    term ← extend*Context (parCxt <> conCxt') $ do
-             normalise term
+        conCxt    = drop pars preConCxt
+        |conCxt|  = length conCxt ; |parCxt| = length parCxt
+
+    let (_ , conArgs , pat₂) = cxtToVars 0 (`tt , `tt) conCxt 
+        (_ , args , pat₁)    = cxtToVars |conCxt| (`tt , `tt) parCxt
+    let ℓs = `Levels #levels
+    let (_ , _ , pat) = cxtToVars (|conCxt| + |parCxt|) (`tt , `tt) ℓs
+
+    let term = def base $ vArg `P ∷ vArg (def₀ &fun) ∷ args
+                 <> [ vArg (con conName (hUnknowns pars <> conArgs)) ]
+    
+    term ← runSpeculative $ extend*Context (parCxt <> conCxt) $ do
+      (_, false) <$> normalise term
     -- levels that should be in the telescope of pattern
-    let ℓparCxt = duplicate #levels ("ℓ" , (hArg `Level)) <> parCxt
-        cxt = ℓparCxt <> conCxt'
-        pat = foldVars ℓparCxt (λ n → var (n + length conCxt')) <>
-              [ vArg (con conName (foldVars conCxt' var)) ]
+    let cxt = ℓs <> parCxt <> conCxt
+        pat = pat <> pat₁ <> [ vArg (con conName pat₂) ]
     return $ cxt ⊢ pat `= term
 
 defineFold : FoldP → Name → TC _
-defineFold P &fold = extendContextℓs #levels λ ℓs → do
-  foldT' ← quoteTC! (FoldNT P ℓs)
-  dprint [ strErr "Type of Fold:" ]
-  dprint $ termErr foldT' ∷ []
-  let foldT = prependLevels foldT' #levels
-  -- dprint [ strErr "Type of Fold:" ]
-  -- dprint [ termErr $ foldT ]
-  declareDef (vArg &fold) foldT
-  -- Assuming that the last parameter of fold is always the target datatype
-  foldLast ← case (last ∘ fst $ ⇑ foldT) of λ where
-               (just x) → return ∘ unArg ∘ snd $ x
-               nothing  → Err.notEndIn (nameErr &fold) (strErr "datatype")
+defineFold P f = extendContextℓs #levels λ ℓs → do
+  declareDef (vArg f) =<< prependLevels #levels <$> quoteTC! (FoldNT P ℓs)
 
-  parTel ← fromTel (Param ℓs)
-  -- dprint [ strErr $ "Parameter telecsope: " ]
-  -- dprint [ strErr $ showTel parTel ]
-  -- npars is the number of parameters including levels
-  npars , conNames ← getDataDefinition =<< (getTermName foldLast)
-  qP ← quoteωTC P
-  dprint $ strErr "FoldP : " ∷ termErr qP ∷ []
-  cls ← mapM (conClause &fold qP npars #levels parTel (quote fold-base)) conNames
-  defineFun &fold cls
-  where
-    open FoldP P
+  Γps  ← withNormalisation true $ fromTel (Param ℓs)
+  pars , cs ← getDataDefinition =<< FoldPToNativeName P
+  `P ← quoteωTC P
+  
+  cls ← forM cs $ conClause f `P pars #levels Γps `fold-base
+  defineFun f cls
+  where open FoldP P
 
 defineInd : IndP → Name → TC _
-defineInd P &ind = extendContextℓs #levels λ ℓs → do
-  indT' ← quoteTC! (IndNT P ℓs)
-  let indT = prependLevels indT' #levels
-  declareDef (vArg &ind) indT
-  indLast ← case (last ∘ fst $ ⇑ indT) of λ where
-              (just x) → return ∘ unArg ∘ snd $ x
-              nothing  → Err.notEndIn (nameErr &ind) (strErr "datatype")
-  parTel ← withNormalisation true $ fromTel (Param ℓs)
-  npars , conNames ← getDataDefinition =<< (getTermName indLast)
-  qP ← quoteωTC P
-  cls ← mapM (conClause &ind qP npars #levels parTel (quote ind-base)) conNames
-  defineFun &ind cls
-  where
-    open IndP P
+defineInd P ind = extendContextℓs #levels λ ℓs → do
+  declareDef (vArg ind) =<< prependLevels #levels <$> quoteTC! (IndNT P ℓs)
+
+  Γps ← withNormalisation true $ fromTel (Param ℓs)
+  pars , cs ← getDataDefinition =<< IndPToNativeName P
+  `P ← quoteωTC P
+  
+  cls ← forM cs $ conClause ind `P pars #levels Γps `ind-base
+  defineFun ind cls
+
+  where open IndP P

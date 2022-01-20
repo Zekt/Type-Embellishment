@@ -54,7 +54,7 @@ module _ {T : Tel ℓ} (`A : ⟦ T ⟧ᵗ → TC Type) where
 
 getCons : Name → (`Param : Telescope) → PDataD → TC (List Type)
 getCons d `Param Dᵖ = extendCxtTel Param λ ps →
-  map (prefixToType `Param) <$>
+  map (prependToType `Param) <$>
       ConDsToTypes (typeOfData d ps) (applyP ps)
   where open PDataD Dᵖ
 {-# INLINE getCons #-}
@@ -72,14 +72,14 @@ getSignature Dᵖ = do
 
 defineByDataD : DataD → Name → List Name → TC _
 defineByDataD dataD dataN conNs = extendContextℓs #levels λ ℓs → do
-  let `Levels = levels #levels
+  let `Levels = `Levels #levels
   let Dᵖ      = applyL ℓs
   `Param , dT ← withNormalisation true $ getSignature Dᵖ
   -- dprint (strErr "`Param:\n" ∷ strErr (show `Param) ∷ [])
   -- dprint (strErr "Type:\n" ∷ termErr dT ∷ [])
-  declareData dataN (#levels + length `Param) (prefixToType `Levels dT)
+  declareData dataN (#levels + length `Param) (prependToType `Levels dT)
 
-  conTs ← withNormalisation true $ map (prefixToType `Levels) <$> getCons dataN `Param Dᵖ
+  conTs ← withNormalisation true $ map (prependToType `Levels) <$> getCons dataN `Param Dᵖ
   defineData dataN (zip conNs conTs)
   where open DataD dataD
 

@@ -24,7 +24,7 @@ extendCxtTel : {A : Set ℓ′}
   → (T : Tel ℓ) → (⟦ T ⟧ᵗ → TC A) → TC A
 extendCxtTel [] f      = f tt
 extendCxtTel (A ∷ T) f = do
---  s ← getAbsNameω T
+  s ← getAbsNameω T
   extendContextT "_" visible-relevant-ω A λ _ x → extendCxtTel (T x) (curry f x)
 extendCxtTel (T ++ U) f = extendCxtTel T λ ⟦T⟧ →
   extendCxtTel (U ⟦T⟧) λ x → curry f ⟦T⟧ x
@@ -41,7 +41,7 @@ fromTel : {ℓ : Level}
   → Tel ℓ → TC Telescope
 fromTel []      = return []
 fromTel (A ∷ T) = do
---  s ← getAbsNameω T
+  s ← getAbsNameω T
   extendContextT "_" (visible-relevant-ω) A λ `A x → do
     Γ ← fromTel (T x)
     return $ ("_" , vArg `A) ∷ Γ
@@ -75,8 +75,6 @@ _⊆ᵗ?_ : Tel ℓ → Telescope → TC (Telescope × Telescope)
     strErr "An extra argument of type" ∷ termErr `A ∷ strErr " to apply" ∷ []
 (A ∷ T) ⊆ᵗ? ((s , arg i@(arg-info v m) `B) ∷ Γ) = do
   `A ← quoteTC! A
---   dprint $ [ termErr `A ]
---   dprint $ [ termErr `B ]
   unify `A `B <|> (typeError $ termErr `A ∷ strErr " ≠ " ∷ termErr `B ∷ [])
   extendContextT s i A λ _ x → bimap ((s , arg i `B) ∷_) id <$> T x ⊆ᵗ? Γ
 (T ++ U) ⊆ᵗ? Γ = do

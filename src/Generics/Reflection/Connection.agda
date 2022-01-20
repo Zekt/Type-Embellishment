@@ -12,6 +12,10 @@ open import Generics.Recursion
 open import Generics.Reflection.Telescope
 open import Generics.Reflection.Uncurry
 
+private
+  pattern `DataC x y = def₂ (quote DataC) x y
+  pattern `datac a b c d = con₄ (quote datac) a b c d
+
 module _ (pars : ℕ) where
   conToClause : (c : Name) → TC (Telescope × (Term × Pattern) × Args Term × Args Pattern)
   conToClause c = do
@@ -44,12 +48,11 @@ module _ (pars : ℕ) where
 genDataCT : (D : DataD) → (d : Name) → Tactic
 genDataCT D d hole = do
   `D ← quoteωTC D
-
   n  ← extendContextℓs #levels λ ℓs → length <$> fromTel (PDataD.Param (applyL ℓs))
   -- `N ← flip checkType (def₁ (quote DataT) `D) =<< uncurryDataD D (def₀ d)
-  `N ← uncurryDataD D (def₀ d)
+  `N ← uncurryDataD D d
 
-  checkedHole ← noConstraints $ checkType hole (def₂ (quote DataC) `D `N)
+  checkedHole ← noConstraints $ checkType hole (`DataC `D `N)
   
   pars , cs ← getDataDefinition d
 
@@ -58,7 +61,7 @@ genDataCT D d hole = do
   `fromN-toN ← genFromN-toNT pars cs 
   `toN-fromN ← genToN-fromNT pars cs 
 
-  unify checkedHole $ con₄ (quote datac) `toN `fromN `fromN-toN `toN-fromN
+  noConstraints $ unify checkedHole $ `datac `toN `fromN `fromN-toN `toN-fromN
   where open DataD D
 
 private

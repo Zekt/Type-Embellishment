@@ -117,18 +117,17 @@ strengthen from by = traverseTerm (record defaultActions
                                            then x
                                            else x ∸ by}) (0 , [])
 
-prefixToType : Telescope → Type → Type
-prefixToType []              `B = `B
-prefixToType ((s , `A) ∷ `T) `B = `Π[ s ∶ `A ] prefixToType `T `B
+prependToType : Telescope → Type → Type
+prependToType []              `B = `B
+prependToType ((s , `A) ∷ `T) `B = `Π[ s ∶ `A ] prependToType `T `B
 
-prefixToTerm : Telescope → Term → Term
-prefixToTerm []              `t = `t
-prefixToTerm ((s , `A) ∷ `T) `t =
-  lam (getVisibility `A) (abs s (prefixToTerm `T `t))
-
-levels : ℕ → Telescope
-levels zero    = []
-levels (suc n) = ("ℓ" , hArg `Level) ∷ levels n
+prependToTerm : Telescope → Term → Term
+prependToTerm []              `t = `t
+prependToTerm ((s , `A) ∷ `T) `t =
+  lam (getVisibility `A) (abs s (prependToTerm `T `t))
+                              
+`Levels : ℕ → Telescope
+`Levels n = duplicate n ("ℓ" , hArg `Level)
 
 vUnknowns : ℕ → Args Term
 vUnknowns = flip duplicate (vArg unknown)

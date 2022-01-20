@@ -128,19 +128,3 @@ record IndC (P : IndP) (f : IndGT P) : Setω where
     equation : let open IndP P in
              ∀ {ℓs ps is} (ns : ⟦ Desc ⟧ᵈ (Native (level ℓs) (param ps)) is)
              → f ps (DataC.toN Conv ns) ≡ algebra ps _ (ind-fmapᵈ Desc (f ps) ns)
-
--- Curried form of `DataT`
-PDataTᶜ : (Dᵖ : PDataD) → Set _
-PDataTᶜ Dᵖ = Curriedᵗ true Param      λ ps →
-             Curriedᵗ true (Index ps) λ is →
-             Set dlevel
-  where open PDataD Dᵖ
-
-DataTᶜ : DataD → Setω
-DataTᶜ D = ∀ {ℓs} → PDataTᶜ (DataD.applyL D ℓs)
-
-uncurryᵈᵗ : (D : DataD) → DataTᶜ D → DataT D
-uncurryᵈᵗ D N ℓs ps = uncurryᵗ (uncurryᵗ N ps)
-
-DataCᶜ : (D : DataD) (Nᶜ : DataTᶜ D) → Setω
-DataCᶜ D Nᶜ = DataC D (uncurryᵈᵗ D Nᶜ)
