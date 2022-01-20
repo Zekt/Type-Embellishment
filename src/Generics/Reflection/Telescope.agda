@@ -51,6 +51,10 @@ fromTel (T ++ U) = do
     `Δ ← fromTel (U x)
     return (`Γ <> `Δ)
 
+fromTel! : {ℓ : Level}
+  → Tel ℓ → TC Telescope
+fromTel! T = withNormalisation true $ fromTel T
+
 to`Tel : Telescope → Term
 to`Tel = foldr `[] λ where
   (s , arg _ `A) `T →  `A `∷ vLam (abs s `T)

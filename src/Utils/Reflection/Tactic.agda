@@ -75,6 +75,9 @@ extendContextT s i B f = do
     x ← unquoteTC {A = B} (var₀ 0)
     f `B x
 
+getConTelescope : Name → (pars : ℕ) → TC Telescope
+getConTelescope c pars = drop pars ∘ fst ∘ (coerce'_to (Telescope × Type)) <$> getType c
+
 getAbsName : {A : Set ℓ} {B : A → Set ℓ′} → ((x : A) → B x) → TC String
 getAbsName f = caseM quoteTC! f of λ { (lam visible (abs s _)) → return s ; t → Err.notλ t }
 
