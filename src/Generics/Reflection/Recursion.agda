@@ -42,20 +42,21 @@ private
 
   -- Generate the corresponding clause of a given constructor name
   conClause : (rec : Term) → (pars #levels : ℕ) → Telescope → Name → TC Clause
-  conClause rec pars #levels parCxt c = do
-    conCxt ← forgetTypes <$> getConTelescope c pars
+  conClause rec pars #levels Γps c = do
+    Γc ← forgetTypes <$> getConTelescope c pars
     
-    let ℓs = `Levels #levels
-    let  |conCxt|  = length conCxt ; |parCxt| = length parCxt
-    let (_ , conArgs , pat₂) = cxtToVars 0                     (`tt , `tt) conCxt 
-    let (_ , args , pat₁)    = cxtToVars |conCxt|              (`tt , `tt) parCxt
-    let (_ , _ , pat)        = cxtToVars (|conCxt| + |parCxt|) (`tt , `tt) ℓs
+    let Γℓs = `Levels #levels
+    let |Γc|  = length Γc ; |Γps| = length Γps
+    let (_ , cArgs , cPats)   = cxtToVars 0              (`tt , `tt) Γc 
+    let (_ , psArgs , psPats) = cxtToVars |Γc|           (`tt , `tt) Γps
+    let (_ , _ , ℓs)          = cxtToVars (|Γc| + |Γps|) (`tt , `tt) Γℓs
 
-    term ← runSpeculative $ extend*Context (parCxt <> conCxt) $ do
-      (_, false) <$> normalise (rec `$$ args `$$ [ vArg (con c $ hUnknowns pars <> conArgs) ])
+    term ← runSpeculative $ extend*Context (Γps <> Γc) $ do
+      (_, false) <$> normalise
+        (rec `$$ psArgs `$$ [ vArg (con c $ hUnknowns pars <> cArgs) ])
 
-    return $ (ℓs <> parCxt <> conCxt)
-      ⊢ pat <> pat₁ <> [ vArg (con c pat₂) ] `= term
+    return $ (Γℓs <> Γps <> Γc)
+      ⊢ ℓs <> psPats <> vArg (con c cPats) ∷ [] `= term
 
 defineFold : FoldP → Name → TC _
 defineFold P f = do
@@ -80,10 +81,11 @@ defineInd P f = do
 
   pars , cs ← getDataDefinition =<< IndPToNativeName P
 
-  cls ← extendContextℓs #levels λ ℓs → do
-    declareDef (vArg f) =<< prependLevels #levels <$> quoteTC! (IndNT P ℓs)
+  declareDef (vArg f) =<<
+    prependLevels #levels <$> extendContextℓs #levels λ ℓs → quoteTC! (IndNT P ℓs)
 
-    Γps  ← fromTel! (Param ℓs)
-    forM cs $ conClause ind pars #levels Γps
-  defineFun f cls
+  defineFun f =<<
+    extendContextℓs #levels λ ℓs → do
+      Γps  ← fromTel! (Param ℓs)
+      forM cs $ conClause ind pars #levels Γps
   where open IndP P

@@ -8,19 +8,18 @@ open import Utils.Error as Err
 
 open import Generics.Description
 open import Generics.Recursion  
+open import Generics.Algebra
 
 open import Generics.Reflection.Telescope
 open import Generics.Reflection.Uncurry
 
 private
-  pattern `DataC x y = def₂ (quote DataC) x y
+  pattern `DataC x y     = def₂ (quote DataC) x y
   pattern `datac a b c d = con₄ (quote datac) a b c d
 
 module _ (pars : ℕ) where
   conToClause : (c : Name) → TC (Telescope × (Term × Pattern) × Args Term × Args Pattern)
-  conToClause c = do
-    `A  ← getType c
-    return $ < forgetTypes , cxtToVars 0 (`refl , `refl) > $ drop pars $ fst $ ⇑ `A
+  conToClause c = < forgetTypes , cxtToVars 0 (`refl , `refl) > <$> getConTelescope c pars
 
   consToClauses : (cs : Names) → TC (List (Telescope × (Term × Pattern) × Name × Args Term × Args Pattern))
   consToClauses []       = ⦇ [] ⦈
@@ -49,7 +48,6 @@ genDataCT : (D : DataD) → (d : Name) → Tactic
 genDataCT D d hole = do
   `D ← quoteωTC D
   n  ← extendContextℓs #levels λ ℓs → length <$> fromTel (PDataD.Param (applyL ℓs))
-  -- `N ← flip checkType (def₁ (quote DataT) `D) =<< uncurryDataD D (def₀ d)
   `N ← uncurryDataD D d
 
   checkedHole ← noConstraints $ checkType hole (`DataC `D `N)

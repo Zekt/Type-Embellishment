@@ -76,13 +76,13 @@ data Vec (A : Set ℓ) : ℕ → Set ℓ where
 VecD′ = genDataD Vec
 VecC = genDataC VecD Vec  -- [FIXME]
 
--- [TODO] generate datatype wrappers (allowing visibility changes)
 -- [TODO] Add an option to choose if dot patterns are printed or not
 
 fromVecP : FoldP
 fromVecP = forget VecC ListC ⌈ VecOD ⌉ᵈ
 
 -- [TODO] fromVec
+unquoteDecl fromVec = defineFold fromVecP fromVec
 
 -- [TODO] toVec
 
@@ -107,7 +107,7 @@ data Len {A : Set ℓ} : ℕ → List A → Set ℓ where
   nil  : Len 0 []
   cons : {a : A} {n : ℕ} {as : List A} {l : Len n as} → Len (suc n) (a ∷ as)
 
--- [TODO] connection & wrapper between LenD and Len
+LenC = genDataC LenD Len
 
 -- [TODO] Vec A n ≅ Σ[ as ∈ List A ] Len n as
 
@@ -123,7 +123,6 @@ ListS _ = record
 ListAnyOD : DataOD NatD
 ListAnyOD = AnyOD ListC ListS
 
-open import Utils.Reflection
 -- [FIXME]
 unquoteDecl data ListAny constructor c₀ c₁ = defineByDataD ⌊ ListAnyOD ⌋ᵈ ListAny (c₀ ∷ c₁ ∷ [])
 

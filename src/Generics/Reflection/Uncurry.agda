@@ -40,10 +40,3 @@ macro
   `uncurry D d hole = do
     u ← uncurryDataD D d
     unify hole u
-
--- private
---   L′ : (ℓs : Level ^ 1) → Set (fst ℓs) × ⊤ → ⊤ → Set (fst ℓs)
---   L′ = `uncurry 1 1 List
-
---   Nat′ : ⊤ → ⊤ → ⊤ → Set
---   Nat′ = `uncurry 0 0 ℕ

@@ -18,22 +18,23 @@ variable
   h : ℕ
 
 -- [FIXME] change to a non-parametric version
-data B23Tree (Val : Set ℓ) (_≤_ : Val → Val → Set ℓ') : ℕ → Val → Val → Set (ℓ ⊔ ℓ') where
+data B23Tree {Val : Set ℓ} (_≤_ : Val → Val → Set ℓ') : ℕ → Val → Val → Set (ℓ ⊔ ℓ') where
 
   node₀ : {l r : Val} → ⦃ l ≤ r ⦄
         → -----------------------
-          B23Tree Val _≤_ 0 l r
+          B23Tree _≤_ 0 l r
 
   node₂ : {l r : Val} (x : Val)
-        → B23Tree Val _≤_ h l x → B23Tree Val _≤_ h x r
+        → B23Tree _≤_ h l x → B23Tree _≤_ h x r
         → ---------------------------------------------
-          B23Tree Val _≤_ (suc h) l r
+          B23Tree _≤_ (suc h) l r
 
   node₃ : {l r : Val} (x y : Val)
-        → B23Tree Val _≤_ h l x → B23Tree Val _≤_ h x y → B23Tree Val _≤_ h y r
+        → B23Tree _≤_ h l x → B23Tree _≤_ h x y → B23Tree _≤_ h y r
         → ---------------------------------------------------------------------
-          B23Tree Val _≤_ (suc h) l r
+          B23Tree _≤_ (suc h) l r
 
+open import Utils.Reflection
 B23TreeD = genDataD B23Tree
 B23TreeC = genDataC B23TreeD B23Tree
 
@@ -55,6 +56,7 @@ B23TreeAnyOD = AnyOD B23TreeC B23TreeS
 -- [FIXME]
 -- (check the number of constructors)
 unquoteDecl data B23TreeAny constructor c0 c1 c2 c3 c4 c5 c6 c7 = defineByDataD ⌊ B23TreeAnyOD ⌋ᵈ B23TreeAny (c0 ∷ c1 ∷ c2 ∷ c3 ∷ c4 ∷ c5 ∷ c6 ∷ c7 ∷ [])
+
 B23TreeAnyC = genDataC ⌊ B23TreeAnyOD ⌋ᵈ B23TreeAny
 
 -- [FIXME]
