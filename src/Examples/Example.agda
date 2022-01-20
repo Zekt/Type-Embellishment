@@ -119,7 +119,7 @@ ListD' = genDataD List
 _ : ListD ≡ω ListD'
 _ = refl
 
-ListC : DataCᶜ ListD List
+-- ListC : DataCᶜ ListD List
 ListC = genDataC ListD List  
 
 unquoteDecl data List' constructor nil cons =
@@ -147,7 +147,7 @@ DataD.applyL  LenD (ℓ , _) = record
       ∷ []
   }
   
-LenC : DataCᶜ LenD Len
+-- LenC : DataCᶜ LenD Len
 LenC =  genDataC LenD Len  
 --   dataC
 --   (λ { (inl refl) → z {_} {_} ; (inr (inl (x , y , xs , ys , p , refl))) → s {_} {_} {x} {y} {xs} {ys} p })
@@ -219,7 +219,7 @@ VecD = record
 VecD' : DataD
 VecD' = genDataD Vec
 
-VecC : DataCᶜ VecD' Vec
+-- VecC : DataCᶜ VecD' Vec
 VecC = genDataC VecD' Vec
 
 -- generated DataC
