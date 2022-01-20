@@ -85,15 +85,15 @@ defineByDataD dataD dataN conNs = extendContextℓs #levels λ ℓs → do
 
 printByDataD' : DataD → String → List String → TC String
 printByDataD' dataD dataN conNs = extendContextℓs #levels λ ℓs → do
-  let `Levels = levels #levels
+  let `Levels = `Levels #levels
   let Dᵖ      = applyL ℓs
   `Param , dT ← withNormalisation true $ getSignature Dᵖ
-  let dataT   = (prefixToType `Levels dT)
+  let dataT   = (prependToType `Levels dT)
       npars   = (#levels + length `Param)
   dName ← freshName dataN
   -- dprint (strErr "`Param:\n" ∷ strErr (show `Param) ∷ [])
   -- dprint (strErr "Type:\n" ∷ termErr dT ∷ [])
-  conTs ← withNormalisation true $ map (prefixToType `Levels) <$> getCons dName `Param Dᵖ
+  conTs ← withNormalisation true $ map (prependToType `Levels) <$> getCons dName `Param Dᵖ
   mapM (λ T → dprint (strErr (show T) ∷ [])) conTs
   printDataAs (dataN , dataT , npars) (alignZip 0 conNs conTs)
   where
