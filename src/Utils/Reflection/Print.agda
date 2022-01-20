@@ -4,14 +4,14 @@ open import Prelude
 
 module Utils.Reflection.Print where
 
-open import Utils.Reflection.Core     
+open import Utils.Reflection.Core
 open import Utils.Reflection.Term
   using (splitType)
 open import Utils.Reflection.Eq
 open import Utils.Reflection.Tactic
 
 infoName = "print"
-verbosity = 5 
+verbosity = 5
 
 private
   variable
@@ -78,7 +78,7 @@ printCon pars c = do
   formatErrorParts $ nameErr c ∷ space ∷ strErr ":" ∷ space ∷ termErr a ∷ []
 
 printCons : (pars : ℕ) → (cs : Names) → TC (List String)
-printCons pars = mapM (printCon pars) 
+printCons pars = mapM (printCon pars)
 
 printData : Name → TC ⊤
 printData d = do
@@ -88,10 +88,29 @@ printData d = do
 
   sig  ← printDataSignature tel a
   decl ← formatErrorParts $ mergeSpace $
-    strErr "data" ∷ space ∷ nameErr d ∷ space ∷ [] <> sig <> space ∷ strErr "where" ∷ []  
+    strErr "data" ∷ space ∷ nameErr d ∷ space ∷ [] <> sig <> space ∷ strErr "where" ∷ []
 
   cons ← vcat ∘ nest <$> extend*Context tel (printCons pars cs)
   debugPrint infoName verbosity $ [ strErr (vcat $ decl ∷ cons ∷ []) ]
+
+printConAs : (String × Type) → TC String
+printConAs (s , T) = do
+  formatErrorParts $ strErr s ∷ space ∷ strErr ":" ∷ space ∷ termErr T ∷ []
+
+printConsAs : List (String × Type) → TC (List String)
+printConsAs = mapM printConAs
+
+-- Currently unusable due to datatype not being in scope when printing constructor types with datatype recursion.
+printDataAs : (String × Type × ℕ) → List (String × Type) → TC String
+printDataAs (s , T , pars) cs = do
+  let tel , a = splitType pars T
+
+  sig  ← printDataSignature tel a
+  decl ← formatErrorParts $ mergeSpace $
+    strErr "data" ∷ space ∷ strErr s ∷ space ∷ [] <> sig <> space ∷ strErr "where" ∷ []
+
+  cons ← vcat ∘ nest <$> extend*Context tel (printConsAs cs)
+  return (vcat $ decl ∷ cons ∷ [])
 
 printPattern : Pattern → TC ErrorParts
 printPattern p@(con c (_ ∷ _)) = return $ paren visible [ pattErr p ]
@@ -105,14 +124,14 @@ printPatterns (p ∷ ps) = do
   ps ← printPatterns ps
   return $ p <> space ∷ ps
 
-printClause : (f : Name) → Clause → TC String 
+printClause : (f : Name) → Clause → TC String
 printClause f (tel ⊢ ps `= t) = do
   tel ← renameUnderscore tel
   extend*Context tel do
     ps  ← printPatterns ps
     formatErrorParts $ (nameErr f ∷ space ∷ ps) <> space ∷ strErr "=" ∷ space ∷ termErr t ∷ []
 printClause f (absurd-clause tel ps) = extend*Context tel do
-  formatErrorParts =<< (λ ps → nameErr f ∷ space ∷ ps) <$> printPatterns ps      
+  formatErrorParts =<< (λ ps → nameErr f ∷ space ∷ ps) <$> printPatterns ps
 
 printClauses : Name → Clauses → TC (List String)
 printClauses f = mapM (printClause f)
@@ -142,4 +161,3 @@ macro
         strErr "Printing the definition of a record type is currently not supported." ∷ []
       _                   → printSig d >>= debugPrint infoName verbosity
     return tt
-

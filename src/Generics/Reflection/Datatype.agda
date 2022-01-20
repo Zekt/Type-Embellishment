@@ -66,7 +66,7 @@ getSignature Dᵖ = do
   dT ← extend*Context `Param+Index do
     `Setℓ ← quoteTC! (Set dlevel)
     return $ ⇑ (`Param+Index , `Setℓ) ⦂ Type
-    
+
   return $ `Param , dT
   where open PDataD Dᵖ
 
@@ -83,6 +83,26 @@ defineByDataD dataD dataN conNs = extendContextℓs #levels λ ℓs → do
   defineData dataN (zip conNs conTs)
   where open DataD dataD
 
+printByDataD' : DataD → String → List String → TC String
+printByDataD' dataD dataN conNs = extendContextℓs #levels λ ℓs → do
+  let `Levels = levels #levels
+  let Dᵖ      = applyL ℓs
+  `Param , dT ← withNormalisation true $ getSignature Dᵖ
+  let dataT   = (prefixToType `Levels dT)
+      npars   = (#levels + length `Param)
+  dName ← freshName dataN
+  -- dprint (strErr "`Param:\n" ∷ strErr (show `Param) ∷ [])
+  -- dprint (strErr "Type:\n" ∷ termErr dT ∷ [])
+  conTs ← withNormalisation true $ map (prefixToType `Levels) <$> getCons dName `Param Dᵖ
+  mapM (λ T → dprint (strErr (show T) ∷ [])) conTs
+  printDataAs (dataN , dataT , npars) (alignZip 0 conNs conTs)
+  where
+    open DataD dataD
+    alignZip : ∀ {B : Set} → ℕ → List String → List B → List (String × B)
+    alignZip n xs [] = []
+    alignZip n [] (x ∷ ys) = ("con" <> show n , x) ∷ alignZip (suc n) [] ys
+    alignZip n (x ∷ xs) (y ∷ ys) = (x , y) ∷ alignZip n xs ys
+
 ------------------------------------------------------------------------
 -- Reification of datatypes
 
@@ -92,7 +112,7 @@ private
 
 module _ (dataName : Name) (pars : ℕ) where
   idxArgs = argsToIdx ∘ drop pars
-  
+
   telescopeToRecD : Telescope → Type → TC Term
   telescopeToRecD ((s , arg _ `x) ∷ `tel) end = do
     rec ← telescopeToRecD `tel end
@@ -107,8 +127,8 @@ module _ (dataName : Name) (pars : ℕ) where
     then (do
       recd ← uncurry telescopeToRecD (⇑ `x)
       cond ← telescopeToConD `tel end
-    -- Indices in recursion in Description is different from those in native constructors!
-    -- Should strengthen by one instead of abstracting.
+      -- Indices in recursion in Description is different from those in native constructors!
+      -- Strengthen by one instead of abstracting.
       return $ `ρ recd (strengthen 0 1 cond)
     ) else (do
       cond ← telescopeToConD `tel end
@@ -155,9 +175,36 @@ reifyData d = do
     patLam : Telescope → Term → Term
     patLam Γ body = let (_ , p) , _ = cxtToVars 0 (`tt , `tt) Γ in
       pat-lam₀ [ Γ ⊢ [ vArg p ] `= body ]
-      
+
 macro
   genDataD : Name → Tactic
   genDataD d hole = do
-    checkedHole ← checkType hole (quoteTerm DataD) 
+    checkedHole ← checkType hole (quoteTerm DataD)
     unify checkedHole =<< reifyData d
+
+-- Currently unusable because module names are always printed.
+macro
+  defineAndPrintData : DataD → String → List String → Tactic
+  defineAndPrintData D s cs hole = do
+    dName ← freshName s
+    len ← extendContextℓs #levels λ ℓs → do
+            return $ length $ PDataD.struct (applyL ℓs)
+    conNames ← align len cs
+    defineByDataD D dName conNames
+    printData dName
+    where
+      open DataD D
+      align : ℕ → List String → TC (List Name)
+      align zero cs = return []
+      align (suc n) [] = do c ← freshName "con"
+      -- freshName does not generate new names when called repetitively
+      -- because it does not modify scope.
+                            ns ← align n []
+                            return $ c ∷ ns
+      align (suc n) (x ∷ cs) = ⦇ freshName x ∷ align n cs ⦈
+
+-- Currently unusable due to Agda's scope checking.
+macro
+  printByDataD : DataD → String → List String → Tactic
+  printByDataD D s cs hole = do s ← printByDataD' D s cs
+                                dprint [ strErr s ]
