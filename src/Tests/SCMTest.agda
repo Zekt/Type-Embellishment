@@ -54,7 +54,7 @@ foldList e f [] = e
 foldList e f (x ∷ xs) = f x (foldList e f xs)
 
 foldList-wrapper : FoldGT foldListP
-foldList-wrapper ((A , tt) , X , e , f , tt) = foldList e f 
+foldList-wrapper _ ((A , tt) , X , e , f , tt) = foldList e f 
 
 foldList-is-fold : FoldC foldListP foldList-wrapper
 FoldC.equation foldList-is-fold (inl refl) = refl
@@ -110,7 +110,7 @@ foldIE g f (tip x) = g x
 foldIE g f (bin y t u) = f y (foldIE g f t) (foldIE g f u)
 
 foldIE-wrapper : FoldGT foldIEP
-foldIE-wrapper ((A , B , _) , X , g , f , tt) = foldIE g f
+foldIE-wrapper _ ((A , B , _) , X , g , f , tt) = foldIE g f
 
 foldIE-is-fold : FoldC foldIEP foldIE-wrapper
 FoldC.equation foldIE-is-fold (inl (x , refl)) = refl
@@ -169,7 +169,7 @@ foldVec e f [] = e
 foldVec e f (x ∷ xs) = f x _ (foldVec e f xs)
 
 foldVec-wrapper : FoldGT foldVecP
-foldVec-wrapper ((A , tt) , X , e , f , tt) {(n , tt)} = foldVec e f {n}
+foldVec-wrapper _ ((A , tt) , X , e , f , tt) {(n , tt)} = foldVec e f {n}
 
 foldVec-is-fold : FoldC foldVecP foldVec-wrapper
 FoldC.equation foldVec-is-fold (inl refl) = refl

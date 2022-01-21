@@ -61,7 +61,7 @@ foldℕ X z s (suc n) = s (foldℕ X z s n)
 
 -- META
 foldℕ-wrapper : FoldGT foldℕP
-foldℕ-wrapper (_ , X , z , s , _) = foldℕ X z s
+foldℕ-wrapper _ (_ , X , z , s , _) = foldℕ X z s
 
 foldℕC : FoldC foldℕP foldℕ-wrapper
 FoldC.equation foldℕC (inl           refl  ) = refl
@@ -160,7 +160,7 @@ length' (x ∷ xs) = suc (length' xs)
 
 -- META
 length'-wrapper : FoldGT length'P
-length'-wrapper A = length'
+length'-wrapper _ A = length'
 
 length'C : FoldC length'P length'-wrapper
 FoldC.equation length'C (inl               refl  ) = refl
@@ -224,7 +224,7 @@ fromVec (x ∷ xs) = x ∷ fromVec xs
 
 -- META
 fromVec-wrapper : FoldGT fromVecP
-fromVec-wrapper (A , _) = fromVec
+fromVec-wrapper _ (A , _) = fromVec
 
 fromVecC : FoldC fromVecP fromVec-wrapper
 FoldC.equation fromVecC (inl                   refl  ) = refl

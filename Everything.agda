@@ -17,7 +17,6 @@ import Generics.Recursion
 import Generics.RecursionScheme
 import Generics.Reflection
 import Generics.Reflection.Connection
-import Generics.Reflection.Constructor
 import Generics.Reflection.Datatype
 import Generics.Reflection.Recursion
 import Generics.Reflection.Telescope

@@ -50,7 +50,7 @@ genDataCT D d hole = do
   n  ← extendContextℓs #levels λ ℓs → length <$> fromTel (PDataD.Param (applyL ℓs))
   `N ← uncurryDataD D d
 
-  checkedHole ← noConstraints $ checkType hole (`DataC `D `N)
+  checkedHole ← checkType hole (`DataC `D `N)
   
   pars , cs ← getDataDefinition d
 

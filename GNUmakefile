@@ -1,9 +1,9 @@
-AGDA_EXEC ?= agda
-RTS_OPTIONS=+RTS -M4.0G -H3.5G -A128M -RTS
-AGDA=$(AGDA_EXEC) $(RTS_OPTIONS)
+AGDA_BIN    ?= agda
+RTS_OPTIONS ?= +RTS -M4.0G -H3.5G -A128M -RTS
+AGDA_EXEC   = $(AGDA_EXEC) $(RTS_OPTIONS)
 
 test: Everything.agda
-	$(AGDA) -i. -isrc README.agda
+	$(AGDA_EXEC) -i. -isrc README.agda
 
 setup: Everything.agda
 
