@@ -91,7 +91,11 @@ _⊆ᵗ?_ : Tel ℓ → Telescope → TC (Telescope × Telescope)
 -- Each constructor `c : (x₁ : A₁) → (x₂ : A₂ x₁) → ⋯ → T`
 -- can be represented as a pattern on the LHS `c x₁ x₂ ⋯ xₙ` or as a term on the RHS
 -- They can be also uncurried described by ⟦ ConD ⟧. Thus, there are 4 types of constructor representations. 
-cxtToVars : (from : ℕ) → (base : Term × Pattern) → (Γ : Telescope) → (Term × Pattern) × (Args Term × Args Pattern)
+Vars : Set
+Vars = (Term × Pattern) × (Args Term × Args Pattern)
+
+cxtToVars : (from : ℕ) (base : Term × Pattern) (Γ : Telescope)
+  → Vars
 cxtToVars from base = snd ∘ foldr emptyVar λ where
       (_ , arg i _) (n , (t , p) , (targs , pargs)) →
         suc n , ((var₀ n `, t) , (var n `, p)) , (arg i (var₀ n) ∷ targs) , (arg i (var n) ∷ pargs)
@@ -104,7 +108,7 @@ cxtToVarPatt Γ = let (_ , p) , _ = cxtToVars 0 (`tt , `tt) Γ in p
 -- 
 
 telToVars : (from : ℕ) (base : Term × Pattern)
-  → (T : Tel ℓ) (Γ : Telescope) → TC $ (Term × Pattern) × (Args Term × Args Pattern)
+  → (T : Tel ℓ) (Γ : Telescope) → TC Vars
 telToVars from base T Γ = snd <$> go from base T Γ 
   where 
     go : (from : ℕ) (base : Term × Pattern)
