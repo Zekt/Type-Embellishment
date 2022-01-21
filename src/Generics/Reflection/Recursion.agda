@@ -20,26 +20,27 @@ private
   pattern `fold-base = quote fold-base
   pattern `ind-base  = quote ind-base
 
-  FoldPToNativeName : FoldP → TC Name
-  FoldPToNativeName P = do
-    extendContextℓs (DataD.#levels Desc) λ ℓs →
-      extendCxtTel (PDataD.Param (DataD.applyL Desc ℓs)) λ ps → 
-        extendCxtTel (PDataD.Index (DataD.applyL Desc ℓs) ps) λ is → do
-          (def d _) ← quoteTC! $ Native ℓs ps is
-            where t → IMPOSSIBLE
-          return d
-    where open FoldP P
-  
-  IndPToNativeName : IndP → TC Name
-  IndPToNativeName P = do
-    extendContextℓs (DataD.#levels Desc) λ ℓs →
-      extendCxtTel (PDataD.Param (DataD.applyL Desc ℓs)) λ ps → 
-        extendCxtTel (PDataD.Index (DataD.applyL Desc ℓs) ps) λ is → do
-          (def d _) ← quoteTC! $ Native ℓs ps is
-            where t → IMPOSSIBLE
-          return d
-    where open IndP P
+FoldPToNativeName : FoldP → TC Name
+FoldPToNativeName P = do
+  extendContextℓs (DataD.#levels Desc) λ ℓs →
+    extendCxtTel (PDataD.Param (DataD.applyL Desc ℓs)) λ ps → 
+      extendCxtTel (PDataD.Index (DataD.applyL Desc ℓs) ps) λ is → do
+        (def d _) ← quoteTC! $ Native ℓs ps is
+          where t → IMPOSSIBLE
+        return d
+  where open FoldP P
 
+IndPToNativeName : IndP → TC Name
+IndPToNativeName P = do
+  extendContextℓs (DataD.#levels Desc) λ ℓs →
+    extendCxtTel (PDataD.Param (DataD.applyL Desc ℓs)) λ ps → 
+      extendCxtTel (PDataD.Index (DataD.applyL Desc ℓs) ps) λ is → do
+        (def d _) ← quoteTC! $ Native ℓs ps is
+          where t → IMPOSSIBLE
+        return d
+  where open IndP P
+
+private
   -- Generate the corresponding clause of a given constructor name
   conClause : (rec : Term) → (pars #levels : ℕ) → Telescope → Name → TC Clause
   conClause rec pars #levels Γps c = do

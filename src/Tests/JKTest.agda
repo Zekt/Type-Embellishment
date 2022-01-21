@@ -63,9 +63,15 @@ foldℕ X z s (suc n) = s (foldℕ X z s n)
 foldℕ-wrapper : FoldGT foldℕP
 foldℕ-wrapper _ (_ , X , z , s , _) = foldℕ X z s
 
-foldℕC : FoldC foldℕP foldℕ-wrapper
+open import Generics.Reflection
+
+-- foldℕC : FoldC foldℕP foldℕ-wrapper
+foldℕC = genFoldC foldℕP foldℕ-wrapper
+
+{-
 FoldC.equation foldℕC (inl           refl  ) = refl
 FoldC.equation foldℕC (inr (inl (_ , refl))) = refl
+-}
 
 -- META (specialising ‘fold-fusion NatC foldℕC’)
 foldℕ-fusion : {ℓs : Σ Level (λ _ → Σ Level (λ _ → ⊤))} (a : Set (fst ℓs))
@@ -103,9 +109,12 @@ indℕ P z s (suc n) = s n (indℕ P z s n)
 indℕ-wrapper : IndGT indℕP
 indℕ-wrapper _ (_ , P , z , s , _) = indℕ P z s
 
-indℕ-is-ind : IndC indℕP indℕ-wrapper
+-- indℕ-is-ind : IndC indℕP indℕ-wrapper
+indℕ-is-ind = genIndC indℕP indℕ-wrapper
+{-
 IndC.equation indℕ-is-ind (inl           refl  ) = refl
 IndC.equation indℕ-is-ind (inr (inl (_ , refl))) = refl
+-}
 
 -- META
 ListD : DataD
@@ -162,9 +171,12 @@ length' (x ∷ xs) = suc (length' xs)
 length'-wrapper : FoldGT length'P
 length'-wrapper _ A = length'
 
-length'C : FoldC length'P length'-wrapper
+-- length'C : FoldC length'P length'-wrapper
+length'C = genFoldC length'P length'-wrapper
+{-
 FoldC.equation length'C (inl               refl  ) = refl
 FoldC.equation length'C (inr (inl (_ , _ , refl))) = refl
+-}
 
 -- USER
 VecOD : DataOD ListD
@@ -207,11 +219,12 @@ Vec-remember (x ∷ xs) = x ∷ Vec-remember xs
 
 -- META
 Vec-remember-wrapper : IndGT Vec-rememberP
-Vec-remember-wrapper _ (A , _) = Vec-remember
+Vec-remember-wrapper = genIndGT Vec-rememberP Vec-remember -- _ (A , _) = Vec-remember
 
-Vec-rememberC : IndC Vec-rememberP Vec-remember-wrapper
-IndC.equation Vec-rememberC (inl               refl  ) = refl
-IndC.equation Vec-rememberC (inr (inl (_ , _ , refl))) = refl
+-- Vec-rememberC : IndC Vec-rememberP Vec-remember-wrapper
+Vec-rememberC = genIndC Vec-rememberP Vec-remember-wrapper
+-- IndC.equation Vec-rememberC (inl               refl  ) = refl
+-- IndC.equation Vec-rememberC (inr (inl (_ , _ , refl))) = refl
 
 -- USER
 fromVecP : FoldP
@@ -224,11 +237,14 @@ fromVec (x ∷ xs) = x ∷ fromVec xs
 
 -- META
 fromVec-wrapper : FoldGT fromVecP
-fromVec-wrapper _ (A , _) = fromVec
+fromVec-wrapper = genFoldGT fromVecP fromVec -- _ (A , _) = fromVec
 
-fromVecC : FoldC fromVecP fromVec-wrapper
+-- fromVecC : FoldC fromVecP fromVec-wrapper
+fromVecC = genFoldC fromVecP fromVec-wrapper
+{-
 FoldC.equation fromVecC (inl                   refl  ) = refl
 FoldC.equation fromVecC (inr (inl (_ , _ , _ , refl))) = refl
+-}
 
 -- USER
 inverseP : IndP
@@ -255,11 +271,16 @@ inverse (x ∷ xs) =
 
 -- META
 inverse-wrapper : IndGT inverseP
-inverse-wrapper _ (A , _) = inverse
+inverse-wrapper = genIndGT inverseP inverse -- _ (A , _) = inverse
 
-inverseC : IndC inverseP inverse-wrapper
+open import Utils.Reflection
+
+-- inverseC : IndC inverseP inverse-wrapper
+inverseC = genIndC inverseP inverse-wrapper
+{-
 IndC.equation inverseC (inl                   refl  ) = refl
 IndC.equation inverseC (inr (inl (_ , _ , _ , refl))) = refl
+-}
 
 VecSC : SCᵈ VecD
 VecSC = λ _ → record

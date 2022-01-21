@@ -13,6 +13,7 @@ open import Generics.RecursionScheme
 
 NatD = genDataD ℕ
 
+NatT : DataT NatD
 NatT = genDataT NatD ℕ
 
 NatC = genDataC NatD ℕ  -- [FIXME]
@@ -26,8 +27,8 @@ foldℕ-wrapper = genFoldGT (fold-operator NatC) foldℕ
 
 -- unquoteDecl indℕ = defineInd (ind-operator NatC) indℕ
 indℕ : {ℓ : Level} {P : ℕ → Set ℓ} →
-  P 0 → ((n : ℕ) → P n → P (suc n)) → (n : ℕ) → P n
+  P 0 → ({n : ℕ} → P n → P (suc n)) → (n : ℕ) → P n
 indℕ base ind zero    = base
-indℕ base ind (suc n) = ind n (indℕ base ind n)
+indℕ base ind (suc n) = ind (indℕ base (λ {n} → ind {n}) n)
 
-indℕ-wrapper = genIndGT (ind-operator NatC) indℕ
+-- indℕ-wrapper = genIndGT (ind-operator NatC) indℕ
