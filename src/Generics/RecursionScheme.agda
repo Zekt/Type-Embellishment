@@ -22,7 +22,7 @@ FoldOpTᶜ (ρ D E) X = ⟦ D ⟧ʳ X → FoldOpTᶜ E X
 FoldOpTelᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) → (I → Set ℓ)
             → Tel (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ hasCon? ℓ cbs)
 FoldOpTelᶜˢ []       X = []
-FoldOpTelᶜˢ (D ∷ Ds) X = FoldOpTᶜ D X ∷ constω (FoldOpTelᶜˢ Ds X)
+FoldOpTelᶜˢ (D ∷ Ds) X = [ _ ∶ FoldOpTᶜ D X ] FoldOpTelᶜˢ Ds X
 
 fold-opᶜ : {I : Set ℓⁱ} (D : ConD I cb) {X : Carrierᶜ D ℓ} → FoldOpTᶜ D X → Algᶜ D X
 fold-opᶜ (ι i  ) f refl       = f
@@ -72,7 +72,7 @@ Homᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {X : I → Set ℓˣ} {Y : I → S
       → ⟦ FoldOpTelᶜˢ D X ⟧ᵗ → ⟦ FoldOpTelᶜˢ D Y ⟧ᵗ → (∀ {i} → X i → Y i)
       → Tel (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓˣ) cbs ⊔ hasCon? ℓʸ cbs)
 Homᶜˢ []       _        _        h = []
-Homᶜˢ (D ∷ Ds) (f , fs) (g , gs) h = ∀ᶜ D (Homᶜ D f g h) ∷ constω (Homᶜˢ Ds fs gs h)
+Homᶜˢ (D ∷ Ds) (f , fs) (g , gs) h = [ _ ∶ ∀ᶜ D (Homᶜ D f g h) ] Homᶜˢ Ds fs gs h
 
 fold-fusionʳ :
     {I : Set ℓⁱ} (D : RecD I rb) {N : I → Set ℓ} {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
@@ -110,9 +110,7 @@ fold-fusionᶜˢ (D ∷ Ds) (f , _ ) (g , _ ) fold-fs fold-gs h (hom , _) (inl n
 fold-fusionᶜˢ (D ∷ Ds) (_ , fs) (_ , gs) fold-fs fold-gs h (_ , hom) (inr ns) all =
   fold-fusionᶜˢ Ds fs gs fold-fs fold-gs h hom ns all
 
-fold-fusion :
-  ∀ {D N} (C : DataC D N) → let P = fold-operator C in
-  {fold : FoldT P} → FoldC P fold → IndP
+fold-fusion : ∀ {D N} (C : DataC D N) {fold} → FoldC (fold-operator C) fold → IndP
 fold-fusion {D} C {fold} foldC = record
   { Conv    = C
   ; #levels = suc (suc (DataD.#levels D))
@@ -157,7 +155,7 @@ IndOpTelᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {N : Carrierᶜˢ D ℓ} → 
            → (P : IndCarrierᶜˢ D N ℓ') → Tel (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔
                                               maxMap (hasRec? ℓ) cbs ⊔ hasCon? ℓ' cbs)
 IndOpTelᶜˢ []       f P = []
-IndOpTelᶜˢ (D ∷ Ds) f P = IndOpTᶜ D (f ∘ inl) P ∷ constω (IndOpTelᶜˢ Ds (f ∘ inr) P)
+IndOpTelᶜˢ (D ∷ Ds) f P = [ _ ∶ IndOpTᶜ D (f ∘ inl) P ] IndOpTelᶜˢ Ds (f ∘ inr) P
 
 ind-opʳ : {I : Set ℓⁱ} (D : RecD I rb) {N : I → Set ℓ} (ns : ⟦ D ⟧ʳ N)
           {P : ∀ i → N i → Set ℓ'} → Allʳ D P ns → IndOpTʳ D ns P

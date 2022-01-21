@@ -178,7 +178,7 @@
         {Ko-OAOAOO}
 \bibfield{author}{\bibinfo{person}{Hsiang-Shang Ko} {and}
   \bibinfo{person}{Jeremy Gibbons}.} \bibinfo{year}{2011}\natexlab{}.
-\newblock \showarticletitle{Modularising inductive families}. In
+\newblock \showarticletitle{Modularising Inductive Families}. In
   \bibinfo{booktitle}{\emph{Workshop on Generic Programming (WGP)}}.
   \bibinfo{publisher}{ACM}, \bibinfo{pages}{13--24}.
 \newblock

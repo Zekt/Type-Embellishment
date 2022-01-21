@@ -193,9 +193,9 @@ module FunExt (funext : FunExt) where
     cong (bimap id inr) (remember-forget-invᶜˢ Ds (alg ∘ inr) f r g ns' all)
 
 forget-remember-inv :
-    {P : FoldP} {f : FoldT P} (C : FoldC P f) → ∀ {N'} (C' : DataC ⌊ AlgOD P ⌋ᵈ N')
+  ∀ {P f} (C : FoldC P f) {N'} (C' : DataC ⌊ AlgOD P ⌋ᵈ N')
   → let forgetP = forget C' (FoldP.Conv P) ⌈ AlgOD P ⌉ᵈ; rememberP = remember C C' in
-    {g : FoldT forgetP} → FoldC forgetP g → {r : IndT rememberP} → IndC rememberP r
+  ∀ {g} (gC : FoldC forgetP g) {r} (rC : IndC rememberP r)
   → Finitary (FoldP.Desc P) ⊎ω FunExt → IndP
 forget-remember-inv {P} {f} C {N'} C' {g} gC {r} rC cond = let open FoldP P in record
   { Conv    = Conv
@@ -248,9 +248,9 @@ forget-remember-inv {P} {f} C {N'} C' {g} gC {r} rC cond = let open FoldP P in r
     erase-fmap-subst-lemma O f xs refl = refl
 
 remember-forget-inv :
-    {P : FoldP} {f : FoldT P} (C : FoldC P f) → ∀ {N'} (C' : DataC ⌊ AlgOD P ⌋ᵈ N')
+  ∀ {P f} (C : FoldC P f) {N'} (C' : DataC ⌊ AlgOD P ⌋ᵈ N')
   → let rememberP = remember C C'; forgetP = forget C' (FoldP.Conv P) ⌈ AlgOD P ⌉ᵈ in
-    {r : IndT rememberP} → IndC rememberP r → {g : FoldT forgetP} → FoldC forgetP g
+  ∀ {r} (rC : IndC rememberP r) {g} (gC : FoldC forgetP g)
   → Finitary (FoldP.Desc P) ⊎ω FunExt → IndP
 remember-forget-inv {P} {f} C {N'} C' {r} rC {g} gC cond = let open FoldP P in record
   { Conv    = C'

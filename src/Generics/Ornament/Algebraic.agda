@@ -117,7 +117,7 @@ rememberᶜˢ :
 rememberᶜˢ (D ∷ Ds) f fold (inl ns) all = inl (rememberᶜ  D  (f ∘ inl) fold ns all)
 rememberᶜˢ (D ∷ Ds) f fold (inr ns) all = inr (rememberᶜˢ Ds (f ∘ inr) fold ns all)
 
-remember : ∀ {P} {f : FoldT P} → FoldC P f → ∀ {N'} → DataC ⌊ AlgOD P ⌋ᵈ N' → IndP
+remember : ∀ {P f} → FoldC P f → ∀ {N'} → DataC ⌊ AlgOD P ⌋ᵈ N' → IndP
 remember {P} {f} C {N'} C' = let open FoldP P in record
   { Conv    = Conv
   ; #levels = #levels
