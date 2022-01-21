@@ -24,6 +24,10 @@ foldℕ-wrapper = genFoldGT (fold-operator NatC) foldℕ
 
 -- [TODO] fold fusion
 
-unquoteDecl indℕ = defineInd (ind-operator NatC) indℕ
+-- unquoteDecl indℕ = defineInd (ind-operator NatC) indℕ
+indℕ : {ℓ : Level} {P : ℕ → Set ℓ} →
+  P 0 → ((n : ℕ) → P n → P (suc n)) → (n : ℕ) → P n
+indℕ base ind zero    = base
+indℕ base ind (suc n) = ind n (indℕ base ind n)
 
 indℕ-wrapper = genIndGT (ind-operator NatC) indℕ
