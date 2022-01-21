@@ -1,4 +1,4 @@
-{-# OPTIONS --safe --without-K  #-}
+{-# OPTIONS --safe --without-K #-}
 open import Prelude
 
 module Generics.Reflection.Uncurry where
@@ -7,6 +7,7 @@ open import Utils.Reflection
 open import Utils.Error as Err
 
 open import Generics.Telescope
+open import Generics.Recursion
 open import Generics.Description
 
 open import Generics.Reflection.Telescope
@@ -17,13 +18,14 @@ open import Generics.Reflection.Telescope
 uncurryDataD : (D : DataD) → Name → TC Term
 uncurryDataD D d = let open DataD D in do
   `A ← getType d
-  let ℓsΓΔ… , `A  = ⇑ `A ⦂ Telescope × Type
   
-  let `ℓs   , ΓΔ… = splitAt #levels ℓsΓΔ…
+  let `ℓsΓΔ⋯ , _  = ⇑ `A ⦂ Telescope × Type
+  let `ℓs   , ΓΔ⋯ = splitAt #levels `ℓsΓΔ⋯
+
   extendContextℓs #levels λ ℓs → let open PDataD (applyL ℓs) in do
-    Γ , Δ… ← Param ⊆ᵗ? ΓΔ…
+    Γ , Δ⋯ ← Param ⊆ᵗ? ΓΔ⋯
     extendCxtTel Param λ ps → let Index = Index ps in do
-      Δ , _ ← Index ⊆ᵗ? Δ…
+      Δ , _ ← Index ⊆ᵗ? Δ⋯
 
       let |Γ| = length Γ ; |Δ| = length Δ 
       
@@ -36,7 +38,9 @@ uncurryDataD D d = let open DataD D in do
         ∷ []
 
 macro
-  `uncurry : (D : DataD) → Name → Tactic
-  `uncurry D d hole = do
-    u ← uncurryDataD D d
-    unify hole u
+  genDataT : (D : DataD) → Name → Tactic
+  genDataT D d hole = do
+    `D ← quoteωTC D
+    checkType hole (def₁ (quote DataT) `D)
+    uncurryDataD D d >>= unify hole
+

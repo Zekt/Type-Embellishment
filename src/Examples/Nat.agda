@@ -15,8 +15,8 @@ NatD = genDataD ℕ
 
 -- [TODO] datatype wrapper
 
-NatT : DataT NatD
-NatT = `uncurry NatD ℕ
+--NatT : DataT NatD
+NatT = genDataT NatD ℕ
 
 NatC = genDataC NatD ℕ  -- [FIXME]
 

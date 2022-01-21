@@ -127,9 +127,9 @@ ListAnyOD = AnyOD ListC ListS
 unquoteDecl data ListAny constructor c₀ c₁ = defineByDataD ⌊ ListAnyOD ⌋ᵈ ListAny (c₀ ∷ c₁ ∷ [])
 
 ListAnyT : DataT ⌊ ListAnyOD ⌋ᵈ
-ListAnyT = (`uncurry ⌊ ListAnyOD ⌋ᵈ ListAny)
+ListAnyT = genDataT ⌊ ListAnyOD ⌋ᵈ ListAny
 
-ListAnyC = genDataC ⌊ ListAnyOD ⌋ᵈ  ListAny 
+ListAnyC = genDataC ⌊ ListAnyOD ⌋ᵈ ListAny 
 
 _∋_ : {A : Set ℓ} → List A → A → Set ℓ
 xs ∋ x = ListAny _ (x ≡_) xs  -- [FIXME]
