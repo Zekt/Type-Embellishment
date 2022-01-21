@@ -62,7 +62,6 @@ jobs:
           key: ${{ runner.os }}-${{ env.GHC_VERSION }}-${{ env.CABAL_VERSION }}-${{ env.AGDA_COMMIT }}
 
       - name: Set up the GHC environment
-        if: ${{ !steps.cache.outputs.cache-hit }}
         id: ghc-setup
         uses: haskell/actions/setup@v1
         with:
