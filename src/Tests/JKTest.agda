@@ -76,6 +76,8 @@ FoldC.equation foldℕC (inr (inl (_ , refl))) = refl
 -}
 
 -- META (specialising ‘fold-fusion NatC foldℕC’)
+unquoteDecl foldℕ-fusion = defineInd (fold-fusion NatC foldℕC) foldℕ-fusion
+{-
 foldℕ-fusion : {ℓs : Σ Level (λ _ → Σ Level (λ _ → ⊤))} (a : Set (fst ℓs))
   (a₁ : Set (fst (snd ℓs))) (a₂ : a → a₁) (a₃ : a) (a₄ : a → a)
   (a₅ : a₁) (a₆ : a₁ → a₁) (a₇ : a₂ a₃ ≡ a₅)
@@ -88,6 +90,7 @@ foldℕ-fusion a a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ (suc n) =
    (a₈ (foldℕ a a₃ a₄ n) (foldℕ a₁ a₅ a₆ n)
     (sym (foldℕ-fusion a a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ n)))
    refl
+-}
 
 -- USER (specialising a generic library component)
 indℕP : IndP
@@ -119,6 +122,8 @@ IndC.equation indℕ-is-ind (inr (inl (_ , refl))) = refl
 
 -- META
 ListD : DataD
+ListD = genDataD List
+{-
 ListD = record
   { #levels = 1
   ; applyL  = λ ℓs → let (ℓ , _) = ℓs in record
@@ -130,6 +135,7 @@ ListD = record
                         in (ι tt)
                          ∷ (σ A λ _ → ρ (ι tt) (ι tt))
                          ∷ [] } }
+-}
 
 -- META
 List-wrapper : DataT ListD
