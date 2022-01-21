@@ -32,8 +32,8 @@ notApp t = typeError $ termErr t ∷ strErr " is not an application witha name."
 notFun : Name → TC A
 notFun d = typeError $ nameErr d ∷ [ strErr " is not a function." ]
 
-notData : Name → TC A
-notData d = typeError $ nameErr d ∷ [ strErr " is not a datatype." ]
+notData : Term → TC A
+notData t = typeError $ termErr t ∷ [ strErr " is not a datatype." ]
 
 IMPOSSIBLE : TC A
 IMPOSSIBLE = typeError $ [ strErr "An impossible event occurs." ]

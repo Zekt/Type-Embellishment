@@ -94,7 +94,7 @@ getFunction d = do
 getDataDefinition : Name → TC (ℕ × Names)
 getDataDefinition d = do
   data-type pars cs ← getDefinition d
-    where _ → Err.notData d
+    where _ → Err.notData (def₀ d)
   return $ pars , cs
 
 getTelescope : Name → TC (Telescope × Type)

@@ -53,7 +53,7 @@ foldList : {ℓs : (Level × Level × ⊤)}
 foldList e f [] = e
 foldList e f (x ∷ xs) = f x (foldList e f xs)
 
-foldList-wrapper : FoldGT foldListP
+foldList-wrapper : FoldT foldListP
 foldList-wrapper _ ((A , tt) , X , e , f , tt) = foldList e f 
 
 foldList-is-fold : FoldC foldListP foldList-wrapper
@@ -109,7 +109,7 @@ foldIE : {ℓs : (Level × Level × Level × ⊤)}
 foldIE g f (tip x) = g x
 foldIE g f (bin y t u) = f y (foldIE g f t) (foldIE g f u)
 
-foldIE-wrapper : FoldGT foldIEP
+foldIE-wrapper : FoldT foldIEP
 foldIE-wrapper _ ((A , B , _) , X , g , f , tt) = foldIE g f
 
 foldIE-is-fold : FoldC foldIEP foldIE-wrapper
@@ -168,7 +168,7 @@ foldVec : {ℓs : (Level × Level × ⊤)}
 foldVec e f [] = e
 foldVec e f (x ∷ xs) = f x _ (foldVec e f xs)
 
-foldVec-wrapper : FoldGT foldVecP
+foldVec-wrapper : FoldT foldVecP
 foldVec-wrapper _ ((A , tt) , X , e , f , tt) {(n , tt)} = foldVec e f {n}
 
 foldVec-is-fold : FoldC foldVecP foldVec-wrapper

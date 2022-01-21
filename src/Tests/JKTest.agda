@@ -20,6 +20,8 @@ open import Generics.SimpleContainer.Any
 open import Generics.Reflection
 -- META
 NatD : DataD
+NatD = genDataD ℕ
+{-
 NatD = record
   { #levels = 0
   ; applyL  = λ _ → record
@@ -27,14 +29,16 @@ NatD = record
       ; Param  = []
       ; Index  = λ _ → []
       ; applyP = λ _ → ι tt ∷ ρ (ι tt) (ι tt) ∷ [] } }
+-}
 
 -- META
-ℕ-wrapper : DataT NatD
+-- ℕ-wrapper : DataT NatD
 ℕ-wrapper = genDataT NatD ℕ -- _ _ _ = ℕ
 
 -- META
-NatC : DataC NatD ℕ-wrapper
-NatC = genDataC NatD ℕ
+-- NatC : DataC NatD ℕ-wrapper
+NatC = genDataC NatD ℕ-wrapper
+
 {-
 NatC = record
   { toN   = λ { (inl           refl  ) → zero
@@ -64,8 +68,8 @@ foldℕ X z s (suc n) = s (foldℕ X z s n)
 -- foldℕ s z (suc n) = s (foldℕ s z n)
 
 -- META
-foldℕ-wrapper : FoldGT foldℕP
-foldℕ-wrapper = genFoldGT foldℕP foldℕ -- _ (_ , X , z , s , _) = foldℕ X z s
+foldℕ-wrapper : FoldT foldℕP
+foldℕ-wrapper = genFoldT foldℕP foldℕ -- _ (_ , X , z , s , _) = foldℕ X z s
 
 -- foldℕC : FoldC foldℕP foldℕ-wrapper
 foldℕC = genFoldC foldℕP foldℕ-wrapper
@@ -110,8 +114,8 @@ indℕ P z s  zero   = z
 indℕ P z s (suc n) = s n (indℕ P z s n)
 
 -- META
-indℕ-wrapper : IndGT indℕP
-indℕ-wrapper = genIndGT indℕP indℕ --  _ (_ , P , z , s , _) = indℕ P z s
+indℕ-wrapper : IndT indℕP
+indℕ-wrapper = genIndT indℕP indℕ --  _ (_ , P , z , s , _) = indℕ P z s
 
 -- indℕ-is-ind : IndC indℕP indℕ-wrapper
 indℕ-is-ind = genIndC indℕP indℕ-wrapper
@@ -143,7 +147,7 @@ List-wrapper = genDataT ListD List -- (ℓ , _) (A , _) _ = List A
 
 -- META
 ListC : DataC ListD List-wrapper
-ListC = genDataC ListD List
+ListC = genDataC ListD List-wrapper
 {-
 ListC = record
   { toN   = λ { (inl                refl  ) → []
@@ -178,8 +182,8 @@ length' (x ∷ xs) = suc (length' xs)
 -- length' A (x ∷ xs) = {! fold-base length'P length' A (x ∷ xs) !}
 
 -- META
-length'-wrapper : FoldGT length'P
-length'-wrapper = genFoldGT length'P length' -- _ A = length'
+length'-wrapper : FoldT length'P
+length'-wrapper = genFoldT length'P length' -- _ A = length'
 
 -- length'C : FoldC length'P length'-wrapper
 length'C = genFoldC length'P length'-wrapper
@@ -228,8 +232,8 @@ Vec-remember (x ∷ xs) = x ∷ Vec-remember xs
 -- Vec-remember A (x ∷ xs) = {! ind-base Vec-rememberP Vec-remember A (x ∷ xs) !}
 
 -- META
-Vec-remember-wrapper : IndGT Vec-rememberP
-Vec-remember-wrapper = genIndGT Vec-rememberP Vec-remember -- _ (A , _) = Vec-remember
+Vec-remember-wrapper : IndT Vec-rememberP
+Vec-remember-wrapper = genIndT Vec-rememberP Vec-remember -- _ (A , _) = Vec-remember
 
 -- Vec-rememberC : IndC Vec-rememberP Vec-remember-wrapper
 Vec-rememberC = genIndC Vec-rememberP Vec-remember-wrapper
@@ -246,8 +250,8 @@ fromVec []       = []
 fromVec (x ∷ xs) = x ∷ fromVec xs
 
 -- META
-fromVec-wrapper : FoldGT fromVecP
-fromVec-wrapper = genFoldGT fromVecP fromVec -- _ (A , _) = fromVec
+fromVec-wrapper : FoldT fromVecP
+fromVec-wrapper = genFoldT fromVecP fromVec -- _ (A , _) = fromVec
 
 -- fromVecC : FoldC fromVecP fromVec-wrapper
 fromVecC = genFoldC fromVecP fromVec-wrapper
@@ -280,8 +284,8 @@ inverse (x ∷ xs) =
    refl
 
 -- META
-inverse-wrapper : IndGT inverseP
-inverse-wrapper = genIndGT inverseP inverse -- _ (A , _) = inverse
+inverse-wrapper : IndT inverseP
+inverse-wrapper = genIndT inverseP inverse -- _ (A , _) = inverse
 
 open import Utils.Reflection
 

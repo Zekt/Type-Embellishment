@@ -25,7 +25,8 @@ data Λ : Set where
   lam : Λ → Λ
 
 UntypedTermD = genDataD Λ
-UntypedTermC = genDataC UntypedTermD Λ  -- [FIXME]
+UntypedTermT = genDataT UntypedTermD Λ
+UntypedTermC = genDataC UntypedTermD UntypedTermT  -- [FIXME]
 
 --------
 -- Simply typed λ-calculus
@@ -58,7 +59,8 @@ data _⊢_ : List Ty → Ty → Set where
         Γ ⊢ τ ⇒ τ'
 
 TypedTermD = genDataD _⊢_
-TypedTermC = genDataC TypedTermD _⊢_
+TypedTermT = genDataT TypedTermD _⊢_
+TypedTermC = genDataC TypedTermD TypedTermT
 
 TypedTermO : DataO TypedTermD UntypedTermD
 TypedTermO = record

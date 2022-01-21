@@ -23,8 +23,10 @@ open import Examples.Nat
 --------
 -- Connecting with the existing List datatype
 
+
 ListD = genDataD List
-ListC = genDataC ListD List  -- [FIXME]
+ListT = genDataT ListD List
+ListC = genDataC ListD ListT  -- [FIXME]
 
 ListO : DataO ListD NatD
 ListO = record
@@ -46,8 +48,8 @@ foldList : {ℓ ℓ₁ : Level} {A : Set ℓ₁} {B : Set ℓ} (z : B)
 foldList base f []       = base
 foldList base f (x ∷ xs) = f x (foldList base f xs)
 
-foldList-wrapper : FoldGT (fold-operator ListC)
-foldList-wrapper = genFoldGT (fold-operator ListC) foldList
+foldList-wrapper : FoldT (fold-operator ListC)
+foldList-wrapper = genFoldT (fold-operator ListC) foldList
 
 -- [TODO] fold fusion
 
@@ -59,8 +61,8 @@ foldList-wrapper = genFoldGT (fold-operator ListC) foldList
 lengthP : FoldP
 lengthP = forget ListC NatC ListO
 
-lengthGT : FoldGT lengthP
-lengthGT = genFoldGT lengthP length
+lengthGT : FoldT lengthP
+lengthGT = genFoldT lengthP length
 
 VecOD : DataOD ListD
 VecOD = AlgOD lengthP
@@ -84,7 +86,8 @@ data Vec (A : Set ℓ) : ℕ → Set ℓ where
   _∷_ : (a : A) {n : ℕ} (as : Vec A n) → Vec A (suc n)
 
 VecD′ = genDataD Vec
-VecC = genDataC VecD Vec  -- [FIXME]
+VecT = genDataT VecD Vec
+VecC = genDataC VecD VecT  -- [FIXME]
 
 -- [TODO] Add an option to choose if dot patterns are printed or not
 
@@ -116,7 +119,8 @@ data Len {A : Set ℓ} : ℕ → List A → Set ℓ where
   nil  : Len 0 []
   cons : {a : A} {n : ℕ} {as : List A} {l : Len n as} → Len (suc n) (a ∷ as)
 
-LenC = genDataC LenD Len
+LenT = genDataT LenD Len
+LenC = genDataC LenD LenT
 
 -- [TODO] Vec A n ≅ Σ[ as ∈ List A ] Len n as
 
@@ -135,10 +139,8 @@ ListAnyOD = AnyOD ListC ListS
 -- [FIXME]
 unquoteDecl data ListAny constructor c₀ c₁ = defineByDataD ⌊ ListAnyOD ⌋ᵈ ListAny (c₀ ∷ c₁ ∷ [])
 
-ListAnyT : DataT ⌊ ListAnyOD ⌋ᵈ
 ListAnyT = genDataT ⌊ ListAnyOD ⌋ᵈ ListAny
-
-ListAnyC = genDataC ⌊ ListAnyOD ⌋ᵈ ListAny 
+ListAnyC = genDataC ⌊ ListAnyOD ⌋ᵈ ListAnyT
 
 _∋_ : {A : Set ℓ} → List A → A → Set ℓ
 xs ∋ x = ListAny _ (x ≡_) xs  -- [FIXME]

@@ -84,14 +84,14 @@ macro
     checkType hole (def₁ (quote DataT) `D)
     uncurryDataD D d >>= unify hole
 
-  genFoldGT : (P : FoldP) → Name → Tactic
-  genFoldGT P d hole = do
+  genFoldT : (P : FoldP) → Name → Tactic
+  genFoldT P d hole = do
     `P ← quoteωTC P
-    checkType hole (def₁ (quote FoldGT) `P)
+    checkType hole (def₁ (quote FoldT) `P)
     uncurryFoldP P d >>= unify hole
 
-  genIndGT : (P : IndP) → Name → Tactic
-  genIndGT P d hole = do
+  genIndT : (P : IndP) → Name → Tactic
+  genIndT P d hole = do
     `P ← quoteωTC P
-    checkType hole (def₁ (quote IndGT) `P)
+    checkType hole (def₁ (quote IndT) `P)
     uncurryIndP P d >>= unify hole

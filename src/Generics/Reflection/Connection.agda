@@ -20,6 +20,16 @@ private
   pattern `FoldC x y     = def₂ (quote FoldC) x y
   pattern `IndC  x y     = def₂ (quote IndC)  x y
 
+DataToNativeName : (D : DataD) (N : DataT D) → TC Name
+DataToNativeName D N = do
+  extendContextℓs #levels λ ℓs → let Desc = applyL ℓs in
+    extendCxtTel (PDataD.Param Desc) λ ps →
+      extendCxtTel (PDataD.Index Desc ps) λ is → do
+        (def n _) ← quoteTC! (N ℓs ps is)
+          where t → notData t
+        return n
+  where open DataD D
+
 module _ (pars : ℕ) where
   conToClause : (c : Name) → TC (Telescope × Vars)
   conToClause c = < forgetTypes , cxtToVars 0 (`refl , `refl) > <$> getConTelescope c pars
@@ -53,14 +63,13 @@ module _ (pars : ℕ) where
     genIndC-equation = pat-lam₀ <$> genFromCons λ where
       (Γ , c , (_ , p) , _) → Γ ⊢ vArg (proj (quote (IndC.equation))) ∷ vArg p ∷ [] `= `refl
   
-genDataCT : (D : DataD) → (d : Name) → Tactic
-genDataCT D d hole = do
+genDataCT : (D : DataD) (N : DataT D) → Tactic
+genDataCT D N hole = do
   `D ← quoteωTC D
-  n  ← extendContextℓs #levels λ ℓs → length <$> fromTel (PDataD.Param (applyL ℓs))
-  `N ← uncurryDataD D d
+  `N ← quoteωTC N
+  hole ← checkType hole (`DataC `D `N)
 
-  checkedHole ← checkType hole (`DataC `D `N)
-  
+  d ← DataToNativeName  D N
   pars , cs ← getDataDefinition d
 
   `toN       ← genToNT       pars cs
@@ -68,33 +77,38 @@ genDataCT D d hole = do
   `fromN-toN ← genFromN-toNT pars cs 
   `toN-fromN ← genToN-fromNT pars cs 
 
-  noConstraints $ unify checkedHole $ `datac `toN `fromN `fromN-toN `toN-fromN
+  noConstraints $ unify hole $ `datac `toN `fromN `fromN-toN `toN-fromN
   where open DataD D
 
-genFoldCT : (P : FoldP) (f : FoldGT P) → Tactic
+genFoldCT : (P : FoldP) (f : FoldT P) → Tactic
 genFoldCT P f hole = do
   `P ← quoteωTC P
   `f ← quoteωTC f
   hole ← checkType hole $ `FoldC `P `f
+
   d ← FoldPToNativeName P
   pars , cs ← getDataDefinition d
+
   genFoldC-equation pars cs  >>= unify hole
   
-genIndCT : (P : IndP) (f : IndGT P) → Tactic
+genIndCT : (P : IndP) (f : IndT P) → Tactic
 genIndCT P f hole = do
   `P ← quoteωTC P
   `f ← quoteωTC f 
+
   hole ← checkType hole $ `IndC `P `f
+
   d ← IndPToNativeName P
   pars , cs ← getDataDefinition d
+
   genIndC-equation pars cs  >>= unify hole
 
 macro
-  genDataC : (D : DataD) (d : Name) → Tactic
+  genDataC : (D : DataD) (N : DataT D) → Tactic
   genDataC = genDataCT
 
-  genFoldC : (P : FoldP) (f : FoldGT P) → Tactic
+  genFoldC : (P : FoldP) (f : FoldT P) → Tactic
   genFoldC = genFoldCT
 
-  genIndC : (P : IndP) (f : IndGT P) → Tactic
+  genIndC : (P : IndP) (f : IndT P) → Tactic
   genIndC = genIndCT

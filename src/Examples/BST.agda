@@ -36,7 +36,8 @@ data B23Tree {Val : Set ℓ} (_≤_ : Val → Val → Set ℓ') : ℕ → Val �
 
 open import Utils.Reflection
 B23TreeD = genDataD B23Tree
-B23TreeC = genDataC B23TreeD B23Tree
+B23TreeT = genDataT B23TreeD B23Tree
+B23TreeC = genDataC B23TreeD B23TreeT
 
 B23TreeS : SCᵈ B23TreeD
 B23TreeS ℓs = record
@@ -57,7 +58,8 @@ B23TreeAnyOD = AnyOD B23TreeC B23TreeS
 -- (check the number of constructors)
 unquoteDecl data B23TreeAny constructor c0 c1 c2 c3 c4 c5 c6 c7 = defineByDataD ⌊ B23TreeAnyOD ⌋ᵈ B23TreeAny (c0 ∷ c1 ∷ c2 ∷ c3 ∷ c4 ∷ c5 ∷ c6 ∷ c7 ∷ [])
 
-B23TreeAnyC = genDataC ⌊ B23TreeAnyOD ⌋ᵈ B23TreeAny
+B23TreeAnyT = genDataT ⌊ B23TreeAnyOD ⌋ᵈ B23TreeAny
+B23TreeAnyC = genDataC ⌊ B23TreeAnyOD ⌋ᵈ B23TreeAnyT
 
 -- [FIXME]
 unquoteDecl lookupAnyB23T = defineFold (lookupAny B23TreeC B23TreeS B23TreeAnyC) lookupAnyB23T

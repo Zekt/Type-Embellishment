@@ -112,7 +112,7 @@ fold-fusionᶜˢ (D ∷ Ds) (_ , fs) (_ , gs) fold-fs fold-gs h (_ , hom) (inr n
 
 fold-fusion :
   ∀ {D N} (C : DataC D N) → let P = fold-operator C in
-  {fold : FoldGT P} → FoldC P fold → IndP
+  {fold : FoldT P} → FoldC P fold → IndP
 fold-fusion {D} C {fold} foldC = record
   { Conv    = C
   ; #levels = suc (suc (DataD.#levels D))

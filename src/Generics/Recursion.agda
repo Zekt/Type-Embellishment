@@ -44,8 +44,8 @@ record FoldP : Setω where
              → Algᶜˢ (PDataD.applyP (DataD.applyL Desc (level ℓs)) (param ps))
                      (Carrier ℓs ps)
 
-FoldGT : FoldP → Setω
-FoldGT P = let open FoldP P in
+FoldT : FoldP → Setω
+FoldT P = let open FoldP P in
          ∀ (ℓs) → let open PDataD (DataD.applyL Desc (level ℓs)) in
            (ps : ⟦ FoldP.Param P ℓs ⟧ᵗ) {is : ⟦ Index (param ps) ⟧ᵗ}
          → Native (level ℓs) (param ps) is → Carrier ℓs ps is
@@ -58,7 +58,7 @@ FoldNT P ℓs = Curriedᵗ true (FoldP.Param P ℓs) λ ps → Curriedᵗ false 
   where open FoldP P
         open PDataD (DataD.applyL Desc (level ℓs))
 
-fold-wrapper : (P : FoldP) → (∀ {ℓs} → FoldNT P ℓs) → FoldGT P
+fold-wrapper : (P : FoldP) → (∀ {ℓs} → FoldNT P ℓs) → FoldT P
 fold-wrapper P f ℓs ps {is} = uncurryᵗ (uncurryᵗ f ps) is
 
 fold-base : (P : FoldP) → ∀ {ℓs} → FoldNT P ℓs → FoldNT P ℓs
@@ -68,7 +68,7 @@ fold-base P {ℓs} rec = let open FoldP P in
   ∘ fmapᵈ Desc (λ {is} → uncurryᵗ (uncurryᵗ rec ps) is)
   ∘ DataC.fromN Conv
 
-record FoldC (P : FoldP) (f : FoldGT P) : Setω where
+record FoldC (P : FoldP) (f : FoldT P) : Setω where
   field
     equation : let open FoldP P in
              ∀ {ℓs ps is} (ns : ⟦ Desc ⟧ᵈ (Native (level ℓs) (param ps)) is)
@@ -95,8 +95,8 @@ record IndP : Setω where
              → IndAlgᶜˢ (PDataD.applyP (DataD.applyL Desc (level ℓs)) (param ps))
                         (DataC.toN Conv) (Carrier ℓs ps) lzero
 
-IndGT : IndP → Setω
-IndGT P = let open IndP P in
+IndT : IndP → Setω
+IndT P = let open IndP P in
         ∀ ℓs → let open PDataD (DataD.applyL Desc (level ℓs)) in
           (ps : ⟦ IndP.Param P ℓs ⟧ᵗ) {is : ⟦ Index (param ps) ⟧ᵗ}
         → (n : Native (level ℓs) (param ps) is) → Carrier ℓs ps is n
@@ -111,7 +111,7 @@ IndNT P ℓs = Curriedᵗ true  (IndP.Param P ℓs)  λ ps →
         where open IndP P
               open PDataD (DataD.applyL Desc (level ℓs))
 
-ind-wrapper : (P : IndP) → (∀ {ℓs} → IndNT P ℓs) → IndGT P
+ind-wrapper : (P : IndP) → (∀ {ℓs} → IndNT P ℓs) → IndT P
 ind-wrapper P f _ ps {is} = uncurryᵗ (uncurryᵗ f ps) is
 
 ind-base : (P : IndP) → (∀ {ℓs} → IndNT P ℓs → IndNT P ℓs)
@@ -123,7 +123,7 @@ ind-base P {ℓs} rec = let open IndP P in
                                     uncurryᵗ (uncurryᵗ rec ps) is)
                                  (DataC.fromN Conv n)))
 
-record IndC (P : IndP) (f : IndGT P) : Setω where
+record IndC (P : IndP) (f : IndT P) : Setω where
   field
     equation : let open IndP P in
              ∀ {ℓs ps is} (ns : ⟦ Desc ⟧ᵈ (Native (level ℓs) (param ps)) is)
