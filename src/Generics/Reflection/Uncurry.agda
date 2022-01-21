@@ -68,7 +68,5 @@ macro
   genFoldGT P d hole = do
     `P ← quoteωTC P
     checkType hole (def₁ (quote FoldGT) `P)
-    t ← uncurryFoldP P d
-    dprint $ termErr t ∷ []
-    unify hole t
+    uncurryFoldP P d >>= unify hole
 

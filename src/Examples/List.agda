@@ -17,6 +17,7 @@ open import Generics.Ornament.Algebraic.Isomorphism
 open import Generics.SimpleContainer
 open import Generics.SimpleContainer.Any
 
+open import Utils.Reflection
 open import Examples.Nat
 
 --------
@@ -38,7 +39,15 @@ ListO = record
 --------
 -- Connecting with the existing foldr function and deriving the fold fusion theorem
 
--- [TODO] connecting with foldr
+-- unquoteDecl foldList = defineFold (fold-operator ListC) foldList
+foldList : {ℓ ℓ₁ : Level} {A : Set ℓ₁} {B : Set ℓ} (z : B)
+           (a₃ : (a₄ : A) (z : B) → B) (l : List {ℓ₁} A) →
+           B
+foldList base f []       = base
+foldList base f (x ∷ xs) = f x (foldList base f xs)
+
+foldList-wrapper : FoldGT (fold-operator ListC)
+foldList-wrapper = genFoldGT (fold-operator ListC) foldList
 
 -- [TODO] fold fusion
 
@@ -50,7 +59,8 @@ ListO = record
 lengthP : FoldP
 lengthP = forget ListC NatC ListO
 
--- [TODO] connecting with the exisiting length function
+lengthGT : FoldGT lengthP
+lengthGT = genFoldGT lengthP length
 
 VecOD : DataOD ListD
 VecOD = AlgOD lengthP
@@ -81,7 +91,6 @@ VecC = genDataC VecD Vec  -- [FIXME]
 fromVecP : FoldP
 fromVecP = forget VecC ListC ⌈ VecOD ⌉ᵈ
 
--- [TODO] fromVec
 unquoteDecl fromVec = defineFold fromVecP fromVec
 
 -- [TODO] toVec

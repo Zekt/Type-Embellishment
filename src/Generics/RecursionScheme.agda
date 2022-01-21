@@ -128,18 +128,18 @@ fold-fusion {D} C {fold} foldC = record
               Homᶜˢ Dᶜˢ fs gs (λ {is} → uncurryᵗ h is)
   ; param   = fst
   ; Carrier = λ _ (ps , X , Y , h , fs , gs , _) is n →
-                uncurryᵗ h is (fold (ps , X , fs) n) ≡ fold (ps , Y , gs) n
+                uncurryᵗ h is (fold _ (ps , X , fs) n) ≡ fold _ (ps , Y , gs) n
   ; algebra = λ (ps , X , Y , h , fs , gs , hom) {is} ns all →
       let Dᶜˢ = PDataD.applyP (DataD.applyL D _) ps in
       begin
-        uncurryᵗ h is (fold (ps , X , fs) (DataC.toN C ns))
+        uncurryᵗ h is (fold _ (ps , X , fs) (DataC.toN C ns))
           ≡⟨ cong (uncurryᵗ h is) (FoldC.equation foldC ns) ⟩
-        uncurryᵗ h is (fold-opᶜˢ Dᶜˢ fs (fmapᶜˢ Dᶜˢ (fold (ps , X , fs)) ns))
-          ≡⟨ fold-fusionᶜˢ Dᶜˢ fs gs (fold (ps , X , fs)) (fold (ps , Y , gs))
+        uncurryᵗ h is (fold-opᶜˢ Dᶜˢ fs (fmapᶜˢ Dᶜˢ (fold _ (ps , X , fs)) ns))
+          ≡⟨ fold-fusionᶜˢ Dᶜˢ fs gs (fold _ (ps , X , fs)) (fold _ (ps , Y , gs))
                (λ {is} → uncurryᵗ h is) hom ns all ⟩
-        fold-opᶜˢ Dᶜˢ gs (fmapᶜˢ Dᶜˢ (fold (ps , Y , gs)) ns)
+        fold-opᶜˢ Dᶜˢ gs (fmapᶜˢ Dᶜˢ (fold _ (ps , Y , gs)) ns)
           ≡⟨ sym (FoldC.equation foldC ns) ⟩
-        fold (ps , Y , gs) (DataC.toN C ns)
+        fold _ (ps , Y , gs) (DataC.toN C ns)
       ∎ } where open ≡-Reasoning
 
 IndOpTʳ : {I : Set ℓⁱ} (D : RecD I rb) {N : I → Set ℓ} → ⟦ D ⟧ʳ N

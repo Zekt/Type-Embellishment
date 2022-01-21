@@ -124,9 +124,9 @@ remember {P} {f} C {N'} C' = let open FoldP P in record
   ; level   = level
   ; Param   = Param
   ; param   = param
-  ; Carrier = λ ℓs ps is n → N' ℓs ps (is , f ps n , tt)
+  ; Carrier = λ ℓs ps is n → N' ℓs ps (is , f ℓs ps n , tt)
   ; algebra = λ ps ns all → DataC.toN C'
       (subst (λ x → ⟦ ⌊ AlgOD P ⌋ᵈ ⟧ᵈ (N' _ ps) (_ , x , tt))
              (sym (FoldC.equation C ns))
              (rememberᶜˢ (PDataD.applyP (DataD.applyL Desc _) (param ps))
-               (algebra ps) (f ps) ns all)) }
+               (algebra ps) (f _ ps) ns all)) }

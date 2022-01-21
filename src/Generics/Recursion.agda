@@ -46,7 +46,7 @@ record FoldP : Setω where
 
 FoldGT : FoldP → Setω
 FoldGT P = let open FoldP P in
-         ∀ {ℓs} → let open PDataD (DataD.applyL Desc (level ℓs)) in
+         ∀ (ℓs) → let open PDataD (DataD.applyL Desc (level ℓs)) in
            (ps : ⟦ FoldP.Param P ℓs ⟧ᵗ) {is : ⟦ Index (param ps) ⟧ᵗ}
          → Native (level ℓs) (param ps) is → Carrier ℓs ps is
 
@@ -59,7 +59,7 @@ FoldNT P ℓs = Curriedᵗ true (FoldP.Param P ℓs) λ ps → Curriedᵗ false 
         open PDataD (DataD.applyL Desc (level ℓs))
 
 fold-wrapper : (P : FoldP) → (∀ {ℓs} → FoldNT P ℓs) → FoldGT P
-fold-wrapper P f ps {is} = uncurryᵗ (uncurryᵗ f ps) is
+fold-wrapper P f ℓs ps {is} = uncurryᵗ (uncurryᵗ f ps) is
 
 fold-base : (P : FoldP) → ∀ {ℓs} → FoldNT P ℓs → FoldNT P ℓs
 fold-base P {ℓs} rec = let open FoldP P in
@@ -72,7 +72,7 @@ record FoldC (P : FoldP) (f : FoldGT P) : Setω where
   field
     equation : let open FoldP P in
              ∀ {ℓs ps is} (ns : ⟦ Desc ⟧ᵈ (Native (level ℓs) (param ps)) is)
-             → f ps (DataC.toN Conv ns) ≡ algebra ps (fmapᵈ Desc (f ps) ns)
+             → f ℓs ps (DataC.toN Conv ns) ≡ algebra ps (fmapᵈ Desc (f ℓs ps) ns)
 
 record IndP : Setω where
   field

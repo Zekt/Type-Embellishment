@@ -13,17 +13,15 @@ open import Generics.RecursionScheme
 
 NatD = genDataD ℕ
 
--- [TODO] datatype wrapper
-
---NatT : DataT NatD
 NatT = genDataT NatD ℕ
 
 NatC = genDataC NatD ℕ  -- [FIXME]
 
 -- [TODO] print function definitions directly
 
--- [TODO] fold wrapper & connection
 unquoteDecl foldℕ = defineFold (fold-operator NatC) foldℕ  -- [FIXME]
+foldℕ-wrapper = genFoldGT (fold-operator NatC) foldℕ 
+
 -- [TODO] fold fusion
 
 unquoteDecl indℕ = defineInd (ind-operator NatC) indℕ
