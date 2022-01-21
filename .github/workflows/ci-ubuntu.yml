@@ -1,0 +1,98 @@
+## Adapted from the agda/agda-stdlib workflow
+
+name: Ubuntu build
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+########################################################################
+## CONFIGURATION
+##
+## See SETTINGS for the most important configuration variable: AGDA_COMMIT.
+## It has to be defined as a build step because it is potentially branch
+## dependent.
+##
+## As for the rest:
+##
+## Basically do not touch GHC_VERSION and CABAL_VERSION as long as
+## they aren't a problem in the build. If you have time to waste, it
+## could be worth investigating whether newer versions of ghc produce
+## more efficient Agda executable and could cut down the build time.
+## Just be aware that actions are flaky and small variations are to be
+## expected.
+##
+## The CABAL_INSTALL variable only passes `-O1` optimisations to ghc
+## because github actions cannot currently handle a build using `-O2`.
+## To be experimented with again in the future to see if things have
+## gotten better.
+##
+########################################################################
+
+env:
+  GHC_VERSION: 8.10.7
+  CABAL_VERSION: latest
+  CABAL_BIN : $HOME/.local/bin
+  CABAL_INSTALL: cabal install --installdir=$HOME/.local/bin --overwrite-policy=always --ghc-options='+RTS -M6G -RTS'
+  AGDA_REPO   : L-TChen/agda
+  AGDA_COMMIT : data ## b940ac9a3bcc9408e5159f82231ebdd8709e4b52
+
+jobs:
+  test-cubical:
+    runs-on: ubuntu-latest
+    steps:
+      ########################################################################
+      ## CACHING
+      ########################################################################
+      # This caching step allows us to save a lot of building time by only
+      # downloading ghc and cabal and rebuilding Agda if absolutely necessary
+      # i.e. if we change either the version of Agda, ghc, or cabal that we want
+      # to use for the build.
+      - name: Cache cabal packages
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: |
+            $HOME/.local/bin
+            ~/.local/bin
+            ~/.cabal/
+          key: ${{ runner.os }}-${{ env.GHC_VERSION }}-${{ env.CABAL_VERSION }}-${{ env.AGDA_COMMIT }}
+
+      - name: Set up the GHC environment
+        if: ${{ !steps.cache.outputs.cache-hit }}
+        id: ghc-setup
+        uses: haskell/actions/setup@v1
+        with:
+          ghc-version: ${{ env.GHC_VERSION }}
+          cabal-version: ${{ env.CABAL_VERSION }}
+
+      - name: Create directory for binary
+        run: |
+          mkdir -p ${{ env.CABAL_BIN }}
+          echo ${{ env.CABAL_BIN }} >> $GITHUB_PATH
+
+      - name: Check out Agda from GitHub
+        uses: actions/checkout@v2
+        if: ${{ !steps.cache.outputs.cache-hit }}
+        with:
+          repository: ${{ env.AGDA_REPO }}
+          ref: ${{ env.AGDA_COMMIT }}
+          path: agda
+
+      - name: Install Agda
+        if: ${{ !steps.cache.outputs.cache-hit }}
+        run: |
+          cd agda
+          ${{ env.CABAL_INSTALL }}
+          strip ${{ env.CABAL_BIN }}/agda
+
+      - name: Checkout the repo
+        uses: actions/checkout@v2
+
+      - name: Check everything
+        run: |
+          make 
+
