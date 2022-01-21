@@ -133,10 +133,12 @@ ListD = record
 
 -- META
 List-wrapper : DataT ListD
-List-wrapper (ℓ , _) (A , _) _ = List A
+List-wrapper = genDataT ListD List -- (ℓ , _) (A , _) _ = List A
 
 -- META
 ListC : DataC ListD List-wrapper
+ListC = genDataC ListD List
+{-
 ListC = record
   { toN   = λ { (inl                refl  ) → []
               ; (inr (inl (a , as , refl))) → a ∷ as }
@@ -146,6 +148,7 @@ ListC = record
                   ; (inr (inl (a , as , refl))) → refl }
   ; toN-fromN = λ { []       → refl
                   ; (a ∷ as) → refl } }
+-}
 
 -- USER
 ListD/NatD : DataO ListD NatD
@@ -170,7 +173,7 @@ length' (x ∷ xs) = suc (length' xs)
 
 -- META
 length'-wrapper : FoldGT length'P
-length'-wrapper _ A = length'
+length'-wrapper = genFoldGT length'P length' -- _ A = length'
 
 -- length'C : FoldC length'P length'-wrapper
 length'C = genFoldC length'P length'-wrapper
@@ -193,7 +196,7 @@ data Vec (A : Set ℓ) : ℕ → Set ℓ where
 
 -- META
 Vec-wrapper : DataT VecD
-Vec-wrapper (ℓ , _) (A , _) (_ , n , _) = Vec A n
+Vec-wrapper = genDataT VecD Vec -- (ℓ , _) (A , _) (_ , n , _) = Vec A n
 
 VecC : DataC VecD Vec-wrapper
 VecC = record
