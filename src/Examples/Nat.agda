@@ -25,3 +25,5 @@ foldℕ-wrapper = genFoldGT (fold-operator NatC) foldℕ
 -- [TODO] fold fusion
 
 unquoteDecl indℕ = defineInd (ind-operator NatC) indℕ
+
+indℕ-wrapper = genIndGT (ind-operator NatC) indℕ

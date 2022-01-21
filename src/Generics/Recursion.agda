@@ -97,7 +97,7 @@ record IndP : Setω where
 
 IndGT : IndP → Setω
 IndGT P = let open IndP P in
-        ∀ {ℓs} → let open PDataD (DataD.applyL Desc (level ℓs)) in
+        ∀ ℓs → let open PDataD (DataD.applyL Desc (level ℓs)) in
           (ps : ⟦ IndP.Param P ℓs ⟧ᵗ) {is : ⟦ Index (param ps) ⟧ᵗ}
         → (n : Native (level ℓs) (param ps) is) → Carrier ℓs ps is n
 
@@ -112,7 +112,7 @@ IndNT P ℓs = Curriedᵗ true  (IndP.Param P ℓs)  λ ps →
               open PDataD (DataD.applyL Desc (level ℓs))
 
 ind-wrapper : (P : IndP) → (∀ {ℓs} → IndNT P ℓs) → IndGT P
-ind-wrapper P f ps {is} = uncurryᵗ (uncurryᵗ f ps) is
+ind-wrapper P f _ ps {is} = uncurryᵗ (uncurryᵗ f ps) is
 
 ind-base : (P : IndP) → (∀ {ℓs} → IndNT P ℓs → IndNT P ℓs)
 ind-base P {ℓs} rec = let open IndP P in
@@ -127,4 +127,4 @@ record IndC (P : IndP) (f : IndGT P) : Setω where
   field
     equation : let open IndP P in
              ∀ {ℓs ps is} (ns : ⟦ Desc ⟧ᵈ (Native (level ℓs) (param ps)) is)
-             → f ps (DataC.toN Conv ns) ≡ algebra ps _ (ind-fmapᵈ Desc (f ps) ns)
+             → f _ ps (DataC.toN Conv ns) ≡ algebra ps _ (ind-fmapᵈ Desc (f _ ps) ns)

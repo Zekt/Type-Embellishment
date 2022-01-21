@@ -13,7 +13,8 @@ open import Generics.Description
 open import Generics.Reflection.Telescope
 
 ------------------------------------------------------------------------
--- Meta-level currying operations
+-- Meta-level uncurrying operations
+-- [TODO] Unify all of the following
 
 uncurryDataD : (D : DataD) → Name → TC Term
 uncurryDataD D d = let open DataD D in do
@@ -54,9 +55,28 @@ uncurryFoldP P d = let open FoldP P in do
       (_ , p₂) , (as₂ , _) ← telToVars |Δ| (`tt , `tt) PsTel Γ
       (_ , p₃) , (as₃ , _) ← telToVars 0 (`tt , `tt) Index Δ
       return $ pat-lam₀ $
-        ((forgetTypes $ `ℓs <> Γ <> Δ) ⊢ vArg p₁ ∷ vArg p₂ ∷ hArg p₃ ∷ [] `= def d (as₁ <> as₂ <> as₃) )
+        ((`ℓs <> Γ <> Δ) ⊢ vArg p₁ ∷ vArg p₂ ∷ hArg p₃ ∷ [] `= def d (as₁ <> as₂ <> as₃) )
         ∷ []
 
+uncurryIndP : (P : IndP) → Name → TC Term
+uncurryIndP P d = let open IndP P in do
+  `A ← getType d
+  let `ℓsΓΔ⋯ , _   = ⇑ `A ⦂ Telescope × Type
+  let `ℓs    , ΓΔ⋯ = splitAt #levels `ℓsΓΔ⋯
+  extendContextℓs #levels λ ℓs → do
+    let PsTel = Param ℓs
+    Γ , Δ⋯ ← PsTel ⊆ᵗ? ΓΔ⋯
+    extendCxtTel PsTel λ ps → do
+      let Index = PDataD.Index (DataD.applyL Desc (level ℓs)) (param ps)
+      Δ , _ ← Index ⊆ᵗ? Δ⋯ 
+
+      let |Γ| = length Γ ; |Δ| = length Δ
+      let ((_ , p₁) , as₁ , _) = cxtToVars (|Γ| + |Δ|) (`tt , `tt) `ℓs
+      (_ , p₂) , (as₂ , _) ← telToVars |Δ| (`tt , `tt) PsTel Γ
+      (_ , p₃) , (as₃ , _) ← telToVars 0 (`tt , `tt) Index Δ
+      return $ pat-lam₀ $
+        ((`ℓs <> Γ <> Δ) ⊢ vArg p₁ ∷ vArg p₂ ∷ hArg p₃ ∷ [] `= def d (as₁ <> as₂ <> as₃) )
+        ∷ []
 macro
   genDataT : (D : DataD) → Name → Tactic
   genDataT D d hole = do
@@ -70,3 +90,8 @@ macro
     checkType hole (def₁ (quote FoldGT) `P)
     uncurryFoldP P d >>= unify hole
 
+  genIndGT : (P : IndP) → Name → Tactic
+  genIndGT P d hole = do
+    `P ← quoteωTC P
+    checkType hole (def₁ (quote IndGT) `P)
+    uncurryIndP P d >>= unify hole

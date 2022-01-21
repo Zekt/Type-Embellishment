@@ -101,7 +101,7 @@ indℕ P z s (suc n) = s n (indℕ P z s n)
 
 -- META
 indℕ-wrapper : IndGT indℕP
-indℕ-wrapper (_ , P , z , s , _) = indℕ P z s
+indℕ-wrapper _ (_ , P , z , s , _) = indℕ P z s
 
 indℕ-is-ind : IndC indℕP indℕ-wrapper
 IndC.equation indℕ-is-ind (inl           refl  ) = refl
@@ -207,7 +207,7 @@ Vec-remember (x ∷ xs) = x ∷ Vec-remember xs
 
 -- META
 Vec-remember-wrapper : IndGT Vec-rememberP
-Vec-remember-wrapper (A , _) = Vec-remember
+Vec-remember-wrapper _ (A , _) = Vec-remember
 
 Vec-rememberC : IndC Vec-rememberP Vec-remember-wrapper
 IndC.equation Vec-rememberC (inl               refl  ) = refl
@@ -255,7 +255,7 @@ inverse (x ∷ xs) =
 
 -- META
 inverse-wrapper : IndGT inverseP
-inverse-wrapper (A , _) = inverse
+inverse-wrapper _ (A , _) = inverse
 
 inverseC : IndC inverseP inverse-wrapper
 IndC.equation inverseC (inl                   refl  ) = refl
