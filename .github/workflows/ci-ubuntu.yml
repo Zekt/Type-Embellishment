@@ -41,7 +41,7 @@ env:
   AGDA_COMMIT : data ## b940ac9a3bcc9408e5159f82231ebdd8709e4b52
 
 jobs:
-  test-cubical:
+  test:
     runs-on: ubuntu-latest
     steps:
       ########################################################################
