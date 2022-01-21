@@ -77,7 +77,8 @@ NatD = record
 natD' : DataD
 natD' = genDataD ℕ
 
-NatC = genDataC NatD ℕ
+NatT = genDataT NatD ℕ
+NatC = genDataC NatD NatT
 
 unquoteDecl data Nat constructor z s = defineByDataD NatD Nat (z ∷ s ∷ [])
 
@@ -95,7 +96,8 @@ data Tree {ℓ : Level} (A : Set ℓ) : Set ℓ where
 
 -- unquoteDecl data Tree constructor leaf node = defineByDataD TreeD Tree (leaf ∷ node ∷ [])
 
-TreeC = genDataC TreeD Tree
+TreeT = genDataT TreeD Tree
+TreeC = genDataC TreeD TreeT
 --
 ListD : DataD
 ListD = record
@@ -120,7 +122,8 @@ _ : ListD ≡ω ListD'
 _ = refl
 
 -- ListC : DataCᶜ ListD List
-ListC = genDataC ListD List  
+ListT = genDataT ListD List
+ListC = genDataC ListD ListT  
 
 unquoteDecl data List' constructor nil cons =
   defineByDataD ListD List' (nil ∷ cons ∷ [])
@@ -148,7 +151,8 @@ DataD.applyL  LenD (ℓ , _) = record
   }
   
 -- LenC : DataCᶜ LenD Len
-LenC =  genDataC LenD Len  
+LenT = genDataT LenD Len
+LenC =  genDataC LenD LenT  
 --   dataC
 --   (λ { (inl refl) → z {_} {_} ; (inr (inl (x , y , xs , ys , p , refl))) → s {_} {_} {x} {y} {xs} {ys} p })
 --   (λ { z → inl refl ; (s {x} {y} {xs} {ys} p) → inr (inl (x , y , xs , ys , p , refl)) })
@@ -177,10 +181,11 @@ data Pointwise {a b ℓ} (A : Set a) (B : Set b) (R : REL A B ℓ) : REL (Maybe 
   just    : ∀ {x y} → R x y → Pointwise A B R (just x) (just y)
   nothing : Pointwise A B R nothing nothing
 
-pointwiseD = genDataD Pointwise
-PointwiseC = genDataC pointwiseD Pointwise
+PointwiseD = genDataD Pointwise
+PointwiseT = genDataT PointwiseD Pointwise
+PointwiseC = genDataC PointwiseD PointwiseT
 
-unquoteDecl data Pointwise' constructor just' nothing' = defineByDataD pointwiseD Pointwise' (just' ∷ nothing' ∷ [])
+unquoteDecl data Pointwise' constructor just' nothing' = defineByDataD PointwiseD Pointwise' (just' ∷ nothing' ∷ [])
 
 {- dataC
   (genToNT List)
@@ -200,27 +205,31 @@ data Vec (A : Set ℓ) : ℕ → Set ℓ where
   _∷_ : (x : A) → {n : ℕ} → (xs : Vec A n) → Vec A (suc n)
 
 VecD : DataD
+VecD = genDataD Vec
+{-
 VecD = record
   { #levels = 1
   ; applyL  = λ { (ℓ , tt) → record
     { alevel = ℓ
     ; Param                 = [ A ∶ Set ℓ ] []
-    ; Index                 = λ _ → [ _ ∶ Nat ] []
+    ; Index                 = λ _ → [ _ ∶ ℕ ] []
     ; applyP                = λ where
       (A , tt) →
-        ι (z , tt)
+        ι (zero , tt)
         -- Vec A 0
-        ∷ σ[ _ ∶ A ] σ[ n ∶ Nat ] (ρ (ι (n , tt)) (ι (s n , tt)))
+        ∷ σ[ _ ∶ A ] σ[ n ∶ ℕ ] (ρ (ι (n , tt)) (ι (suc n , tt)))
         -- (x : A) → (n : ℕ) → Vec A n → Vec A (suc n)
         ∷ []
     } }
   }
+-}
 
 VecD' : DataD
 VecD' = genDataD Vec
 
 -- VecC : DataCᶜ VecD' Vec
-VecC = genDataC VecD' Vec
+VecT = genDataT VecD Vec
+VecC = genDataC VecD' VecT
 
 -- generated DataC
 VecC′ : DataC VecD' λ { ℓs (A , tt) (n , tt) → Vec A n }
