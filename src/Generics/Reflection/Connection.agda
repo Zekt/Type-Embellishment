@@ -90,7 +90,16 @@ genFoldCT P f hole = do
   pars , cs ← getDataDefinition d
 
   genFoldC-equation pars cs  >>= unify hole
-  
+
+genFoldCT' : (P : FoldP) → Name → Tactic
+genFoldCT' P d hole = do
+  `t ← uncurryFoldP P d
+  d ← FoldPToNativeName P
+  pars , cs ← getDataDefinition d
+  `P ← quoteωTC P
+  hole ← checkType hole $ `FoldC `P `t
+  genFoldC-equation pars cs >>= unify hole
+
 genIndCT : (P : IndP) (f : IndT P) → Tactic
 genIndCT P f hole = do
   `P ← quoteωTC P
@@ -103,6 +112,15 @@ genIndCT P f hole = do
 
   genIndC-equation pars cs  >>= unify hole
 
+genIndCT' : (P : IndP) → Name → Tactic
+genIndCT' P d hole = do
+  `t ← uncurryIndP P d
+  d ← IndPToNativeName P
+  pars , cs ← getDataDefinition d
+  `P ← quoteωTC P
+  hole ← checkType hole $ `IndC `P `t
+  genIndC-equation pars cs >>= unify hole
+
 macro
   genDataC : (D : DataD) (N : DataT D) → Tactic
   genDataC = genDataCT
@@ -110,5 +128,11 @@ macro
   genFoldC : (P : FoldP) (f : FoldT P) → Tactic
   genFoldC = genFoldCT
 
+  genFoldC' : (P : FoldP) → Name → Tactic
+  genFoldC' = genFoldCT'
+
   genIndC : (P : IndP) (f : IndT P) → Tactic
   genIndC = genIndCT
+
+  genIndC' : (P : IndP) → Name → Tactic
+  genIndC' = genIndCT'
