@@ -58,9 +58,6 @@ FoldNT P ℓs = Curriedᵗ true (FoldP.Param P ℓs) λ ps → Curriedᵗ false 
   where open FoldP P
         open PDataD (DataD.applyL Desc (level ℓs))
 
-fold-wrapper : (P : FoldP) → (∀ {ℓs} → FoldNT P ℓs) → FoldT P
-fold-wrapper P f ℓs ps {is} = uncurryᵗ (uncurryᵗ f ps) is
-
 fold-base : (P : FoldP) → ∀ {ℓs} → FoldNT P ℓs → FoldNT P ℓs
 fold-base P {ℓs} rec = let open FoldP P in
   curryᵗ λ ps → curryᵗ λ is →
@@ -110,9 +107,6 @@ IndNT P ℓs = Curriedᵗ true  (IndP.Param P ℓs)  λ ps →
            → Carrier ℓs ps is n
         where open IndP P
               open PDataD (DataD.applyL Desc (level ℓs))
-
-ind-wrapper : (P : IndP) → (∀ {ℓs} → IndNT P ℓs) → IndT P
-ind-wrapper P f _ ps {is} = uncurryᵗ (uncurryᵗ f ps) is
 
 ind-base : (P : IndP) → (∀ {ℓs} → IndNT P ℓs → IndNT P ℓs)
 ind-base P {ℓs} rec = let open IndP P in
