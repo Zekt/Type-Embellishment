@@ -56,13 +56,13 @@ formatErrorPart = formatErrorParts ∘ [_]
 
 defineUnify : String → Type → Term → Tactic
 defineUnify ns ty tm hole = do
-  checkedHole ← checkType hole ty
+--  checkedHole ← checkType hole ty
 
   n ← freshName ns
   declareDef (vArg n) ty
   defineFun n [ [] ⊢ [] `= tm ]
 
-  unify checkedHole (def₀ n)
+  unify hole (def₀ n)
   
 evalTC : TC A → Tactic
 evalTC {A = A} c hole = do

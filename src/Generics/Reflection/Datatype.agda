@@ -181,9 +181,8 @@ reifyData d = do
 macro
   genDataD : Name → Tactic
   genDataD d hole = do
-    ds ← formatErrorPart $ nameErr d
     t ← reifyData d
-    defineUnify (ds <> "DataD") `DataD t hole
+    defineUnify "_" `DataD t hole
 
 -- Currently unusable because module names are always printed.
 macro

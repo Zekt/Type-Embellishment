@@ -109,8 +109,6 @@ genIndCT' P f hole = do
   d ← IndPToNativeName P
   pars , cs ← getDataDefinition d
 
---  t ← genIndC-equation pars cs 
---  defineUnify "_" (`IndC `P `f) t hole
   hole ← checkType hole $ `IndC `P `f
   genIndC-equation pars cs  >>= unify hole
 
