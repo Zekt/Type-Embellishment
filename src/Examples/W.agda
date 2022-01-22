@@ -15,8 +15,6 @@ open import Generics.Ornament.Algebraic
 open import Generics.SimpleContainer
 open import Generics.SimpleContainer.Any
 
-open import Examples.Nat
-
 data W (A : Set ℓ) (B : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
   sup : (a : A) → (B a → W A B) → W A B
 
@@ -46,18 +44,18 @@ WS _ = record
   ; pos = (true ∷ tt ∷ []) ∷ []
   ; coe = λ _ → (refl ,ωω λ _ → lift tt) ,ωω lift tt }
 
-WAnyOD : DataOD NatD
-WAnyOD = AnyOD WC WS
+WAnyD : DataD
+WAnyD = ⌊ AnyOD WC WS ⌋ᵈ
 
--- unquoteDecl data WAny constructor c0 c1 = defineByDataD ⌊ WAnyOD ⌋ᵈ WAny (c0 ∷ c1 ∷ [])
+-- unquoteDecl data WAny constructor c0 c1 = defineByDataD WAnyD WAny (c0 ∷ c1 ∷ [])
 data WAny {A : Set ℓ} {B : A → Set ℓ'} (P : A → Set ℓ'') : W A B → Set (ℓ ⊔ ℓ' ⊔ ℓ'') where
   here  : ∀ {a ws} → P a → WAny P (sup a ws)
   there : ∀ {a ws} (b : B a) → WAny P (ws b) → WAny P (sup a ws)
 
-WAnyT : DataT ⌊ WAnyOD ⌋ᵈ
+WAnyT : DataT WAnyD
 WAnyT _ ((A , B , tt) , P , tt) (tt , x , tt) = WAny P x
 
-WAnyC = genDataC ⌊ WAnyOD ⌋ᵈ WAnyT
+WAnyC = genDataC WAnyD WAnyT
 
 lookupWAnyP : FoldP
 lookupWAnyP = lookupAny WC WS WAnyC

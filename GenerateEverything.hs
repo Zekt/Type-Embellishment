@@ -49,8 +49,9 @@ withKModules = map modToFile
   , "Tests.JKTest"
   , "Tests.SCMTest"
   , "Examples.List"
-  , "Examples.BST"
   , "Examples.STLC"
+  , "Examples.BST"
+  , "Examples.W"
   ]
 
 isWithKModule :: FilePath -> Bool
