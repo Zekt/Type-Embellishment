@@ -4,7 +4,6 @@ module Examples.STLC where
 
 open import Prelude
 
-open import Generics.Telescope
 open import Generics.Description
 open import Generics.Recursion
 open import Generics.Reflection

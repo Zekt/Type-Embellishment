@@ -4,7 +4,6 @@ module Examples.List where
 
 open import Prelude
 
-open import Generics.Telescope
 open import Generics.Description
 open import Generics.Recursion
 open import Generics.Reflection
@@ -17,7 +16,6 @@ open import Generics.Ornament.Algebraic.Isomorphism
 open import Generics.SimpleContainer
 open import Generics.SimpleContainer.Any
 
-open import Utils.Reflection
 open import Examples.Nat
 
 --------
