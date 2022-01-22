@@ -67,7 +67,7 @@ TypedTermO = record
   ; applyL = λ _ → record
       { param  = λ _ → tt
       ; index  = λ _ _ → tt
-      ; applyP = λ _ → (Δ[ Γ ] Δ[ τ ] Δ[ i ] ∇ (toℕ _ _ i) ι)  -- [FIXME]
+      ; applyP = λ _ → (Δ[ Γ ] Δ[ τ ] Δ[ i ] ∇ (toℕ i) ι)
                    ∷ ∺ (Δ[ Γ ] Δ[ τ ] Δ[ τ' ] ρ ι (ρ ι ι))
                    ∷ ∺ (Δ[ τ ] Δ[ Γ ] Δ[ τ' ] ρ ι ι) ∷ ∺ [] } }
 
@@ -76,7 +76,7 @@ toΛP = forget TypedTermC UntypedTermC TypedTermO
 
 -- unquoteDecl toΛ = defineFold toΛP toΛ
 toΛ : Γ ⊢ τ → Λ
-toΛ (var i  ) = var (toℕ _ _ i)   -- [FIXME]
+toΛ (var i  ) = var (toℕ i)
 toΛ (app t u) = app (toΛ t) (toΛ u)
 toΛ (lam t  ) = lam (toΛ t)
 
@@ -99,16 +99,16 @@ infix 3 _⊢_∶_
 --   defineByDataD ⌊ TypingOD ⌋ᵈ Typing (var' ∷ app' ∷ lam' ∷ [])
 data _⊢_∶_ : List Ty → Λ → Ty → Set₀ where
 
-  var : ∀ {Γ τ} (i : ListAny Ty (_≡_ τ) Γ)
-      → ------------------------------
-        Γ ⊢ var (toℕ Ty (_≡_ τ) i) ∶ τ
+  var : (i : Γ ∋ τ)
+      → -------------------
+        Γ ⊢ var (toℕ i) ∶ τ
 
-  app : ∀ {Γ τ τ' t} → Γ ⊢ t ∶ τ ⇒ τ'
-      → ∀ {u}        → Γ ⊢ u ∶ τ
-      → -----------------------------
+  app : ∀ {t} → Γ ⊢ t ∶ τ ⇒ τ'
+      → ∀ {u} → Γ ⊢ u ∶ τ
+      → ----------------------
         Γ ⊢ app t u ∶ τ'
-  lam : ∀ {τ Γ τ' t} → τ ∷ Γ ⊢ t ∶ τ'
-      → -----------------------------
+  lam : ∀ {t} → τ ∷ Γ ⊢ t ∶ τ'
+      → ----------------------
         Γ ⊢ lam t ∶ τ ⇒ τ'
 
 TypingT : DataT ⌊ TypingOD ⌋ᵈ
@@ -123,7 +123,7 @@ fromTypingP : FoldP
 fromTypingP = forget TypingC TypedTermC ⌈ TypingOD ⌉ᵈ
 
 -- unquoteDecl fromTyping = defineFold fromTypingP fromTyping
-fromTyping : ∀ {Γ τ t} (z : Γ ⊢ t ∶ τ) → Γ ⊢ τ
+fromTyping : ∀ {t} → Γ ⊢ t ∶ τ → Γ ⊢ τ
 fromTyping (var i  ) = var i
 fromTyping (app d e) = app (fromTyping d) (fromTyping e)
 fromTyping (lam d  ) = lam (fromTyping d)
@@ -178,7 +178,7 @@ to-fromTypingP = remember-forget-inv toΛC TypingC toTypingC fromTypingC (inl Ty
 
 -- unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
 -- [FAIL] too slow; manually case-split and elaborate-and-give
-to-fromTyping : ∀ {Γ τ t} (d : Γ ⊢ t ∶ τ)
+to-fromTyping : ∀ {t} (d : Γ ⊢ t ∶ τ)
               → (toΛ (fromTyping d) , toTyping (fromTyping d))
               ≡ ((t , d) ⦂ Σ[ t' ∈ Λ ] Γ ⊢ t' ∶ τ)  -- [FAIL] manual type annotation
 to-fromTyping (var i) = refl
@@ -218,3 +218,5 @@ to-fromTyping (lam {τ} {Γ} {τ'} d) =
            (cong (λ p → lam (fst p) , fst p , snd p , refl) (to-fromTyping d))
            refl))))))))
    refl
+
+to-fromTypingC = genIndC to-fromTypingP (genIndT to-fromTypingP to-fromTyping)

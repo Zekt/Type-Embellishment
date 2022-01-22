@@ -440,6 +440,8 @@ fold-operator {D} C = record
 
 \subsection{Interactive User Interface}
 
+\subsection{Automatic Resolution of Arguments to Generic Programs}
+
 \section{Discussion}
 
 \citet{Gibbons-DGP, Altenkirch-GP-within-DTP, Pickering-staged-SoP, Yallop-staged-generic-programming, de-Vries-masters-thesis, Jones-partial-evaluation, Chapman-type-theory-should-eat-itself, Christiansen-elaborator-reflection, Kovacs-universe-hierarchies, Allais-binding-syntax-universe-JFP, McBride-ornaments, Ko-OAOAOO, Chen-Mtac-Agda}
@@ -449,6 +451,10 @@ fold-operator {D} C = record
 \todo[inline]{From the angle of datatype-generic programming, the generic constructions should work on native datatypes and functions for maximum interoperability with language facilities and other libraries, and the gap between generic and native entities can be filled straightforwardly with (powerful enough) metaprogramming.
 From the angle of metaprogramming, one way to offer better correctness guarantees about the meta-level constructions is to introduce types, and (dependently typed) datatype-generic programming already provides a working solution for typing a good range of the constructions.
 Each of the two programming disciplines works nicely as the other's natural extension.}
+
+\todo[inline]{The native world as the common playground of multiple generic libraries}
+
+\todo[inline]{Suggestions for the future evolution of Agda or the design of new languages with elaborator reflection}
 
 %%
 %% The acknowledgments section is defined using the "acks" environment
