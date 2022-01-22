@@ -243,6 +243,8 @@ $\bullet$ Simpler and less error-prone `object-level' binder-manipulating techni
 
 \todo[inline]{Typesetting conventions (in a footnote)}
 
+\citet{de-Vries-true-SoP}
+
 \begin{halfcol}\begin{code}
 data ProdD : Set₁ where
   𝟙    : ProdD
@@ -430,7 +432,7 @@ fold-operator {D} C = record
 
 \subsection{Naming, Visibility, and Order of Arguments}
 
-\todo[inline]{Chosen by generic programs, dependency analysis, refactoring tools, heuristics, machine learning; the wrapper trick retains all these possibilities}
+\todo[inline]{Chosen by generic programs, dependency analysis, refactoring tools, heuristics, machine learning; interaction with generalised variables; the wrapper trick retains all these possibilities}
 
 \subsection{Normalisation and Printing}
 
