@@ -73,6 +73,8 @@ defineFold P f = do
     extendContextℓs #levels λ ℓs → do
       Γps  ← fromTel! (Param ℓs)
       forM cs $ conClause rec pars #levels Γps
+
+  printFunction f
   where open FoldP P
 
 defineInd : IndP → Name → TC _
@@ -89,4 +91,6 @@ defineInd P f = do
     extendContextℓs #levels λ ℓs → do
       Γps  ← fromTel! (Param ℓs)
       forM cs $ conClause ind pars #levels Γps
+
+  printFunction f
   where open IndP P
