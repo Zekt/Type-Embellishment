@@ -80,8 +80,8 @@ genDataCT D N hole = do
   noConstraints $ unify hole $ `datac `toN `fromN `fromN-toN `toN-fromN
   where open DataD D
 
-genFoldCT : (P : FoldP) (f : FoldT P) → Tactic
-genFoldCT P f hole = do
+genFoldCT' : (P : FoldP) (f : FoldT P) → Tactic
+genFoldCT' P f hole = do
   `P ← quoteωTC P
   `f ← quoteωTC f
   hole ← checkType hole $ `FoldC `P `f
@@ -91,8 +91,8 @@ genFoldCT P f hole = do
 
   genFoldC-equation pars cs  >>= unify hole
 
-genFoldCT' : (P : FoldP) → Name → Tactic
-genFoldCT' P d hole = do
+genFoldCT : (P : FoldP) → Name → Tactic
+genFoldCT P d hole = do
   `t ← uncurryFoldP P d
   d ← FoldPToNativeName P
   pars , cs ← getDataDefinition d
@@ -100,20 +100,22 @@ genFoldCT' P d hole = do
   hole ← checkType hole $ `FoldC `P `t
   genFoldC-equation pars cs >>= unify hole
 
-genIndCT : (P : IndP) (f : IndT P) → Tactic
-genIndCT P f hole = do
+genIndCT' : (P : IndP) (f : IndT P) → Tactic
+genIndCT' P f hole = do
   `P ← quoteωTC P
   `f ← quoteωTC f 
 
-  hole ← checkType hole $ `IndC `P `f
 
   d ← IndPToNativeName P
   pars , cs ← getDataDefinition d
 
+--  t ← genIndC-equation pars cs 
+--  defineUnify "_" (`IndC `P `f) t hole
+  hole ← checkType hole $ `IndC `P `f
   genIndC-equation pars cs  >>= unify hole
 
-genIndCT' : (P : IndP) → Name → Tactic
-genIndCT' P d hole = do
+genIndCT : (P : IndP) → Name → Tactic
+genIndCT P d hole = do
   `t ← uncurryIndP P d
   d ← IndPToNativeName P
   pars , cs ← getDataDefinition d
@@ -125,14 +127,14 @@ macro
   genDataC : (D : DataD) (N : DataT D) → Tactic
   genDataC = genDataCT
 
-  genFoldC : (P : FoldP) (f : FoldT P) → Tactic
-  genFoldC = genFoldCT
-
-  genFoldC' : (P : FoldP) → Name → Tactic
+  genFoldC' : (P : FoldP) (f : FoldT P) → Tactic
   genFoldC' = genFoldCT'
 
-  genIndC : (P : IndP) (f : IndT P) → Tactic
-  genIndC = genIndCT
+  genFoldC : (P : FoldP) → Name → Tactic
+  genFoldC = genFoldCT
 
-  genIndC' : (P : IndP) → Name → Tactic
+  genIndC' : (P : IndP) (f : IndT P) → Tactic
   genIndC' = genIndCT'
+
+  genIndC : (P : IndP) → Name → Tactic
+  genIndC = genIndCT

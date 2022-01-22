@@ -33,7 +33,7 @@ indW P s (sup a ws) = s a ws (λ b → indW P s (ws b))
 indWT : IndT (ind-operator WC)
 indWT _ ((a , a₁ , tt) , a₂ , a₃ , tt) = indW a₂ a₃
 
-indWC = genIndC (ind-operator WC) indWT
+indWC = genIndC' (ind-operator WC) indWT
 
 --------
 -- Any predicate
@@ -68,4 +68,4 @@ lookupWAny (there b i) = lookupWAny i
 lookupWAnyT : FoldT lookupWAnyP
 lookupWAnyT _ _ = lookupWAny
 
-lookupWAnyC = genFoldC lookupWAnyP lookupWAnyT
+lookupWAnyC = genFoldC' lookupWAnyP lookupWAnyT

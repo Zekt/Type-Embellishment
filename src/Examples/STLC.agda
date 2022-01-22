@@ -79,7 +79,8 @@ toΛ (var i  ) = var (toℕ i)
 toΛ (app t u) = app (toΛ t) (toΛ u)
 toΛ (lam t  ) = lam (toΛ t)
 
-toΛC = genFoldC toΛP (genFoldT toΛP toΛ)
+--toΛC = genFoldC' toΛP (genFoldT toΛP toΛ)
+toΛC = genFoldC toΛP toΛ
 
 TypedTermFin : Finitary TypedTermD
 TypedTermFin _ = (tt ∷ tt ∷ tt ∷ [])
@@ -127,7 +128,8 @@ fromTyping (var i  ) = var i
 fromTyping (app d e) = app (fromTyping d) (fromTyping e)
 fromTyping (lam d  ) = lam (fromTyping d)
 
-fromTypingC = genFoldC fromTypingP (genFoldT fromTypingP fromTyping)
+--fromTypingC = genFoldC' fromTypingP (genFoldT fromTypingP fromTyping)
+fromTypingC = genFoldC fromTypingP fromTyping
 
 toTypingP : IndP
 toTypingP = remember toΛC TypingC
@@ -138,7 +140,8 @@ toTyping (var i  ) = var i
 toTyping (app t u) = app (toTyping t) (toTyping u)
 toTyping (lam t  ) = lam (toTyping t)
 
-toTypingC = genIndC toTypingP (genIndT toTypingP toTyping)
+--toTypingC = genIndC' toTypingP (genIndT toTypingP toTyping)
+toTypingC = genIndC toTypingP toTyping
 
 from-toTypingP : IndP
 from-toTypingP = forget-remember-inv toΛC TypingC fromTypingC toTypingC (inl TypedTermFin)
@@ -170,7 +173,8 @@ from-toTyping (lam {τ} {Γ} {τ'} t) =
            refl))))))))
    refl
 
-from-toTypingC = genIndC from-toTypingP (genIndT from-toTypingP from-toTyping)
+--from-toTypingC = genIndC' from-toTypingP (genIndT from-toTypingP from-toTyping)
+from-toTypingC = genIndC from-toTypingP from-toTyping
 
 to-fromTypingP : IndP
 to-fromTypingP = remember-forget-inv toΛC TypingC toTypingC fromTypingC (inl TypedTermFin)
@@ -218,4 +222,5 @@ to-fromTyping (lam {τ} {Γ} {τ'} d) =
            refl))))))))
    refl
 
-to-fromTypingC = genIndC to-fromTypingP (genIndT to-fromTypingP to-fromTyping)
+--to-fromTypingC = genIndC' to-fromTypingP (genIndT to-fromTypingP to-fromTyping)
+to-fromTypingC = genIndC to-fromTypingP to-fromTyping

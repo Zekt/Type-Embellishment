@@ -41,7 +41,7 @@ ListO = record
 foldrT : FoldT (fold-operator ListC)
 foldrT _ ((A , tt) , B , e , f , tt) = foldr e f
 
-foldrC = genFoldC (fold-operator ListC) foldrT
+foldrC = genFoldC' (fold-operator ListC) foldrT
 
 -- unquoteDecl foldr-fusion = defineInd (fold-fusion ListC foldrC) foldr-fusion
 foldr-fusion :
@@ -60,7 +60,7 @@ foldr-fusionT _
   ((a , tt) , a₁ , a₂ , a₃ , (a₄ , a₅ , tt) , (a₆ , a₇ , tt) , a₈ , a₉ , tt) =
   foldr-fusion a₃ a₄ a₅ a₆ a₇ a₈ a₉
 
-foldr-fusionC = genIndC (fold-fusion ListC foldrC) foldr-fusionT
+foldr-fusionC = genIndC' (fold-fusion ListC foldrC) foldr-fusionT
 
 --------
 -- Algebraic ornamentation
@@ -78,7 +78,8 @@ AlgListC = genDataC ⌊ AlgOD (fold-operator ListC) ⌋ᵈ AlgListT
 lengthP : FoldP
 lengthP = forget ListC NatC ListO
 
-lengthC = genFoldC lengthP (genFoldT lengthP length)
+--lengthC = genFoldC' lengthP (genFoldT lengthP length)
+lengthC = genFoldC lengthP length
 
 VecOD : DataOD ListD
 VecOD = AlgOD lengthP
@@ -98,7 +99,8 @@ fromVec : {A : Set ℓ} {n : ℕ} (v : Vec A n) → List A
 fromVec []       = []
 fromVec (a ∷ as) = a ∷ fromVec as
 
-fromVecC = genFoldC fromVecP (genFoldT fromVecP fromVec)
+--fromVecC = genFoldC' fromVecP (genFoldT fromVecP fromVec)
+fromVecC = genFoldC fromVecP fromVec
 
 toVecP : IndP
 toVecP = remember lengthC VecC
@@ -108,7 +110,8 @@ toVec :  {A : Set ℓ} (as : List A) → Vec A (length as)
 toVec []       = []
 toVec (a ∷ as) = a ∷ toVec as
 
-toVecC = genIndC toVecP (genIndT toVecP toVec)
+--toVecC = genIndC' toVecP (genIndT toVecP toVec)
+toVecC = genIndC toVecP toVec
 
 -- [TODO] fromVec and toVec form an isomorphism List A ≅ Σ[ n ∈ ℕ ] Vec A n
 
@@ -157,4 +160,4 @@ toℕ (suc  i) = suc (toℕ i)
 toℕT : FoldT (forget ListAnyC NatC ⌈ ListAnyOD ⌉ᵈ)
 toℕT _ ((A , tt) , P , tt) = toℕ
 
-toℕC = genFoldC (forget ListAnyC NatC ⌈ ListAnyOD ⌉ᵈ) toℕT
+toℕC = genFoldC' (forget ListAnyC NatC ⌈ ListAnyOD ⌉ᵈ) toℕT

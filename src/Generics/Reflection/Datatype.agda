@@ -108,6 +108,7 @@ printByDataD' dataD dataN conNs = extendContextℓs #levels λ ℓs → do
 -- Reification of datatypes
 
 private
+  pattern `DataD          = def₀ (quote DataD)
   pattern `datad  x y     = con₂ (quote datad)  x y
   pattern `pdatad x z u v = con₄ (quote pdatad) x z u v
 
@@ -180,8 +181,9 @@ reifyData d = do
 macro
   genDataD : Name → Tactic
   genDataD d hole = do
-    checkedHole ← checkType hole (quoteTerm DataD)
-    unify checkedHole =<< reifyData d
+    ds ← formatErrorPart $ nameErr d
+    t ← reifyData d
+    defineUnify (ds <> "DataD") `DataD t hole
 
 -- Currently unusable because module names are always printed.
 macro

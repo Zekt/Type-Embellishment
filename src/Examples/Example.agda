@@ -304,5 +304,3 @@ listP : IndP
 listP = ind-operator ListC
 
 unquoteDecl indList = defineInd listP indList
-
-

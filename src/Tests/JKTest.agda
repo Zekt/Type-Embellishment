@@ -72,7 +72,7 @@ foldℕ-wrapper : FoldT foldℕP
 foldℕ-wrapper = genFoldT foldℕP foldℕ -- _ (_ , X , z , s , _) = foldℕ X z s
 
 -- foldℕC : FoldC foldℕP foldℕ-wrapper
-foldℕC = genFoldC foldℕP foldℕ-wrapper
+foldℕC = genFoldC' foldℕP foldℕ-wrapper
 
 {-
 FoldC.equation foldℕC (inl           refl  ) = refl
@@ -118,7 +118,7 @@ indℕ-wrapper : IndT indℕP
 indℕ-wrapper = genIndT indℕP indℕ --  _ (_ , P , z , s , _) = indℕ P z s
 
 -- indℕ-is-ind : IndC indℕP indℕ-wrapper
-indℕ-is-ind = genIndC indℕP indℕ-wrapper
+indℕ-is-ind = genIndC' indℕP indℕ-wrapper
 {-
 IndC.equation indℕ-is-ind (inl           refl  ) = refl
 IndC.equation indℕ-is-ind (inr (inl (_ , refl))) = refl
@@ -186,7 +186,7 @@ length'-wrapper : FoldT length'P
 length'-wrapper = genFoldT length'P length' -- _ A = length'
 
 -- length'C : FoldC length'P length'-wrapper
-length'C = genFoldC length'P length'-wrapper
+length'C = genFoldC' length'P length'-wrapper
 {-
 FoldC.equation length'C (inl               refl  ) = refl
 FoldC.equation length'C (inr (inl (_ , _ , refl))) = refl
@@ -236,7 +236,7 @@ Vec-remember-wrapper : IndT Vec-rememberP
 Vec-remember-wrapper = genIndT Vec-rememberP Vec-remember -- _ (A , _) = Vec-remember
 
 -- Vec-rememberC : IndC Vec-rememberP Vec-remember-wrapper
-Vec-rememberC = genIndC Vec-rememberP Vec-remember-wrapper
+Vec-rememberC = genIndC' Vec-rememberP Vec-remember-wrapper
 -- IndC.equation Vec-rememberC (inl               refl  ) = refl
 -- IndC.equation Vec-rememberC (inr (inl (_ , _ , refl))) = refl
 
@@ -254,7 +254,7 @@ fromVec-wrapper : FoldT fromVecP
 fromVec-wrapper = genFoldT fromVecP fromVec -- _ (A , _) = fromVec
 
 -- fromVecC : FoldC fromVecP fromVec-wrapper
-fromVecC = genFoldC fromVecP fromVec-wrapper
+fromVecC = genFoldC' fromVecP fromVec-wrapper
 {-
 FoldC.equation fromVecC (inl                   refl  ) = refl
 FoldC.equation fromVecC (inr (inl (_ , _ , _ , refl))) = refl
@@ -290,7 +290,7 @@ inverse-wrapper = genIndT inverseP inverse -- _ (A , _) = inverse
 open import Utils.Reflection
 
 -- inverseC : IndC inverseP inverse-wrapper
-inverseC = genIndC inverseP inverse-wrapper
+inverseC = genIndC' inverseP inverse-wrapper
 {-
 IndC.equation inverseC (inl                   refl  ) = refl
 IndC.equation inverseC (inr (inl (_ , _ , _ , refl))) = refl
