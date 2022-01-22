@@ -1,7 +1,7 @@
 {-# OPTIONS --safe --without-K #-}
 open import Prelude
 
-module Examples.Example where
+module Tests.Example where
 
 open import Utils.Reflection
 
