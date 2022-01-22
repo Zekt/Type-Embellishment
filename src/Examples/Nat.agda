@@ -48,8 +48,8 @@ indℕ : {P : ℕ → Set ℓ} → P 0 → ((n : ℕ) → P n → P (suc n)) →
 indℕ z s  zero   = z
 indℕ z s (suc n) = s n (indℕ z s n)
 
-indℕT = genIndT (ind-operator NatC) indℕ
-indℕC = genIndC (ind-operator NatC) indℕT
+-- indℕT = genIndT (ind-operator NatC) indℕ
+-- indℕC = genIndC (ind-operator NatC) indℕT
 -- [FAIL] unsolved constraints
--- indℕC = genIndC (ind-operator NatC) (genIndT (ind-operator NatC) indℕ)
+indℕC = genIndC (ind-operator NatC) (genIndT (ind-operator NatC) indℕ)
 -- unquoteDecl foldℕ-fusion = defineInd (fold-fusion NatC foldℕC) foldℕ-fusion

@@ -105,11 +105,13 @@ genIndCT P f hole = do
   `P ← quoteωTC P
   `f ← quoteωTC f 
 
-  hole ← checkType hole $ `IndC `P `f
 
   d ← IndPToNativeName P
   pars , cs ← getDataDefinition d
 
+--  t ← genIndC-equation pars cs 
+--  defineUnify "_" (`IndC `P `f) t hole
+  hole ← checkType hole $ `IndC `P `f
   genIndC-equation pars cs  >>= unify hole
 
 genIndCT' : (P : IndP) → Name → Tactic
