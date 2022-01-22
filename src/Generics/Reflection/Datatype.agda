@@ -81,8 +81,9 @@ defineByDataD dataD dataN conNs = extendContextℓs #levels λ ℓs → do
 
   conTs ← withNormalisation true $ map (prependToType `Levels) <$> getCons dataN `Param Dᵖ
   defineData dataN (zip conNs conTs)
+  printData dataN
   where open DataD dataD
-
+{-
 printByDataD' : DataD → String → List String → TC String
 printByDataD' dataD dataN conNs = extendContextℓs #levels λ ℓs → do
   let `Levels = `Levels #levels
@@ -102,7 +103,7 @@ printByDataD' dataD dataN conNs = extendContextℓs #levels λ ℓs → do
     alignZip n xs [] = []
     alignZip n [] (x ∷ ys) = ("con" <> show n , x) ∷ alignZip (suc n) [] ys
     alignZip n (x ∷ xs) (y ∷ ys) = (x , y) ∷ alignZip n xs ys
-
+-}
 ------------------------------------------------------------------------
 -- Reification of datatypes
 
@@ -203,8 +204,10 @@ macro
                             return $ c ∷ ns
       align (suc n) (x ∷ cs) = ⦇ freshName x ∷ align n cs ⦈
 
+{-
 -- Currently unusable due to Agda's scope checking.
 macro
   printByDataD : DataD → String → List String → Tactic
   printByDataD D s cs hole = do s ← printByDataD' D s cs
                                 dprint [ strErr s ]
+-}
