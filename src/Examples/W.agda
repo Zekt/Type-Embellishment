@@ -63,12 +63,11 @@ lookupWAnyP : FoldP
 lookupWAnyP = lookupAny WC WS WAnyC
 
 -- unquoteDecl lookupWAny = defineFold lookupWAnyP lookupWAny
-lookupWAny : {ℓ ℓ₁ ℓ₂ : Level} {A : Set ℓ₁} {B : A → Set ℓ₂}
-             {P : A → Set ℓ} {w : W A B} → WAny P w → Σ A P
-lookupWAny (here p) = _ , p
+lookupWAny : {A : Set ℓ} {B : A → Set ℓ'} {P : A → Set ℓ''} {w : W A B} → WAny P w → Σ A P
+lookupWAny (here p   ) = _ , p
 lookupWAny (there b i) = lookupWAny i
 
-lookupWAnyT = genFoldT lookupWAnyP lookupWAny
+lookupWAnyT : FoldT lookupWAnyP
+lookupWAnyT _ _ = lookupWAny
+
 lookupWAnyC = genFoldC lookupWAnyP lookupWAnyT
--- [FAIL] unsolved constraints
--- lookupWAnyC = genFoldC lookupWAnyP (genFoldT lookupWAnyP lookupWAny)
