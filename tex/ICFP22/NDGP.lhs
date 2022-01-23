@@ -456,6 +456,8 @@ Each of the two programming disciplines works nicely as the other's natural exte
 
 \todo[inline]{Suggestions for the future evolution of Agda or the design of new languages with elaborator reflection}
 
+\todo[inline]{Our experience with untyped metaprogramming was painful, especially in contrast to the experience with datatype-generic programming (a form of typed metaprogramming, as we argued above)}
+
 %%
 %% The acknowledgments section is defined using the "acks" environment
 %% (and NOT an unnumbered section). This ensures the proper

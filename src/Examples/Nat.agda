@@ -15,9 +15,6 @@ open import Generics.RecursionScheme
 
 NatD = genDataD ℕ
 NatC = genDataC NatD (genDataT NatD ℕ)
--- [FAIL] This checks, but foldℕC below wouldn’t
--- NatC = let NatD = genDataD ℕ
---        in  genDataC NatD (genDataT NatD ℕ)
 
 --------
 -- Fold operator and fusion theorem
@@ -27,7 +24,6 @@ foldℕ : {X : Set ℓ} → X → (X → X) → ℕ → X
 foldℕ z s  zero   = z
 foldℕ z s (suc n) = s (foldℕ z s n)
 
---foldℕC = genFoldC' (fold-operator NatC) (genFoldT (fold-operator NatC) foldℕ)
 foldℕC = genFoldC (fold-operator NatC) foldℕ
 
 foldℕ-fusion :
@@ -38,8 +34,6 @@ foldℕ-fusion h z s z' s' hz hs  zero   = trans hz refl
 foldℕ-fusion h z s z' s' hz hs (suc n) =
   trans (hs (foldℕ z s n) (foldℕ z' s' n) (sym (foldℕ-fusion h z s z' s' hz hs n))) refl
 
---foldℕ-fusionC = genIndC' (fold-fusion NatC foldℕC)
---               (genIndT (fold-fusion NatC foldℕC) foldℕ-fusion)
 foldℕ-fusionC = genIndC (fold-fusion NatC foldℕC) foldℕ-fusion
 
 --------
@@ -50,10 +44,4 @@ indℕ : {P : ℕ → Set ℓ} → P 0 → ((n : ℕ) → P n → P (suc n)) →
 indℕ z s  zero   = z
 indℕ z s (suc n) = s n (indℕ z s n)
 
--- indℕT = genIndT (ind-operator NatC) indℕ
--- indℕC = genIndC' (ind-operator NatC) indℕT
 indℕC = genIndC (ind-operator NatC) indℕ
-
--- [SUCCESS] no more unsolved constraints
--- indℕC = genIndC' (ind-operator NatC) (genIndT (ind-operator NatC) indℕ)
--- unquoteDecl foldℕ-fusion = defineInd (fold-fusion NatC foldℕC) foldℕ-fusion

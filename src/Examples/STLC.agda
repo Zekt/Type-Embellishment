@@ -79,7 +79,6 @@ toΛ (var i  ) = var (toℕ i)
 toΛ (app t u) = app (toΛ t) (toΛ u)
 toΛ (lam t  ) = lam (toΛ t)
 
---toΛC = genFoldC' toΛP (genFoldT toΛP toΛ)
 toΛC = genFoldC toΛP toΛ
 
 TypedTermFin : Finitary TypedTermD
@@ -128,7 +127,6 @@ fromTyping (var i  ) = var i
 fromTyping (app d e) = app (fromTyping d) (fromTyping e)
 fromTyping (lam d  ) = lam (fromTyping d)
 
---fromTypingC = genFoldC' fromTypingP (genFoldT fromTypingP fromTyping)
 fromTypingC = genFoldC fromTypingP fromTyping
 
 toTypingP : IndP
@@ -140,7 +138,6 @@ toTyping (var i  ) = var i
 toTyping (app t u) = app (toTyping t) (toTyping u)
 toTyping (lam t  ) = lam (toTyping t)
 
---toTypingC = genIndC' toTypingP (genIndT toTypingP toTyping)
 toTypingC = genIndC toTypingP toTyping
 
 from-toTypingP : IndP
@@ -173,14 +170,13 @@ from-toTyping (lam {τ} {Γ} {τ'} t) =
            refl))))))))
    refl
 
---from-toTypingC = genIndC' from-toTypingP (genIndT from-toTypingP from-toTyping)
 from-toTypingC = genIndC from-toTypingP from-toTyping
 
 to-fromTypingP : IndP
 to-fromTypingP = remember-forget-inv toΛC TypingC toTypingC fromTypingC (inl TypedTermFin)
 
--- unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
 -- [FAIL] too slow; manually case-split and elaborate-and-give
+-- unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
 to-fromTyping : ∀ {t} (d : Γ ⊢ t ∶ τ)
               → (toΛ (fromTyping d) , toTyping (fromTyping d))
               ≡ ((t , d) ⦂ Σ[ t' ∈ Λ ] Γ ⊢ t' ∶ τ)  -- [FAIL] manual type annotation
@@ -222,5 +218,4 @@ to-fromTyping (lam {τ} {Γ} {τ'} d) =
            refl))))))))
    refl
 
---to-fromTypingC = genIndC' to-fromTypingP (genIndT to-fromTypingP to-fromTyping)
 to-fromTypingC = genIndC to-fromTypingP to-fromTyping

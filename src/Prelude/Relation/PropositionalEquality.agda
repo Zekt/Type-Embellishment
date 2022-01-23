@@ -5,8 +5,8 @@ open import Agda.Primitive
 open import Agda.Builtin.Equality public
 
 private variable
-  a b c : Level
-  A B C : Set _
+  a b c   : Level
+  A B C D : Set _
 
 sym : {x y : A} → x ≡ y → y ≡ x
 sym refl = refl
@@ -20,6 +20,10 @@ cong f refl = refl
 cong₂ : ∀ (f : A → B → C) {x y u v}
   → x ≡ y → u ≡ v → f x u ≡ f y v
 cong₂ f refl refl = refl
+
+cong₃ : ∀ (f : A → B → C → D) {w x y z u v}
+  → w ≡ x → y ≡ z → u ≡ v → f w y u ≡ f x z v
+cong₃ f refl refl refl = refl
 
 subst : (P : A → Set b) {x y : A} → x ≡ y → P x → P y
 subst P refl p = p
