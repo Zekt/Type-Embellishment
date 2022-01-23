@@ -182,10 +182,10 @@ printClause : Bool → (f : Name) → Clause → TC String
 printClause b f (tel ⊢ ps `= t) = do
   tel ← renameUnderscore tel
   extend*Context tel do
-    ps  ← printPatterns b ps
+    ps  ← mergeSpace ∘ dropWhile (space ==_) <$> printPatterns b ps
     formatErrorParts $ (nameErr f ∷ space ∷ ps) <> space ∷ strErr "=" ∷ space ∷ termErr t ∷ []
 printClause b f (absurd-clause tel ps) = extend*Context tel do
-  formatErrorParts =<< (λ ps → nameErr f ∷ space ∷ ps) <$> printPatterns b ps
+  formatErrorParts =<< (λ ps → nameErr f ∷ space ∷ ps) ∘ mergeSpace <$> printPatterns b ps
 
 printClauses : Bool → Name → Clauses → TC (List String)
 printClauses b f = mapM (printClause b f)
