@@ -160,8 +160,14 @@ printDataAs (s , T , pars) cs = do
   cons ← vcat ∘ nest <$> extend*Context tel (printConsAs cs)
   return (vcat $ decl ∷ cons ∷ [])
 
+removeImplicitDot : Args Pattern → Args Pattern
+removeImplicitDot = filter λ where
+  (arg (arg-info hidden _) (dot _)) → false
+  t → true
+
 printPattern : Pattern → TC ErrorParts
-printPattern p@(con c (_ ∷ _)) = return $ paren visible (toErr p)
+printPattern (con c as@(_ ∷ _)) = return $
+  paren visible (toErr $ con c (removeImplicitDot as))
 printPattern p                 = return $ toErr p
 
 printPatterns : Bool → Args Pattern → TC ErrorParts
