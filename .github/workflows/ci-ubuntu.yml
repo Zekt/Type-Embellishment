@@ -1,13 +1,21 @@
 ## Adapted from the agda/agda-stdlib workflow
 
-name: Ubuntu build
+name: Check Everything.agda
 on:
   push:
     branches:
       - master
+    paths:
+      - .github/workflows/ci-ubuntu.yml
+      - GNUmakefile
+      - src
   pull_request:
     branches:
       - master
+    paths:
+      - .github/workflows/ci-ubuntu.yml
+      - GNUmakefile
+      - src
 
 ########################################################################
 ## CONFIGURATION
