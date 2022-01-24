@@ -8,14 +8,14 @@ on:
     paths:
       - .github/workflows/ci-ubuntu.yml
       - GNUmakefile
-      - src
+      - src/**
   pull_request:
     branches:
       - master
     paths:
       - .github/workflows/ci-ubuntu.yml
       - GNUmakefile
-      - src
+      - src/**
 
 ########################################################################
 ## CONFIGURATION
