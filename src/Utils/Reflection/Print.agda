@@ -5,7 +5,6 @@ module Utils.Reflection.Print where
 
 open import Utils.Reflection.Core
 open import Utils.Reflection.Term
-  using (splitType)
 open import Utils.Reflection.Eq
 open import Utils.Reflection.Tactic
 
@@ -169,6 +168,21 @@ printPattern : Pattern → TC ErrorParts
 printPattern (con c as@(_ ∷ _)) = return $
   paren visible (toErr $ con c (removeImplicitDot as))
 printPattern p                 = return $ toErr p
+
+--TisP : Term → Pattern → Bool
+--TisP (var x args) (var y) = x == y
+--TisP (con c args) (con d ps) = (c == d) ∧ {!!}
+--TisP (lit l) (lit k) = l == k
+--TisP _ _ = false
+--
+--termHasPat : Term → Pattern → Bool
+--termHasPat t p = anyTerm {!!} {!!} t
+--
+--patIsUsed : Pattern → Term → Bool
+--patIsUsed p t = anyPat (termHasPat t) p
+--
+--printNecessaryPattern : Term → Bool → Arg Pattern → TC ErrorPart
+--printNecessaryPattern t b p = {!!}
 
 printPatterns : Bool → Args Pattern → TC ErrorParts
 printPatterns b []       = ⦇ [] ⦈

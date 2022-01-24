@@ -1,5 +1,5 @@
 {-# OPTIONS --safe --without-K #-}
-open import Prelude
+open import Prelude renaming (Any to AnyL)
 
 module Utils.Reflection.Term where
 
@@ -28,6 +28,9 @@ private
 -- A very limited travasal on terms
 Action : Set → Set
 Action A = Cxt → A → A
+
+Finder : Set → Set
+Finder A = Cxt → A → Bool
 
 -- A traversal gets to operate on variables, metas, and names.
 record Actions : Set where
@@ -97,6 +100,39 @@ module _ (actions : Actions) where
 
   traverseTel Γ [] = []
   traverseTel Γ ((s , t) ∷ tel) = (s , traverseArg Γ t) ∷ traverseTel ((s , t) ∷cxt Γ) tel
+
+data Any (f : Term → Set) : Term → Set
+
+data Any f where
+  self : ∀ {x : Term} → f x → Any f x
+  var : ∀ {x args} → AnyL (Any f ∘ unArg) args → Any f (var x args)
+  con : ∀ {c args} → AnyL (Any f ∘ unArg) args → Any f (con c args)
+  def : ∀ {g args} → AnyL (Any f ∘ unArg) args → Any f (def g args)
+  lam : ∀ {v t} → Any f (unAbs t) → Any f (lam v t)
+  --pat-lam   : (cs : List Clause) (args : List (Arg Term)) → Term
+  --pi        : (a : Arg Type) (b : Abs Type) → Term
+  --agda-sort : (s : Sort) → Term
+  --lit       : (l : Literal) → Term
+  --meta      : (x : Meta) → List (Arg Term) → Term
+  --unknown   : Term
+
+anyTerm : (Cxt → Term → Bool) → Cxt → Term → Bool
+anyTerm f Γ t = if f Γ t then true
+              else case t of λ where
+                (var _ args) → any (f Γ ∘ unArg) args
+                (con _ args) → any (f Γ ∘ unArg) args
+                (def _ args) → any (f Γ ∘ unArg) args
+                (lam v (abs s x)) → anyTerm f ((s , arg (arg-info v (modality relevant quantity-ω)) unknown) ∷cxt Γ) x
+                (pat-lam cs args) → any (f Γ ∘ unArg) args
+                (`Π[ s ∶ arg i x ] y) → anyTerm f Γ x ∨ anyTerm f ((s , arg i x) ∷cxt Γ) y
+                (meta _ xs) → any (f Γ ∘ unArg) xs
+                _ → false
+
+anyPat : (Pattern → Bool) → Pattern → Bool
+anyPat f p = if (f p) then true
+             else case p of λ where
+               (con c ps) → any (f ∘ unArg) ps
+               _ → false
 
 weaken : ℕ → ℕ → Term → Term
 weaken from by = traverseTerm (record defaultActions
