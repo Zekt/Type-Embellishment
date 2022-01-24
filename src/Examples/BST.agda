@@ -4,6 +4,8 @@ module Examples.BST where
 
 open import Prelude hiding (lookupAny)
 
+open import Utils.Reflection
+
 open import Generics.Description
 open import Generics.Recursion
 open import Generics.Reflection
@@ -296,21 +298,22 @@ data B23TreeAny (P : Value → Set ℓ) : ∀ {h l r} → B23Tree h l r → Set 
   node₃-there₂ : ∀ {x y t u v} → B23TreeAny P v
                → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
 
-B23TreeAnyC = genDataC B23TreeAnyD (genDataT B23TreeAnyD B23TreeAny)
+B23TreeAnyT = genDataT B23TreeAnyD B23TreeAny
+B23TreeAnyC = genDataC B23TreeAnyD B23TreeAnyT
 
 lookupB23TreeAnyP : FoldP
 lookupB23TreeAnyP = lookupAny B23TreeC B23TreeS B23TreeAnyC
 
--- unquoteDecl lookupB23TreeAny = defineFold lookupB23TreeAnyP lookupB23TreeAny
-lookupB23TreeAny :
-  ∀ {P : Value → Set ℓ} {h l r} {t : B23Tree h l r} → B23TreeAny P t → Σ Value P
-lookupB23TreeAny (node₂-here   p) = _ , p
-lookupB23TreeAny (node₃-here₀  p) = _ , p
-lookupB23TreeAny (node₃-here₁  p) = _ , p
-lookupB23TreeAny (node₂-there₀ i) = lookupB23TreeAny i
-lookupB23TreeAny (node₂-there₁ i) = lookupB23TreeAny i
-lookupB23TreeAny (node₃-there₀ i) = lookupB23TreeAny i
-lookupB23TreeAny (node₃-there₁ i) = lookupB23TreeAny i
-lookupB23TreeAny (node₃-there₂ i) = lookupB23TreeAny i
+unquoteDecl lookupB23TreeAny = defineFold lookupB23TreeAnyP lookupB23TreeAny
+-- lookupB23TreeAny :
+--   ∀ {P : Value → Set ℓ} {h l r} {t : B23Tree h l r} → B23TreeAny P t → Σ Value P
+-- lookupB23TreeAny (node₂-here   p) = _ , p
+-- lookupB23TreeAny (node₃-here₀  p) = _ , p
+-- lookupB23TreeAny (node₃-here₁  p) = _ , p
+-- lookupB23TreeAny (node₂-there₀ i) = lookupB23TreeAny i
+-- lookupB23TreeAny (node₂-there₁ i) = lookupB23TreeAny i
+-- lookupB23TreeAny (node₃-there₀ i) = lookupB23TreeAny i
+-- lookupB23TreeAny (node₃-there₁ i) = lookupB23TreeAny i
+-- lookupB23TreeAny (node₃-there₂ i) = lookupB23TreeAny i
 
 lookupB23TreeAnyC = genFoldC lookupB23TreeAnyP lookupB23TreeAny

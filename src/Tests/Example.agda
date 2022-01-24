@@ -8,6 +8,7 @@ open import Utils.Reflection
 open import Generics.Telescope
 open import Generics.Description
 open import Generics.Recursion
+open import Generics.RecursionScheme
 
 open import Generics.Reflection
 
@@ -79,6 +80,12 @@ natD' = genDataD ℕ
 
 NatT = genDataT NatD ℕ
 NatC = genDataC NatD NatT
+
+
+foldℕP : FoldP
+foldℕP = fold-operator NatC
+
+unquoteDecl foldℕ = defineFold foldℕP foldℕ
 
 unquoteDecl data Nat constructor z s = defineByDataD NatD Nat (z ∷ s ∷ [])
 
@@ -282,10 +289,6 @@ WD = record
       }
   }
 
-open import Generics.RecursionScheme
-
-foldℕP : FoldP
-foldℕP = fold-operator NatC
 
 lenP : FoldP
 lenP = fold-operator LenC
