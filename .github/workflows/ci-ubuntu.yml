@@ -45,8 +45,9 @@ env:
   CABAL_VERSION: latest
   CABAL_BIN : $HOME/.local/bin
   CABAL_INSTALL: cabal install --installdir=$HOME/.local/bin --overwrite-policy=always --ghc-options='+RTS -M8G -RTS'
+
   AGDA_REPO   : L-TChen/agda
-  AGDA_COMMIT : data ## b940ac9a3bcc9408e5159f82231ebdd8709e4b52
+  AGDA_COMMIT : 84a19a0d43fc1af694ed239090262198d4446898
 
 jobs:
   test:
