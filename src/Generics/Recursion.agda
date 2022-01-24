@@ -3,6 +3,7 @@
 open import Prelude
 
 module Generics.Recursion where
+
 open import Generics.Telescope
 open import Generics.Description
 open import Generics.Algebra
@@ -35,6 +36,8 @@ record FoldP : Setω where
     level    : Levels → DataD.Levels Desc
     {plevel} : Levels → Level
     Param    : ∀ ℓs → Tel (plevel ℓs)
+    ParamV   : ∀ {ℓs} → TelInfo Visibility (Param ℓs)
+    ParamN   : ∀ {ℓs} → TelInfo String     (Param ℓs)
     param    : ∀ {ℓs} → ⟦ Param ℓs ⟧ᵗ → ⟦ PDataD.Param (DataD.applyL Desc (level ℓs)) ⟧ᵗ
     {clevel} : Levels → Level
     Carrier  : ∀ ℓs (ps : ⟦ Param ℓs ⟧ᵗ)
@@ -53,8 +56,10 @@ FoldT P = let open FoldP P in
 FoldNT : (P : FoldP)   → let open FoldP P in
          (ℓs : Levels) → let open PDataD (DataD.applyL Desc (level ℓs)) hiding (plevel) in
          Set (alevel ⊔ ilevel ⊔ FoldP.plevel P ℓs ⊔ clevel ℓs)
-FoldNT P ℓs = Curriedᵗ true (FoldP.Param P ℓs) λ ps → Curriedᵗ false (Index (param ps)) λ is
-         → Native (level ℓs) (param ps) is → Carrier ℓs ps is
+FoldNT P ℓs =
+  Curriedᵗ (FoldP.Param P ℓs) (FoldP.ParamV P) λ ps →
+  Curriedᵗ (Index (param ps)) (constTelInfo hidden) λ is →
+  Native (level ℓs) (param ps) is → Carrier ℓs ps is
   where open FoldP P
         open PDataD (DataD.applyL Desc (level ℓs))
 
@@ -84,6 +89,8 @@ record IndP : Setω where
     {plevel} : Levels → Level
     Param    : ∀ ℓs → Tel (plevel ℓs)
     param    : ∀ {ℓs} → ⟦ Param ℓs ⟧ᵗ → ⟦ PDataD.Param (DataD.applyL Desc (level ℓs)) ⟧ᵗ
+    ParamV   : ∀ {ℓs} → TelInfo Visibility (Param ℓs)
+    ParamN   : ∀ {ℓs} → TelInfo String     (Param ℓs)
     {clevel} : Levels → Level
     Carrier  : ∀ ℓs (ps : ⟦ Param ℓs ⟧ᵗ)
              → IndCarrierᶜˢ (PDataD.applyP (DataD.applyL Desc (level ℓs)) (param ps))
@@ -101,12 +108,12 @@ IndT P = let open IndP P in
 IndNT : (P : IndP)    → let open IndP P in
         (ℓs : Levels) → let open PDataD (DataD.applyL Desc (level ℓs)) hiding (plevel) in
         Set (alevel ⊔ ilevel ⊔ plevel ℓs ⊔ clevel ℓs)
-IndNT P ℓs = Curriedᵗ true  (IndP.Param P ℓs)  λ ps →
-             Curriedᵗ false (Index (param ps)) λ is →
-             (n : Native (level ℓs) (param ps) is)
-           → Carrier ℓs ps is n
-        where open IndP P
-              open PDataD (DataD.applyL Desc (level ℓs))
+IndNT P ℓs =
+  Curriedᵗ (IndP.Param P ℓs) ParamV λ ps →
+  Curriedᵗ (Index (param ps)) (constTelInfo hidden) λ is →
+  (n : Native (level ℓs) (param ps) is) → Carrier ℓs ps is n
+  where open IndP P
+        open PDataD (DataD.applyL Desc (level ℓs))
 
 ind-base : (P : IndP) → (∀ {ℓs} → IndNT P ℓs → IndNT P ℓs)
 ind-base P {ℓs} rec = let open IndP P in
