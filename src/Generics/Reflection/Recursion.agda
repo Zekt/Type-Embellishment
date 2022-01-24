@@ -16,7 +16,6 @@ open import Generics.Reflection.Name
 
 normaliseClause : Clause → TC Clause
 normaliseClause (tel ⊢ ps `= t) = do
-  printTelescope tel (return []) >>= dprint 
   u ← extend*Context tel (normalise t)
   return $ tel ⊢ ps `= u
 normaliseClause cl = return cl
