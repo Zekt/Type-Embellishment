@@ -32,8 +32,8 @@ data Rel (A : Set) : (xs ys : List A) → Set where
 _ : genTel `T-rel ≡ω [ B ∶ Set ] [ bs ∶ List B ] [ bs ∶ List B ] []
 _ = refl
 
-_ : evalT (fromTel ([ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] [])) ≢ `T-rel
-_ = λ { () }
+_ : evalT (fromTel ([ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] [])) ≡ `T-rel
+_ = refl
 
 ------------------------------------------------------------------------------
 -- 
