@@ -11,6 +11,7 @@ open import Generics.Recursion
 open import Generics.Algebra
 
 open import Generics.Reflection.Telescope
+open import Generics.Reflection.Name
 open import Generics.Reflection.Uncurry
 open import Generics.Reflection.Recursion
 
@@ -19,16 +20,6 @@ private
   pattern `datac a b c d = con₄ (quote datac) a b c d
   pattern `FoldC x y     = def₂ (quote FoldC) x y
   pattern `IndC  x y     = def₂ (quote IndC)  x y
-
-DataToNativeName : (D : DataD) (N : DataT D) → TC Name
-DataToNativeName D N = do
-  extendContextℓs #levels λ ℓs → let Desc = applyL ℓs in
-    extendCxtTel (PDataD.Param Desc) λ ps →
-      extendCxtTel (PDataD.Index Desc ps) λ is → do
-        (def n _) ← quoteTC! (N ℓs ps is)
-          where t → notData t
-        return n
-  where open DataD D
 
 module _ (pars : ℕ) where
   conToClause : (c : Name) → TC (Telescope × Vars)

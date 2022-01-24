@@ -12,6 +12,23 @@ open import Generics.Description
 open import Generics.Recursion   
 
 open import Generics.Reflection.Telescope
+open import Generics.Reflection.Name
+
+normaliseClause : Clause → TC Clause
+normaliseClause (tel ⊢ ps `= t) = do
+  printTelescope tel (return []) >>= dprint 
+  u ← extend*Context tel (normalise t)
+  return $ tel ⊢ ps `= u
+normaliseClause cl = return cl
+
+normaliseClauses : Clauses → TC Clauses
+normaliseClauses = mapM normaliseClause
+
+checkClauses : Clauses → Type → TC Clauses
+checkClauses cls `A = do
+  pat-lam₀ cls ← checkType (pat-lam₀ cls) `A
+    where _ → IMPOSSIBLE
+  return cls
 
 private
   prependLevels : ℕ → Type → Type
@@ -20,27 +37,6 @@ private
   pattern `fold-base = quote fold-base
   pattern `ind-base  = quote ind-base
 
-FoldPToNativeName : FoldP → TC Name
-FoldPToNativeName P = do
-  extendContextℓs (DataD.#levels Desc) λ ℓs →
-    extendCxtTel (PDataD.Param (DataD.applyL Desc ℓs)) λ ps → 
-      extendCxtTel (PDataD.Index (DataD.applyL Desc ℓs) ps) λ is → do
-        (def d _) ← quoteTC! $ Native ℓs ps is
-          where t → IMPOSSIBLE
-        return d
-  where open FoldP P
-
-IndPToNativeName : IndP → TC Name
-IndPToNativeName P = do
-  extendContextℓs (DataD.#levels Desc) λ ℓs →
-    extendCxtTel (PDataD.Param (DataD.applyL Desc ℓs)) λ ps → 
-      extendCxtTel (PDataD.Index (DataD.applyL Desc ℓs) ps) λ is → do
-        (def d _) ← quoteTC! $ Native ℓs ps is
-          where t → IMPOSSIBLE
-        return d
-  where open IndP P
-
-private
   -- Generate the corresponding clause of a given constructor name
   conClause : (rec : Term) → (pars #levels : ℕ) → Telescope → Name → TC Clause
   conClause rec pars #levels Γps c = do
@@ -52,45 +48,46 @@ private
     let (_ , psArgs , psPats) = cxtToVars |Γc|           (`tt , `tt) Γps
     let (_ , _ , ℓs)          = cxtToVars (|Γc| + |Γps|) (`tt , `tt) Γℓs
 
-    term ← runSpeculative $ extend*Context (Γps <> Γc) $ do
-      (_, false) <$> normalise
-        (rec `$$ psArgs `$$ [ vArg (con c $ hUnknowns pars <> cArgs) ])
-
     return $ (Γℓs <> Γps <> Γc)
-      ⊢ ℓs <> psPats <> vArg (con c cPats) ∷ [] `= term
+      ⊢ ℓs <> psPats <> vArg (con c cPats) ∷ [] `=
+        (rec `$$ psArgs `$$ [ vArg (con c $ hUnknowns pars <> cArgs) ])
 
 defineFold : FoldP → Name → TC _
 defineFold P f = do
   `P ← quoteωTC P
-  let rec = def₂ `fold-base `P (def₀ f)
+  `type ← prependLevels #levels <$> extendContextℓs #levels λ ℓs →
+      quoteTC! (FoldNT P ℓs)
+  declareDef (vArg f) `type
 
+  let rec = def₂ `fold-base `P (def₀ f)
   pars , cs ← getDataDefinition =<< FoldPToNativeName P
 
-  declareDef (vArg f) =<<
-    prependLevels #levels <$> extendContextℓs #levels λ ℓs → quoteTC! (FoldNT P ℓs)
+  cls ← extendContextℓs #levels λ ℓs → do
+    Γps  ← fromTel! (Param ℓs)
+    forM cs $ conClause rec pars #levels Γps
+  cls ← noConstraints $ normaliseClauses =<< checkClauses cls `type
 
-  defineFun f =<< 
-    extendContextℓs #levels λ ℓs → do
-      Γps  ← fromTel! (Param ℓs)
-      forM cs $ conClause rec pars #levels Γps
-
+  defineFun f cls
   printFunction false f
   where open FoldP P
 
 defineInd : IndP → Name → TC _
 defineInd P f = do
   `P ← quoteωTC P
-  let ind = def₂ `ind-base `P (def₀ f)
+  `type ← prependLevels #levels <$> extendContextℓs #levels λ ℓs →
+    quoteTC! (IndNT P ℓs)
+  declareDef (vArg f) `type
 
+  let ind = def₂ `ind-base `P (def₀ f)
   pars , cs ← getDataDefinition =<< IndPToNativeName P
 
-  declareDef (vArg f) =<<
-    prependLevels #levels <$> extendContextℓs #levels λ ℓs → quoteTC! (IndNT P ℓs)
+  cls ← extendContextℓs #levels λ ℓs → do
+    Γps  ← fromTel! (Param ℓs)
+    forM cs $ conClause ind pars #levels Γps
 
-  defineFun f =<<
-    extendContextℓs #levels λ ℓs → do
-      Γps  ← fromTel! (Param ℓs)
-      forM cs $ conClause ind pars #levels Γps
+  cls ← noConstraints $ normaliseClauses =<< checkClauses cls `type
+  
+  defineFun f cls
 
   printFunction false f
   where open IndP P
