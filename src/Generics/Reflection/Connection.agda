@@ -65,15 +65,15 @@ genDataCT D N hole = do
   hole ← checkType hole (`DataC `D `N)
 
   d ← DataToNativeName  D N
-  ds ← formatErrorParts [ nameErr d ]
   pars , cs ← getDataDefinition d
 
---  `toN-cls       ← genToNT       pars cs
-  toN ← freshName (ds <> ".toN")
+  `Ds ← formatErrorParts [ termErr `D ]
+  `Ns ← formatErrorParts [ termErr `N ]
+  let msg = "<An instance of DataC " <> `Ds <> " " <> `Ns <> ">"
+  toN ← freshName (msg <> " .toN")
   genToNT pars cs >>= define (vArg toN) (`Algs `D `N)
 
-  -- `fromN-cls     ← genFromNT     pars cs 
-  fromN ← freshName (ds <> ".fromN")
+  fromN ← freshName (msg <> ".fromN")
   genFromNT     pars cs >>= define (vArg fromN) (`Coalgs `D `N)
 
   `fromN-toN ← genFromN-toNT pars cs 
