@@ -101,20 +101,19 @@ module _ (actions : Actions) where
   traverseTel Γ [] = []
   traverseTel Γ ((s , t) ∷ tel) = (s , traverseArg Γ t) ∷ traverseTel ((s , t) ∷cxt Γ) tel
 
-data Any (f : Term → Set) : Term → Set
-
-data Any f where
-  self : ∀ {x : Term} → f x → Any f x
-  var : ∀ {x args} → AnyL (Any f ∘ unArg) args → Any f (var x args)
-  con : ∀ {c args} → AnyL (Any f ∘ unArg) args → Any f (con c args)
-  def : ∀ {g args} → AnyL (Any f ∘ unArg) args → Any f (def g args)
-  lam : ∀ {v t} → Any f (unAbs t) → Any f (lam v t)
-  --pat-lam   : (cs : List Clause) (args : List (Arg Term)) → Term
-  --pi        : (a : Arg Type) (b : Abs Type) → Term
-  --agda-sort : (s : Sort) → Term
-  --lit       : (l : Literal) → Term
-  --meta      : (x : Meta) → List (Arg Term) → Term
-  --unknown   : Term
+anyVisibleTerm : (Cxt → Term → Bool) → Cxt → Term → Bool
+anyVisibleTerm f Γ t = if f Γ t then true else
+  case t of λ where
+    (var _ args) → any visibleTrue args
+    (con _ args) → any visibleTrue args
+    (def _ args) → any visibleTrue args
+    (lam v (abs s x)) → anyVisibleTerm f ((s , arg (arg-info v (modality relevant quantity-ω)) unknown) ∷cxt Γ) x
+    (pat-lam cs args) → any visibleTrue args
+    (`Π[ s ∶ arg i x ] y) → anyVisibleTerm f Γ x ∨ anyVisibleTerm f ((s , arg i x) ∷cxt Γ) y
+    (meta _ xs) → any visibleTrue xs
+    _ → false
+  where visibleTrue : (Arg _) → Bool
+        visibleTrue a = isVisible a ∧ f Γ (unArg a)
 
 anyTerm : (Cxt → Term → Bool) → Cxt → Term → Bool
 anyTerm f Γ t = if f Γ t then true
