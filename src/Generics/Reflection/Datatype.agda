@@ -82,7 +82,7 @@ defineByDataD dataD dataN conNs = extendContextℓs #levels λ ℓs → do
   conTs ← withNormalisation true $ map (prependToType `Levels) <$> getCons dataN `Param Dᵖ
 
   let |conTs| = length conTs ; |conNs| = length conNs
-  guard (|conTs| /= |conNs|) $ typeError {A = ⊤}
+  when (|conTs| /= |conNs|) $ typeError {A = ⊤}
     (strErr ("The number of required constructor names: " <> show |conTs|) ∷
     strErr ("\n ≠ \nthe number of given names: " <> show |conNs|) ∷ [])
 
