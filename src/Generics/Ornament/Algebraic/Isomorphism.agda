@@ -21,22 +21,21 @@ module Finitary where
 
   forget-remember-invᶜ :
       {I : Set ℓⁱ} (D : ConD I cb) → Finitaryᶜ cb
-    → {N : I → Set ℓ} (toN : Algᶜ D N) (toN' : Algᶜ D N)
-      (toNeq : ∀ {i} {ns ns' : ⟦ D ⟧ᶜ N i} → ns ≡ ns' → toN ns ≡ toN' ns')
+    → {N : I → Set ℓ} (toN toN' : Algᶜ D N)
       {X : I → Set ℓˣ} (alg : Algᶜ D X) (f : ∀ {i} → N i → X i)
       {N' : Σ[ i ∈ I ] X i × ⊤ → Set ℓ'}
       (g : ∀ {i x} → N' (i , x , tt) → N i) (r : ∀ {i} (n : N i) → N' (i , f n , tt))
-    → ∀ {i} (ns : ⟦ D ⟧ᶜ N i) → Allᶜ D (λ _ n → g (r n) ≡ n) ns ℓ''
+    → ∀ {i} (ns : ⟦ D ⟧ᶜ N i) → Allᶜ D (λ _ n → g (r n) ≡ n) ns ℓ'' → toN ns ≡ toN' ns
     → toN (eraseᶜ ⌈ algODᶜ D alg ⌉ᶜ (fmapᶜ ⌊ algODᶜ D alg ⌋ᶜ g
         (rememberᶜ {ℓ'' = ℓ'''} D alg f {N'} ns (ind-fmapᶜ D r ns)))) ≡ toN' ns
-  forget-remember-invᶜ (ι i) fin toN toN' toNeq alg f g r refl all = toNeq refl
-  forget-remember-invᶜ (σ A D) (_ ∷ fin) toN toN' toNeq alg f g r (a , ns) all =
-    forget-remember-invᶜ (D a) fin (curry toN a) (curry toN' a) (toNeq ∘ cong (a ,_))
-      (curry alg a) f g r ns all
-  forget-remember-invᶜ (ρ (ι i) E) (refl ∷ fin) toN toN' toNeq
-    alg f g r (n , ns) (eq , all) =
-    forget-remember-invᶜ E fin (curry toN (g (r n))) (curry toN' n) (toNeq ∘ cong₂ _,_ eq)
-      (curry alg (f n)) f g r ns all
+  forget-remember-invᶜ (ι i) fin toN toN' alg f g r refl all toNeq = toNeq
+  forget-remember-invᶜ (σ A D) (_ ∷ fin) toN toN' alg f g r (a , ns) all toNeq =
+    forget-remember-invᶜ (D a) fin (curry toN a) (curry toN' a) (curry alg a)
+      f g r ns all toNeq
+  forget-remember-invᶜ (ρ (ι i) E) (refl ∷ fin) toN toN' alg
+    f g r (n , ns) (eq , all) toNeq =
+    forget-remember-invᶜ E fin (curry toN (g (r n))) (curry toN' n) (curry alg (f n))
+      f g r ns all (trans' (cong (λ n' → toN (n' , ns)) eq) toNeq)
 
   forget-remember-invᶜˢ :
       {I : Set ℓⁱ} (D : ConDs I cbs) → Finitaryᶜˢ cbs → {N : I → Set ℓ} (toN : Algᶜˢ D N)
@@ -47,8 +46,8 @@ module Finitary where
     → toN (eraseᶜˢ ⌈ algODᶜˢ D alg ⌉ᶜˢ (fmapᶜˢ ⌊ algODᶜˢ D alg ⌋ᶜˢ g
         (rememberᶜˢ {ℓ'' = ℓ'''} D alg f {N'} ns (ind-fmapᶜˢ D r ns)))) ≡ toN ns
   forget-remember-invᶜˢ (D ∷ Ds) (fin ∷ _) toN alg f g r (inl ns) all =
-    forget-remember-invᶜ D fin (toN ∘ inl) (toN ∘ inl) (cong (toN ∘ inl))
-      (alg ∘ inl) f g r ns all
+    forget-remember-invᶜ D fin (toN ∘ inl) (toN ∘ inl)
+      (alg ∘ inl) f g r ns all refl
   forget-remember-invᶜˢ (D ∷ Ds) (_ ∷ fin) toN alg f g r (inr ns) all =
     forget-remember-invᶜˢ Ds fin (toN ∘ inr) (alg ∘ inr) f g r ns all
 
@@ -241,7 +240,7 @@ forget-remember-inv {P} {f} C {N'} C' {g} gC {r} rC cond = let open FoldP P in r
           ≡⟨ [ (λ fin    → Finitary.forget-remember-invᶜˢ Dᶜˢ (fin _)
                   (DataC.toN Conv) (algebra ps) (f _ ps) (g _ ps) (r _ ps) ns all)
              , (λ funext → FunExt.forget-remember-invᶜˢ (λ {ℓ} {ℓ'} → funext {ℓ} {ℓ'}) Dᶜˢ
-                  (DataC.toN Conv) (algebra ps) (f _ ps) (g _ ps) (r _ ps) ns all) ]ω cond ⟩
+                  (DataC.toN Conv) (algebra ps) (f _ ps) (g _ ps) (r _ ps) ns all) ]ω cond ⟩'
         DataC.toN Conv ns
       ∎ }
   where

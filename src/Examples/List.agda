@@ -57,13 +57,11 @@ foldrC = genFoldC' (fold-operator ListC) foldrT
 foldr-fusion :
   {A : Set ℓ} {B : Set ℓ'} {C : Set ℓ''}
   (h : B → C) (e : B) (f : A → B → B) (e' : C) (f' : A → C → C)
-  (he : h e ≡ e') (hf : (a : A) (b : B) (c : C) → c ≡ h b → h (f a b) ≡ f' a c)
+  (he : h e ≡ e') (hf : (a : A) (b : B) (c : C) → h b ≡ c → h (f a b) ≡ f' a c)
   (as : List A) → h (foldr e f as) ≡ foldr e' f' as
-foldr-fusion h e f e' f' he hf [] = trans he refl
+foldr-fusion h e f e' f' he hf [] = he
 foldr-fusion h e f e' f' he hf (a ∷ as) =
-  trans
-   (hf a (foldr e f as) (foldr e' f' as) (sym (foldr-fusion h e f e' f' he hf as)))
-   refl
+   hf a (foldr e f as) (foldr e' f' as) (foldr-fusion h e f e' f' he hf as)
 
 foldr-fusionT : IndT (fold-fusion ListC foldrC)
 foldr-fusionT _
@@ -129,14 +127,7 @@ from-toVecP = forget-remember-inv lengthC VecC fromVecC toVecC (inl ListFin)
 -- unquoteDecl from-toVec = defineInd from-toVecP from-toVec
 from-toVec : {A : Set ℓ} (as : List A) → fromVec (toVec as) ≡ as
 from-toVec []       = refl
-from-toVec (a ∷ as) =
-  trans
-   (cong (DataC.toN ListC)  -- [FAIL] manually un-normalised
-    (cong inr
-     (cong inl
-      (cong (λ section → a , section)
-       (cong₂ _,_ (from-toVec as) refl)))))
-   refl
+from-toVec (a ∷ as) = cong (λ n' → a ∷ n') (from-toVec as)
 
 from-toVecC = genIndC from-toVecP from-toVec
 
@@ -200,13 +191,7 @@ from-toLenP = forget-remember-inv fromVecC LenC fromLenC toLenC (inl VecFin)
 -- unquoteDecl from-toLen = defineInd from-toLenP from-toLen
 from-toLen : {A : Set ℓ} {n : ℕ} (as : Vec A n) → fromLen (toLen as) ≡ as
 from-toLen             []       = refl
-from-toLen {n = suc n} (a ∷ as) =
-  trans
-   (cong (DataC.toN VecC)
-    (cong inr
-     (cong inl
-      (cong (a ,_) (cong (n ,_) (cong₂ _,_ (from-toLen as) refl))))))
-   refl
+from-toLen {n = suc n} (a ∷ as) = cong (λ n' → a ∷ n') (from-toLen as)
 
 from-toLenC = genIndC from-toLenP from-toLen
 

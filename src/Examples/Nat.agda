@@ -28,11 +28,11 @@ foldℕC = genFoldC (fold-operator NatC) foldℕ
 
 foldℕ-fusion :
     {X : Set ℓ} {Y : Set ℓ'} (h : X → Y) (z : X) (s : X → X) (z' : Y) (s' : Y → Y)
-  → h z ≡ z' → ((x : X) (y : Y) → y ≡ h x → h (s x) ≡ s' y)
+  → h z ≡ z' → ((x : X) (y : Y) → h x ≡ y → h (s x) ≡ s' y)
   → (n : ℕ) → h (foldℕ z s n) ≡ foldℕ z' s' n
-foldℕ-fusion h z s z' s' hz hs  zero   = trans hz refl
+foldℕ-fusion h z s z' s' hz hs  zero   = hz
 foldℕ-fusion h z s z' s' hz hs (suc n) =
-  trans (hs (foldℕ z s n) (foldℕ z' s' n) (sym (foldℕ-fusion h z s z' s' hz hs n))) refl
+  hs (foldℕ z s n) (foldℕ z' s' n) (foldℕ-fusion h z s z' s' hz hs n)
 
 foldℕ-fusionC = genIndC (fold-fusion NatC foldℕC) foldℕ-fusion
 

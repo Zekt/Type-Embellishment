@@ -55,7 +55,7 @@ Homᶜ : {I : Set ℓⁱ} (D : ConD I cb) {X : I → Set ℓˣ} {Y : I → Set �
 Homᶜ (ι i  ) x y h _ = h x ≡ y
 Homᶜ (σ A D) f g h (a , xs) = Homᶜ (D a) (f a) (g a) h xs
 Homᶜ (ρ D E) {X} {Y} f g h (xs , xs') =
-  (ys : ⟦ D ⟧ʳ Y) → ExtEqʳ D ys (fmapʳ D h xs) → Homᶜ E (f xs) (g ys) h xs'
+  (ys : ⟦ D ⟧ʳ Y) → ExtEqʳ D (fmapʳ D h xs) ys → Homᶜ E (f xs) (g ys) h xs'
 
 ∀ᶜ : {I : Set ℓⁱ} (D : ConD I cb) {X : Carrierᶜ D ℓˣ}
    → (∀ {i} → ⟦ D ⟧ᶜ X i → Set ℓʸ) → Set (max-π cb ⊔ max-σ cb ⊔ hasRec? ℓˣ cb ⊔ ℓʸ)
@@ -80,8 +80,8 @@ fold-fusionʳ :
     {I : Set ℓⁱ} (D : RecD I rb) {N : I → Set ℓ} {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
     (fold-fs : ∀ {i} → N i → X i) (fold-gs : ∀ {i} → N i → Y i)
   → (h : ∀ {i} → X i → Y i) (ns : ⟦ D ⟧ʳ N) → Allʳ D (λ _ n → h (fold-fs n) ≡ fold-gs n) ns
-  → ExtEqʳ D (fmapʳ D fold-gs ns) (fmapʳ D h (fmapʳ D fold-fs ns))
-fold-fusionʳ (ι i  ) fold-fs fold-gs h n  eq  = sym eq
+  → ExtEqʳ D (fmapʳ D h (fmapʳ D fold-fs ns)) (fmapʳ D fold-gs ns)
+fold-fusionʳ (ι i  ) fold-fs fold-gs h n  eq  = eq
 fold-fusionʳ (π A D) fold-fs fold-gs h ns all =
   λ a → fold-fusionʳ (D a) fold-fs fold-gs h (ns a) (all a)
 
@@ -141,11 +141,11 @@ fold-fusion {D} C {fold} foldC = record
           ≡⟨ cong (uncurryᵗ h is) (FoldC.equation foldC ns) ⟩
         uncurryᵗ h is (fold-opᶜˢ Dᶜˢ fs (fmapᶜˢ Dᶜˢ (fold _ (ps , X , fs)) ns))
           ≡⟨ fold-fusionᶜˢ Dᶜˢ fs gs (fold _ (ps , X , fs)) (fold _ (ps , Y , gs))
-               (λ {is} → uncurryᵗ h is) hom ns all ⟩
+               (λ {is} → uncurryᵗ h is) hom ns all ⟩'
         fold-opᶜˢ Dᶜˢ gs (fmapᶜˢ Dᶜˢ (fold _ (ps , Y , gs)) ns)
-          ≡⟨ sym (FoldC.equation foldC ns) ⟩′
+          ≡⟨ sym (FoldC.equation foldC ns) ⟩'
         fold _ (ps , Y , gs) (DataC.toN C ns)
-      □ } where open ≡-Reasoning
+      ∎ } where open ≡-Reasoning
 
 IndOpTʳ : {I : Set ℓⁱ} (D : RecD I rb) {N : I → Set ℓ} → ⟦ D ⟧ʳ N
         → (∀ i → N i → Set ℓ') → Set (max-ℓ rb ⊔ ℓ')

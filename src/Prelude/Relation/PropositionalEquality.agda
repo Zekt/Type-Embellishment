@@ -14,6 +14,9 @@ sym refl = refl
 trans : {x y z : A} → x ≡ y → y ≡ z → x ≡ z
 trans refl eq = eq
 
+trans' : {x y z : A} → x ≡ y → y ≡ z → x ≡ z
+trans' eq refl = eq
+
 cong : ∀ (f : A → B) {x y} → x ≡ y → f x ≡ f y
 cong f refl = refl
 
@@ -31,8 +34,7 @@ subst P refl p = p
 module ≡-Reasoning {A : Set a} where
 
   infix  3 _∎
-  infix  3 final-step-≡
-  infixr 2 _≡⟨⟩_ step-≡ step-≡˘
+  infixr 2 _≡⟨⟩_ step-≡ step-≡' step-≡˘
   infix  1 begin_
 
   begin_ : ∀{x y : A} → x ≡ y → x ≡ y
@@ -44,8 +46,9 @@ module ≡-Reasoning {A : Set a} where
   step-≡ : ∀ (x {y z} : A) → y ≡ z → x ≡ y → x ≡ z
   step-≡ _ y≡z x≡y = trans x≡y y≡z
 
-  final-step-≡ : (x y : A) → x ≡ y → x ≡ y
-  final-step-≡ _ _ x≡y = x≡y
+  step-≡' : ∀ (x {y z} : A) → y ≡ z → x ≡ y → x ≡ z
+  step-≡' _ y≡z x≡y = trans' x≡y y≡z
+
 
   step-≡˘ : ∀ (x {y z} : A) → y ≡ z → y ≡ x → x ≡ z
   step-≡˘ _ y≡z y≡x = trans (sym y≡x) y≡z
@@ -53,8 +56,8 @@ module ≡-Reasoning {A : Set a} where
   _∎ : ∀ (x : A) → x ≡ x
   _∎ _ = refl
 
-  syntax step-≡ x y≡z x≡y = x ≡⟨  x≡y ⟩ y≡z
-  syntax final-step-≡ x y x≡y = x ≡⟨  x≡y ⟩′ y □
+  syntax step-≡  x y≡z x≡y = x ≡⟨  x≡y ⟩  y≡z
+  syntax step-≡' x y≡z x≡y = x ≡⟨  x≡y ⟩' y≡z
   syntax step-≡˘ x y≡z y≡x = x ≡˘⟨ y≡x ⟩ y≡z
 
 FunExt : Setω
