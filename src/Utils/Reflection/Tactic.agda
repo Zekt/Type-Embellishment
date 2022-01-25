@@ -39,6 +39,12 @@ f onClause cl = return cl
 _onClauses_ : (Term → TC Term) → Clauses → TC Clauses
 _onClauses_ f = mapM (normalise onClause_)
 
+checkClauses : Clauses → Type → TC Clauses
+checkClauses cls `A = do
+  pat-lam₀ cls ← checkType (pat-lam₀ cls) `A
+    where _ → Err.IMPOSSIBLE
+  return cls
+  
 quoteTC! : A → TC Term
 quoteTC! a = withNormalisation true (quoteTC a)
 

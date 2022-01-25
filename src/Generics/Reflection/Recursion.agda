@@ -19,11 +19,9 @@ removeAbsurdClauses []                        = []
 removeAbsurdClauses (cl@(clause _ _ _) ∷ cls) = cl ∷ removeAbsurdClauses cls
 removeAbsurdClauses (absurd-clause _ _ ∷ cls) = removeAbsurdClauses cls 
 
-checkClauses : Clauses → Type → TC Clauses
-checkClauses cls `A = do
-  pat-lam₀ cls ← checkType (pat-lam₀ cls) `A
-    where _ → IMPOSSIBLE
-  return cls
+dontReduce⦂ : {A : Set ℓ}
+  → TC A → TC A
+dontReduce⦂ = dontReduceDefs [ quote idFun ]
 
 private
   prependLevels : ℕ → Type → Type
@@ -50,7 +48,7 @@ private
 defineFold : FoldP → Name → TC _
 defineFold P f = do
   `P ← quoteωTC P
-  `type ← prependLevels #levels <$> extendContextℓs #levels λ ℓs →
+  `type ← dontReduce⦂ $ prependLevels #levels <$> extendContextℓs #levels λ ℓs →
       quoteTC! (FoldNT P ℓs)
   declareDef (vArg f) `type
 
@@ -69,7 +67,7 @@ defineFold P f = do
 defineInd : IndP → Name → TC _
 defineInd P f = do
   `P ← quoteωTC P
-  `type ← prependLevels #levels <$> extendContextℓs #levels λ ℓs →
+  `type ← dontReduce⦂ $ prependLevels #levels <$> extendContextℓs #levels λ ℓs →
     quoteTC! (IndNT P ℓs)
   declareDef (vArg f) `type
 
