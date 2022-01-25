@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{14}
+\begin{thebibliography}{15}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -36,6 +36,19 @@
 \providecommand\bibinfo[2]{#2}
 \providecommand\natexlab[1]{#1}
 \providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[\protect\citeauthoryear{Allais}{Allais}{2019}]%
+        {Allais-n-ary-functions}
+\bibfield{author}{\bibinfo{person}{Guillaume Allais}.}
+  \bibinfo{year}{2019}\natexlab{}.
+\newblock \showarticletitle{Generic Level Polymorphic N-ary Functions}. In
+  \bibinfo{booktitle}{\emph{International Workshop on Type-Driven Development
+  (TyDe)}}. \bibinfo{publisher}{ACM}, \bibinfo{pages}{14--26}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1145/3331554.3342604}
+\showDOI{\tempurl}
+
 
 \bibitem[\protect\citeauthoryear{Allais, Atkey, Chapman, McBride, and
   McKinna}{Allais et~al\mbox{.}}{2021}]%

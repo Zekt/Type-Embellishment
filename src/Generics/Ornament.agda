@@ -106,6 +106,8 @@ forget {D} DC {N = N} EC O = record
   ; level   = id
   ; Param   = λ ℓs → PDataD.Param (DataD.applyL D ℓs)
   ; param   = id
+  ; ParamV  = constTelInfo hidden
+  ; ParamN  = constTelInfo "p"
   ; Carrier = λ ℓs ps is → let Oᵖ = DataO.applyL O ℓs in
       N (DataO.level O ℓs) (PDataO.param Oᵖ ps) (PDataO.index Oᵖ ps is)
   ; algebra = λ _ → DataC.toN EC ∘ eraseᵈ O }

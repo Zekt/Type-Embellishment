@@ -440,6 +440,8 @@ lookupAny {D} C S C' = record
   ; level   = id
   ; Param   = λ ℓs → PDataD.Param (DataD.applyL (AnyD C S) ℓs)
   ; param   = id
+  ; ParamV  = constTelInfo hidden
+  ; ParamN  = constTelInfo "p"
   ; Carrier = λ (_ , ℓs) (ps , P , _) _ → Σ (SC.El (S ℓs) ps) P
   ; algebra = λ (ps , P , _) → let Dᶜˢ = PDataD.applyP (DataD.applyL D _) ps in
       lookupAny-hereᶜˢ  Dᶜˢ (SC.pos (S _)) (SC.coe (S _) ps) (DataC.toN C) P
