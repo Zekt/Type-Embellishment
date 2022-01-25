@@ -38,26 +38,38 @@ extendContextℓs (suc n) c = extendContextT "ℓ" hidden-relevant-ω Level λ _
 -- ℕ is the length of (T : Tel ℓ)
 -- this may fail if `Tel` is not built by λ by pattern matching lambdas.
 fromTel : {ℓ : Level}
-  → Tel ℓ → TC Telescope
-fromTel []      = return []
-fromTel (A ∷ T) = do
+  → (tel : Tel ℓ) → TelInfo Visibility tel → TC Telescope
+fromTel []      _ = return []
+fromTel (A ∷ T) (v ∷ U) = do
   s ← getAbsNameω T
-  extendContextT s (visible-relevant-ω) A λ `A x → do
-    Γ ← fromTel (T x)
-    return $ (s , vArg `A) ∷ Γ
-fromTel (T ++ U) = do
-  `Γ ← fromTel T
+  extendContextT s (arg-info v (modality relevant quantity-ω)) A λ `A x → do
+    Γ ← fromTel (T x) (U x)
+    return $ (s , arg (arg-info v (modality relevant quantity-ω)) `A) ∷ Γ
+fromTel (T ++ U) (V ++ W) = do
+  `Γ ← fromTel T V
   extendCxtTel T λ x → do
-    `Δ ← fromTel (U x)
+    `Δ ← fromTel (U x) (W x)
     return (`Γ <> `Δ)
 
 fromTel! : {ℓ : Level}
-  → Tel ℓ → TC Telescope
-fromTel! T = withNormalisation true $ fromTel T
+  → (tel : Tel ℓ) → TelInfo Visibility tel → TC Telescope
+fromTel! T V = withNormalisation true $ fromTel T V
 
 to`Tel : Telescope → Term
 to`Tel = foldr `[] λ where
   (s , arg _ `A) `T →  `A `∷ vLam (abs s `T)
+
+fromTelInfo : ∀ {ℓ} → {tel : Tel ℓ} → TelInfo String tel → TC (List String)
+fromTelInfo [] = return []
+fromTelInfo {tel = A ∷ T} (s ∷ N) = do
+  extendContextT s (visible-relevant-ω) A λ `A x → do
+    ss ← fromTelInfo (N x)
+    return (s ∷ ss)
+fromTelInfo {tel = T ++ U} (S ++ S') = do
+  ss ← fromTelInfo S
+  extendCxtTel T λ t → do
+    ts ← fromTelInfo (S' t)
+    return (ss <> ts)
 
 macro
   genTel : Telescope → Tactic
@@ -123,7 +135,7 @@ telToVars from base T Γ = snd <$> go from base T Γ
         n , (t , p) , (targs , pargs) ← go from base (T x) Γ
         return $ suc n , ((var₀ n `, t) , (var n `, p)) , arg i (var₀ n) ∷ targs , arg i (var n) ∷ pargs
     go from base (T ++ U) Γ = do
-      n ← length <$> fromTel T
+      n ← length <$> fromTel T (constTelInfo visible)
       let (Γ , Δ) = splitAt n Γ
       n , (Δt , Δp) , Δts , Δps ← extendCxtTel T λ t → go from base (U t) Δ
       m , (Γt , Γp) , Γts , Γps ← go n base T Γ 

@@ -61,8 +61,8 @@ getCons d `Param Dᵖ = extendCxtTel Param λ ps →
 
 getSignature : PDataD → TC (Telescope × Type)
 getSignature Dᵖ = do
-  `Param       ← fromTel Param
-  `Param+Index ← fromTel (Param ++ Index)
+  `Param       ← fromTel Param (constTelInfo visible)
+  `Param+Index ← fromTel (Param ++ Index) (constTelInfo visible)
   dT ← extend*Context `Param+Index do
     `Setℓ ← quoteTC! (Set dlevel)
     return $ ⇑ (`Param+Index , `Setℓ) ⦂ Type
