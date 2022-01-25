@@ -80,6 +80,12 @@ defineByDataD dataD dataN conNs = extendContextℓs #levels λ ℓs → do
   declareData dataN (#levels + length `Param) (prependToType `Levels dT)
 
   conTs ← withNormalisation true $ map (prependToType `Levels) <$> getCons dataN `Param Dᵖ
+
+  let |conTs| = length conTs ; |conNs| = length conNs
+  guard (|conTs| /= |conNs|) $ typeError {A = ⊤}
+    (strErr ("The number of required constructor names: " <> show |conTs|) ∷
+    strErr ("\n ≠ \nthe number of given names: " <> show |conNs|) ∷ [])
+
   defineData dataN (zip conNs conTs)
   printData dataN
   where open DataD dataD
