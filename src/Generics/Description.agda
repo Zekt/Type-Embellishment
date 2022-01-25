@@ -99,7 +99,7 @@ record PDataD : Setω where
     ⦃ level-inequality ⦄ : maxMap max-π struct ⊔ maxMap max-σ struct ⊑ dlevel
     Param  : Tel plevel
     Index  : ⟦ Param ⟧ᵗ → Tel ilevel
-    applyP : (p : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index p ⟧ᵗ struct
+    applyP : (ps : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index ps ⟧ᵗ struct
 
 level-pre-fixed-point : (D : PDataD) → PDataD.flevel D (PDataD.dlevel D) ⊑ PDataD.dlevel D
 level-pre-fixed-point D =

@@ -25,7 +25,7 @@ extendCxtTel : {A : Set ℓ′}
 extendCxtTel [] f      = f tt
 extendCxtTel (A ∷ T) f = do
   s ← getAbsNameω T
-  extendContextT "_" visible-relevant-ω A λ _ x → extendCxtTel (T x) (curry f x)
+  extendContextT s visible-relevant-ω A λ _ x → extendCxtTel (T x) (curry f x)
 extendCxtTel (T ++ U) f = extendCxtTel T λ ⟦T⟧ →
   extendCxtTel (U ⟦T⟧) λ x → curry f ⟦T⟧ x
 
@@ -42,9 +42,9 @@ fromTel : {ℓ : Level}
 fromTel []      = return []
 fromTel (A ∷ T) = do
   s ← getAbsNameω T
-  extendContextT "_" (visible-relevant-ω) A λ `A x → do
+  extendContextT s (visible-relevant-ω) A λ `A x → do
     Γ ← fromTel (T x)
-    return $ ("_" , vArg `A) ∷ Γ
+    return $ (s , vArg `A) ∷ Γ
 fromTel (T ++ U) = do
   `Γ ← fromTel T
   extendCxtTel T λ x → do

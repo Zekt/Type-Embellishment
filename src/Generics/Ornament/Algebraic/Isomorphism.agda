@@ -203,6 +203,8 @@ forget-remember-inv {P} {f} C {N'} C' {g} gC {r} rC cond = let open FoldP P in r
   ; level   = level
   ; Param   = Param
   ; param   = param
+  ; ParamV  = ParamV
+  ; ParamN  = ParamN
   ; Carrier = λ _ ps _ n → g _ ps (r _ ps n) ≡ n
   ; algebra = λ ps ns all → let Dᶜˢ = PDataD.applyP (DataD.applyL Desc _) (param ps) in
       begin
@@ -258,6 +260,8 @@ remember-forget-inv {P} {f} C {N'} C' {r} rC {g} gC cond = let open FoldP P in r
   ; level   = id
   ; Param   = Param
   ; param   = id
+  ; ParamV  = constTelInfo hidden
+  ; ParamN  = ParamN
   ; Carrier = λ ℓs ps (is , x , _) n' →
         (f _ ps (g _ ps n') , r _ ps (g _ ps n'))
       ≡ ((x , n') ⦂ Σ[ x' ∈ Carrier ℓs ps is ] N' ℓs ps (is , x' , tt))

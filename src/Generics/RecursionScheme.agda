@@ -41,9 +41,11 @@ fold-operator {D} C = record
   ; level   = snd
   ; Param   = λ (ℓ , ℓs) → let Dᵖ = DataD.applyL D ℓs in
       [[ ps ∶ PDataD.Param Dᵖ ]]
-      [  X  ∶ Curriedᵗ true (PDataD.Index Dᵖ ps) (λ _ → Set ℓ) ]
+      [  X  ∶ Curriedᵗ (PDataD.Index Dᵖ ps) (constTelInfo visible) (λ _ → Set ℓ) ]
               FoldOpTelᶜˢ (PDataD.applyP Dᵖ ps) (uncurryᵗ X)
   ; param   = fst
+  ; ParamV  = constTelInfo hidden ++ λ _ → hidden ∷ λ _ → constTelInfo visible
+  ; ParamN  = constTelInfo "p" ++ λ _ → "X" ∷ λ _ → constTelInfo "alg"
   ; Carrier = λ _ (_ , X , _) → uncurryᵗ X
   ; algebra = λ (ps , _ , args) → fold-opᶜˢ (PDataD.applyP (DataD.applyL D _) ps) args }
 
@@ -118,13 +120,18 @@ fold-fusion {D} C {fold} foldC = record
   ; Param   = λ (ℓˣ , ℓʸ , ℓs) → let Dᵖ = DataD.applyL D ℓs in
       [[ ps ∶ PDataD.Param Dᵖ ]]
       let ITel = PDataD.Index Dᵖ ps; Dᶜˢ = PDataD.applyP Dᵖ ps in
-      [  X  ∶ Curriedᵗ true  ITel (λ _ → Set ℓˣ) ]
-      [  Y  ∶ Curriedᵗ true  ITel (λ _ → Set ℓʸ) ]
-      [  h  ∶ Curriedᵗ false ITel (λ is → uncurryᵗ X is → uncurryᵗ Y is) ]
+      [  X  ∶ Curriedᵗ ITel (constTelInfo visible) (λ _ → Set ℓˣ) ]
+      [  Y  ∶ Curriedᵗ ITel (constTelInfo visible) (λ _ → Set ℓʸ) ]
+      [  h  ∶ Curriedᵗ ITel (constTelInfo hidden ) (λ is → uncurryᵗ X is → uncurryᵗ Y is) ]
       [[ fs ∶ FoldOpTelᶜˢ Dᶜˢ (uncurryᵗ X) ]]
       [[ gs ∶ FoldOpTelᶜˢ Dᶜˢ (uncurryᵗ Y) ]]
               Homᶜˢ Dᶜˢ fs gs (λ {is} → uncurryᵗ h is)
   ; param   = fst
+  ; ParamV  = constTelInfo hidden ++ λ _ →
+              hidden ∷ λ _ → hidden ∷ λ _ → visible ∷ λ _ →
+              constTelInfo hidden ++ λ _ → constTelInfo hidden ++ λ _ → constTelInfo visible
+  ; ParamN  = constTelInfo "p" ++ λ _ → "X" ∷ λ _ → "Y" ∷ λ _ → "h" ∷ λ _ →
+              constTelInfo "f" ++ λ _ → constTelInfo "g" ++ λ _ → constTelInfo "hom"
   ; Carrier = λ _ (ps , X , Y , h , fs , gs , _) is n →
                 uncurryᵗ h is (fold _ (ps , X , fs) n) ≡ fold _ (ps , Y , gs) n
   ; algebra = λ (ps , X , Y , h , fs , gs , hom) {is} ns all →
@@ -181,9 +188,12 @@ ind-operator {D} {N} C = record
   ; level   = snd
   ; Param   = λ (ℓ , ℓs) → let Dᵖ = DataD.applyL D ℓs in
       [[ ps ∶ PDataD.Param Dᵖ ]] let Dᶜˢ = PDataD.applyP Dᵖ ps in
-      [  P  ∶ Curriedᵗ false (PDataD.Index Dᵖ ps) (λ is → N ℓs ps is → Set ℓ) ]
+      [  P  ∶ Curriedᵗ (PDataD.Index Dᵖ ps) (constTelInfo hidden)
+                (λ is → N ℓs ps is → Set ℓ) ]
               IndOpTelᶜˢ Dᶜˢ (DataC.toN C) (uncurryᵗ P)
   ; param   = fst
+  ; ParamV  = constTelInfo hidden ++ λ _ → visible ∷ λ _ → constTelInfo visible
+  ; ParamN  = constTelInfo "p" ++ λ _ → "P" ∷ λ _ → constTelInfo "ind-case"
   ; Carrier = λ _ (_ , P , _) is n → uncurryᵗ P is n
   ; algebra = λ (ps , P , fs) →
       ind-opᶜˢ (PDataD.applyP (DataD.applyL D _) ps) (DataC.toN C) fs }

@@ -124,6 +124,8 @@ remember {P} {f} C {N'} C' = let open FoldP P in record
   ; level   = level
   ; Param   = Param
   ; param   = param
+  ; ParamV  = constTelInfo hidden
+  ; ParamN  = ParamN
   ; Carrier = λ ℓs ps is n → N' ℓs ps (is , f ℓs ps n , tt)
   ; algebra = λ ps ns all → DataC.toN C'
       (subst (λ x → ⟦ ⌊ AlgOD P ⌋ᵈ ⟧ᵈ (N' _ ps) (_ , x , tt))

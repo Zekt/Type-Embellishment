@@ -444,7 +444,7 @@ fold-operator {D} C = record
 
 \section{Discussion}
 
-\citet{Gibbons-DGP, Altenkirch-GP-within-DTP, Pickering-staged-SoP, Yallop-staged-generic-programming, de-Vries-masters-thesis, Jones-partial-evaluation, Chapman-type-theory-should-eat-itself, Christiansen-elaborator-reflection, Kovacs-universe-hierarchies, Allais-binding-syntax-universe-JFP, McBride-ornaments, Ko-OAOAOO, Chen-Mtac-Agda}
+\citet{Gibbons-DGP, Altenkirch-GP-within-DTP, Pickering-staged-SoP, Yallop-staged-generic-programming, de-Vries-masters-thesis, Jones-partial-evaluation, Chapman-type-theory-should-eat-itself, Christiansen-elaborator-reflection, Kovacs-universe-hierarchies, Allais-binding-syntax-universe-JFP, McBride-ornaments, Ko-OAOAOO, Chen-Mtac-Agda, Allais-n-ary-functions}
 
 \todo[inline]{Partial evaluation is more programmer-friendly than staging, and elaborator reflection provides, to some extent, the ability to do partial evaluation}
 
