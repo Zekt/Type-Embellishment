@@ -143,9 +143,9 @@ fold-fusion {D} C {fold} foldC = record
           ≡⟨ fold-fusionᶜˢ Dᶜˢ fs gs (fold _ (ps , X , fs)) (fold _ (ps , Y , gs))
                (λ {is} → uncurryᵗ h is) hom ns all ⟩
         fold-opᶜˢ Dᶜˢ gs (fmapᶜˢ Dᶜˢ (fold _ (ps , Y , gs)) ns)
-          ≡⟨ sym (FoldC.equation foldC ns) ⟩
+          ≡⟨ sym (FoldC.equation foldC ns) ⟩′
         fold _ (ps , Y , gs) (DataC.toN C ns)
-      ∎ } where open ≡-Reasoning
+      □ } where open ≡-Reasoning
 
 IndOpTʳ : {I : Set ℓⁱ} (D : RecD I rb) {N : I → Set ℓ} → ⟦ D ⟧ʳ N
         → (∀ i → N i → Set ℓ') → Set (max-ℓ rb ⊔ ℓ')
