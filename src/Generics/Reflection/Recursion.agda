@@ -14,9 +14,6 @@ open import Generics.Recursion
 open import Generics.Reflection.Telescope
 open import Generics.Reflection.Name
 
-_onClauses_ : (Term → TC Term) → Clauses → TC Clauses
-f onClauses cls = mapM (normalise onClause_) cls
-
 removeAbsurdClauses : Clauses → Clauses
 removeAbsurdClauses []                        = []
 removeAbsurdClauses (cl@(clause _ _ _) ∷ cls) = cl ∷ removeAbsurdClauses cls
