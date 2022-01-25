@@ -30,6 +30,15 @@ extend*Context : Telescope → TC A → TC A
 extend*Context []              m = m
 extend*Context ((s , a) ∷ tel) m = extendContext s a (extend*Context tel m)
 
+_onClause_ : (Term → TC Term) → Clause → TC Clause
+f onClause (tel ⊢ ps `= t) = do
+  u ← extend*Context tel (f t)
+  return $ tel ⊢ ps `= u
+f onClause cl = return cl
+
+_onClauses_ : (Term → TC Term) → Clauses → TC Clauses
+_onClauses_ f = mapM (normalise onClause_)
+
 quoteTC! : A → TC Term
 quoteTC! a = withNormalisation true (quoteTC a)
 

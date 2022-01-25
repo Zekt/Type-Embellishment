@@ -14,14 +14,13 @@ open import Generics.Recursion
 open import Generics.Reflection.Telescope
 open import Generics.Reflection.Name
 
-normaliseClause : Clause → TC Clause
-normaliseClause (tel ⊢ ps `= t) = do
-  u ← extend*Context tel (normalise t)
-  return $ tel ⊢ ps `= u
-normaliseClause cl = return cl
+_onClauses_ : (Term → TC Term) → Clauses → TC Clauses
+f onClauses cls = mapM (normalise onClause_) cls
 
-normaliseClauses : Clauses → TC Clauses
-normaliseClauses = mapM normaliseClause
+removeAbsurdClauses : Clauses → Clauses
+removeAbsurdClauses []                        = []
+removeAbsurdClauses (cl@(clause _ _ _) ∷ cls) = cl ∷ removeAbsurdClauses cls
+removeAbsurdClauses (absurd-clause _ _ ∷ cls) = removeAbsurdClauses cls 
 
 checkClauses : Clauses → Type → TC Clauses
 checkClauses cls `A = do
@@ -64,7 +63,7 @@ defineFold P f = do
   cls ← extendContextℓs #levels λ ℓs → do
     Γps  ← fromTel! (Param ℓs)
     forM cs $ conClause rec pars #levels Γps
-  cls ← noConstraints $ normaliseClauses =<< checkClauses cls `type
+  cls ← noConstraints $ (reduce onClauses_) =<< checkClauses cls `type
 
   defineFun f cls
   printFunction false f
@@ -84,7 +83,7 @@ defineInd P f = do
     Γps  ← fromTel! (Param ℓs)
     forM cs $ conClause ind pars #levels Γps
 
-  cls ← noConstraints $ normaliseClauses =<< checkClauses cls `type
+  cls ← noConstraints $ (reduce onClauses_) =<< checkClauses cls `type
   
   defineFun f cls
 
