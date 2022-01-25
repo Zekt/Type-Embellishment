@@ -19,10 +19,6 @@ removeAbsurdClauses []                        = []
 removeAbsurdClauses (cl@(clause _ _ _) ∷ cls) = cl ∷ removeAbsurdClauses cls
 removeAbsurdClauses (absurd-clause _ _ ∷ cls) = removeAbsurdClauses cls 
 
-dontReduce⦂ : {A : Set ℓ}
-  → TC A → TC A
-dontReduce⦂ = dontReduceDefs [ quote idFun ]
-
 private
   prependLevels : ℕ → Type → Type
   prependLevels n = prependToType (`Levels n)
@@ -48,7 +44,7 @@ private
 defineFold : FoldP → Name → TC _
 defineFold P f = do
   `P ← quoteωTC P
-  `type ← dontReduce⦂ $ prependLevels #levels <$> extendContextℓs #levels λ ℓs →
+  `type ← prependLevels #levels <$> extendContextℓs #levels λ ℓs →
       quoteTC! (FoldNT P ℓs)
   declareDef (vArg f) `type
 
@@ -58,7 +54,7 @@ defineFold P f = do
   cls ← extendContextℓs #levels λ ℓs → do
     Γps  ← fromTel! (Param ℓs)
     forM cs $ conClause rec pars #levels Γps
-  cls ← noConstraints $ (reduce onClauses_) =<< checkClauses cls `type
+  cls ← noConstraints $ (reduce onClauses_) =<< removeAbsurdClauses <$> checkClauses cls `type
 
   defineFun f cls
   printFunction false f
@@ -67,7 +63,7 @@ defineFold P f = do
 defineInd : IndP → Name → TC _
 defineInd P f = do
   `P ← quoteωTC P
-  `type ← dontReduce⦂ $ prependLevels #levels <$> extendContextℓs #levels λ ℓs →
+  `type ← prependLevels #levels <$> extendContextℓs #levels λ ℓs →
     quoteTC! (IndNT P ℓs)
   declareDef (vArg f) `type
 
@@ -78,7 +74,7 @@ defineInd P f = do
     Γps  ← fromTel! (Param ℓs)
     forM cs $ conClause ind pars #levels Γps
 
-  cls ← noConstraints $ (reduce onClauses_) =<< checkClauses cls `type
+  cls ← noConstraints $ (reduce onClauses_) =<< removeAbsurdClauses <$> checkClauses cls `type
   
   defineFun f cls
 
