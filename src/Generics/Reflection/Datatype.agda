@@ -184,11 +184,14 @@ reifyData d = do
     patLam Γ body = let (_ , p) , _ = cxtToVars 0 (`tt , `tt) Γ in
       pat-lam₀ [ Γ ⊢ [ vArg p ] `= body ]
 
+genDataDT : Name → Term → TC Name
+genDataDT d hole = do
+  t ← reifyData d
+  defineUnify (vArg "_") `DataD t hole
+
 macro
   genDataD : Name → Tactic
-  genDataD d hole = do
-    t ← reifyData d
-    defineUnify "_" `DataD t hole
+  genDataD d hole = genDataDT d hole >> return tt
 
 -- Currently unusable because module names are always printed.
 macro
