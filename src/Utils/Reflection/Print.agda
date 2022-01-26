@@ -5,9 +5,9 @@ module Utils.Reflection.Print where
 
 open import Utils.Reflection.Core
 open import Utils.Reflection.Term
-  using (splitType)
 open import Utils.Reflection.Eq
 open import Utils.Reflection.Tactic
+open import Utils.Reflection.Show
 
 infoName = "print"
 verbosity = 5
@@ -90,15 +90,16 @@ mergeSpace []                     = []
 mergeSpace (space ∷ space ∷ msg)  = mergeSpace (space ∷ msg)
 mergeSpace (err   ∷ errs)         = err ∷ mergeSpace errs
 
-printArg : (showImplicit : Bool) → Arg A → (A → TC ErrorParts) → TC ErrorParts
-printArg b x f = case getVisibility x of λ where
+printArg : (showImplicit : Bool) → String → Arg A → (A → TC ErrorParts) → TC ErrorParts
+printArg b s x f = case getVisibility x of λ where
   visible → do
     err ← f (unArg x)
     return $ if elem space err
       then paren visible err
       else err
   v → if b
-    then (paren v <$> f (unArg x))
+    then (f (unArg x) >>= λ err →
+          (return $ paren v (strErr (s <> " = ") ∷ err))) --f (unArg x)
     else return []
   
 printTelescope : Telescope → TC ErrorParts → TC ErrorParts
@@ -160,6 +161,11 @@ printDataAs (s , T , pars) cs = do
   cons ← vcat ∘ nest <$> extend*Context tel (printConsAs cs)
   return (vcat $ decl ∷ cons ∷ [])
 
+hideDot : Args Pattern → Args Pattern
+hideDot = map λ where
+  (arg i (dot t)) → arg i (dot unknown)
+  t → t
+
 removeImplicitDot : Args Pattern → Args Pattern
 removeImplicitDot = filter λ where
   (arg (arg-info hidden _) (dot _)) → false
@@ -167,28 +173,47 @@ removeImplicitDot = filter λ where
 
 printPattern : Pattern → TC ErrorParts
 printPattern (con c as@(_ ∷ _)) = return $
-  paren visible (toErr $ con c (removeImplicitDot as))
+  paren visible (toErr $ con c (hideDot $ removeImplicitDot as))
 printPattern p                 = return $ toErr p
 
-printPatterns : Bool → Args Pattern → TC ErrorParts
-printPatterns b []       = ⦇ [] ⦈
-printPatterns b (p ∷ []) = printArg b p printPattern
-printPatterns b (p ∷ ps) = do
-  p  ← printArg b p printPattern
-  ps ← printPatterns b ps
-  return $ p <> space ∷ ps
+PVarIsT : Cxt → Term → Pattern → Bool
+PVarIsT Γ (var x args) (var y) = x == y + Cxt.len Γ
+PVarIsT _ _ _ = false
 
-printClause : Bool → (f : Name) → Clause → TC String
-printClause b f (tel ⊢ ps `= t) = do
+termHasPat : Term → Pattern → Bool
+termHasPat t p = anyVisibleTerm (λ Γ t → PVarIsT Γ t p) (0 , []) t
+
+isUsed : Pattern → Term → Bool
+isUsed p t = anyPat (termHasPat t) p
+
+printNecessaryPattern : Term → String → Arg Pattern → TC ErrorParts
+printNecessaryPattern t s p = if isUsed (unArg p) t then
+                                printArg true s p printPattern
+                              else
+                                printArg false s p printPattern
+
+printPatterns : Bool → Term → Telescope → Args Pattern → TC ErrorParts
+printPatterns b t _ []       = ⦇ [] ⦈
+printPatterns b t (n ∷ _) (p ∷ []) = if b then printArg true (fst n) p printPattern
+                                     else printNecessaryPattern t (fst n) p
+printPatterns b t (n ∷ ns) (p ∷ ps) = do
+  p  ← if b then printArg true (fst n) p printPattern
+       else printNecessaryPattern t (fst n) p
+  ps ← printPatterns b t ns ps
+  return $ p <> space ∷ ps
+printPatterns _ _ _ _ = typeError [ strErr "Length of Type and Patterns doesn't match." ]
+
+printClause : Bool → (f : Name) → Telescope → Clause → TC String
+printClause b f ns (tel ⊢ ps `= t) = do
   tel ← renameUnderscore tel
   extend*Context tel do
-    ps  ← mergeSpace ∘ dropWhile (space ==_) <$> printPatterns b ps
+    ps  ← mergeSpace ∘ dropWhile (space ==_) <$> printPatterns b t ns ps
     formatErrorParts $ (nameErr f ∷ space ∷ ps) <> space ∷ strErr "=" ∷ space ∷ termErr t ∷ []
-printClause b f (absurd-clause tel ps) = extend*Context tel do
-  formatErrorParts =<< (λ ps → nameErr f ∷ space ∷ ps) ∘ mergeSpace <$> printPatterns b ps
+printClause b f ns (absurd-clause tel ps) = extend*Context tel do
+  formatErrorParts =<< (λ ps → nameErr f ∷ space ∷ ps) ∘ mergeSpace <$> printPatterns b unknown ns ps
 
-printClauses : Bool → Name → Clauses → TC (List String)
-printClauses b f = mapM (printClause b f)
+printClauses : Bool → Name → Telescope → Clauses → TC (List String)
+printClauses b f tel = mapM (printClause b f tel)
 
 printSig : Name → TC ErrorParts
 printSig f = do
@@ -198,7 +223,8 @@ printSig f = do
 printFunction : Bool → Name → TC ⊤
 printFunction b f = do
   `A , cs ← getFunction f
-  css ← printClauses b f cs
+  a ← ⇑_ <$> getType f
+  css ← printClauses b f (fst a) cs
   debugPrint infoName verbosity =<< printSig f
   debugPrint infoName verbosity $ [ strErr (vcat css) ]
   return tt

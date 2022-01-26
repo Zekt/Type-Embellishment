@@ -81,18 +81,18 @@ macro
   genDataT : (D : DataD) → Name → Tactic
   genDataT D d hole = do
     `D ← quoteωTC D
-    t ← uncurryDataD D d
-    defineUnify "_" (def₁ (quote DataT) `D) t hole
---    checkType hole (def₁ (quote DataT) `D)
---    uncurryDataD D d >>= unify hole
+--    t ← uncurryDataD D d
+--    defineUnify "_" (def₁ (quote DataT) `D) t hole
+    checkType hole (def₁ (quote DataT) `D)
+    uncurryDataD D d >>= unify hole
 
   genFoldT : (P : FoldP) → Name → Tactic
   genFoldT P d hole = do
     `P ← quoteωTC P
-    t ← uncurryFoldP P d
-    defineUnify "_" (def₁ (quote FoldT) `P) t hole
---    checkType hole (def₁ (quote FoldT) `P)
---    uncurryFoldP P d >>= unify hole
+--    t ← uncurryFoldP P d
+--    defineUnify "_" (def₁ (quote FoldT) `P) t hole
+    checkType hole (def₁ (quote FoldT) `P)
+    uncurryFoldP P d >>= unify hole
 
   genIndT : (P : IndP) → Name → Tactic
   genIndT P d hole = do

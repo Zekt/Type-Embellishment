@@ -61,8 +61,8 @@ getCons d `Param Dᵖ = extendCxtTel Param λ ps →
 
 getSignature : PDataD → TC (Telescope × Type)
 getSignature Dᵖ = do
-  `Param       ← fromTel Param
-  `Param+Index ← fromTel (Param ++ Index)
+  `Param       ← fromTel Param (constTelInfo visible)
+  `Param+Index ← fromTel (Param ++ Index) (constTelInfo visible)
   dT ← extend*Context `Param+Index do
     `Setℓ ← quoteTC! (Set dlevel)
     return $ ⇑ (`Param+Index , `Setℓ) ⦂ Type
@@ -80,6 +80,12 @@ defineByDataD dataD dataN conNs = extendContextℓs #levels λ ℓs → do
   declareData dataN (#levels + length `Param) (prependToType `Levels dT)
 
   conTs ← withNormalisation true $ map (prependToType `Levels) <$> getCons dataN `Param Dᵖ
+
+  let |conTs| = length conTs ; |conNs| = length conNs
+  when (|conTs| /= |conNs|) $ typeError {A = ⊤}
+    (strErr ("The number of required constructor names: " <> show |conTs|) ∷
+    strErr ("\n ≠ \nthe number of given names: " <> show |conNs|) ∷ [])
+
   defineData dataN (zip conNs conTs)
   printData dataN
   where open DataD dataD

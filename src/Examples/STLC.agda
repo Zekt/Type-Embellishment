@@ -143,32 +143,32 @@ toTypingC = genIndC toTypingP toTyping
 from-toTypingP : IndP
 from-toTypingP = forget-remember-inv toΛC TypingC fromTypingC toTypingC (inl TypedTermFin)
 
--- unquoteDecl from-toTyping = defineInd from-toTypingP from-toTyping
-from-toTyping : (t : Γ ⊢ τ) → fromTyping (toTyping t) ≡ t
-from-toTyping (var i) = refl
-from-toTyping (app {Γ} {τ} {τ'} t u) =
-  trans
-   (cong (DataC.toN TypedTermC)
-    (cong inr
-     (cong inl
-      (cong (λ section → Γ , section)
-       (cong (λ section → τ , section)
-        (cong (λ section → τ' , section)
-         (cong₂ _,_ (from-toTyping t)
-          (cong₂ _,_ (from-toTyping u) refl))))))))
-   refl
-from-toTyping (lam {τ} {Γ} {τ'} t) =
-  trans
-   (cong (DataC.toN TypedTermC)  -- [FAIL] manually un-normalised
-    (cong inr
-     (cong inr
-      (cong inl
-       (cong (λ section → τ , section)
-        (cong (λ section → Γ , section)
-         (cong (λ section → τ' , section)
-          (cong₂ _,_ (from-toTyping t)
-           refl))))))))
-   refl
+unquoteDecl from-toTyping = defineInd from-toTypingP from-toTyping
+-- from-toTyping : (t : Γ ⊢ τ) → fromTyping (toTyping t) ≡ t
+-- from-toTyping (var i) = refl
+-- from-toTyping (app {Γ} {τ} {τ'} t u) =
+--   trans
+--    (cong (DataC.toN TypedTermC)
+--     (cong inr
+--      (cong inl
+--       (cong (λ section → Γ , section)
+--        (cong (λ section → τ , section)
+--         (cong (λ section → τ' , section)
+--          (cong₂ _,_ (from-toTyping t)
+--           (cong₂ _,_ (from-toTyping u) refl))))))))
+--    refl
+-- from-toTyping (lam {τ} {Γ} {τ'} t) =
+--   trans
+--    (cong (DataC.toN TypedTermC)  -- [FAIL] manually un-normalised
+--     (cong inr
+--      (cong inr
+--       (cong inl
+--        (cong (λ section → τ , section)
+--         (cong (λ section → Γ , section)
+--          (cong (λ section → τ' , section)
+--           (cong₂ _,_ (from-toTyping t)
+--            refl))))))))
+--    refl
 
 from-toTypingC = genIndC from-toTypingP from-toTyping
 
@@ -176,46 +176,46 @@ to-fromTypingP : IndP
 to-fromTypingP = remember-forget-inv toΛC TypingC toTypingC fromTypingC (inl TypedTermFin)
 
 -- [FAIL] too slow; manually case-split and elaborate-and-give
--- unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
-to-fromTyping : ∀ {t} (d : Γ ⊢ t ∶ τ)
-              → (toΛ (fromTyping d) , toTyping (fromTyping d))
-              ≡ ((t , d) ⦂ Σ[ t' ∈ Λ ] Γ ⊢ t' ∶ τ)  -- [FAIL] manual type annotation
-to-fromTyping (var i) = refl
-to-fromTyping (app {Γ} {τ} {τ'} {t} d e) =
-  trans
-   (cong
-    (bimap (λ x → x) (DataC.toN TypingC))  -- [FAIL] manually un-normalised
-    (cong (bimap (λ x → x) inr)
-     (cong (bimap (λ x → x) inl)
-      (cong (bimap (λ x → x) (λ section → Γ , section))
-       (cong (bimap (λ x → x) (λ section → τ , section))
-        (cong (bimap (λ x → x) (λ section → τ' , section))  -- [FAIL] printed as τ (if implicit arguments to app are not given on lhs)
-         (trans
-          (cong
-           (λ p →
-              app (fst p) (toΛ (fromTyping e)) ,
-              fst p ,
-              snd p , toΛ (fromTyping e) , toTyping (fromTyping e) , refl)
-           (to-fromTyping d))
-          (cong (bimap (λ x → x) (λ x → t , d , x))
-           (trans
-            (cong (λ p → app t (fst p) , fst p , snd p , refl)
-             (to-fromTyping e))
-            refl)))))))))
-   refl
-to-fromTyping (lam {τ} {Γ} {τ'} d) =
-  trans
-   (cong
-    (bimap (λ x → x) (DataC.toN TypingC))  -- [FAIL] manually un-normalised
-    (cong (bimap (λ x → x) inr)
-     (cong (bimap (λ x → x) inr)
-      (cong (bimap (λ x → x) inl)
-       (cong (bimap (λ x → x) (λ section → τ , section))
-        (cong (bimap (λ x → x) (λ section → Γ , section))
-         (cong (bimap (λ x → x) (λ section → τ' , section))
-          (trans
-           (cong (λ p → lam (fst p) , fst p , snd p , refl) (to-fromTyping d))
-           refl))))))))
-   refl
+unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
+-- to-fromTyping : ∀ {t} (d : Γ ⊢ t ∶ τ)
+--               → (toΛ (fromTyping d) , toTyping (fromTyping d))
+--               ≡ ((t , d) ⦂ Σ[ t' ∈ Λ ] Γ ⊢ t' ∶ τ)  -- [FAIL] manual type annotation
+-- to-fromTyping (var i) = refl
+-- to-fromTyping (app {Γ} {τ} {τ'} {t} d e) =
+--   trans
+--    (cong
+--     (bimap (λ x → x) (DataC.toN TypingC))  -- [FAIL] manually un-normalised
+--     (cong (bimap (λ x → x) inr)
+--      (cong (bimap (λ x → x) inl)
+--       (cong (bimap (λ x → x) (λ section → Γ , section))
+--        (cong (bimap (λ x → x) (λ section → τ , section))
+--         (cong (bimap (λ x → x) (λ section → τ' , section))  -- [FAIL] printed as τ (if implicit arguments to app are not given on lhs)
+--          (trans
+--           (cong
+--            (λ p →
+--               app (fst p) (toΛ (fromTyping e)) ,
+--               fst p ,
+--               snd p , toΛ (fromTyping e) , toTyping (fromTyping e) , refl)
+--            (to-fromTyping d))
+--           (cong (bimap (λ x → x) (λ x → t , d , x))
+--            (trans
+--             (cong (λ p → app t (fst p) , fst p , snd p , refl)
+--              (to-fromTyping e))
+--             refl)))))))))
+--    refl
+-- to-fromTyping (lam {τ} {Γ} {τ'} d) =
+--   trans
+--    (cong
+--     (bimap (λ x → x) (DataC.toN TypingC))  -- [FAIL] manually un-normalised
+--     (cong (bimap (λ x → x) inr)
+--      (cong (bimap (λ x → x) inr)
+--       (cong (bimap (λ x → x) inl)
+--        (cong (bimap (λ x → x) (λ section → τ , section))
+--         (cong (bimap (λ x → x) (λ section → Γ , section))
+--          (cong (bimap (λ x → x) (λ section → τ' , section))
+--           (trans
+--            (cong (λ p → lam (fst p) , fst p , snd p , refl) (to-fromTyping d))
+--            refl))))))))
+--    refl
 
 to-fromTypingC = genIndC to-fromTypingP to-fromTyping
