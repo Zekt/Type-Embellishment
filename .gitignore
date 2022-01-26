@@ -4,3 +4,7 @@ src/.DS_Store
 dist-newstyle
 Everything.agda
 EverythingSafe.agda
+tex/ICFP22/comment.cut
+tex/ICFP22/NDGP.pdf
+tex/ICFP22/NDGP.ptb
+tex/ICFP22/NDGP.tex

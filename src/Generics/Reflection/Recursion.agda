@@ -23,11 +23,10 @@ normaliseClause cl = return cl
 normaliseClauses : Clauses → TC Clauses
 normaliseClauses = mapM normaliseClause
 
-checkClauses : Clauses → Type → TC Clauses
-checkClauses cls `A = do
-  pat-lam₀ cls ← checkType (pat-lam₀ cls) `A
-    where _ → IMPOSSIBLE
-  return cls
+removeAbsurdClauses : Clauses → Clauses
+removeAbsurdClauses []                        = []
+removeAbsurdClauses (cl@(clause _ _ _) ∷ cls) = cl ∷ removeAbsurdClauses cls
+removeAbsurdClauses (absurd-clause _ _ ∷ cls) = removeAbsurdClauses cls 
 
 private
   prependLevels : ℕ → Type → Type
@@ -108,7 +107,7 @@ defineFold P f = do
     Γps ← fromTel! (Param ℓs) ParamV
     ss  ← fromTelInfo (ParamN {ℓs})
     forM cs $ conClause dummyRec pars #levels (renameTelTo Γps ss)
-  cls ← noConstraints $ normaliseClauses =<< checkClauses cls `type
+  cls ← noConstraints $ (reduce onClauses_) =<< removeAbsurdClauses <$> checkClauses cls `type
 
   defineFun f cls
   printFunction false f
@@ -135,8 +134,7 @@ defineInd P f = do
     ss  ← fromTelInfo (ParamN {ℓs})
     forM cs $ conClause dummyRec pars #levels (renameTelTo Γps ss)
 
-  cls ← noConstraints $ normaliseClauses =<< checkClauses cls `type
-
+  cls ← noConstraints $ (reduce onClauses_) =<< removeAbsurdClauses <$> checkClauses cls `type
   defineFun f cls
 
   printFunction false f

@@ -126,40 +126,42 @@ toVecC = genIndC toVecP toVec
 from-toVecP : IndP
 from-toVecP = forget-remember-inv lengthC VecC fromVecC toVecC (inl ListFin)
 
--- unquoteDecl from-toVec = defineInd from-toVecP from-toVec
-from-toVec : {A : Set ℓ} (as : List A) → fromVec (toVec as) ≡ as
-from-toVec []       = refl
-from-toVec (a ∷ as) =
-  trans
-   (cong (DataC.toN ListC)  -- [FAIL] manually un-normalised
-    (cong inr
-     (cong inl
-      (cong (λ section → a , section)
-       (cong₂ _,_ (from-toVec as) refl)))))
-   refl
+unquoteDecl from-toVec = defineInd from-toVecP from-toVec
+-- from-toVec : {A : Set ℓ} (as : List A) → fromVec (toVec as) ≡ as
+-- from-toVec []       = refl
+-- from-toVec (a ∷ as) =
+--   trans
+--    (cong (DataC.toN ListC)  -- [FAIL] manually un-normalised
+--     (cong inr
+--      (cong inl
+--       (cong (λ section → a , section)
+--        (cong₂ _,_ (from-toVec as) refl)))))
+--    refl
 
-from-toVecC = genIndC from-toVecP from-toVec
+-- from-toVecC = genIndC from-toVecP from-toVec
 
 to-fromVecP : IndP
 to-fromVecP = remember-forget-inv lengthC VecC toVecC fromVecC (inl ListFin)
 
 -- [FAIL] Cannot instantiate the metavariable…
--- unquoteDecl to-fromVec = defineInd to-fromVecP to-fromVec
-to-fromVec : {A : Set ℓ} {n : ℕ} (as : Vec A n)
-           → (length (fromVec as) , toVec (fromVec as))  -- [WARNING] ‘length’ is manually un-normalised
-           ≡ ((n , as) ⦂ Σ[ n' ∈ ℕ ] Vec A n')           -- [FAIL] manual type annotation
-to-fromVec []       = refl
-to-fromVec (a ∷ as) =
-  trans
-   (cong
-    (bimap (λ x → x) (DataC.toN VecC))  -- [FAIL] manually un-normalised
-    (cong (bimap (λ x → x) inr)
-     (cong (bimap (λ x → x) inl)
-      (cong (bimap (λ x → x) (λ section → a , section))
-       (trans
-        (cong (λ p → suc (fst p) , fst p , snd p , refl) (to-fromVec as))
-        refl)))))
-   refl
+-- since (part of) the solution was created in an irrelevant context
+-- when checking that the expression
+unquoteDecl to-fromVec = defineInd to-fromVecP to-fromVec
+--to-fromVec : {A : Set ℓ} {n : ℕ} (as : Vec A n)
+--           → (length (fromVec as) , toVec (fromVec as))  -- [WARNING] ‘length’ is manually un-normalised
+--           ≡ ((n , as) ⦂ Σ[ n' ∈ ℕ ] Vec A n')           -- [FAIL] manual type annotation
+--to-fromVec []       = refl
+--to-fromVec (a ∷ as) =
+--  trans
+--   (cong
+--    (bimap (λ x → x) (DataC.toN VecC))  -- [FAIL] manually un-normalised
+--    (cong (bimap (λ x → x) inr)
+--     (cong (bimap (λ x → x) inl)
+--      (cong (bimap (λ x → x) (λ section → a , section))
+--       (trans
+--        (cong (λ p → suc (fst p) , fst p , snd p , refl) (to-fromVec as))
+--        refl)))))
+--   refl
 
 to-fromVecC = genIndC to-fromVecP to-fromVec
 
@@ -197,16 +199,16 @@ from-toLenP : IndP
 from-toLenP = forget-remember-inv fromVecC LenC fromLenC toLenC (inl VecFin)
 
 -- [FAIL] The case for the constructor refl is impossible…
--- unquoteDecl from-toLen = defineInd from-toLenP from-toLen
-from-toLen : {A : Set ℓ} {n : ℕ} (as : Vec A n) → fromLen (toLen as) ≡ as
-from-toLen             []       = refl
-from-toLen {n = suc n} (a ∷ as) =
-  trans
-   (cong (DataC.toN VecC)
-    (cong inr
-     (cong inl
-      (cong (a ,_) (cong (n ,_) (cong₂ _,_ (from-toLen as) refl))))))
-   refl
+unquoteDecl from-toLen = defineInd from-toLenP from-toLen
+--from-toLen : {A : Set ℓ} {n : ℕ} (as : Vec A n) → fromLen (toLen as) ≡ as
+--from-toLen             []       = refl
+--from-toLen {n = suc n} (a ∷ as) =
+--  trans
+--   (cong (DataC.toN VecC)
+--    (cong inr
+--     (cong inl
+--      (cong (a ,_) (cong (n ,_) (cong₂ _,_ (from-toLen as) refl))))))
+--   refl
 
 from-toLenC = genIndC from-toLenP from-toLen
 
@@ -214,23 +216,23 @@ to-fromLenP : IndP
 to-fromLenP = remember-forget-inv fromVecC LenC toLenC fromLenC (inl VecFin)
 
 -- [FAIL] too slow; manually case-split and elaborate-and-give
--- unquoteDecl to-fromLen = defineInd to-fromLenP to-fromLen
-to-fromLen : {A : Set ℓ} {n : ℕ} {as : List A} (l : Len n as)
-           → (fromVec (fromLen l) , toLen (fromLen l))
-           ≡ ((as , l) ⦂ Σ[ as' ∈ List A ] Len n as')  -- [FAIL] manual type annotation
-to-fromLen                      zero   = refl
-to-fromLen {n = suc n} {a ∷ _} (suc l) =
-  trans
-   (cong
-    (bimap (λ x → x) (DataC.toN LenC))  -- [FAIL] manually un-normalised
-    (cong (bimap (λ x → x) inr)
-     (cong (bimap (λ x → x) inl)
-      (cong (bimap (λ x → x) (λ section → a , section))
-       (cong (bimap (λ x → x) (λ section → n , section))
-        (trans
-         (cong (λ p → a ∷ fst p , fst p , snd p , refl) (to-fromLen l))
-         refl))))))
-   refl
+unquoteDecl to-fromLen = defineInd to-fromLenP to-fromLen
+-- to-fromLen : {A : Set ℓ} {n : ℕ} {as : List A} (l : Len n as)
+--            → (fromVec (fromLen l) , toLen (fromLen l))
+--            ≡ ((as , l) ⦂ Σ[ as' ∈ List A ] Len n as')  -- [FAIL] manual type annotation
+-- to-fromLen                      zero   = refl
+-- to-fromLen {n = suc n} {a ∷ _} (suc l) =
+--   trans
+--    (cong
+--     (bimap (λ x → x) (DataC.toN LenC))  -- [FAIL] manually un-normalised
+--     (cong (bimap (λ x → x) inr)
+--      (cong (bimap (λ x → x) inl)
+--       (cong (bimap (λ x → x) (λ section → a , section))
+--        (cong (bimap (λ x → x) (λ section → n , section))
+--         (trans
+--          (cong (λ p → a ∷ fst p , fst p , snd p , refl) (to-fromLen l))
+--          refl))))))
+--    refl
 
 to-fromLenC = genIndC to-fromLenP to-fromLen
 

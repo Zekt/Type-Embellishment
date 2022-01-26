@@ -8,6 +8,7 @@ open import Utils.Reflection
 open import Generics.Telescope
 open import Generics.Description
 open import Generics.Recursion
+open import Generics.RecursionScheme
 
 open import Generics.Reflection
 
@@ -19,7 +20,7 @@ open import Generics.Reflection
 _ : genTel (fst `T-Nat) ≡ω []
 _ = refl
 
-_ : evalT (fromTel []) ≡ fst `T-Nat
+_ : evalT (fromTel [] (constTelInfo visible)) ≡ fst `T-Nat
 _ = refl
 
 ------------------------------------------------------------------------------
@@ -32,8 +33,8 @@ data Rel (A : Set) : (xs ys : List A) → Set where
 _ : genTel `T-rel ≡ω [ B ∶ Set ] [ bs ∶ List B ] [ bs ∶ List B ] []
 _ = refl
 
-_ : evalT (fromTel ([ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] [])) ≢ `T-rel
-_ = λ { () }
+_ : evalT (fromTel ([ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] []) (constTelInfo visible)) ≡ `T-rel
+_ = refl
 
 ------------------------------------------------------------------------------
 -- 
@@ -44,19 +45,19 @@ sort-is-not-normal : Tel _
 sort-is-not-normal = [ b ∶ if true then Bool else ⊥ ] [] 
 
 `sort-is-not-normal : Telescope
-`sort-is-not-normal = evalT (fromTel sort-is-not-normal)
+`sort-is-not-normal = evalT (fromTel sort-is-not-normal (constTelInfo visible))
 
 _ : sort-is-not-normal ≡ω [ b ∶ Bool ] []
 _ = refl
 
-_ : `sort-is-not-normal ≡ evalT (fromTel ([ b ∶ Bool ] []))
+_ : `sort-is-not-normal ≡ evalT (fromTel ([ b ∶ Bool ] []) (constTelInfo visible))
 _ = refl
 
 ex₁ : Bool → Tel _
 ex₁ = λ b → []
 
 `ex₁ : Telescope
-`ex₁ = evalT (fromTel (Bool ∷ ex₁))
+`ex₁ = evalT (fromTel (Bool ∷ ex₁) (constTelInfo visible))
 
 -- 
 NatD : DataD
@@ -79,6 +80,12 @@ natD' = genDataD ℕ
 
 NatT = genDataT NatD ℕ
 NatC = genDataC NatD NatT
+
+
+foldℕP : FoldP
+foldℕP = fold-operator NatC
+
+unquoteDecl foldℕ = defineFold foldℕP foldℕ
 
 unquoteDecl data Nat constructor z s = defineByDataD NatD Nat (z ∷ s ∷ [])
 
@@ -282,10 +289,6 @@ WD = record
       }
   }
 
-open import Generics.RecursionScheme
-
-foldℕP : FoldP
-foldℕP = fold-operator NatC
 
 lenP : FoldP
 lenP = fold-operator LenC

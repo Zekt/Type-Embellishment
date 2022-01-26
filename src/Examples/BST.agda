@@ -4,6 +4,8 @@ module Examples.BST where
 
 open import Prelude hiding (lookupAny)
 
+open import Utils.Reflection
+
 open import Generics.Description
 open import Generics.Recursion
 open import Generics.Reflection
@@ -147,47 +149,47 @@ from-toAllP : IndP
 from-toAllP = forget-remember-inv toB23TreeC B23TreeAllC fromAllC toAllC (inl B23TreePFin)
 
 -- [FAIL] too slow;  manually case-split and elaborate-and-give
--- unquoteDecl from-toAll = defineInd from-toAllP from-toAll
-from-toAll : ∀ {P : Value → Set ℓ} {h l r} (t : B23TreeP P h l r) → fromAll (toAll t) ≡ t
-from-toAll  node₀ = refl
-from-toAll (node₂ {h} {l} {r} x p t u) =
-  trans
-   (cong (DataC.toN B23TreePC)  -- [FAIL] manually un-normalised
-    (cong inr
-     (cong inl
-      (cong (h ,_)
-       (cong (l ,_)
-        (cong (r ,_)
-         (cong (x ,_)
-          (cong (p ,_)
-           (cong₂ _,_ (from-toAll t)
-            (cong₂ _,_ (from-toAll u) refl))))))))))
-   refl
-from-toAll (node₃ {h} {l} {r} x p y q t u v) =
-  trans
-   (cong (DataC.toN B23TreePC)  -- [FAIL] manually un-normalised
-    (cong inr
-     (cong inr
-      (cong inl
-       (cong (h ,_)
-        (cong (l ,_)
-         (cong (r ,_)
-          (cong (x ,_)
-           (cong (p ,_)
-            (cong (y ,_)
-             (cong (q ,_)
-              (cong₂ _,_ (from-toAll t)
-               (cong₂ _,_ (from-toAll u)
-                (cong₂ _,_ (from-toAll v) refl))))))))))))))
-   refl
+unquoteDecl from-toAll = defineInd from-toAllP from-toAll
+-- from-toAll : ∀ {P : Value → Set ℓ} {h l r} (t : B23TreeP P h l r) → fromAll (toAll t) ≡ t
+-- from-toAll  node₀ = refl
+-- from-toAll (node₂ {h} {l} {r} x p t u) =
+--   trans
+--    (cong (DataC.toN B23TreePC)  -- [FAIL] manually un-normalised
+--     (cong inr
+--      (cong inl
+--       (cong (h ,_)
+--        (cong (l ,_)
+--         (cong (r ,_)
+--          (cong (x ,_)
+--           (cong (p ,_)
+--            (cong₂ _,_ (from-toAll t)
+--             (cong₂ _,_ (from-toAll u) refl))))))))))
+--    refl
+-- from-toAll (node₃ {h} {l} {r} x p y q t u v) =
+--   trans
+--    (cong (DataC.toN B23TreePC)  -- [FAIL] manually un-normalised
+--     (cong inr
+--      (cong inr
+--       (cong inl
+--        (cong (h ,_)
+--         (cong (l ,_)
+--          (cong (r ,_)
+--           (cong (x ,_)
+--            (cong (p ,_)
+--             (cong (y ,_)
+--              (cong (q ,_)
+--               (cong₂ _,_ (from-toAll t)
+--                (cong₂ _,_ (from-toAll u)
+--                 (cong₂ _,_ (from-toAll v) refl))))))))))))))
+--    refl
 
 from-toAllC = genIndC from-toAllP from-toAll
 
--- to-fromAllP : IndP
--- to-fromAllP = remember-forget-inv toB23TreeC B23TreeAllC toAllC fromAllC (inl B23TreePFin)
+to-fromAllP : IndP
+to-fromAllP = remember-forget-inv toB23TreeC B23TreeAllC toAllC fromAllC (inl B23TreePFin)
 
 -- [FAIL] too slow
--- unquoteDecl to-fromAll = defineInd to-fromAllP to-fromAll
+unquoteDecl to-fromAll = defineInd to-fromAllP to-fromAll
 
 -- [FAIL] manually case-split and elaborate-and-give but still too slow
 -- to-fromAll : ∀ {P : Value → Set ℓ} {h l r} {t : B23Tree h l r} (allt : B23TreeAll P t)
@@ -259,20 +261,20 @@ from-toAllC = genIndC from-toAllP from-toAll
 --                    refl))))))))))))))))
 --    refl
 
--- to-fromAllC = genIndC to-fromAllP to-fromAll
+to-fromAllC = genIndC to-fromAllP to-fromAll
 
 -- Compare with hand-written version
-to-fromAll : ∀ {P : Value → Set ℓ} {h l r} {t : B23Tree h l r} (allt : B23TreeAll P t)
-           → (toB23Tree (fromAll allt) , toAll (fromAll allt))
-           ≡ ((t , allt) ⦂ Σ[ t' ∈ B23Tree h l r ] B23TreeAll P t')
-to-fromAll node₀ = refl
-to-fromAll (node₂ _ allt allu) =
-  cong₂ (λ (t' , allt') (u' , allu') → node₂ _ t' u' , node₂ _ allt' allu')
-        (to-fromAll allt) (to-fromAll allu)
-to-fromAll (node₃ _ _ allt allu allv) =
-  cong₃ (λ (t' , allt') (u' , allu') (v' , allv') →
-           node₃ _ _ t' u' v' , node₃ _ _ allt' allu' allv')
-        (to-fromAll allt) (to-fromAll allu) (to-fromAll allv)
+-- to-fromAll : ∀ {P : Value → Set ℓ} {h l r} {t : B23Tree h l r} (allt : B23TreeAll P t)
+--            → (toB23Tree (fromAll allt) , toAll (fromAll allt))
+--            ≡ ((t , allt) ⦂ Σ[ t' ∈ B23Tree h l r ] B23TreeAll P t')
+-- to-fromAll node₀ = refl
+-- to-fromAll (node₂ _ allt allu) =
+--   cong₂ (λ (t' , allt') (u' , allu') → node₂ _ t' u' , node₂ _ allt' allu')
+--         (to-fromAll allt) (to-fromAll allu)
+-- to-fromAll (node₃ _ _ allt allu allv) =
+--   cong₃ (λ (t' , allt') (u' , allu') (v' , allv') →
+--            node₃ _ _ t' u' v' , node₃ _ _ allt' allu' allv')
+--         (to-fromAll allt) (to-fromAll allu) (to-fromAll allv)
 
 --------
 -- Any predicate
@@ -296,21 +298,22 @@ data B23TreeAny (P : Value → Set ℓ) : ∀ {h l r} → B23Tree h l r → Set 
   node₃-there₂ : ∀ {x y t u v} → B23TreeAny P v
                → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
 
-B23TreeAnyC = genDataC B23TreeAnyD (genDataT B23TreeAnyD B23TreeAny)
+B23TreeAnyT = genDataT B23TreeAnyD B23TreeAny
+B23TreeAnyC = genDataC B23TreeAnyD B23TreeAnyT
 
 lookupB23TreeAnyP : FoldP
 lookupB23TreeAnyP = lookupAny B23TreeC B23TreeS B23TreeAnyC
 
--- unquoteDecl lookupB23TreeAny = defineFold lookupB23TreeAnyP lookupB23TreeAny
-lookupB23TreeAny :
-  ∀ {P : Value → Set ℓ} {h l r} {t : B23Tree h l r} → B23TreeAny P t → Σ Value P
-lookupB23TreeAny (node₂-here   p) = _ , p
-lookupB23TreeAny (node₃-here₀  p) = _ , p
-lookupB23TreeAny (node₃-here₁  p) = _ , p
-lookupB23TreeAny (node₂-there₀ i) = lookupB23TreeAny i
-lookupB23TreeAny (node₂-there₁ i) = lookupB23TreeAny i
-lookupB23TreeAny (node₃-there₀ i) = lookupB23TreeAny i
-lookupB23TreeAny (node₃-there₁ i) = lookupB23TreeAny i
-lookupB23TreeAny (node₃-there₂ i) = lookupB23TreeAny i
+unquoteDecl lookupB23TreeAny = defineFold lookupB23TreeAnyP lookupB23TreeAny
+-- lookupB23TreeAny :
+--   ∀ {P : Value → Set ℓ} {h l r} {t : B23Tree h l r} → B23TreeAny P t → Σ Value P
+-- lookupB23TreeAny (node₂-here   p) = _ , p
+-- lookupB23TreeAny (node₃-here₀  p) = _ , p
+-- lookupB23TreeAny (node₃-here₁  p) = _ , p
+-- lookupB23TreeAny (node₂-there₀ i) = lookupB23TreeAny i
+-- lookupB23TreeAny (node₂-there₁ i) = lookupB23TreeAny i
+-- lookupB23TreeAny (node₃-there₀ i) = lookupB23TreeAny i
+-- lookupB23TreeAny (node₃-there₁ i) = lookupB23TreeAny i
+-- lookupB23TreeAny (node₃-there₂ i) = lookupB23TreeAny i
 
 lookupB23TreeAnyC = genFoldC lookupB23TreeAnyP lookupB23TreeAny

@@ -22,6 +22,8 @@ private
   pattern `IndC  x y     = def₂ (quote IndC)  x y
   pattern `Algs  x y     = def₂ (quote Algs)  x y
   pattern `Coalgs x y    = def₂ (quote Coalgs) x y
+  pattern `FoldC-equation = proj (quote (FoldC.equation))
+  pattern `IndC-equation  = proj (quote (IndC.equation))
 
 module _ (pars : ℕ) where
   conToClause : (c : Name) → TC (Telescope × Vars)
@@ -33,7 +35,7 @@ module _ (pars : ℕ) where
     `Γ , (t , p) , args ← conToClause c
     cls                 ← consToClauses cs
     return $ (`Γ , c , (`inl t , `inl p) , args)
-      ∷ ((λ { (`Γ , c , (t , p) , args) → `Γ , c , (`inr t , `inr p) , args}) <$> cls)
+      ∷ ((λ (`Γ , c , (t , p) , args) → `Γ , c , (`inr t , `inr p) , args) <$> cls)
 
   module _ (cs : Names) where
     genFromCons :  (Telescope × Name × Vars → Clause) → TC Clauses
@@ -53,10 +55,10 @@ module _ (pars : ℕ) where
       (Γ , c , _ , _ , args) → Γ ⊢ [ vArg (con c args) ] `= `refl
 
     genFoldC-equation = pat-lam₀ <$> genFromCons λ where
-      (Γ , c , (_ , p) , _) → Γ ⊢ vArg (proj (quote (FoldC.equation))) ∷ vArg p ∷ [] `= `refl
+      (Γ , c , (_ , p) , _) → Γ ⊢ vArg `FoldC-equation ∷ vArg p ∷ [] `= `refl
 
     genIndC-equation = pat-lam₀ <$> genFromCons λ where
-      (Γ , c , (_ , p) , _) → Γ ⊢ vArg (proj (quote (IndC.equation))) ∷ vArg p ∷ [] `= `refl
+      (Γ , c , (_ , p) , _) → Γ ⊢ vArg `IndC-equation ∷ vArg p ∷ [] `= `refl
   
 genDataCT : (D : DataD) (N : DataT D) → Tactic
 genDataCT D N hole = do
@@ -65,15 +67,15 @@ genDataCT D N hole = do
   hole ← checkType hole (`DataC `D `N)
 
   d ← DataToNativeName  D N
-  ds ← formatErrorParts [ nameErr d ]
   pars , cs ← getDataDefinition d
 
---  `toN-cls       ← genToNT       pars cs
-  toN ← freshName (ds <> ".toN")
+  `Ds ← formatErrorParts [ termErr `D ]
+  `Ns ← formatErrorParts [ termErr `N ]
+  let msg = "<An instance of DataC " <> `Ds <> " " <> `Ns <> ">"
+  toN ← freshName (msg <> " .toN")
   genToNT pars cs >>= define (vArg toN) (`Algs `D `N)
 
-  -- `fromN-cls     ← genFromNT     pars cs 
-  fromN ← freshName (ds <> ".fromN")
+  fromN ← freshName (msg <> " .fromN")
   genFromNT     pars cs >>= define (vArg fromN) (`Coalgs `D `N)
 
   `fromN-toN ← genFromN-toNT pars cs 
