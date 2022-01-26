@@ -3,11 +3,16 @@ module Prelude.String where
 
 open import Agda.Builtin.Char
 open import Agda.Builtin.Bool
+open import Agda.Builtin.Nat hiding (_==_)
 open import Agda.Builtin.List
 
 open import Prelude.Eq
+open import Prelude.List
+open import Prelude.Char
 open import Prelude.Coercion
 open import Prelude.Monoid
+open import Prelude.Maybe
+open import Prelude.Function
 
 open import Agda.Builtin.String as S public
   using (String)
@@ -43,3 +48,22 @@ parensIfSpace s with hasSpace (⇑ s)
     ... | false = hasSpace xs
 ... | true  = parens s
 ... | false = s
+
+trailingNatʳ : List Char → Maybe Nat
+trailingNatʳ [] = nothing
+trailingNatʳ (x ∷ xs) with toNat x
+... | (just x) = case trailingNatʳ xs of λ where
+                   (just x') → just (x' * 10 + x)
+                   nothing → just x
+... | nothing = nothing
+
+trailingNat = trailingNatʳ ∘ reverse
+lenTrailingNat = lenLeadingNat ∘ reverse
+
+increase : String → String
+increase s with ⇑ s
+... | cs = case trailingNat cs of λ where
+             (just x) → (⇑ removeLast (lenTrailingNat cs) cs) <>
+                        S.primShowNat (suc x)
+             nothing  → s <> "1"
+

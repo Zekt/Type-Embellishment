@@ -161,6 +161,11 @@ printDataAs (s , T , pars) cs = do
   cons ← vcat ∘ nest <$> extend*Context tel (printConsAs cs)
   return (vcat $ decl ∷ cons ∷ [])
 
+hideDot : Args Pattern → Args Pattern
+hideDot = map λ where
+  (arg i (dot t)) → arg i (dot unknown)
+  t → t
+
 removeImplicitDot : Args Pattern → Args Pattern
 removeImplicitDot = filter λ where
   (arg (arg-info hidden _) (dot _)) → false
@@ -168,7 +173,7 @@ removeImplicitDot = filter λ where
 
 printPattern : Pattern → TC ErrorParts
 printPattern (con c as@(_ ∷ _)) = return $
-  paren visible (toErr $ con c (removeImplicitDot as))
+  paren visible (toErr $ con c (hideDot $ removeImplicitDot as))
 printPattern p                 = return $ toErr p
 
 PVarIsT : Cxt → Term → Pattern → Bool
@@ -183,22 +188,17 @@ isUsed p t = anyPat (termHasPat t) p
 
 printNecessaryPattern : Term → String → Arg Pattern → TC ErrorParts
 printNecessaryPattern t s p = if isUsed (unArg p) t then
-                              --dprint (strErr "Found: "
-                              --      ∷ strErr (show (unArg p))
-                              --      ∷ strErr " is used in term "
-                              --      ∷ strErr (show t)
-                              --      ∷ []) >>
-                              printArg true s p printPattern
-                            else
-                              printArg false s p printPattern
+                                printArg true s p printPattern
+                              else
+                                printArg false s p printPattern
 
 printPatterns : Bool → Term → Telescope → Args Pattern → TC ErrorParts
 printPatterns b t _ []       = ⦇ [] ⦈
 printPatterns b t (n ∷ _) (p ∷ []) = if b then printArg true (fst n) p printPattern
-                                     else printNecessaryPattern t (fst n) p --printArg b p printPattern
+                                     else printNecessaryPattern t (fst n) p
 printPatterns b t (n ∷ ns) (p ∷ ps) = do
   p  ← if b then printArg true (fst n) p printPattern
-       else printNecessaryPattern t (fst n) p --printArg b p printPattern
+       else printNecessaryPattern t (fst n) p
   ps ← printPatterns b t ns ps
   return $ p <> space ∷ ps
 printPatterns _ _ _ _ = typeError [ strErr "Length of Type and Patterns doesn't match." ]
@@ -224,7 +224,6 @@ printFunction : Bool → Name → TC ⊤
 printFunction b f = do
   `A , cs ← getFunction f
   a ← ⇑_ <$> getType f
-  --dprint (strErr "telescope of function type: " ∷ map ((λ s → strErr (s <> " ")) ∘ fst) (fst a) )
   css ← printClauses b f (fst a) cs
   debugPrint infoName verbosity =<< printSig f
   debugPrint infoName verbosity $ [ strErr (vcat css) ]
