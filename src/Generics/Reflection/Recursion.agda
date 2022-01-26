@@ -14,11 +14,6 @@ open import Generics.Recursion
 open import Generics.Reflection.Telescope
 open import Generics.Reflection.Name
 
-removeAbsurdClauses : Clauses → Clauses
-removeAbsurdClauses []                        = []
-removeAbsurdClauses (cl@(clause _ _ _) ∷ cls) = cl ∷ removeAbsurdClauses cls
-removeAbsurdClauses (absurd-clause _ _ ∷ cls) = removeAbsurdClauses cls 
-
 private
   prependLevels : ℕ → Type → Type
   prependLevels n = prependToType (`Levels n)
@@ -54,7 +49,8 @@ defineFold P f = do
   cls ← extendContextℓs #levels λ ℓs → do
     Γps  ← fromTel! (Param ℓs)
     forM cs $ conClause rec pars #levels Γps
-  cls ← noConstraints $ (reduce onClauses_) =<< removeAbsurdClauses <$> checkClauses cls `type
+
+  cls ← noConstraints $ (reduce onClauses_) =<< checkClauses cls `type
 
   defineFun f cls
   printFunction false f
@@ -74,9 +70,8 @@ defineInd P f = do
     Γps  ← fromTel! (Param ℓs)
     forM cs $ conClause ind pars #levels Γps
 
-  cls ← noConstraints $ (reduce onClauses_) =<< removeAbsurdClauses <$> checkClauses cls `type
-  
-  defineFun f cls
+  cls ← noConstraints $ (reduce onClauses_) =<< checkClauses cls `type
 
+  defineFun f cls
   printFunction false f
   where open IndP P

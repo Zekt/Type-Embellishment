@@ -185,7 +185,8 @@ printClause b f (tel ⊢ ps `= t) = do
     ps  ← mergeSpace ∘ dropWhile (space ==_) <$> printPatterns b ps
     formatErrorParts $ (nameErr f ∷ space ∷ ps) <> space ∷ strErr "=" ∷ space ∷ termErr t ∷ []
 printClause b f (absurd-clause tel ps) = extend*Context tel do
-  formatErrorParts =<< (λ ps → nameErr f ∷ space ∷ ps) ∘ mergeSpace <$> printPatterns b ps
+  formatErrorParts =<<
+    (λ ps → nameErr f ∷ space ∷ ps) ∘ mergeSpace ∘ dropWhile (space ==_) <$> printPatterns b ps
 
 printClauses : Bool → Name → Clauses → TC (List String)
 printClauses b f = mapM (printClause b f)
