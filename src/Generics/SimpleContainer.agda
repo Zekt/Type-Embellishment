@@ -60,4 +60,4 @@ record SC (D : PDataD) : Setω where
     coe : (ps : ⟦ PDataD.Param D ⟧ᵗ) → SCᶜˢ (PDataD.applyP D ps) pos (El ps)
 
 SCᵈ : DataD → Setω
-SCᵈ D = ∀ ℓs → SC (DataD.applyL D ℓs)
+SCᵈ D = ∀ {ℓs} → SC (DataD.applyL D ℓs)

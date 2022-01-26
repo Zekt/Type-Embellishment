@@ -4,6 +4,7 @@ open import Prelude
 
 module Generics.Recursion where
 
+open import Agda.Builtin.Reflection public using (Name)
 open import Generics.Telescope
 open import Generics.Description
 open import Generics.Algebra
@@ -23,6 +24,22 @@ record DataC (D : DataD) (N : DataT D) : Setω where
     fromN : Coalgs D N
     fromN-toN : ∀ {ℓs ps is} (ns : ⟦ D ⟧ᵈ (N ℓs ps) is) → fromN (toN ns) ≡ ns
     toN-fromN : ∀ {ℓs ps is}          (n : N ℓs ps  is) → toN (fromN n ) ≡ n
+
+record Named (n : Name) (A : Setω) : Setω where
+  constructor named
+  field
+    unNamed : A
+
+open Named public
+
+findNamed : (n : Name) (A : Setω) → ⦃ Named n A ⦄ → A
+findNamed _ _ ⦃ named a ⦄ = a
+
+findDataC : ∀ (n : Name) {D N} → ⦃ Named n (DataC D N) ⦄ → DataC D N
+findDataC n = findNamed n _
+
+findDataD : ∀ (n : Name) {D N} → ⦃ Named n (DataC D N) ⦄ → DataD
+findDataD _ {D} = D
 
 record FoldP : Setω where
   field

@@ -200,11 +200,13 @@ module FunExt (funext : FunExt) where
     cong (bimap id inr) (remember-forget-invᶜˢ Ds (alg ∘ inr) f r g ns' all)
 
 forget-remember-inv :
-  ∀ {P f} (C : FoldC P f) {N'} (C' : DataC ⌊ AlgOD P ⌋ᵈ N')
-  → let forgetP = forget C' (FoldP.Conv P) ⌈ AlgOD P ⌉ᵈ; rememberP = remember C C' in
-  ∀ {g} (gC : FoldC forgetP g) {r} (rC : IndC rememberP r)
+  ∀ (n' n : Name) {P f} ⦃ C : FoldC P f ⦄ {N'} ⦃ C' : Named n' (DataC ⌊ AlgOD P ⌋ᵈ N') ⦄
+  → let forgetP   = forget n' n ⦃ C' ⦄ ⦃ named (FoldP.Conv P) ⦄ ⦃ ⌈ AlgOD P ⌉ᵈ ⦄
+        rememberP = remember n' ⦃ C ⦄ ⦃ C' ⦄ in
+  ∀ {g} ⦃ gC : FoldC forgetP g ⦄ {r} ⦃ rC : IndC rememberP r ⦄
   → Finitary (FoldP.Desc P) ⊎ω FunExt → IndP
-forget-remember-inv {P} {f} C {N'} C' {g} gC {r} rC cond = let open FoldP P in record
+forget-remember-inv _ _ {P} {f} ⦃ C ⦄ {N'} ⦃ named C' ⦄ {g} ⦃ gC ⦄ {r} ⦃ rC ⦄ cond =
+  let open FoldP P in record
   { Conv    = Conv
   ; #levels = #levels
   ; level   = level
@@ -237,7 +239,7 @@ forget-remember-inv {P} {f} C {N'} C' {g} gC {r} rC cond = let open FoldP P in r
             (fmapᶜˢ ⌊ algODᶜˢ Dᶜˢ (algebra ps) ⌋ᶜˢ (g _ ps)
               (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (algebra ps) (f _ ps) {N' _ ps} ns
                 (ind-fmapᶜˢ Dᶜˢ (r _ ps) ns))))
-          ≡⟨ [ (λ fin    → Finitary.forget-remember-invᶜˢ Dᶜˢ (fin _)
+          ≡⟨ [ (λ fin    → Finitary.forget-remember-invᶜˢ Dᶜˢ (fin {_})
                   (DataC.toN Conv) (algebra ps) (f _ ps) (g _ ps) (r _ ps) ns all)
              , (λ funext → FunExt.forget-remember-invᶜˢ (λ {ℓ} {ℓ'} → funext {ℓ} {ℓ'}) Dᶜˢ
                   (DataC.toN Conv) (algebra ps) (f _ ps) (g _ ps) (r _ ps) ns all) ]ω cond ⟩'
@@ -255,11 +257,13 @@ forget-remember-inv {P} {f} C {N'} C' {g} gC {r} rC cond = let open FoldP P in r
     erase-fmap-subst-lemma O f xs refl = refl
 
 remember-forget-inv :
-  ∀ {P f} (C : FoldC P f) {N'} (C' : DataC ⌊ AlgOD P ⌋ᵈ N')
-  → let rememberP = remember C C'; forgetP = forget C' (FoldP.Conv P) ⌈ AlgOD P ⌉ᵈ in
-  ∀ {r} (rC : IndC rememberP r) {g} (gC : FoldC forgetP g)
+  ∀ (n' n : Name) {P f} ⦃ C : FoldC P f ⦄ {N'} ⦃ C' : Named n' (DataC ⌊ AlgOD P ⌋ᵈ N') ⦄
+  → let forgetP   = forget n' n ⦃ C' ⦄ ⦃ named (FoldP.Conv P) ⦄ ⦃ ⌈ AlgOD P ⌉ᵈ ⦄
+        rememberP = remember n' ⦃ C ⦄ ⦃ C' ⦄ in
+  ∀ {g} ⦃ gC : FoldC forgetP g ⦄ {r} ⦃ rC : IndC rememberP r ⦄
   → Finitary (FoldP.Desc P) ⊎ω FunExt → IndP
-remember-forget-inv {P} {f} C {N'} C' {r} rC {g} gC cond = let open FoldP P in record
+remember-forget-inv _ _ {P} {f} ⦃ C ⦄ {N'} ⦃ named C' ⦄ {g} ⦃ gC ⦄ {r} ⦃ rC ⦄ cond =
+  let open FoldP P in record
   { Conv    = C'
   ; #levels = #levels
   ; level   = id
@@ -287,7 +291,7 @@ remember-forget-inv {P} {f} C {N'} C' {r} rC {g} gC cond = let open FoldP P in r
         algebra ps (fmapᵈ Desc (f _ ps) ns) ,
         DataC.toN C' (rememberᶜˢ Dᶜˢ (algebra ps) (f _ ps) _ (ind-fmapᵈ Desc (r _ ps) ns))
           ≡⟨ cong (bimap id (DataC.toN C'))
-                  ([ (λ fin    → Finitary.remember-forget-invᶜˢ Dᶜˢ (fin _)
+                  ([ (λ fin    → Finitary.remember-forget-invᶜˢ Dᶜˢ (fin {_})
                                    (algebra ps) (f _ ps) (r _ ps) (g _ ps) ns' all)
                    , (λ funext → FunExt.remember-forget-invᶜˢ
                                    (λ {ℓ} {ℓ'} → funext {ℓ} {ℓ'}) Dᶜˢ

@@ -194,4 +194,4 @@ Finitaryᵖᵈ : PDataD → Set
 Finitaryᵖᵈ D = Finitaryᶜˢ (PDataD.struct D)
 
 Finitary : DataD → Set
-Finitary D = ∀ ℓs → Finitaryᵖᵈ (DataD.applyL D ℓs)
+Finitary D = ∀ {ℓs} → Finitaryᵖᵈ (DataD.applyL D ℓs)

@@ -304,7 +304,8 @@ AnyD-level-inequality ℓ ℓᵈ cbs sbs ineq =
   ∎ where open ≡-Reasoning
 
 AnyODᵖᵈ : (D : PDataD) → SC D → {N : ∀ ps → Carrierᵖᵈ D ps (PDataD.dlevel D)}
-        → (∀ {ps} → Algᵖᵈ D (N ps)) → Level → PDataOD (DataD.applyL NatD tt)
+        → (∀ {ps} → Algᵖᵈ D (N ps)) → Level
+        → PDataOD (DataD.applyL (findDataD (quote ℕ)) tt)
 AnyODᵖᵈ D S {N} toN ℓ = record
   { alevel = maxMap (uncurry (hasEl? ℓ)) (allToList (SC.pos S))
   ; level-inequality = AnyD-level-inequality
@@ -314,13 +315,14 @@ AnyODᵖᵈ D S {N} toN ℓ = record
   ; applyP = λ (ps , P , _) → let Dᶜˢ = PDataD.applyP D ps in
       hereODᶜˢ Dᶜˢ (SC.pos S) (SC.coe S ps) toN P (thereODᶜˢ Dᶜˢ toN []) }
 
-AnyOD : ∀ {D N} → DataC D N → SCᵈ D → DataOD NatD
-AnyOD {D} C S = record
+AnyOD : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄
+      → DataOD (findDataD (quote ℕ))
+AnyOD _ {D} ⦃ named C ⦄ ⦃ S ⦄ = record
   { #levels = suc (DataD.#levels D)
-  ; applyL  = λ (ℓ , ℓs) → AnyODᵖᵈ (DataD.applyL D ℓs) (S ℓs) (DataC.toN C) ℓ }
+  ; applyL  = λ (ℓ , ℓs) → AnyODᵖᵈ (DataD.applyL D ℓs) S (DataC.toN C) ℓ }
 
-AnyD : ∀ {D N} → DataC D N → SCᵈ D → DataD
-AnyD C S = ⌊ AnyOD C S ⌋ᵈ
+AnyD : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄ → DataD
+AnyD n = ⌊ AnyOD n ⌋ᵈ
 
 lookupAny-hereᶜ' :
     {I : Set ℓⁱ} (D : ConD I cb) {N : Carrierᶜ D ℓᵈ} (toN : Algᶜ D N) (X : Set ℓ)
@@ -433,16 +435,17 @@ lookupAny-thereᶜˢ (D ∷ Ds) toN P acc-alg =
   lookupAny-thereᶜˢ' _ P (lookupAny-thereᶜ  D  (toN ∘ inl) P)
                          (lookupAny-thereᶜˢ Ds (toN ∘ inr) P acc-alg)
 
-lookupAny : ∀ {D N} (C : DataC D N) (S : SCᵈ D) → ∀ {N'} → DataC (AnyD C S) N' → FoldP
-lookupAny {D} C S C' = record
+lookupAny : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄
+          → ∀ {n' N'} ⦃ _ : Named n' (DataC (AnyD n ⦃ C ⦄ ⦃ S ⦄) N') ⦄ → FoldP
+lookupAny n {D} ⦃ named C ⦄ ⦃ S ⦄ ⦃ named C' ⦄ = record
   { Conv    = C'
-  ; #levels = DataD.#levels (AnyD C S)
+  ; #levels = DataD.#levels (AnyD n ⦃ named C ⦄ ⦃ S ⦄)
   ; level   = id
-  ; Param   = λ ℓs → PDataD.Param (DataD.applyL (AnyD C S) ℓs)
+  ; Param   = λ ℓs → PDataD.Param (DataD.applyL (AnyD n ⦃ named C ⦄ ⦃ S ⦄) ℓs)
   ; param   = id
   ; ParamV  = constTelInfo hidden
-  ; ParamN  = constTelInfo "p"
-  ; Carrier = λ (_ , ℓs) (ps , P , _) _ → Σ (SC.El (S ℓs) ps) P
+  ; ParamN  = constTelInfo "p" ++ λ _ → "P" ∷ λ _ → []
+  ; Carrier = λ (_ , ℓs) (ps , P , _) _ → Σ (SC.El S ps) P
   ; algebra = λ (ps , P , _) → let Dᶜˢ = PDataD.applyP (DataD.applyL D _) ps in
-      lookupAny-hereᶜˢ  Dᶜˢ (SC.pos (S _)) (SC.coe (S _) ps) (DataC.toN C) P
+      lookupAny-hereᶜˢ  Dᶜˢ (SC.pos S) (SC.coe S ps) (DataC.toN C) P
      (lookupAny-thereᶜˢ Dᶜˢ (DataC.toN C) P (λ ())) }

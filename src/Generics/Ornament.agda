@@ -99,8 +99,9 @@ eraseᵈ : {D E : DataD} (O : DataO D E) {ℓs : DataD.Levels D}
        → ⟦ D ⟧ᵈ (X ∘ index) is → ⟦ E ⟧ᵈ X (index is)
 eraseᵈ O {ℓs} = eraseᵖᵈ (DataO.applyL O ℓs)
 
-forget : ∀ {D M} → DataC D M → ∀ {E N} → DataC E N → DataO D E → FoldP
-forget {D} DC {N = N} EC O = record
+forget : ∀ (m n : Name) {D M} ⦃ DC : Named m (DataC D M) ⦄
+       → ∀ {E N} ⦃ EC : Named n (DataC E N) ⦄ ⦃ O : DataO D E ⦄ → FoldP
+forget _ _ {D} ⦃ named DC ⦄ {N = N} ⦃ named EC ⦄ ⦃ O ⦄ = record
   { Conv    = DC
   ; #levels = DataD.#levels D
   ; level   = id

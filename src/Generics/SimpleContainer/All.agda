@@ -87,18 +87,21 @@ PredODᵖᵈ D S ℓ = record
   ; applyP = λ (ps , P , _) →
       PredODᶜˢ (PDataD.applyP D ps) (SC.El S ps) P (SC.pos S) (SC.coe S ps) }
 
-PredOD : (D : DataD) → SCᵈ D → DataOD D
-PredOD D S = record
+PredOD : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄ → DataOD D
+PredOD _ {D} ⦃ _ ⦄ ⦃ S ⦄ = record
   { #levels = suc (DataD.#levels D)
   ; level   = snd
-  ; applyL  = λ (ℓ , ℓs) → PredODᵖᵈ (DataD.applyL D ℓs) (S ℓs) ℓ }
+  ; applyL  = λ (ℓ , ℓs) → PredODᵖᵈ (DataD.applyL D ℓs) S ℓ }
 
-PredD : (D : DataD) → SCᵈ D → DataD
-PredD D S = ⌊ PredOD D S ⌋ᵈ
+PredD : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄ → DataD
+PredD n = ⌊ PredOD n ⌋ᵈ
 
-AllOD : ∀ {D N} → DataC D N → (S : SCᵈ D) → ∀ {N'} → DataC (PredD D S) N'
-      → DataOD (PredD D S)
-AllOD {D} C S C' = AlgOD (forget C' C ⌈ PredOD D S ⌉ᵈ)
+AllOD : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄
+      → ∀ {n' N'} ⦃ C' : Named n' (DataC (PredD n ⦃ C ⦄ ⦃ S ⦄) N') ⦄
+      → DataOD (PredD n ⦃ C ⦄ ⦃ S ⦄)
+AllOD n {D} ⦃ C ⦄ ⦃ S ⦄ ⦃ C' ⦄ =
+  AlgOD (forget _ _ ⦃ C' ⦄ ⦃ C ⦄ ⦃ ⌈ PredOD n ⦃ C ⦄ ⦃ S ⦄ ⌉ᵈ ⦄)
 
-AllD : ∀ {D N} → DataC D N → (S : SCᵈ D) → ∀ {N'} → DataC (PredD D S) N' → DataD
-AllD C S C' = ⌊ AllOD C S C' ⌋ᵈ
+AllD : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄
+     → ∀ {n' N'} ⦃ C' : Named n' (DataC (PredD n ⦃ C ⦄ ⦃ S ⦄) N') ⦄ → DataD
+AllD n = ⌊ AllOD n ⌋ᵈ

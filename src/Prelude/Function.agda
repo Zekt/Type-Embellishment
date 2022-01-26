@@ -76,3 +76,9 @@ case x of f = case x return _ of f
 
 typeOf : {A : Set a} → A → Set a
 typeOf {A = A} _ = A
+
+it : ∀ {ℓ} {A : Set ℓ} → ⦃ A ⦄ → A
+it ⦃ a ⦄ = a
+
+itω : {A : Setω} → ⦃ A ⦄ → A
+itω ⦃ a ⦄ = a
