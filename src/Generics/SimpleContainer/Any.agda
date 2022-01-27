@@ -306,20 +306,28 @@ AnyD-level-inequality ℓ ℓᵈ cbs sbs ineq =
 AnyODᵖᵈ : (D : PDataD) → SC D → {N : ∀ ps → Carrierᵖᵈ D ps (PDataD.dlevel D)}
         → (∀ {ps} → Algᵖᵈ D (N ps)) → Level
         → PDataOD (DataD.applyL (findDataD (quote ℕ)) tt)
-AnyODᵖᵈ D S {N} toN ℓ = record
-  { alevel = maxMap (uncurry (hasEl? ℓ)) (allToList (SC.pos S))
-  ; level-inequality = AnyD-level-inequality
-      ℓ (PDataD.dlevel D) (PDataD.struct D) (SC.pos S)(PDataD.level-inequality D)
-  ; Param  = [[ ps ∶ PDataD.Param D ]] [ P ∶ (SC.El S ps → Set ℓ) ] []
-  ; Index  = λ (ps , _) → [[ is ∶ PDataD.Index D ps ]] [ n ∶ N ps is ] []
-  ; applyP = λ (ps , P , _) → let Dᶜˢ = PDataD.applyP D ps in
-      hereODᶜˢ Dᶜˢ (SC.pos S) (SC.coe S ps) toN P (thereODᶜˢ Dᶜˢ toN []) }
+PDataOD.alevel (AnyODᵖᵈ D S {N} toN ℓ) = maxMap (uncurry (hasEl? ℓ)) (allToList (SC.pos S))
+PDataOD.plevel (AnyODᵖᵈ D S {N} toN ℓ) = _
+PDataOD.ilevel (AnyODᵖᵈ D S {N} toN ℓ) = _
+PDataOD.struct (AnyODᵖᵈ D S {N} toN ℓ) = _
+PDataOD.level-inequality (AnyODᵖᵈ D S {N} toN ℓ) = AnyD-level-inequality
+  ℓ (PDataD.dlevel D) (PDataD.struct D) (SC.pos S) (PDataD.level-inequality D)
+PDataOD.Param  (AnyODᵖᵈ D S {N} toN ℓ) =
+  [[ ps ∶ PDataD.Param D ]] [ P ∶ (SC.El S ps → Set ℓ) ] []
+PDataOD.param  (AnyODᵖᵈ D S {N} toN ℓ) _ = tt
+PDataOD.Index  (AnyODᵖᵈ D S {N} toN ℓ) (ps , _) =
+  [[ is ∶ PDataD.Index D ps ]] [ n ∶ N ps is ] []
+PDataOD.index  (AnyODᵖᵈ D S {N} toN ℓ) (ps , _) _ = tt
+PDataOD.applyP (AnyODᵖᵈ D S {N} toN ℓ) (ps , P , _) =
+  let Dᶜˢ = PDataD.applyP D ps
+  in  hereODᶜˢ Dᶜˢ (SC.pos S) (SC.coe S ps) toN P (thereODᶜˢ Dᶜˢ toN [])
 
 AnyOD : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄
       → DataOD (findDataD (quote ℕ))
-AnyOD _ {D} ⦃ named C ⦄ ⦃ S ⦄ = record
-  { #levels = suc (DataD.#levels D)
-  ; applyL  = λ (ℓ , ℓs) → AnyODᵖᵈ (DataD.applyL D ℓs) S (DataC.toN C) ℓ }
+DataOD.#levels (AnyOD _ {D} ⦃ named C ⦄ ⦃ S ⦄) = suc (DataD.#levels D)
+DataOD.level   (AnyOD _ {D} ⦃ named C ⦄ ⦃ S ⦄) _ = tt
+DataOD.applyL  (AnyOD _ {D} ⦃ named C ⦄ ⦃ S ⦄) (ℓ , ℓs) =
+  AnyODᵖᵈ (DataD.applyL D ℓs) S (DataC.toN C) ℓ
 
 AnyD : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄ → DataD
 AnyD n = ⌊ AnyOD n ⌋ᵈ

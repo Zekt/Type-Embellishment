@@ -16,6 +16,7 @@ import System.Exit
 import System.FilePath
 import System.FilePath.Find
 import System.IO
+import System.FilePath (takeDirectory)
 
 allOutputFile  = "Everything"
 safeOutputFile = "EverythingSafe"
@@ -79,6 +80,9 @@ isLibraryModule :: FilePath -> Bool
 isLibraryModule f =
   takeExtension f `elem` [".agda", ".lagda"]
   && unqualifiedModuleName f /= "Core"
+
+isExcludedModule :: FilePath -> Bool
+isExcludedModule f = takeDirectory f == srcDir </> "Tests"
 
 ---------------------------------------------------------------------------
 -- Analysing library files
@@ -165,7 +169,7 @@ main = do
   checkFilePaths "unsafe" unsafeModules
   checkFilePaths "using K" withKModules
 
-  modules <- filter isLibraryModule . List.sort <$>
+  modules <- filter (not . isExcludedModule) . filter isLibraryModule . List.sort <$>
                find always
                     (extension ==? ".agda" ||? extension ==? ".lagda")
                     srcDir

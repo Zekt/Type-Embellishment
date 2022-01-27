@@ -175,7 +175,7 @@ unquoteDecl to-fromVec = defineInd to-fromVecP to-fromVec
 instance to-fromVecC = genIndC to-fromVecP to-fromVec
 
 private
-  LenOD : DataOD ⌊ VecOD ⌋ᵈ
+  LenOD : DataOD (findDataD (quote Vec))
   LenOD = AlgOD fromVecP
 
 instance LenO = ⌈ LenOD ⌉ᵈ

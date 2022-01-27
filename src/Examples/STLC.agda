@@ -26,7 +26,7 @@ data Λ : Set where
 
 instance
   UntypedTermC : Named (quote Λ) _
-  UntypedTermC = named (genDataC UntypedTermD (genDataT UntypedTermD Λ))
+  unNamed UntypedTermC = genDataC UntypedTermD (genDataT UntypedTermD Λ)
     where UntypedTermD = genDataD Λ
 
 --------
@@ -62,7 +62,7 @@ data _⊢_ : List Ty → Ty → Set where
 instance
 
   TypedTermC : Named (quote _⊢_) _
-  TypedTermC = named (genDataC TypedTermD (genDataT TypedTermD _⊢_))
+  unNamed TypedTermC = genDataC TypedTermD (genDataT TypedTermD _⊢_)
     where TypedTermD = genDataD _⊢_
 
   TypedTermO : DataO (findDataD (quote _⊢_)) (findDataD (quote Λ))
@@ -101,95 +101,76 @@ private
 
 instance TypingO = ⌈ TypingOD ⌉ᵈ
 
-unquoteDecl data Typing constructor c0 c1 c2 = defineByDataD ⌊ TypingOD ⌋ᵈ Typing (c0 ∷ c1 ∷ c2 ∷ [])
-TypingT = genDataT ⌊ TypingOD ⌋ᵈ Typing
--- [FAIL] Failed to solve the following constraints…
+infix 3 _⊢_∶_
 
--- infix 3 _⊢_∶_
+-- unquoteDecl data Typing constructor c0 c1 c2 = defineByDataD ⌊ TypingOD ⌋ᵈ Typing (c0 ∷ c1 ∷ c2 ∷ [])
+data _⊢_∶_ : List Ty → Λ → Ty → Set₀ where
 
--- data _⊢_∶_ : List Ty → Λ → Ty → Set₀ where
+  var : (i : Γ ∋ τ)
+      → -------------------
+        Γ ⊢ var (toℕ i) ∶ τ
 
---   var : (i : Γ ∋ τ)
---       → -------------------
---         Γ ⊢ var (toℕ i) ∶ τ
+  app : ∀ {t} → Γ ⊢ t ∶ τ ⇒ τ'
+      → ∀ {u} → Γ ⊢ u ∶ τ
+      → ----------------------
+        Γ ⊢ app t u ∶ τ'
 
---   app : ∀ {t} → Γ ⊢ t ∶ τ ⇒ τ'
---       → ∀ {u} → Γ ⊢ u ∶ τ
---       → ----------------------
---         Γ ⊢ app t u ∶ τ'
+  lam : ∀ {t} → τ ∷ Γ ⊢ t ∶ τ'
+      → ----------------------
+        Γ ⊢ lam t ∶ τ ⇒ τ'
 
---   lam : ∀ {t} → τ ∷ Γ ⊢ t ∶ τ'
---       → ----------------------
---         Γ ⊢ lam t ∶ τ ⇒ τ'
+instance
+  TypingC : Named (quote _⊢_∶_) _
+  unNamed TypingC = genDataC ⌊ TypingOD ⌋ᵈ TypingT
+    where
+      TypingT : DataT ⌊ TypingOD ⌋ᵈ
+      TypingT tt tt ((Γ , τ , tt) , t , tt) = Γ ⊢ t ∶ τ
 
--- instance
---   TypingC : Named (quote _⊢_∶_) _
---   TypingC = named (genDataC ⌊ TypingOD ⌋ᵈ TypingT)
---     where TypingT : DataT ⌊ TypingOD ⌋ᵈ
---           TypingT tt tt ((x , x₁ , tt) , x₂ , tt) = x ⊢ x₂ ∶ x₁
+--------
+-- Conversion between intrinsically and extrinsically typed terms
 
--- --------
--- -- Conversion between intrinsically and extrinsically typed terms
+private
+  fromTypingP : FoldP
+  fromTypingP = forget (quote _⊢_∶_) (quote _⊢_)
 
--- fromTypingP : FoldP
--- fromTypingP = forget TypingC TypedTermC ⌈ TypingOD ⌉ᵈ
-
--- -- unquoteDecl fromTyping = defineFold fromTypingP fromTyping
+unquoteDecl fromTyping = defineFold fromTypingP fromTyping
 -- fromTyping : ∀ {t} → Γ ⊢ t ∶ τ → Γ ⊢ τ
 -- fromTyping (var i  ) = var i
 -- fromTyping (app d e) = app (fromTyping d) (fromTyping e)
 -- fromTyping (lam d  ) = lam (fromTyping d)
 
--- fromTypingC = genFoldC fromTypingP fromTyping
+instance fromTypingC = genFoldC fromTypingP fromTyping
 
--- toTypingP : IndP
--- toTypingP = remember toΛC TypingC
+private
+  toTypingP : IndP
+  toTypingP = remember (quote _⊢_∶_)
 
--- -- unquoteDecl toTyping = defineInd toTypingP toTyping
+unquoteDecl toTyping = defineInd toTypingP toTyping
 -- toTyping : (t : Γ ⊢ τ) → Γ ⊢ toΛ t ∶ τ
 -- toTyping (var i  ) = var i
 -- toTyping (app t u) = app (toTyping t) (toTyping u)
 -- toTyping (lam t  ) = lam (toTyping t)
 
--- toTypingC = genIndC toTypingP toTyping
+instance toTypingC = genIndC toTypingP toTyping
 
--- from-toTypingP : IndP
--- from-toTypingP = forget-remember-inv toΛC TypingC fromTypingC toTypingC (inl TypedTermFin)
+private
+  from-toTypingP : IndP
+  from-toTypingP = forget-remember-inv (quote _⊢_∶_) (quote _⊢_) (inl it)
 
--- unquoteDecl from-toTyping = defineInd from-toTypingP from-toTyping
+unquoteDecl from-toTyping = defineInd from-toTypingP from-toTyping
 -- from-toTyping : (t : Γ ⊢ τ) → fromTyping (toTyping t) ≡ t
--- from-toTyping (var i) = refl
--- from-toTyping (app {Γ} {τ} {τ'} t u) =
---   trans
---    (cong (DataC.toN TypedTermC)
---     (cong inr
---      (cong inl
---       (cong (λ section → Γ , section)
---        (cong (λ section → τ , section)
---         (cong (λ section → τ' , section)
---          (cong₂ _,_ (from-toTyping t)
---           (cong₂ _,_ (from-toTyping u) refl))))))))
---    refl
--- from-toTyping (lam {τ} {Γ} {τ'} t) =
---   trans
---    (cong (DataC.toN TypedTermC)  -- [FAIL] manually un-normalised
---     (cong inr
---      (cong inr
---       (cong inl
---        (cong (λ section → τ , section)
---         (cong (λ section → Γ , section)
---          (cong (λ section → τ' , section)
---           (cong₂ _,_ (from-toTyping t)
---            refl))))))))
---    refl
+-- from-toTyping (var i  ) = refl
+-- from-toTyping (app t u) = trans' (cong (app (fromTyping (toTyping t))) (from-toTyping u))
+--                                  (cong (λ n' → app n' u) (from-toTyping t))
+-- from-toTyping (lam t  ) = cong lam (from-toTyping t)
 
--- from-toTypingC = genIndC from-toTypingP from-toTyping
+instance from-toTypingC = genIndC from-toTypingP from-toTyping
 
--- to-fromTypingP : IndP
--- to-fromTypingP = remember-forget-inv toΛC TypingC toTypingC fromTypingC (inl TypedTermFin)
+private
+  to-fromTypingP : IndP
+  to-fromTypingP = remember-forget-inv (quote _⊢_∶_) (quote _⊢_) (inl it)
 
--- [FAIL] too slow; manually case-split and elaborate-and-give
--- unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
+unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
 -- to-fromTyping : ∀ {t} (d : Γ ⊢ t ∶ τ)
 --               → (toΛ (fromTyping d) , toTyping (fromTyping d))
 --               ≡ ((t , d) ⦂ Σ[ t' ∈ Λ ] Γ ⊢ t' ∶ τ)  -- [FAIL] manual type annotation
@@ -197,12 +178,12 @@ TypingT = genDataT ⌊ TypingOD ⌋ᵈ Typing
 -- to-fromTyping (app {Γ} {τ} {τ'} {t} d e) =
 --   trans
 --    (cong
---     (bimap (λ x → x) (DataC.toN TypingC))  -- [FAIL] manually un-normalised
+--     (bimap (λ x → x) (DataC.toN (findDataC (quote _⊢_∶_))))
 --     (cong (bimap (λ x → x) inr)
 --      (cong (bimap (λ x → x) inl)
 --       (cong (bimap (λ x → x) (λ section → Γ , section))
 --        (cong (bimap (λ x → x) (λ section → τ , section))
---         (cong (bimap (λ x → x) (λ section → τ' , section))  -- [FAIL] printed as τ (if implicit arguments to app are not given on lhs)
+--         (cong (bimap (λ x → x) (λ section → τ' , section))
 --          (trans
 --           (cong
 --            (λ p →
@@ -219,7 +200,7 @@ TypingT = genDataT ⌊ TypingOD ⌋ᵈ Typing
 -- to-fromTyping (lam {τ} {Γ} {τ'} d) =
 --   trans
 --    (cong
---     (bimap (λ x → x) (DataC.toN TypingC))  -- [FAIL] manually un-normalised
+--     (bimap (λ x → x) (DataC.toN (findDataC (quote _⊢_∶_))))
 --     (cong (bimap (λ x → x) inr)
 --      (cong (bimap (λ x → x) inr)
 --       (cong (bimap (λ x → x) inl)
@@ -231,4 +212,4 @@ TypingT = genDataT ⌊ TypingOD ⌋ᵈ Typing
 --            refl))))))))
 --    refl
 
--- to-fromTypingC = genIndC to-fromTypingP to-fromTyping
+instance to-fromTypingC = genIndC to-fromTypingP to-fromTyping

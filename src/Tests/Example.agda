@@ -13,7 +13,7 @@ open import Generics.RecursionScheme
 open import Generics.Reflection
 
 ------------------------------------------------------------------------------
--- 
+--
 `T-Nat : Telescope × Type
 `T-Nat = getTelescopeT ℕ
 
@@ -24,7 +24,7 @@ _ : evalT (fromTel [] (constTelInfo visible)) ≡ fst `T-Nat
 _ = refl
 
 ------------------------------------------------------------------------------
--- 
+--
 
 data Rel (A : Set) : (xs ys : List A) → Set where
 `T-rel : Telescope
@@ -37,12 +37,12 @@ _ : evalT (fromTel ([ A ∶ Set ] [ xs ∶ List A ] [ ys ∶ List A ] []) (const
 _ = refl
 
 ------------------------------------------------------------------------------
--- 
+--
 
 
 -- Okay but unusual examples
 sort-is-not-normal : Tel _
-sort-is-not-normal = [ b ∶ if true then Bool else ⊥ ] [] 
+sort-is-not-normal = [ b ∶ if true then Bool else ⊥ ] []
 
 `sort-is-not-normal : Telescope
 `sort-is-not-normal = evalT (fromTel sort-is-not-normal (constTelInfo visible))
@@ -59,7 +59,7 @@ ex₁ = λ b → []
 `ex₁ : Telescope
 `ex₁ = evalT (fromTel (Bool ∷ ex₁) (constTelInfo visible))
 
--- 
+--
 NatD : DataD
 NatD = record
   { #levels = 0
@@ -68,7 +68,7 @@ NatD = record
     ; Param  = []
     ; Index  = λ _ → []
     ; applyP = λ where
-      _ → ι tt 
+      _ → ι tt
         -- ℕ
         ∷ ρ (ι tt) (ι tt) ∷ []
         -- ℕ → ℕ
@@ -130,7 +130,7 @@ _ = refl
 
 -- ListC : DataCᶜ ListD List
 ListT = genDataT ListD List
-ListC = genDataC ListD ListT  
+ListC = genDataC ListD ListT
 
 unquoteDecl data List' constructor nil cons =
   defineByDataD ListD List' (nil ∷ cons ∷ [])
@@ -156,10 +156,10 @@ DataD.applyL  LenD (ℓ , _) = record
         σ[ ys ∶ List A ] ρ (ι (xs , ys , _)) (ι (x ∷ xs , y ∷ ys , _))
       ∷ []
   }
-  
+
 -- LenC : DataCᶜ LenD Len
 LenT = genDataT LenD Len
-LenC =  genDataC LenD LenT  
+LenC =  genDataC LenD LenT
 --   dataC
 --   (λ { (inl refl) → z {_} {_} ; (inr (inl (x , y , xs , ys , p , refl))) → s {_} {_} {x} {y} {xs} {ys} p })
 --   (λ { z → inl refl ; (s {x} {y} {xs} {ys} p) → inr (inl (x , y , xs , ys , p , refl)) })
@@ -179,7 +179,7 @@ unquoteDecl data newnewLen constructor newnewz newnews =
 newnewlen : newnewLen ℕ (2 ∷ 5 ∷ []) (1 ∷ 3 ∷ [])
 newnewlen = newnews 2 1 [ 5 ] [ 3 ] (newnews 5 3 [] [] newnewz)
 
--- 
+--
 REL : {a b : Level} → Set a → Set b
     → (ℓ : Level) → Set (a ⊔ b ⊔ lsuc ℓ)
 REL A B ℓ = A → B → Set ℓ

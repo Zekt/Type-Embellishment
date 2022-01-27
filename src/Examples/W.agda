@@ -17,7 +17,7 @@ data W (A : Set ℓ) (B : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
 
 instance
   WC : Named (quote W) _
-  WC = named (genDataC WD (genDataT WD W))
+  unNamed WC = genDataC WD (genDataT WD W)
     where WD = genDataD W
 
 --------
@@ -56,7 +56,7 @@ data WAny {ℓ'' ℓ ℓ'} {A : Set ℓ} {B : A → Set ℓ'} (P : A → Set ℓ
 
 instance
   WAnyC : Named (quote WAny) _
-  WAnyC = named (genDataC WAnyD WAnyT) where WAnyT = genDataT WAnyD WAny
+  unNamed WAnyC = genDataC WAnyD WAnyT where WAnyT = genDataT WAnyD WAny
 
 lookupWAnyP : FoldP
 lookupWAnyP = lookupAny (quote W)

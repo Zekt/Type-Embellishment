@@ -80,23 +80,22 @@ module _ (ℓ : Level) where
 AlgOD : (P : FoldP) → DataOD (FoldP.Desc P)
 DataOD.#levels (AlgOD P) = FoldP.#levels P
 DataOD.level   (AlgOD P) = FoldP.level P
-DataOD.applyL  (AlgOD P) ℓs = AlgODᵖᵈ
-  where
-    open FoldP P
-    Dᵖ = DataD.applyL Desc (level ℓs)
-    AlgODᵖᵈ : PDataOD Dᵖ
-    PDataOD.alevel AlgODᵖᵈ = PDataD.alevel (DataD.applyL Desc (level ℓs))
-    PDataOD.plevel AlgODᵖᵈ = _
-    PDataOD.ilevel AlgODᵖᵈ = _
-    PDataOD.struct AlgODᵖᵈ = _
-    PDataOD.level-inequality AlgODᵖᵈ = algOD-level-inequality
-      (clevel ℓs) (PDataD.dlevel Dᵖ) (PDataD.struct Dᵖ) (PDataD.level-inequality Dᵖ)
-    PDataOD.Param  AlgODᵖᵈ = FoldP.Param P ℓs
-    PDataOD.param  AlgODᵖᵈ = FoldP.param P
-    PDataOD.Index  AlgODᵖᵈ ps = PDataD.Index Dᵖ (param ps) ++ λ is →
-                                Carrier ℓs ps is ∷ λ _ → []
-    PDataOD.index  AlgODᵖᵈ _  = fst
-    PDataOD.applyP AlgODᵖᵈ ps = algODᶜˢ (PDataD.applyP Dᵖ (param ps)) (algebra ps)
+DataOD.applyL  (AlgOD P) ℓs = AlgODᵖᵈ where
+  open FoldP P
+  Dᵖ = DataD.applyL Desc (level ℓs)
+  AlgODᵖᵈ : PDataOD Dᵖ
+  PDataOD.alevel AlgODᵖᵈ = PDataD.alevel (DataD.applyL Desc (level ℓs))
+  PDataOD.plevel AlgODᵖᵈ = _
+  PDataOD.ilevel AlgODᵖᵈ = _
+  PDataOD.struct AlgODᵖᵈ = _
+  PDataOD.level-inequality AlgODᵖᵈ = algOD-level-inequality
+    (clevel ℓs) (PDataD.dlevel Dᵖ) (PDataD.struct Dᵖ) (PDataD.level-inequality Dᵖ)
+  PDataOD.Param  AlgODᵖᵈ = FoldP.Param P ℓs
+  PDataOD.param  AlgODᵖᵈ = FoldP.param P
+  PDataOD.Index  AlgODᵖᵈ ps = PDataD.Index Dᵖ (param ps) ++ λ is →
+                              Carrier ℓs ps is ∷ λ _ → []
+  PDataOD.index  AlgODᵖᵈ _  = fst
+  PDataOD.applyP AlgODᵖᵈ ps = algODᶜˢ (PDataD.applyP Dᵖ (param ps)) (algebra ps)
 
 rememberʳ :
     {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ}
