@@ -22,6 +22,10 @@ private
   pattern `IndC  x y     = def₂ (quote IndC)  x y
   pattern `Algs  x y     = def₂ (quote Algs)  x y
   pattern `Coalgs x y    = def₂ (quote Coalgs) x y
+  pattern `toN            = proj (quote (DataC.toN))
+  pattern `fromN          = proj (quote (DataC.fromN))
+  pattern `fromN-toN      = proj (quote (DataC.fromN-toN))
+  pattern `toN-fromN      = proj (quote (DataC.toN-fromN))
   pattern `FoldC-equation = proj (quote (FoldC.equation))
   pattern `IndC-equation  = proj (quote (IndC.equation))
 
@@ -42,17 +46,17 @@ module _ (pars : ℕ) where
     genFromCons f = map f <$> consToClauses cs
 
     genToNT = genFromCons λ where
-      (`Γ , c , (_ , p) , args , _) → `Γ ⊢ [ vArg p ] `=
+      (`Γ , c , (_ , p) , args , _) → `Γ ⊢ vArg `toN ∷ [ vArg p ] `=
         con c (hUnknowns pars <> args)
 
     genFromNT = genFromCons λ where
-      (Γ , c , (t , _) , _ , args) → Γ ⊢ [ vArg (con c args) ] `= t
+      (Γ , c , (t , _) , _ , args) → Γ ⊢ vArg `fromN ∷ [ vArg (con c args) ] `= t
 
-    genFromN-toNT = pat-lam₀ <$> genFromCons λ where
-      (Γ , _ , (_ , p) , _) → Γ ⊢ [ vArg p ] `= `refl
+    genFromN-toNT = genFromCons λ where
+      (Γ , _ , (_ , p) , _) → Γ ⊢ vArg `fromN-toN ∷ [ vArg p ] `= `refl
 
-    genToN-fromNT = pat-lam₀ <$> genFromCons λ where
-      (Γ , c , _ , _ , args) → Γ ⊢ [ vArg (con c args) ] `= `refl
+    genToN-fromNT = genFromCons λ where
+      (Γ , c , _ , _ , args) → Γ ⊢ vArg `toN-fromN ∷ [ vArg (con c args) ] `= `refl
 
     genFoldC-equation = pat-lam₀ <$> genFromCons λ where
       (Γ , c , (_ , p) , _) → Γ ⊢ vArg `FoldC-equation ∷ vArg p ∷ [] `= `refl
@@ -64,25 +68,22 @@ genDataCT : (D : DataD) (N : DataT D) → Tactic
 genDataCT D N hole = do
   `D ← quoteωTC D
   `N ← quoteωTC N
-  hole ← checkType hole (`DataC `D `N)
-
-  d ← DataToNativeName  D N
-  pars , cs ← getDataDefinition d
 
   `Ds ← formatErrorParts [ termErr `D ]
   `Ns ← formatErrorParts [ termErr `N ]
   let msg = "<An instance of DataC " <> `Ds <> " " <> `Ns <> ">"
-  toN ← freshName (msg <> " .toN")
-  genToNT pars cs >>= define (vArg toN) (`Algs `D `N)
+  dataC ← freshName msg
 
-  fromN ← freshName (msg <> " .fromN")
-  genFromNT     pars cs >>= define (vArg fromN) (`Coalgs `D `N)
+  d ← DataToNativeName  D N
+  pars , cs ← getDataDefinition d
 
-  `fromN-toN ← genFromN-toNT pars cs 
-  `toN-fromN ← genToN-fromNT pars cs 
+  toN       ← genToNT       pars cs
+  fromN     ← genFromNT     pars cs
+  fromN-toN ← genFromN-toNT pars cs 
+  toN-fromN ← genToN-fromNT pars cs 
 
-  noConstraints $ unify hole $
-    `datac (def₀ toN) (def₀ fromN) `fromN-toN `toN-fromN
+  noConstraints $ define (vArg dataC) (`DataC `D `N) (toN <> fromN <> fromN-toN <> toN-fromN)
+  unify hole (def₀ dataC)
   where open DataD D
 
 genFoldCT' : (P : FoldP) (f : FoldT P) → Tactic
