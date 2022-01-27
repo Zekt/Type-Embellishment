@@ -35,19 +35,26 @@ fold-opᶜˢ (D ∷ Ds) (f , fs) (inl xs) = fold-opᶜ  D  f  xs
 fold-opᶜˢ (D ∷ Ds) (f , fs) (inr xs) = fold-opᶜˢ Ds fs xs
 
 fold-operator : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ → FoldP
-fold-operator _ {D} ⦃ named C ⦄ = record
-  { Conv    = C
-  ; #levels = suc (DataD.#levels D)
-  ; level   = snd
-  ; Param   = λ (ℓ , ℓs) → let Dᵖ = DataD.applyL D ℓs in
-      [[ ps ∶ PDataD.Param Dᵖ ]]
-      [  X  ∶ Curriedᵗ (PDataD.Index Dᵖ ps) (constTelInfo visible) (λ _ → Set ℓ) ]
-              FoldOpTelᶜˢ (PDataD.applyP Dᵖ ps) (uncurryᵗ X)
-  ; param   = fst
-  ; ParamV  = constTelInfo hidden ++ λ _ → hidden ∷ λ _ → constTelInfo visible
-  ; ParamN  = constTelInfo "p" ++ λ _ → "X" ∷ λ _ → constTelInfo "alg"
-  ; Carrier = λ _ (_ , X , _) → uncurryᵗ X
-  ; algebra = λ (ps , _ , args) → fold-opᶜˢ (PDataD.applyP (DataD.applyL D _) ps) args }
+fold-operator _ {D} ⦃ named C ⦄ = foldP where
+  foldP : FoldP
+  FoldP.Desc    foldP = _
+  FoldP.Native  foldP = _
+  FoldP.Conv    foldP = C
+  FoldP.#levels foldP = suc (DataD.#levels D)
+  FoldP.level   foldP = snd
+  FoldP.plevel  foldP = _
+  FoldP.Param   foldP (ℓ , ℓs) =
+    let Dᵖ = DataD.applyL D ℓs
+    in  [[ ps ∶ PDataD.Param Dᵖ ]]
+        [  X  ∶ Curriedᵗ (PDataD.Index Dᵖ ps) (constTelInfo visible) (λ _ → Set ℓ) ]
+                FoldOpTelᶜˢ (PDataD.applyP Dᵖ ps) (uncurryᵗ X)
+  FoldP.ParamV  foldP = constTelInfo hidden ++ λ _ → hidden ∷ λ _ → constTelInfo visible
+  FoldP.ParamN  foldP = constTelInfo "p" ++ λ _ → "X" ∷ λ _ → constTelInfo "alg"
+  FoldP.param   foldP = fst
+  FoldP.clevel  foldP = _
+  FoldP.Carrier foldP _ (_ , X , _) = uncurryᵗ X
+  FoldP.algebra foldP (ps , _ , args) =
+    fold-opᶜˢ (PDataD.applyP (DataD.applyL D _) ps) args
 
 Homᶜ : {I : Set ℓⁱ} (D : ConD I cb) {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
      → FoldOpTᶜ D X → FoldOpTᶜ D Y → (∀ {i} → X i → Y i)
@@ -114,39 +121,45 @@ fold-fusionᶜˢ (D ∷ Ds) (_ , fs) (_ , gs) fold-fs fold-gs h (_ , hom) (inr n
 
 fold-fusion : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄
               {fold} ⦃ foldC : FoldC (fold-operator n ⦃ C ⦄) fold ⦄ → IndP
-fold-fusion _ {D} ⦃ named C ⦄ {fold} ⦃ foldC ⦄ = record
-  { Conv    = C
-  ; #levels = suc (suc (DataD.#levels D))
-  ; level   = snd ∘ snd
-  ; Param   = λ (ℓˣ , ℓʸ , ℓs) → let Dᵖ = DataD.applyL D ℓs in
-      [[ ps ∶ PDataD.Param Dᵖ ]]
-      let ITel = PDataD.Index Dᵖ ps; Dᶜˢ = PDataD.applyP Dᵖ ps in
-      [  X  ∶ Curriedᵗ ITel (constTelInfo visible) (λ _ → Set ℓˣ) ]
-      [  Y  ∶ Curriedᵗ ITel (constTelInfo visible) (λ _ → Set ℓʸ) ]
-      [  h  ∶ Curriedᵗ ITel (constTelInfo hidden ) (λ is → uncurryᵗ X is → uncurryᵗ Y is) ]
-      [[ fs ∶ FoldOpTelᶜˢ Dᶜˢ (uncurryᵗ X) ]]
-      [[ gs ∶ FoldOpTelᶜˢ Dᶜˢ (uncurryᵗ Y) ]]
-              Homᶜˢ Dᶜˢ fs gs (λ {is} → uncurryᵗ h is)
-  ; param   = fst
-  ; ParamV  = constTelInfo hidden ++ λ _ →
-              hidden ∷ λ _ → hidden ∷ λ _ → visible ∷ λ _ →
-              constTelInfo hidden ++ λ _ → constTelInfo hidden ++ λ _ → constTelInfo visible
-  ; ParamN  = constTelInfo "p" ++ λ _ → "X" ∷ λ _ → "Y" ∷ λ _ → "h" ∷ λ _ →
-              constTelInfo "f" ++ λ _ → constTelInfo "g" ++ λ _ → constTelInfo "hom"
-  ; Carrier = λ _ (ps , X , Y , h , fs , gs , _) is n →
-                uncurryᵗ h is (fold _ (ps , X , fs) n) ≡ fold _ (ps , Y , gs) n
-  ; algebra = λ (ps , X , Y , h , fs , gs , hom) {is} ns all →
-      let Dᶜˢ = PDataD.applyP (DataD.applyL D _) ps in
-      begin
-        uncurryᵗ h is (fold _ (ps , X , fs) (DataC.toN C ns))
-          ≡⟨ cong (uncurryᵗ h is) (FoldC.equation foldC ns) ⟩
-        uncurryᵗ h is (fold-opᶜˢ Dᶜˢ fs (fmapᶜˢ Dᶜˢ (fold _ (ps , X , fs)) ns))
-          ≡⟨ fold-fusionᶜˢ Dᶜˢ fs gs (fold _ (ps , X , fs)) (fold _ (ps , Y , gs))
-               (λ {is} → uncurryᵗ h is) hom ns all ⟩'
-        fold-opᶜˢ Dᶜˢ gs (fmapᶜˢ Dᶜˢ (fold _ (ps , Y , gs)) ns)
-          ≡⟨ sym (FoldC.equation foldC ns) ⟩'
-        fold _ (ps , Y , gs) (DataC.toN C ns)
-      ∎ } where open ≡-Reasoning
+fold-fusion _ {D} ⦃ named C ⦄ {fold} ⦃ foldC ⦄ = indP where
+  indP : IndP
+  IndP.Desc    indP = _
+  IndP.Native  indP = _
+  IndP.Conv    indP = C
+  IndP.#levels indP = suc (suc (DataD.#levels D))
+  IndP.level   indP = snd ∘ snd
+  IndP.plevel  indP = _
+  IndP.Param   indP (ℓˣ , ℓʸ , ℓs) = let Dᵖ = DataD.applyL D ℓs in
+    [[ ps ∶ PDataD.Param Dᵖ ]]
+    let ITel = PDataD.Index Dᵖ ps; Dᶜˢ = PDataD.applyP Dᵖ ps in
+    [  X  ∶ Curriedᵗ ITel (constTelInfo visible) (λ _ → Set ℓˣ) ]
+    [  Y  ∶ Curriedᵗ ITel (constTelInfo visible) (λ _ → Set ℓʸ) ]
+    [  h  ∶ Curriedᵗ ITel (constTelInfo hidden ) (λ is → uncurryᵗ X is → uncurryᵗ Y is) ]
+    [[ fs ∶ FoldOpTelᶜˢ Dᶜˢ (uncurryᵗ X) ]]
+    [[ gs ∶ FoldOpTelᶜˢ Dᶜˢ (uncurryᵗ Y) ]]
+            Homᶜˢ Dᶜˢ fs gs (λ {is} → uncurryᵗ h is)
+  IndP.param   indP = fst
+  IndP.ParamV  indP =
+    constTelInfo hidden ++ λ _ → hidden ∷ λ _ → hidden ∷ λ _ → visible ∷ λ _ →
+    constTelInfo hidden ++ λ _ → constTelInfo hidden ++ λ _ → constTelInfo visible
+  IndP.ParamN  indP =
+    constTelInfo "p" ++ λ _ → "X" ∷ λ _ → "Y" ∷ λ _ → "h" ∷ λ _ →
+    constTelInfo "f" ++ λ _ → constTelInfo "g" ++ λ _ → constTelInfo "hom"
+  IndP.clevel  indP = _
+  IndP.Carrier indP _ (ps , X , Y , h , fs , gs , _) is n =
+    uncurryᵗ h is (fold _ (ps , X , fs) n) ≡ fold _ (ps , Y , gs) n
+  IndP.algebra indP (ps , X , Y , h , fs , gs , hom) {is} ns all =
+    let Dᶜˢ = PDataD.applyP (DataD.applyL D _) ps in
+    begin
+      uncurryᵗ h is (fold _ (ps , X , fs) (DataC.toN C ns))
+        ≡⟨ cong (uncurryᵗ h is) (FoldC.equation foldC ns) ⟩
+      uncurryᵗ h is (fold-opᶜˢ Dᶜˢ fs (fmapᶜˢ Dᶜˢ (fold _ (ps , X , fs)) ns))
+        ≡⟨ fold-fusionᶜˢ Dᶜˢ fs gs (fold _ (ps , X , fs)) (fold _ (ps , Y , gs))
+             (λ {is} → uncurryᵗ h is) hom ns all ⟩'
+      fold-opᶜˢ Dᶜˢ gs (fmapᶜˢ Dᶜˢ (fold _ (ps , Y , gs)) ns)
+        ≡⟨ sym (FoldC.equation foldC ns) ⟩'
+      fold _ (ps , Y , gs) (DataC.toN C ns)
+    ∎ where open ≡-Reasoning
 
 IndOpTʳ : {I : Set ℓⁱ} (D : RecD I rb) {N : I → Set ℓ} → ⟦ D ⟧ʳ N
         → (∀ i → N i → Set ℓ') → Set (max-ℓ rb ⊔ ℓ')
@@ -183,18 +196,22 @@ ind-opᶜˢ (D ∷ Ds) f (g , gs) (inl ps) = ind-opᶜ  D  (f ∘ inl) g  ps
 ind-opᶜˢ (D ∷ Ds) f (g , gs) (inr ps) = ind-opᶜˢ Ds (f ∘ inr) gs ps
 
 ind-operator : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ → IndP
-ind-operator _ {D} {N} ⦃ named C ⦄ = record
-  { Conv    = C
-  ; #levels = suc (DataD.#levels D)
-  ; level   = snd
-  ; Param   = λ (ℓ , ℓs) → let Dᵖ = DataD.applyL D ℓs in
-      [[ ps ∶ PDataD.Param Dᵖ ]] let Dᶜˢ = PDataD.applyP Dᵖ ps in
-      [  P  ∶ Curriedᵗ (PDataD.Index Dᵖ ps) (constTelInfo hidden)
-                (λ is → N ℓs ps is → Set ℓ) ]
-              IndOpTelᶜˢ Dᶜˢ (DataC.toN C) (uncurryᵗ P)
-  ; param   = fst
-  ; ParamV  = constTelInfo hidden ++ λ _ → visible ∷ λ _ → constTelInfo visible
-  ; ParamN  = constTelInfo "p" ++ λ _ → "P" ∷ λ _ → constTelInfo "ind-case"
-  ; Carrier = λ _ (_ , P , _) is n → uncurryᵗ P is n
-  ; algebra = λ (ps , P , fs) →
-      ind-opᶜˢ (PDataD.applyP (DataD.applyL D _) ps) (DataC.toN C) fs }
+ind-operator _ {D} {N} ⦃ named C ⦄ = indP where
+  indP : IndP
+  IndP.Desc    indP = _
+  IndP.Native  indP = _
+  IndP.Conv    indP = C
+  IndP.#levels indP = suc (DataD.#levels D)
+  IndP.level   indP = snd
+  IndP.plevel  indP = _
+  IndP.Param   indP (ℓ , ℓs) = let Dᵖ = DataD.applyL D ℓs in
+    [[ ps ∶ PDataD.Param Dᵖ ]] let Dᶜˢ = PDataD.applyP Dᵖ ps in
+    [  P  ∶ Curriedᵗ (PDataD.Index Dᵖ ps) (constTelInfo hidden) (λ is → N ℓs ps is → Set ℓ) ]
+            IndOpTelᶜˢ Dᶜˢ (DataC.toN C) (uncurryᵗ P)
+  IndP.param   indP = fst
+  IndP.ParamV  indP = constTelInfo hidden ++ λ _ → visible ∷ λ _ → constTelInfo visible
+  IndP.ParamN  indP = constTelInfo "p" ++ λ _ → "P" ∷ λ _ → constTelInfo "ind-case"
+  IndP.clevel  indP = _
+  IndP.Carrier indP _ (_ , P , _) is n = uncurryᵗ P is n
+  IndP.algebra indP (ps , P , fs) =
+    ind-opᶜˢ (PDataD.applyP (DataD.applyL D _) ps) (DataC.toN C) fs

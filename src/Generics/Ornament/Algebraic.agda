@@ -78,18 +78,25 @@ module _ (ℓ : Level) where
     ∎ where open ≡-Reasoning
 
 AlgOD : (P : FoldP) → DataOD (FoldP.Desc P)
-AlgOD P = let open FoldP P in record
-  { #levels = #levels
-  ; level   = level
-  ; applyL  = λ ℓs → let Dᵖ = DataD.applyL Desc (level ℓs) in record
-      { alevel = PDataD.alevel Dᵖ
-      ; level-inequality = algOD-level-inequality
-          (clevel ℓs) (PDataD.dlevel Dᵖ) (PDataD.struct Dᵖ) (PDataD.level-inequality Dᵖ)
-      ; Param  = Param ℓs
-      ; param  = param
-      ; Index  = λ ps → PDataD.Index Dᵖ (param ps) ++ λ is → Carrier ℓs ps is ∷ λ _ → []
-      ; index  = λ _ → fst
-      ; applyP = λ ps → algODᶜˢ (PDataD.applyP Dᵖ (param ps)) (algebra ps) } }
+DataOD.#levels (AlgOD P) = FoldP.#levels P
+DataOD.level   (AlgOD P) = FoldP.level P
+DataOD.applyL  (AlgOD P) ℓs = AlgODᵖᵈ
+  where
+    open FoldP P
+    Dᵖ = DataD.applyL Desc (level ℓs)
+    AlgODᵖᵈ : PDataOD Dᵖ
+    PDataOD.alevel AlgODᵖᵈ = PDataD.alevel (DataD.applyL Desc (level ℓs))
+    PDataOD.plevel AlgODᵖᵈ = _
+    PDataOD.ilevel AlgODᵖᵈ = _
+    PDataOD.struct AlgODᵖᵈ = _
+    PDataOD.level-inequality AlgODᵖᵈ = algOD-level-inequality
+      (clevel ℓs) (PDataD.dlevel Dᵖ) (PDataD.struct Dᵖ) (PDataD.level-inequality Dᵖ)
+    PDataOD.Param  AlgODᵖᵈ = FoldP.Param P ℓs
+    PDataOD.param  AlgODᵖᵈ = FoldP.param P
+    PDataOD.Index  AlgODᵖᵈ ps = PDataD.Index Dᵖ (param ps) ++ λ is →
+                                Carrier ℓs ps is ∷ λ _ → []
+    PDataOD.index  AlgODᵖᵈ _  = fst
+    PDataOD.applyP AlgODᵖᵈ ps = algODᶜˢ (PDataD.applyP Dᵖ (param ps)) (algebra ps)
 
 rememberʳ :
     {I : Set ℓⁱ} (D : RecD I rb) {X : I → Set ℓˣ}
@@ -119,17 +126,24 @@ rememberᶜˢ (D ∷ Ds) f fold (inr ns) all = inr (rememberᶜˢ Ds (f ∘ inr)
 
 remember : ∀ (n : Name) {P f} ⦃ _ : FoldC P f ⦄
            {N'} ⦃ _ : Named n (DataC ⌊ AlgOD P ⌋ᵈ N') ⦄ → IndP
-remember _ {P} {f} ⦃ C ⦄ {N'} ⦃ named C' ⦄ = let open FoldP P in record
-  { Conv    = Conv
-  ; #levels = #levels
-  ; level   = level
-  ; Param   = Param
-  ; param   = param
-  ; ParamV  = constTelInfo hidden
-  ; ParamN  = ParamN
-  ; Carrier = λ ℓs ps is n → N' ℓs ps (is , f ℓs ps n , tt)
-  ; algebra = λ ps ns all → DataC.toN C'
+remember _ {P} {f} ⦃ C ⦄ {N'} ⦃ named C' ⦄ = indP where
+  open FoldP P
+  indP : IndP
+  IndP.Desc    indP = _
+  IndP.Native  indP = _
+  IndP.Conv    indP = Conv
+  IndP.#levels indP = #levels
+  IndP.level   indP = level
+  IndP.plevel  indP = _
+  IndP.Param   indP = Param
+  IndP.ParamV  indP = constTelInfo hidden
+  IndP.ParamN  indP = ParamN
+  IndP.param   indP = param
+  IndP.clevel  indP = _
+  IndP.Carrier indP ℓs ps is n = N' ℓs ps (is , f ℓs ps n , tt)
+  IndP.algebra indP ps ns all =
+    DataC.toN C'
       (subst (λ x → ⟦ ⌊ AlgOD P ⌋ᵈ ⟧ᵈ (N' _ ps) (_ , x , tt))
              (sym (FoldC.equation C ns))
              (rememberᶜˢ (PDataD.applyP (DataD.applyL Desc _) (param ps))
-               (algebra ps) (f _ ps) ns all)) }
+               (algebra ps) (f _ ps) ns all))

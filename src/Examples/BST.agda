@@ -22,8 +22,7 @@ Height = ℕ
 Value : Set
 Value = ℕ
 
-variable
-  h l r : ℕ
+variable h l r : ℕ
 
 data B23Tree : Height → Value → Value → Set where
 
@@ -41,14 +40,13 @@ data B23Tree : Height → Value → Value → Set where
         → ---------------------------------------------
           B23Tree (suc h) l r
 
-B23TreeD = genDataD B23Tree
-
 instance
 
   B23TreeC : Named (quote B23Tree) _
-  unNamed B23TreeC = genDataC B23TreeD (genDataT B23TreeD B23Tree)
+  B23TreeC = named (genDataC B23TreeD (genDataT B23TreeD B23Tree))
+    where B23TreeD = genDataD B23Tree
 
-  B23TreeS : SCᵈ B23TreeD
+  B23TreeS : SCᵈ (findDataD (quote B23Tree))
   B23TreeS = record
     { El  = λ _ → ℕ
     ; pos = (false ∷ false ∷ false ∷ [])
@@ -58,83 +56,83 @@ instance
               ,ωω (λ _ _ _ → refl ,ωω λ _ → lift tt)
               ,ωω (λ _ _ _ → refl ,ωω λ _ → refl ,ωω λ _ → lift tt) ,ωω lift tt }
 
---------
--- All predicate
+-- --------
+-- -- All predicate
 
-instance
+-- instance
 
-  B23TreePOD : DataOD B23TreeD
-  B23TreePOD = PredOD (quote B23Tree)
+--   B23TreePOD : DataOD B23TreeD
+--   B23TreePOD = PredOD (quote B23Tree)
 
-  B23TreePO = ⌈ B23TreePOD ⌉ᵈ
+--   B23TreePO = ⌈ B23TreePOD ⌉ᵈ
 
--- unquoteDecl data B23TreeP constructor c0 c1 c2 = defineByDataD ⌊ B23TreePOD ⌋ᵈ B23TreeP (c0 ∷ c1 ∷ c2 ∷ [])
-data B23TreeP (P : Value → Set ℓ) : Height → Value → Value → Set ℓ where
+-- -- unquoteDecl data B23TreeP constructor c0 c1 c2 = defineByDataD ⌊ B23TreePOD ⌋ᵈ B23TreeP (c0 ∷ c1 ∷ c2 ∷ [])
+-- data B23TreeP (P : Value → Set ℓ) : Height → Value → Value → Set ℓ where
 
-  node₀ : ⦃ l ≤ r ⦄
-        → ----------------
-          B23TreeP P 0 l r
+--   node₀ : ⦃ l ≤ r ⦄
+--         → ----------------
+--           B23TreeP P 0 l r
 
-  node₂ : (x : Value) → P x
-        → B23TreeP P h l x → B23TreeP P h x r
-        → -----------------------------------
-          B23TreeP P (suc h) l r
+--   node₂ : (x : Value) → P x
+--         → B23TreeP P h l x → B23TreeP P h x r
+--         → -----------------------------------
+--           B23TreeP P (suc h) l r
 
-  node₃ : (x : Value) → P x → (y : Value) → P y
-        → B23TreeP P h l x → B23TreeP P h x y → B23TreeP P h y r
-        → ------------------------------------------------------
-          B23TreeP P (suc h) l r
+--   node₃ : (x : Value) → P x → (y : Value) → P y
+--         → B23TreeP P h l x → B23TreeP P h x y → B23TreeP P h y r
+--         → ------------------------------------------------------
+--           B23TreeP P (suc h) l r
 
-instance
+-- instance
 
-  B23TreePC : Named (quote B23TreeP) _
-  unNamed B23TreePC = genDataC ⌊ B23TreePOD ⌋ᵈ (genDataT ⌊ B23TreePOD ⌋ᵈ B23TreeP)
+--   B23TreePC : Named (quote B23TreeP) _
+--   B23TreePC = named (genDataC ⌊ B23TreePOD ⌋ᵈ (genDataT ⌊ B23TreePOD ⌋ᵈ B23TreeP))
 
-  B23TreePFin : Finitary ⌊ B23TreePOD ⌋ᵈ
-  B23TreePFin = (tt ∷ tt ∷ tt ∷ [])
-              ∷ (tt ∷ tt ∷ tt ∷ tt ∷ tt ∷ refl ∷ refl ∷ [])
-              ∷ (tt ∷ tt ∷ tt ∷ tt ∷ tt ∷ tt ∷ tt ∷ refl ∷ refl ∷ refl ∷ []) ∷ []
+--   B23TreePFin : Finitary ⌊ B23TreePOD ⌋ᵈ
+--   B23TreePFin = (tt ∷ tt ∷ tt ∷ [])
+--               ∷ (tt ∷ tt ∷ tt ∷ tt ∷ tt ∷ refl ∷ refl ∷ [])
+--               ∷ (tt ∷ tt ∷ tt ∷ tt ∷ tt ∷ tt ∷ tt ∷ refl ∷ refl ∷ refl ∷ []) ∷ []
 
-toB23TreeP : FoldP
-toB23TreeP = forget (quote B23TreeP) (quote B23Tree)
+-- toB23TreeP : FoldP
+-- toB23TreeP = forget (quote B23TreeP) (quote B23Tree)
 
--- unquoteDecl toB23Tree = defineFold toB23TreeP toB23Tree
-toB23Tree : ∀ {P : ℕ → Set ℓ} {h l r} → B23TreeP P h l r → B23Tree h l r
-toB23Tree  node₀                 = node₀
-toB23Tree (node₂ x p      t u  ) = node₂ x   (toB23Tree t) (toB23Tree u)
-toB23Tree (node₃ x p y p' t u v) = node₃ x y (toB23Tree t) (toB23Tree u) (toB23Tree v)
+-- -- unquoteDecl toB23Tree = defineFold toB23TreeP toB23Tree
+-- toB23Tree : ∀ {P : ℕ → Set ℓ} {h l r} → B23TreeP P h l r → B23Tree h l r
+-- toB23Tree  node₀                 = node₀
+-- toB23Tree (node₂ x p      t u  ) = node₂ x   (toB23Tree t) (toB23Tree u)
+-- toB23Tree (node₃ x p y p' t u v) = node₃ x y (toB23Tree t) (toB23Tree u) (toB23Tree v)
 
-instance
+-- instance
 
-  toB23TreeC = genFoldC toB23TreeP toB23Tree
+--   toB23TreeC = genFoldC toB23TreeP toB23Tree
 
-  B23TreeAllOD : DataOD ⌊ B23TreePOD ⌋ᵈ
-  B23TreeAllOD = AllOD (quote B23Tree)
+--   B23TreeAllOD : DataOD ⌊ B23TreePOD ⌋ᵈ
+--   B23TreeAllOD = AllOD (quote B23Tree)
 
-  B23TreeAllO = ⌈ B23TreeAllOD ⌉ᵈ
+--   B23TreeAllO = ⌈ B23TreeAllOD ⌉ᵈ
 
--- unquoteDecl data B23TreeAll constructor c0 c1 c2 = defineByDataD ⌊ B23TreeAllOD ⌋ᵈ B23TreeAll (c0 ∷ c1 ∷ c2 ∷ [])
-data B23TreeAll (P : Value → Set ℓ) : ∀ {h l r} → B23Tree h l r → Set ℓ where
+-- -- unquoteDecl data B23TreeAll constructor c0 c1 c2 = defineByDataD ⌊ B23TreeAllOD ⌋ᵈ B23TreeAll (c0 ∷ c1 ∷ c2 ∷ [])
+-- data B23TreeAll (P : Value → Set ℓ) : ∀ {h l r} → B23Tree h l r → Set ℓ where
 
-  node₀ : ⦃ _ : l ≤ r ⦄
-        → ------------------------------
-          B23TreeAll P {0} {l} {r} node₀
+--   node₀ : ⦃ _ : l ≤ r ⦄
+--         → ------------------------------
+--           B23TreeAll P {0} {l} {r} node₀
 
-  node₂ : ∀ {x} → P x
-        → ∀ {t} → B23TreeAll P {h} {l} {x} t
-        → ∀ {u} → B23TreeAll P {h} {x} {r} u
-        → ----------------------------------
-          B23TreeAll P (node₂ x t u)
+--   node₂ : ∀ {x} → P x
+--         → ∀ {t} → B23TreeAll P {h} {l} {x} t
+--         → ∀ {u} → B23TreeAll P {h} {x} {r} u
+--         → ----------------------------------
+--           B23TreeAll P (node₂ x t u)
 
-  node₃ : ∀ {x} → P x → ∀ {y} → P y
-        → ∀ {t} → B23TreeAll P {h} {l} {x} t
-        → ∀ {u} → B23TreeAll P {h} {x} {y} u
-        → ∀ {v} → B23TreeAll P {h} {y} {r} v
-        → ----------------------------------
-          B23TreeAll P (node₃ x y t u v)
+--   node₃ : ∀ {x} → P x → ∀ {y} → P y
+--         → ∀ {t} → B23TreeAll P {h} {l} {x} t
+--         → ∀ {u} → B23TreeAll P {h} {x} {y} u
+--         → ∀ {v} → B23TreeAll P {h} {y} {r} v
+--         → ----------------------------------
+--           B23TreeAll P (node₃ x y t u v)
 
-B23TreeAllC : Named (quote B23TreeAll) _
-unNamed B23TreeAllC = genDataC ⌊ B23TreeAllOD ⌋ᵈ (genDataT ⌊ B23TreeAllOD ⌋ᵈ B23TreeAll)
+-- B23TreeAllC : Named (quote B23TreeAll) _
+-- B23TreeAllC = named (genDataC ⌊ B23TreeAllOD ⌋ᵈ (genDataT ⌊ B23TreeAllOD ⌋ᵈ B23TreeAll))
 
 -- fromAllP : FoldP
 -- fromAllP = forget B23TreeAllC B23TreePC ⌈ B23TreeAllOD ⌉ᵈ
@@ -290,46 +288,46 @@ unNamed B23TreeAllC = genDataC ⌊ B23TreeAllOD ⌋ᵈ (genDataT ⌊ B23TreeAllO
 --            node₃ _ _ t' u' v' , node₃ _ _ allt' allu' allv')
 --         (to-fromAll allt) (to-fromAll allu) (to-fromAll allv)
 
---------
--- Any predicate
+-- --------
+-- -- Any predicate
 
-B23TreeAnyD : DataD
-B23TreeAnyD = AnyD (quote B23Tree)
+-- B23TreeAnyD : DataD
+-- B23TreeAnyD = AnyD (quote B23Tree)
 
--- unquoteDecl data B23TreeAny constructor c0 c1 c2 c3 c4 c5 c6 c7 = defineByDataD B23TreeAnyD B23TreeAny (c0 ∷ c1 ∷ c2 ∷ c3 ∷ c4 ∷ c5 ∷ c6 ∷ c7 ∷ [])
-data B23TreeAny (P : Value → Set ℓ) : ∀ {h l r} → B23Tree h l r → Set ℓ where
-  node₂-here   : ∀ {x   t u  } → P x → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
-  node₃-here₀  : ∀ {x y t u v} → P x → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
-  node₃-here₁  : ∀ {x y t u v} → P y → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
-  node₂-there₀ : ∀ {x   t u  } → B23TreeAny P t
-               → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
-  node₂-there₁ : ∀ {x   t u  } → B23TreeAny P u
-               → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
-  node₃-there₀ : ∀ {x y t u v} → B23TreeAny P t
-               → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
-  node₃-there₁ : ∀ {x y t u v} → B23TreeAny P u
-               → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
-  node₃-there₂ : ∀ {x y t u v} → B23TreeAny P v
-               → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
+-- -- unquoteDecl data B23TreeAny constructor c0 c1 c2 c3 c4 c5 c6 c7 = defineByDataD B23TreeAnyD B23TreeAny (c0 ∷ c1 ∷ c2 ∷ c3 ∷ c4 ∷ c5 ∷ c6 ∷ c7 ∷ [])
+-- data B23TreeAny (P : Value → Set ℓ) : ∀ {h l r} → B23Tree h l r → Set ℓ where
+--   node₂-here   : ∀ {x   t u  } → P x → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
+--   node₃-here₀  : ∀ {x y t u v} → P x → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
+--   node₃-here₁  : ∀ {x y t u v} → P y → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
+--   node₂-there₀ : ∀ {x   t u  } → B23TreeAny P t
+--                → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
+--   node₂-there₁ : ∀ {x   t u  } → B23TreeAny P u
+--                → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
+--   node₃-there₀ : ∀ {x y t u v} → B23TreeAny P t
+--                → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
+--   node₃-there₁ : ∀ {x y t u v} → B23TreeAny P u
+--                → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
+--   node₃-there₂ : ∀ {x y t u v} → B23TreeAny P v
+--                → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
 
-instance
-  B23TreeAnyC : Named (quote B23TreeAny) _
-  unNamed B23TreeAnyC = genDataC B23TreeAnyD (genDataT B23TreeAnyD B23TreeAny)
+-- instance
+--   B23TreeAnyC : Named (quote B23TreeAny) _
+--   B23TreeAnyC = named (genDataC B23TreeAnyD (genDataT B23TreeAnyD B23TreeAny))
 
-lookupB23TreeAnyP : FoldP
-lookupB23TreeAnyP = lookupAny (quote B23Tree)
+-- lookupB23TreeAnyP : FoldP
+-- lookupB23TreeAnyP = lookupAny (quote B23Tree)
 
--- unquoteDecl lookupB23TreeAny = defineFold lookupB23TreeAnyP lookupB23TreeAny
-lookupB23TreeAny :
-  ∀ {P : Value → Set ℓ} {h l r} {t : B23Tree h l r} → B23TreeAny P t → Σ Value P
-lookupB23TreeAny (node₂-here   p) = _ , p
-lookupB23TreeAny (node₃-here₀  p) = _ , p
-lookupB23TreeAny (node₃-here₁  p) = _ , p
-lookupB23TreeAny (node₂-there₀ i) = lookupB23TreeAny i
-lookupB23TreeAny (node₂-there₁ i) = lookupB23TreeAny i
-lookupB23TreeAny (node₃-there₀ i) = lookupB23TreeAny i
-lookupB23TreeAny (node₃-there₁ i) = lookupB23TreeAny i
-lookupB23TreeAny (node₃-there₂ i) = lookupB23TreeAny i
+-- -- unquoteDecl lookupB23TreeAny = defineFold lookupB23TreeAnyP lookupB23TreeAny
+-- lookupB23TreeAny :
+--   ∀ {P : Value → Set ℓ} {h l r} {t : B23Tree h l r} → B23TreeAny P t → Σ Value P
+-- lookupB23TreeAny (node₂-here   p) = _ , p
+-- lookupB23TreeAny (node₃-here₀  p) = _ , p
+-- lookupB23TreeAny (node₃-here₁  p) = _ , p
+-- lookupB23TreeAny (node₂-there₀ i) = lookupB23TreeAny i
+-- lookupB23TreeAny (node₂-there₁ i) = lookupB23TreeAny i
+-- lookupB23TreeAny (node₃-there₀ i) = lookupB23TreeAny i
+-- lookupB23TreeAny (node₃-there₁ i) = lookupB23TreeAny i
+-- lookupB23TreeAny (node₃-there₂ i) = lookupB23TreeAny i
 
-instance
-  lookupB23TreeAnyC = genFoldC lookupB23TreeAnyP lookupB23TreeAny
+-- instance
+--   lookupB23TreeAnyC = genFoldC lookupB23TreeAnyP lookupB23TreeAny

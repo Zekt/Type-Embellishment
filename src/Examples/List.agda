@@ -187,7 +187,7 @@ data Len {A : Set ℓ} : ℕ → List A → Set ℓ where
 
 instance
   LenC : Named (quote Len) _
-  LenC = named (genDataC ⌊ LenOD ⌋ᵈ (genDataT ⌊ LenOD ⌋ᵈ Len))
+  unNamed LenC = genDataC ⌊ LenOD ⌋ᵈ (genDataT ⌊ LenOD ⌋ᵈ Len)
 
 private
   fromLenP : FoldP
@@ -263,7 +263,7 @@ data ListP {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : Set (ℓ ⊔ ℓ') wh
 instance
 
   ListPC : Named (quote ListP) _
-  ListPC = named (genDataC ⌊ ListPOD ⌋ᵈ (genDataT ⌊ ListPOD ⌋ᵈ ListP))
+  unNamed ListPC = genDataC ⌊ ListPOD ⌋ᵈ (genDataT ⌊ ListPOD ⌋ᵈ ListP)
 
   ListPFin : Finitary ⌊ ListPOD ⌋ᵈ
   ListPFin = [] ∷ (tt ∷ tt ∷ refl ∷ []) ∷ []
@@ -292,7 +292,7 @@ data ListAll {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ
 
 instance
   ListAllC : Named (quote ListAll) _
-  ListAllC = named (genDataC ⌊ ListAllOD ⌋ᵈ ListAllT)
+  unNamed ListAllC = genDataC ⌊ ListAllOD ⌋ᵈ ListAllT
     where ListAllT = genDataT ⌊ ListAllOD ⌋ᵈ ListAll
 
 private
@@ -370,7 +370,7 @@ data ListAny {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ
 
 instance
   ListAnyC : Named (quote ListAny) _
-  ListAnyC = named (genDataC ⌊ ListAnyOD ⌋ᵈ ListAnyT)
+  unNamed ListAnyC = genDataC ⌊ ListAnyOD ⌋ᵈ ListAnyT
     where ListAnyT = genDataT ⌊ ListAnyOD ⌋ᵈ ListAny
 
 _∋_ : {A : Set ℓ} → List A → A → Set ℓ

@@ -76,22 +76,26 @@ module _ (ℓ : Level) where
     ∎ where open ≡-Reasoning
 
 PredODᵖᵈ : (D : PDataD) → SC D → Level → PDataOD D
-PredODᵖᵈ D S ℓ = record
-  { alevel = PDataD.alevel D ⊔ maxMap (uncurry (hasEl? ℓ)) (allToList (SC.pos S))
-  ; level-inequality = PredOD-level-inequality
-      ℓ (PDataD.dlevel D) (PDataD.struct D) (SC.pos S) (PDataD.level-inequality D)
-  ; Param = [[ ps ∶ PDataD.Param D ]] [ P ∶ (SC.El S ps → Set ℓ) ] []
-  ; param = fst
-  ; Index = λ (ps , _) → PDataD.Index D ps
-  ; index = λ _ → id
-  ; applyP = λ (ps , P , _) →
-      PredODᶜˢ (PDataD.applyP D ps) (SC.El S ps) P (SC.pos S) (SC.coe S ps) }
+PDataOD.alevel (PredODᵖᵈ D S ℓ) =
+  PDataD.alevel D ⊔ maxMap (uncurry (hasEl? ℓ)) (allToList (SC.pos S))
+PDataOD.plevel (PredODᵖᵈ D S ℓ) = _
+PDataOD.ilevel (PredODᵖᵈ D S ℓ) = _
+PDataOD.struct (PredODᵖᵈ D S ℓ) = _
+PDataOD.level-inequality (PredODᵖᵈ D S ℓ) =
+  PredOD-level-inequality
+    ℓ (PDataD.dlevel D) (PDataD.struct D) (SC.pos S) (PDataD.level-inequality D)
+PDataOD.Param  (PredODᵖᵈ D S ℓ) =
+  [[ ps ∶ PDataD.Param D ]] [ P ∶ (SC.El S ps → Set ℓ) ] []
+PDataOD.param  (PredODᵖᵈ D S ℓ) = fst
+PDataOD.Index  (PredODᵖᵈ D S ℓ) (ps , _) = PDataD.Index D ps
+PDataOD.index  (PredODᵖᵈ D S ℓ) _ = id
+PDataOD.applyP (PredODᵖᵈ D S ℓ) (ps , P , _) =
+  PredODᶜˢ (PDataD.applyP D ps) (SC.El S ps) P (SC.pos S) (SC.coe S ps)
 
 PredOD : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄ → DataOD D
-PredOD _ {D} ⦃ _ ⦄ ⦃ S ⦄ = record
-  { #levels = suc (DataD.#levels D)
-  ; level   = snd
-  ; applyL  = λ (ℓ , ℓs) → PredODᵖᵈ (DataD.applyL D ℓs) S ℓ }
+DataOD.#levels (PredOD _ {D} ⦃ _ ⦄ ⦃ S ⦄) = suc (DataD.#levels D)
+DataOD.level   (PredOD _ {D} ⦃ _ ⦄ ⦃ S ⦄) = snd
+DataOD.applyL  (PredOD _ {D} ⦃ _ ⦄ ⦃ S ⦄) (ℓ , ℓs) = PredODᵖᵈ (DataD.applyL D ℓs) S ℓ
 
 PredD : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄ → DataD
 PredD n = ⌊ PredOD n ⌋ᵈ

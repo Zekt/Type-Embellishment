@@ -205,56 +205,63 @@ forget-remember-inv :
         rememberP = remember n' ⦃ C ⦄ ⦃ C' ⦄ in
   ∀ {g} ⦃ gC : FoldC forgetP g ⦄ {r} ⦃ rC : IndC rememberP r ⦄
   → Finitary (FoldP.Desc P) ⊎ω FunExt → IndP
-forget-remember-inv _ _ {P} {f} ⦃ C ⦄ {N'} ⦃ named C' ⦄ {g} ⦃ gC ⦄ {r} ⦃ rC ⦄ cond =
-  let open FoldP P in record
-  { Conv    = Conv
-  ; #levels = #levels
-  ; level   = level
-  ; Param   = Param
-  ; param   = param
-  ; ParamV  = ParamV
-  ; ParamN  = ParamN
-  ; Carrier = λ _ ps _ n → g _ ps (r _ ps n) ≡ n
-  ; algebra = λ ps ns all → let Dᶜˢ = PDataD.applyP (DataD.applyL Desc _) (param ps) in
-      begin
-        g _ ps (r _ ps (DataC.toN Conv ns))
-          ≡⟨ cong (g _ ps) (IndC.equation rC ns) ⟩
-        g _ ps (DataC.toN C'
-          (subst (λ x → ⟦ ⌊ AlgOD P ⌋ᵈ ⟧ᵈ (N' _ ps) (_ , x , tt))
-                 (sym (FoldC.equation C ns))
-                 (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (algebra ps) (f _ ps) ns
-                   (ind-fmapᶜˢ Dᶜˢ (r _ ps) ns))))
-          ≡⟨ FoldC.equation gC _ ⟩
-        DataC.toN Conv
-          (eraseᶜˢ ⌈ algODᶜˢ Dᶜˢ (algebra ps) ⌉ᶜˢ
-            (fmapᶜˢ ⌊ algODᶜˢ Dᶜˢ (algebra ps) ⌋ᶜˢ (g _ ps)
-              (subst (λ x → ⟦ ⌊ algODᶜˢ Dᶜˢ (algebra ps) ⌋ᶜˢ ⟧ᶜˢ (N' _ ps) (_ , x , tt))
-                     (sym (FoldC.equation C ns))
-                     (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (algebra ps) (f _ ps) ns
-                       (ind-fmapᶜˢ Dᶜˢ (r _ ps) ns)))))
-          ≡⟨ cong (DataC.toN Conv)
-                  (erase-fmap-subst-lemma ⌈ algODᶜˢ Dᶜˢ (algebra ps) ⌉ᶜˢ (g _ ps) _ _) ⟩
-        DataC.toN Conv
-          (eraseᶜˢ ⌈ algODᶜˢ Dᶜˢ (algebra ps) ⌉ᶜˢ
-            (fmapᶜˢ ⌊ algODᶜˢ Dᶜˢ (algebra ps) ⌋ᶜˢ (g _ ps)
-              (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (algebra ps) (f _ ps) {N' _ ps} ns
-                (ind-fmapᶜˢ Dᶜˢ (r _ ps) ns))))
-          ≡⟨ [ (λ fin    → Finitary.forget-remember-invᶜˢ Dᶜˢ (fin {_})
-                  (DataC.toN Conv) (algebra ps) (f _ ps) (g _ ps) (r _ ps) ns all)
-             , (λ funext → FunExt.forget-remember-invᶜˢ (λ {ℓ} {ℓ'} → funext {ℓ} {ℓ'}) Dᶜˢ
-                  (DataC.toN Conv) (algebra ps) (f _ ps) (g _ ps) (r _ ps) ns all) ]ω cond ⟩'
-        DataC.toN Conv ns
-      ∎ }
-  where
-    open ≡-Reasoning
-    erase-fmap-subst-lemma :
-      ∀ {I : Set ℓⁱ} {J : I → Set ℓʲ}
-        {D : ConDs (Σ[ i ∈ I ] J i × ⊤) cbs} {E : ConDs I cbs'} (O : ConOs fst D E)
-        {X : Σ[ i ∈ I ] J i × ⊤ → Set ℓˣ} {Y : I → Set ℓʸ} (f : ∀ {i j} → X (i , j) → Y i)
-        {i j} (xs : ⟦ D ⟧ᶜˢ X (i , j , tt)) {j'} (jeq : j ≡ j')
-      → eraseᶜˢ O (fmapᶜˢ D f (subst (λ j' → ⟦ D ⟧ᶜˢ X (i , j' , tt)) jeq xs))
-      ≡ eraseᶜˢ O (fmapᶜˢ D f xs)
-    erase-fmap-subst-lemma O f xs refl = refl
+forget-remember-inv
+  _ _ {P} {f} ⦃ C ⦄ {N'} ⦃ named C' ⦄ {g} ⦃ gC ⦄ {r} ⦃ rC ⦄ cond = indP where
+  open FoldP P
+  indP : IndP
+  IndP.Desc    indP = _
+  IndP.Native  indP = _
+  IndP.Conv    indP = Conv
+  IndP.#levels indP = #levels
+  IndP.level   indP = level
+  IndP.plevel  indP = _
+  IndP.Param   indP = Param
+  IndP.ParamV  indP = ParamV
+  IndP.ParamN  indP = ParamN
+  IndP.param   indP = param
+  IndP.clevel  indP = _
+  IndP.Carrier indP _ ps _ n = g _ ps (r _ ps n) ≡ n
+  IndP.algebra indP ps ns all =
+    let Dᶜˢ = PDataD.applyP (DataD.applyL Desc _) (param ps) in
+    begin
+      g _ ps (r _ ps (DataC.toN Conv ns))
+        ≡⟨ cong (g _ ps) (IndC.equation rC ns) ⟩
+      g _ ps (DataC.toN C'
+        (subst (λ x → ⟦ ⌊ AlgOD P ⌋ᵈ ⟧ᵈ (N' _ ps) (_ , x , tt))
+               (sym (FoldC.equation C ns))
+               (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (algebra ps) (f _ ps) ns
+                 (ind-fmapᶜˢ Dᶜˢ (r _ ps) ns))))
+        ≡⟨ FoldC.equation gC _ ⟩
+      DataC.toN Conv
+        (eraseᶜˢ ⌈ algODᶜˢ Dᶜˢ (algebra ps) ⌉ᶜˢ
+          (fmapᶜˢ ⌊ algODᶜˢ Dᶜˢ (algebra ps) ⌋ᶜˢ (g _ ps)
+            (subst (λ x → ⟦ ⌊ algODᶜˢ Dᶜˢ (algebra ps) ⌋ᶜˢ ⟧ᶜˢ (N' _ ps) (_ , x , tt))
+                   (sym (FoldC.equation C ns))
+                   (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (algebra ps) (f _ ps) ns
+                     (ind-fmapᶜˢ Dᶜˢ (r _ ps) ns)))))
+        ≡⟨ cong (DataC.toN Conv)
+                (erase-fmap-subst-lemma ⌈ algODᶜˢ Dᶜˢ (algebra ps) ⌉ᶜˢ (g _ ps) _ _) ⟩
+      DataC.toN Conv
+        (eraseᶜˢ ⌈ algODᶜˢ Dᶜˢ (algebra ps) ⌉ᶜˢ
+          (fmapᶜˢ ⌊ algODᶜˢ Dᶜˢ (algebra ps) ⌋ᶜˢ (g _ ps)
+            (rememberᶜˢ {ℓ'' = lzero} Dᶜˢ (algebra ps) (f _ ps) {N' _ ps} ns
+              (ind-fmapᶜˢ Dᶜˢ (r _ ps) ns))))
+        ≡⟨ [ (λ fin    → Finitary.forget-remember-invᶜˢ Dᶜˢ (fin {_})
+                (DataC.toN Conv) (algebra ps) (f _ ps) (g _ ps) (r _ ps) ns all)
+           , (λ funext → FunExt.forget-remember-invᶜˢ (λ {ℓ} {ℓ'} → funext {ℓ} {ℓ'}) Dᶜˢ
+                (DataC.toN Conv) (algebra ps) (f _ ps) (g _ ps) (r _ ps) ns all) ]′ω cond ⟩'
+      DataC.toN Conv ns
+    ∎
+    where
+      open ≡-Reasoning
+      erase-fmap-subst-lemma :
+        ∀ {I : Set ℓⁱ} {J : I → Set ℓʲ}
+          {D : ConDs (Σ[ i ∈ I ] J i × ⊤) cbs} {E : ConDs I cbs'} (O : ConOs fst D E)
+          {X : Σ[ i ∈ I ] J i × ⊤ → Set ℓˣ} {Y : I → Set ℓʸ} (f : ∀ {i j} → X (i , j) → Y i)
+          {i j} (xs : ⟦ D ⟧ᶜˢ X (i , j , tt)) {j'} (jeq : j ≡ j')
+        → eraseᶜˢ O (fmapᶜˢ D f (subst (λ j' → ⟦ D ⟧ᶜˢ X (i , j' , tt)) jeq xs))
+        ≡ eraseᶜˢ O (fmapᶜˢ D f xs)
+      erase-fmap-subst-lemma O f xs refl = refl
 
 remember-forget-inv :
   ∀ (n' n : Name) {P f} ⦃ C : FoldC P f ⦄ {N'} ⦃ C' : Named n' (DataC ⌊ AlgOD P ⌋ᵈ N') ⦄
@@ -262,46 +269,53 @@ remember-forget-inv :
         rememberP = remember n' ⦃ C ⦄ ⦃ C' ⦄ in
   ∀ {g} ⦃ gC : FoldC forgetP g ⦄ {r} ⦃ rC : IndC rememberP r ⦄
   → Finitary (FoldP.Desc P) ⊎ω FunExt → IndP
-remember-forget-inv _ _ {P} {f} ⦃ C ⦄ {N'} ⦃ named C' ⦄ {g} ⦃ gC ⦄ {r} ⦃ rC ⦄ cond =
-  let open FoldP P in record
-  { Conv    = C'
-  ; #levels = #levels
-  ; level   = id
-  ; Param   = Param
-  ; param   = id
-  ; ParamV  = constTelInfo hidden
-  ; ParamN  = ParamN
-  ; Carrier = λ ℓs ps (is , x , _) n' →
-        (f _ ps (g _ ps n') , r _ ps (g _ ps n'))
-      ≡ ((x , n') ⦂ Σ[ x' ∈ Carrier ℓs ps is ] N' ℓs ps (is , x' , tt))
-  ; algebra = λ ps ns' all → let Dᶜˢ = PDataD.applyP (DataD.applyL Desc _) (param ps) in
-      begin
-        (let n = g _ ps (DataC.toN C' ns') in f _ ps n , r _ ps n)
-          ≡⟨ cong (λ n → f _ ps n , r _ ps n) (FoldC.equation gC ns') ⟩
-        let ns = eraseᵈ ⌈ AlgOD P ⌉ᵈ (fmapᵈ ⌊ AlgOD P ⌋ᵈ (g _ ps) ns')
-            n  = DataC.toN Conv ns in
-       (f _ ps n , r _ ps n
-          ≡⟨ cong (λ m → f _ ps (DataC.toN Conv ns) , m) (IndC.equation rC _) ⟩
-        f _ ps n ,
-        DataC.toN C'
-          (subst (λ x → ⟦ ⌊ AlgOD P ⌋ᵈ ⟧ᵈ (N' _ ps) (_ , x , tt))
-                 (sym (FoldC.equation C _))
-                 (rememberᶜˢ Dᶜˢ (algebra ps) (f _ ps) _ (ind-fmapᵈ Desc (r _ ps) ns)))
-          ≡⟨ pair-subst-lemma (DataC.toN C') (sym (FoldC.equation C _)) ⟩
-        algebra ps (fmapᵈ Desc (f _ ps) ns) ,
-        DataC.toN C' (rememberᶜˢ Dᶜˢ (algebra ps) (f _ ps) _ (ind-fmapᵈ Desc (r _ ps) ns))
-          ≡⟨ cong (bimap id (DataC.toN C'))
-                  ([ (λ fin    → Finitary.remember-forget-invᶜˢ Dᶜˢ (fin {_})
-                                   (algebra ps) (f _ ps) (r _ ps) (g _ ps) ns' all)
-                   , (λ funext → FunExt.remember-forget-invᶜˢ
-                                   (λ {ℓ} {ℓ'} → funext {ℓ} {ℓ'}) Dᶜˢ
-                                   (algebra ps) (f _ ps) (r _ ps) (g _ ps) ns' all) ]ω cond) ⟩
-        (_ , DataC.toN C' ns')
-      ∎) }
-  where
-    open ≡-Reasoning
-    pair-subst-lemma :
-        {I : Set ℓⁱ} {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
-        (f : ∀ {i} → X i → Y i) {i i' : I} (ieq : i ≡ i') {x : X i}
-      → (i' , f (subst X ieq x)) ≡ (i , f x)
-    pair-subst-lemma f refl = refl
+remember-forget-inv
+  _ _ {P} {f} ⦃ C ⦄ {N'} ⦃ named C' ⦄ {g} ⦃ gC ⦄ {r} ⦃ rC ⦄ cond = indP where
+  open FoldP P
+  indP : IndP
+  IndP.Desc    indP = _
+  IndP.Native  indP = _
+  IndP.Conv    indP = C'
+  IndP.#levels indP = #levels
+  IndP.level   indP = id
+  IndP.plevel  indP = _
+  IndP.Param   indP = Param
+  IndP.ParamV  indP = constTelInfo hidden
+  IndP.ParamN  indP = ParamN
+  IndP.param   indP = id
+  IndP.clevel  indP = _
+  IndP.Carrier indP ℓs ps (is , x , _) n' =
+      (f _ ps (g _ ps n') , r _ ps (g _ ps n'))
+    ≡ ((x , n') ⦂ Σ[ x' ∈ Carrier ℓs ps is ] N' ℓs ps (is , x' , tt))
+  IndP.algebra indP = λ ps ns' all →
+    let Dᶜˢ = PDataD.applyP (DataD.applyL Desc _) (param ps) in
+    begin
+      (let n = g _ ps (DataC.toN C' ns') in f _ ps n , r _ ps n)
+        ≡⟨ cong (λ n → f _ ps n , r _ ps n) (FoldC.equation gC ns') ⟩
+      let ns = eraseᵈ ⌈ AlgOD P ⌉ᵈ (fmapᵈ ⌊ AlgOD P ⌋ᵈ (g _ ps) ns')
+          n  = DataC.toN Conv ns in
+     (f _ ps n , r _ ps n
+        ≡⟨ cong (λ m → f _ ps (DataC.toN Conv ns) , m) (IndC.equation rC _) ⟩
+      f _ ps n ,
+      DataC.toN C'
+        (subst (λ x → ⟦ ⌊ AlgOD P ⌋ᵈ ⟧ᵈ (N' _ ps) (_ , x , tt))
+               (sym (FoldC.equation C _))
+               (rememberᶜˢ Dᶜˢ (algebra ps) (f _ ps) _ (ind-fmapᵈ Desc (r _ ps) ns)))
+        ≡⟨ pair-subst-lemma (DataC.toN C') (sym (FoldC.equation C _)) ⟩
+      algebra ps (fmapᵈ Desc (f _ ps) ns) ,
+      DataC.toN C' (rememberᶜˢ Dᶜˢ (algebra ps) (f _ ps) _ (ind-fmapᵈ Desc (r _ ps) ns))
+        ≡⟨ cong (bimap id (DataC.toN C'))
+             ([ (λ fin    → Finitary.remember-forget-invᶜˢ Dᶜˢ (fin {_})
+                              (algebra ps) (f _ ps) (r _ ps) (g _ ps) ns' all)
+              , (λ funext → FunExt.remember-forget-invᶜˢ
+                              (λ {ℓ} {ℓ'} → funext {ℓ} {ℓ'}) Dᶜˢ
+                              (algebra ps) (f _ ps) (r _ ps) (g _ ps) ns' all) ]′ω cond) ⟩
+      (_ , DataC.toN C' ns')
+    ∎)
+    where
+      open ≡-Reasoning
+      pair-subst-lemma :
+          {I : Set ℓⁱ} {X : I → Set ℓˣ} {Y : I → Set ℓʸ}
+          (f : ∀ {i} → X i → Y i) {i i' : I} (ieq : i ≡ i') {x : X i}
+        → (i' , f (subst X ieq x)) ≡ (i , f x)
+      pair-subst-lemma f refl = refl
