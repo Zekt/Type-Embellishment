@@ -1,0 +1,222 @@
+%% This BibTeX bibliography file was created using BibDesk.
+%% http://bibdesk.sourceforge.net/
+
+%% Created for Josh Ko at 2022-01-27 17:14:03 +0800 
+
+
+%% Saved with string encoding Unicode (UTF-8) 
+
+
+
+@article{Allais-binding-syntax-universe-JFP,
+	abstract = {The syntax of almost every programming language includes a notion of binder and corresponding bound occurrences, along with the accompanying notions of $\alpha$-equivalence, capture-avoiding substitution, typing contexts, runtime environments, and so on. In the past, implementing and reasoning about programming languages required careful handling to maintain the correct behaviour of bound variables. Modern programming languages include features that enable constraints like scope safety to be expressed in types. Nevertheless, the programmer is still forced to write the same boilerplate over again for each new implementation of a scope-safe operation (e.g., renaming, substitution, desugaring, printing), and then again for correctness proofs. We present an expressive universe of syntaxes with binding and demonstrate how to (1) implement scope-safe traversals once and for all by generic programming; and (2) how to derive properties of these traversals by generic proving. Our universe description, generic traversals and proofs, and our examples have all been formalised in Agda and are available in the accompanying material available online at https://github.com/gallais/generic-syntax.},
+	author = {Allais, Guillaume and Atkey, Robert and Chapman, James and McBride, Conor and McKinna, James},
+	date-added = {2020-09-26 22:55:37 +0800},
+	date-modified = {2021-11-07 15:13:29 +0800},
+	doi = {10.1017/S0956796820000076},
+	journal = {Journal of Functional Programming},
+	pages = {e22:1-51},
+	title = {A Type- and Scope-Safe Universe of Syntaxes with Binding: Their Semantics and Proofs},
+	volume = {31},
+	year = {2021},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxDPLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0FsbGFpcyBldCBhbCAyMDIxIC0gQSBUeXBlLSBhbmQgU2NvcGUtU2FmZSBVbml2ZXJzZSBvZiBTeW50YXhlcyB3aXRoIEJpbmRpbmcgVGhlaXIgU2VtYW50aWNzIGFuZCBQcm9vZnMucGRmTxEDTAAAAAADTAACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H0FsbGFpcyBldCBhbCAyMDIxICNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAM8vOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6QWxsYWlzIGV0IGFsIDIwMjEgLSBBIFR5cGUtIGFuZCBTY29wZS1TYWZlIFVuaXZlcnNlIG9mIFN5bnRheGVzIHdpdGggQmluZGluZyBUaGVpciBTZW1hbnRpY3MgYW5kIFByb29mcy5wZGYAAA4A2ABrAEEAbABsAGEAaQBzACAAZQB0ACAAYQBsACAAMgAwADIAMQAgAC0AIABBACAAVAB5AHAAZQAtACAAYQBuAGQAIABTAGMAbwBwAGUALQBTAGEAZgBlACAAVQBuAGkAdgBlAHIAcwBlACAAbwBmACAAUwB5AG4AdABhAHgAZQBzACAAdwBpAHQAaAAgAEIAaQBuAGQAaQBuAGcAIABUAGgAZQBpAHIAIABTAGUAbQBhAG4AdABpAGMAcwAgAGEAbgBkACAAUAByAG8AbwBmAHMALgBwAGQAZgAPAA4ABgBTAHkAcwB0AGUAbQASAM1Vc2Vycy9qb3Noa28vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0FsbGFpcyBldCBhbCAyMDIxIC0gQSBUeXBlLSBhbmQgU2NvcGUtU2FmZSBVbml2ZXJzZSBvZiBTeW50YXhlcyB3aXRoIEJpbmRpbmcgVGhlaXIgU2VtYW50aWNzIGFuZCBQcm9vZnMucGRmAAATAAEvAAAVAAIADf//AAAACAANABoAJAD2AAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAABEY=}}
+
+@misc{Kovacs-universe-hierarchies,
+	abstract = {In type theories, universe hierarchies are commonly used to increase the expressive power of the theory while avoiding inconsistencies arising from size issues. There are numerous ways to specify universe hierarchies, and theories may differ in details of cumulativity, choice of universe levels, specification of type formers and eliminators, and available internal operations on levels. In the current work, we aim to provide a framework which covers a large part of the design space. First, we develop syntax and semantics for cumulative universe hierarchies, where levels may come from any set equipped with a transitive well-founded ordering. In the semantics, we show that induction-recursion can be used to model transfinite hierarchies, and also support lifting operations on type codes which strictly preserve type formers. Then, we consider a setup where universe levels are first-class types and subject to arbitrary internal reasoning. This generalizes the bounded polymorphism features of Coq and at the same time the internal level computations in Agda.},
+	author = {Kov{\'a}cs, Andr{\'a}s},
+	date-added = {2021-12-01 21:48:10 +0800},
+	date-modified = {2021-12-01 21:49:07 +0800},
+	howpublished = {\arXiv{2103.00223}},
+	title = {Generalized Universe Hierarchies and First-Class Universe Levels},
+	year = {2021},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhbxC3AC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAEwAaQBiAHIAYQByAHkALwBNAG8AYgBpAGwAZQAgAEQAbwBjAHUAbQBlAG4AdABzAC8ASgBGAEoAVwBXAFAANgA0AFEARAB+AGMAbwBtAH4AZwBvAG8AZABpAHcAYQByAGUAfgBHAG8AbwBkAFIAZQBhAGQAZQByAC8ARABvAGMAdQBtAGUAbgB0AHMALwBCAGkAYgBSAGUAcABvAHMAaQB0AG8AcgB5AC8ASwBvAHYAYQMBAGMAcwAgADIAMAAyADEAIAAtACAARwBlAG4AZQByAGEAbABpAHoAZQBkACAAVQBuAGkAdgBlAHIAcwBlACAASABpAGUAcgBhAHIAYwBoAGkAZQBzACAAYQBuAGQAIABGAGkAcgBzAHQALQBDAGwAYQBzAHMAIABVAG4AaQB2AGUAcgBzAGUAIABMAGUAdgBlAGwAcwAuAHAAZABmTxEC7AAAAAAC7AACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////EUtvdmEjRkZGRkZGRkYucGRmcmFsaXplZCBVbml2ZQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACALgvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6S292YcyBY3MgMjAyMSAtIEdlbmVyYWxpemVkIFVuaXZlcnNlIEhpZXJhcmNoaWVzIGFuZCBGaXJzdC1DbGFzcyBVbml2ZXJzZSBMZXZlbHMucGRmAA4AqABTAEsAbwB2AGEDAQBjAHMAIAAyADAAMgAxACAALQAgAEcAZQBuAGUAcgBhAGwAaQB6AGUAZAAgAFUAbgBpAHYAZQByAHMAZQAgAEgAaQBlAHIAYQByAGMAaABpAGUAcwAgAGEAbgBkACAARgBpAHIAcwB0AC0AQwBsAGEAcwBzACAAVQBuAGkAdgBlAHIAcwBlACAATABlAHYAZQBsAHMALgBwAGQAZgAPAA4ABgBTAHkAcwB0AGUAbQASALZVc2Vycy9qb3Noa28vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0tvdmHMgWNzIDIwMjEgLSBHZW5lcmFsaXplZCBVbml2ZXJzZSBIaWVyYXJjaGllcyBhbmQgRmlyc3QtQ2xhc3MgVW5pdmVyc2UgTGV2ZWxzLnBkZgATAAEvAAAVAAIADf//AAAACAANABoAJAGVAAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAABIU=}}
+
+@inproceedings{Pickering-staged-SoP,
+	abstract = {Generic programming libraries have historically traded efficiency in return for convenience, and the \textsf{generics-sop} library is no exception. It offers a simple, uniform, representation of all datatypes precisely as a sum of products, making it easy to write generic functions. We show how to finally make \textsf{generics-sop} fast through the use of staging with Typed Template Haskell.},
+	author = {Pickering, Matthew and L{\"o}h, Andres and Wu, Nicolas},
+	booktitle = {International Symposium on Haskell},
+	date-added = {2021-08-04 08:09:07 +0800},
+	date-modified = {2021-11-15 10:26:37 +0800},
+	doi = {10.1145/3406088.3409021},
+	pages = {122-135},
+	publisher = {ACM},
+	title = {Staged Sums of Products},
+	year = {2020},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCWLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L1BpY2tlcmluZyBldCBhbCAyMDIwIC0gU3RhZ2VkIFN1bXMgb2YgUHJvZHVjdHMucGRmTxECZgAAAAACZgACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H1BpY2tlcmluZyBldCBhbCAyMCNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJYvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6UGlja2VyaW5nIGV0IGFsIDIwMjAgLSBTdGFnZWQgU3VtcyBvZiBQcm9kdWN0cy5wZGYADgBmADIAUABpAGMAawBlAHIAaQBuAGcAIABlAHQAIABhAGwAIAAyADAAMgAwACAALQAgAFMAdABhAGcAZQBkACAAUwB1AG0AcwAgAG8AZgAgAFAAcgBvAGQAdQBjAHQAcwAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAlFVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvUGlja2VyaW5nIGV0IGFsIDIwMjAgLSBTdGFnZWQgU3VtcyBvZiBQcm9kdWN0cy5wZGYAEwABLwAAFQACAA3//wAAAAgADQAaACQAvQAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAMn}}
+
+@inproceedings{Allais-n-ary-functions,
+	abstract = {Agda's standard library struggles in various places with n-ary functions and relations. It introduces congruence and substitution operators for functions of arities one and two, and provides users with convenient combinators for manipulating indexed families of arity exactly one.\par
+
+After a careful analysis of the kinds of problems the unifier can easily solve, we design a unifier-friendly representation of n-ary functions. This allows us to write generic programs acting on n-ary functions which automatically reconstruct the representation of their inputs' types by unification. In particular, we can define fully level polymorphic n-ary versions of congruence, substitution and the combinators for indexed families, all requiring minimal user input.},
+	author = {Allais, Guillaume},
+	booktitle = {International Workshop on Type-Driven Development (TyDe)},
+	date-added = {2021-12-01 21:28:10 +0800},
+	date-modified = {2021-12-01 21:37:09 +0800},
+	doi = {10.1145/3331554.3342604},
+	pages = {14--26},
+	publisher = {ACM},
+	title = {Generic Level Polymorphic N-ary Functions},
+	year = 2019,
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCfLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0FsbGFpcyAyMDE5IC0gR2VuZXJpYyBMZXZlbCBQb2x5bW9ycGhpYyBOLWFyeSBGdW5jdGlvbnMucGRmTxECjAAAAAACjAACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H0FsbGFpcyAyMDE5IC0gR2VuZSNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJ8vOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6QWxsYWlzIDIwMTkgLSBHZW5lcmljIExldmVsIFBvbHltb3JwaGljIE4tYXJ5IEZ1bmN0aW9ucy5wZGYAAA4AeAA7AEEAbABsAGEAaQBzACAAMgAwADEAOQAgAC0AIABHAGUAbgBlAHIAaQBjACAATABlAHYAZQBsACAAUABvAGwAeQBtAG8AcgBwAGgAaQBjACAATgAtAGEAcgB5ACAARgB1AG4AYwB0AGkAbwBuAHMALgBwAGQAZgAPAA4ABgBTAHkAcwB0AGUAbQASAJ1Vc2Vycy9qb3Noa28vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0FsbGFpcyAyMDE5IC0gR2VuZXJpYyBMZXZlbCBQb2x5bW9ycGhpYyBOLWFyeSBGdW5jdGlvbnMucGRmAAATAAEvAAAVAAIADf//AAAACAANABoAJADGAAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAAA1Y=}}
+
+@inproceedings{Chen-Mtac-Agda,
+	abstract = {We present a work in progress---a shallow embedding of a typed tactic language \emph{Mtac} using \emph{elaborator reflection} in a dependently typed language to allow users to write high-level tactics within the same language. In contrast to the original implementation of Mtac in Coq, this implementation is completely written in Agda using its reflection mechanism. To focus on the difference from its Coq counterpart, we give an example of tactics and briefly sketch the implementation of the core design and the pattern matching construct.},
+	author = {Chen, Liang-Ting},
+	booktitle = {Workshop on Type-Driven Development (TyDe)},
+	date-added = {2020-06-21 23:40:24 +0800},
+	date-modified = {2020-06-21 23:41:36 +0800},
+	title = {Monadic Typed Tactic Programming by Reflection (extended abstract)},
+	url = {http://tydeworkshop.org/2019-abstracts/paper20.pdf},
+	year = {2019},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxC2Li4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0NoZW4gMjAxOSAtIE1vbmFkaWMgVHlwZWQgVGFjdGljIFByb2dyYW1taW5nIGJ5IFJlZmxlY3Rpb24gKGV4dGVuZGVkIGFic3RyYWN0KS5wZGZPEQLmAAAAAALmAAIAAAZTeXN0ZW0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQkQAAf////8fQ2hlbiAyMDE5IC0gTW9uYWRpI0ZGRkZGRkZGLnBkZgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wAAAAAAAAAAAAAAAAAFAAYAAAogY3UAAAAAAAAAAAAAAAAADUJpYlJlcG9zaXRvcnkAAAIAti86VXNlcnM6am9zaGtvOkxpYnJhcnk6TW9iaWxlIERvY3VtZW50czpKRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlcjpEb2N1bWVudHM6QmliUmVwb3NpdG9yeTpDaGVuIDIwMTkgLSBNb25hZGljIFR5cGVkIFRhY3RpYyBQcm9ncmFtbWluZyBieSBSZWZsZWN0aW9uIChleHRlbmRlZCBhYnN0cmFjdCkucGRmAA4ApgBSAEMAaABlAG4AIAAyADAAMQA5ACAALQAgAE0AbwBuAGEAZABpAGMAIABUAHkAcABlAGQAIABUAGEAYwB0AGkAYwAgAFAAcgBvAGcAcgBhAG0AbQBpAG4AZwAgAGIAeQAgAFIAZQBmAGwAZQBjAHQAaQBvAG4AIAAoAGUAeAB0AGUAbgBkAGUAZAAgAGEAYgBzAHQAcgBhAGMAdAApAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgC0VXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9DaGVuIDIwMTkgLSBNb25hZGljIFR5cGVkIFRhY3RpYyBQcm9ncmFtbWluZyBieSBSZWZsZWN0aW9uIChleHRlbmRlZCBhYnN0cmFjdCkucGRmABMAAS8AABUAAgAN//8AAAAIAA0AGgAkAN0AAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAADxw==}}
+
+@article{Yallop-staged-generic-programming,
+	abstract = {Generic programming libraries such as \textit{Scrap Your Boilerplate} eliminate the need to write repetitive code, but typically introduce significant performance overheads. This leaves programmers with the regrettable choice between writing succinct but slow programs and writing tedious but efficient programs.\par
+
+Applying structured multi-stage programming techniques transforms \emph{Scrap Your Boilerplate} from an inefficient library into a typed optimising code generator, bringing its performance in line with hand-written code, and so combining high-level programming with uncompromised performance.},
+	author = {Yallop, Jeremy},
+	date-added = {2021-12-29 22:03:41 +0800},
+	date-modified = {2021-12-29 22:04:39 +0800},
+	doi = {10.1145/3110273},
+	journal = {Proceedings of the ACM on Programming Languages},
+	number = {ICFP},
+	pages = {29:1--29},
+	title = {Staged Generic Programming},
+	volume = {1},
+	year = 2017,
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCQLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L1lhbGxvcCAyMDE3IC0gU3RhZ2VkIEdlbmVyaWMgUHJvZ3JhbW1pbmcucGRmTxECTgAAAAACTgACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H1lhbGxvcCAyMDE3IC0gU3RhZyNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJAvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6WWFsbG9wIDIwMTcgLSBTdGFnZWQgR2VuZXJpYyBQcm9ncmFtbWluZy5wZGYADgBaACwAWQBhAGwAbABvAHAAIAAyADAAMQA3ACAALQAgAFMAdABhAGcAZQBkACAARwBlAG4AZQByAGkAYwAgAFAAcgBvAGcAcgBhAG0AbQBpAG4AZwAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAjlVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvWWFsbG9wIDIwMTcgLSBTdGFnZWQgR2VuZXJpYyBQcm9ncmFtbWluZy5wZGYAEwABLwAAFQACAA3//wAAAAgADQAaACQAtwAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAMJ}}
+
+@inproceedings{Christiansen-elaborator-reflection,
+	abstract = {Many programming languages and proof assistants are defined by elaboration from a high-level language with a great deal of implicit information to a highly explicit core language. In many advanced languages, these elaboration facilities contain powerful tools for program construction, but these tools are rarely designed to be repurposed by users. We describe \emph{elaborator reflection}, a paradigm for metaprogramming in which the elaboration machinery is made directly available to metaprograms, as well as a concrete realization of elaborator reflection in Idris, a functional language with full dependent types. We demonstrate the applicability of Idris's reflected elaboration framework to a number of realistic problems, we discuss the motivation for the specific features of its design, and we explore the broader meaning of elaborator reflection as it can relate to other languages.},
+	author = {Christiansen, David and Brady, Edwin},
+	booktitle = {International Conference on Functional Programming (ICFP)},
+	date-added = {2017-07-31 07:56:32 +0000},
+	date-modified = {2017-07-31 07:57:59 +0000},
+	doi = {10.1145/3022670.2951932},
+	pages = {284-297},
+	publisher = {ACM},
+	title = {Elaborator Reflection: Extending {Idris} in {Idris}},
+	year = {2016},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCwLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0NocmlzdGlhbnNlbiBldCBhbCAyMDE2IC0gRWxhYm9yYXRvciBSZWZsZWN0aW9uIEV4dGVuZGluZyBJZHJpcyBpbiBJZHJpcy5wZGZPEQLOAAAAAALOAAIAAAZTeXN0ZW0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQkQAAf////8fQ2hyaXN0aWFuc2VuIGV0IGFsI0ZGRkZGRkZGLnBkZgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wAAAAAAAAAAAAAAAAAFAAYAAAogY3UAAAAAAAAAAAAAAAAADUJpYlJlcG9zaXRvcnkAAAIAsC86VXNlcnM6am9zaGtvOkxpYnJhcnk6TW9iaWxlIERvY3VtZW50czpKRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlcjpEb2N1bWVudHM6QmliUmVwb3NpdG9yeTpDaHJpc3RpYW5zZW4gZXQgYWwgMjAxNiAtIEVsYWJvcmF0b3IgUmVmbGVjdGlvbiBFeHRlbmRpbmcgSWRyaXMgaW4gSWRyaXMucGRmAA4AmgBMAEMAaAByAGkAcwB0AGkAYQBuAHMAZQBuACAAZQB0ACAAYQBsACAAMgAwADEANgAgAC0AIABFAGwAYQBiAG8AcgBhAHQAbwByACAAUgBlAGYAbABlAGMAdABpAG8AbgAgAEUAeAB0AGUAbgBkAGkAbgBnACAASQBkAHIAaQBzACAAaQBuACAASQBkAHIAaQBzAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgCuVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9DaHJpc3RpYW5zZW4gZXQgYWwgMjAxNiAtIEVsYWJvcmF0b3IgUmVmbGVjdGlvbiBFeHRlbmRpbmcgSWRyaXMgaW4gSWRyaXMucGRmABMAAS8AABUAAgAN//8AAAAIAA0AGgAkANcAAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAADqQ==}}
+
+@inproceedings{de-Vries-true-SoP,
+	abstract = {We introduce the \emph{sum-of-products} (SOP) view for datatype-generic programming (in Haskell). While many of the libraries that are commonly in use today represent datatypes as arbitrary combinations of binary sums and products, SOP reflects the structure of datatypes more faithfully: each datatype is a \emph{single} $n$-ary sum, where each component of the sum is a \emph{single} $n$-ary product. This representation turns out to be expressible accurately in GHC with today's extensions. The resulting list-like structure of datatypes allows for the definition of powerful high-level traversal combinators, which in turn encourage the definition of generic functions in a compositional and concise style. A major plus of the SOP view is that it allows to separate function-specific metadata from the main structural representation and recombining this information later.},
+	author = {de Vries, Edsko and L{\"o}h, Andres},
+	booktitle = {Workshop on Generic Programming (WGP)},
+	date-added = {2021-11-15 10:00:06 +0800},
+	date-modified = {2021-11-15 10:26:42 +0800},
+	doi = {10.1145/2633628.2633634},
+	pages = {83-94},
+	publisher = {ACM},
+	title = {True Sums of Products},
+	year = 2014,
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCQLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L1ZyaWVzIGV0IGFsIDIwMTQgLSBUcnVlIFN1bXMgb2YgUHJvZHVjdHMucGRmTxECTgAAAAACTgACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H1ZyaWVzIGV0IGFsIDIwMTQgLSNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJAvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6VnJpZXMgZXQgYWwgMjAxNCAtIFRydWUgU3VtcyBvZiBQcm9kdWN0cy5wZGYADgBaACwAVgByAGkAZQBzACAAZQB0ACAAYQBsACAAMgAwADEANAAgAC0AIABUAHIAdQBlACAAUwB1AG0AcwAgAG8AZgAgAFAAcgBvAGQAdQBjAHQAcwAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAjlVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvVnJpZXMgZXQgYWwgMjAxNCAtIFRydWUgU3VtcyBvZiBQcm9kdWN0cy5wZGYAEwABLwAAFQACAA3//wAAAAgADQAaACQAtwAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAMJ}}
+
+@inproceedings{Ko-OAOAOO,
+	abstract = {Dependently typed programmers are encouraged to use inductive families to integrate constraints with data construction. Different constraints are used in different contexts, leading to different versions of datatypes for the same data structure. Modular implementation of common operations for these structurally similar datatypes has been a longstanding problem. We propose a datatype-generic solution based on McBride's datatype ornaments, exploiting an isomorphism whose interpretation borrows ideas from realisability. Relevant properties of the operations are separately proven for each constraint, and after the programmer selects several constraints to impose on a basic datatype and synthesises an inductive family incorporating those constraints, the operations can be routinely upgraded to work with the synthesised inductive family.},
+	author = {Ko, Hsiang-Shang and Gibbons, Jeremy},
+	booktitle = {Workshop on Generic Programming (WGP)},
+	date-added = {2011-05-10 09:06:23 +0100},
+	date-modified = {2022-01-20 15:58:14 +0800},
+	doi = {10.1145/2036918.2036921},
+	pages = {13-24},
+	publisher = {ACM},
+	read = {1},
+	title = {Modularising Inductive Families},
+	year = {2011},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCXLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0tvIGV0IGFsIDIwMTEgLSBNb2R1bGFyaXNpbmcgaW5kdWN0aXZlIGZhbWlsaWVzLnBkZk8RAmwAAAAAAmwAAgAABlN5c3RlbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCRAAB/////x9LbyBldCBhbCAyMDExIC0gTW8jRkZGRkZGRkYucGRmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAUABgAACiBjdQAAAAAAAAAAAAAAAAANQmliUmVwb3NpdG9yeQAAAgCXLzpVc2Vyczpqb3Noa286TGlicmFyeTpNb2JpbGUgRG9jdW1lbnRzOkpGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyOkRvY3VtZW50czpCaWJSZXBvc2l0b3J5OktvIGV0IGFsIDIwMTEgLSBNb2R1bGFyaXNpbmcgaW5kdWN0aXZlIGZhbWlsaWVzLnBkZgAADgBoADMASwBvACAAZQB0ACAAYQBsACAAMgAwADEAMQAgAC0AIABNAG8AZAB1AGwAYQByAGkAcwBpAG4AZwAgAGkAbgBkAHUAYwB0AGkAdgBlACAAZgBhAG0AaQBsAGkAZQBzAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgCVVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9LbyBldCBhbCAyMDExIC0gTW9kdWxhcmlzaW5nIGluZHVjdGl2ZSBmYW1pbGllcy5wZGYAABMAAS8AABUAAgAN//8AAAAIAA0AGgAkAL4AAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAADLg==}}
+
+@misc{McBride-ornaments,
+	abstract = {This paper re-examines the presentation of datatypes in dependently typed languages, addressing in particular the issue of what it means for one datatype to be in various ways more informative than another. Informal human observations like `lists are natural numbers with extra decoration' and `vectors are lists indexed by length' are expressed in a first class language of \emph{ornaments} --- presentations of fancy new types based on plain old ones --- encompassing both decoration and, in the sense of Tim Freeman and Frank Pfenning (1991), refinement.\par
+
+Each ornament adds information, so it comes with a forgetful function from fancy data back to plain, expressible as the fold of its \emph{ornamental algebra}: lists built from numbers acquire the `length' algebra. Conversely, each algebra for a datatype induces a way to index it --- an \emph{algebraic ornament}. The length algebra for lists induces the construction of the paradigmatic dependent vector types.\par
+
+Dependent types thus provide not only a new `axis of diversity' --- indexing --- for data structures, but also new abstractions to manage and exploit that diversity. In the spirit of `the new programming' (McBride \& McKinna, 2004), the engineering of coincidence is replaced by the propagation of consequence.},
+	author = {Conor McBride},
+	date-added = {2010-12-23 09:24:51 +0000},
+	date-modified = {2020-07-28 14:19:24 +0800},
+	read = {1},
+	title = {Ornamental Algebras, Algebraic Ornaments},
+	url = {https://personal.cis.strath.ac.uk/conor.mcbride/pub/OAAO/LitOrn.pdf},
+	year = {2011},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCfLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L01jQnJpZGUgMjAxMSAtIE9ybmFtZW50YWwgQWxnZWJyYXMsIEFsZ2VicmFpYyBPcm5hbWVudHMucGRmTxECjAAAAAACjAACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H01jQnJpZGUgMjAxMSAtIE9ybiNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJ8vOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6TWNCcmlkZSAyMDExIC0gT3JuYW1lbnRhbCBBbGdlYnJhcywgQWxnZWJyYWljIE9ybmFtZW50cy5wZGYAAA4AeAA7AE0AYwBCAHIAaQBkAGUAIAAyADAAMQAxACAALQAgAE8AcgBuAGEAbQBlAG4AdABhAGwAIABBAGwAZwBlAGIAcgBhAHMALAAgAEEAbABnAGUAYgByAGEAaQBjACAATwByAG4AYQBtAGUAbgB0AHMALgBwAGQAZgAPAA4ABgBTAHkAcwB0AGUAbQASAJ1Vc2Vycy9qb3Noa28vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L01jQnJpZGUgMjAxMSAtIE9ybmFtZW50YWwgQWxnZWJyYXMsIEFsZ2VicmFpYyBPcm5hbWVudHMucGRmAAATAAEvAAAVAAIADf//AAAACAANABoAJADGAAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAAA1Y=}}
+
+@inproceedings{Chapman-type-theory-should-eat-itself,
+	abstract = {In this paper I present a partial formalisation of a normaliser for type theory in Agda[22]; extending previous work on big-step normalisation[2,1]. The normaliser in written as an environment machine. Only the \emph{computational behaviour} of the normaliser is presented omitting details of termination.},
+	author = {Chapman, James},
+	booktitle = {International Workshop on Logical Frameworks and Metalanguages: Theory and Practice (LFMTP)},
+	date-added = {2014-02-11 20:12:51 +0000},
+	date-modified = {2021-12-07 10:03:52 +0800},
+	doi = {10.1016/j.entcs.2008.12.114},
+	pages = {21-36},
+	publisher = {Elsevier},
+	series = {Electronic Notes in Theoretical Computer Science},
+	title = {Type Theory Should Eat Itself},
+	volume = {228},
+	year = {2009},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCULi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0NoYXBtYW4gMjAwOSAtIFR5cGUgVGhlb3J5IFNob3VsZCBFYXQgSXRzZWxmLnBkZk8RAl4AAAAAAl4AAgAABlN5c3RlbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCRAAB/////x9DaGFwbWFuIDIwMDkgLSBUeXAjRkZGRkZGRkYucGRmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAUABgAACiBjdQAAAAAAAAAAAAAAAAANQmliUmVwb3NpdG9yeQAAAgCULzpVc2Vyczpqb3Noa286TGlicmFyeTpNb2JpbGUgRG9jdW1lbnRzOkpGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyOkRvY3VtZW50czpCaWJSZXBvc2l0b3J5OkNoYXBtYW4gMjAwOSAtIFR5cGUgVGhlb3J5IFNob3VsZCBFYXQgSXRzZWxmLnBkZgAOAGIAMABDAGgAYQBwAG0AYQBuACAAMgAwADAAOQAgAC0AIABUAHkAcABlACAAVABoAGUAbwByAHkAIABTAGgAbwB1AGwAZAAgAEUAYQB0ACAASQB0AHMAZQBsAGYALgBwAGQAZgAPAA4ABgBTAHkAcwB0AGUAbQASAJJVc2Vycy9qb3Noa28vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0NoYXBtYW4gMjAwOSAtIFR5cGUgVGhlb3J5IFNob3VsZCBFYXQgSXRzZWxmLnBkZgATAAEvAAAVAAIADf//AAAACAANABoAJAC7AAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAAAx0=}}
+
+@incollection{Gibbons-DGP,
+	abstract = {\emph{Generic programming} aims to increase the flexibility of programming languages, by expanding the possibilities for parametrization --- ideally, without also expanding the possibilities for uncaught errors. The term means different things to different people: \emph{parametric polymorphism}, \emph{data abstraction}, \emph{meta-programming}, and so on. We use it to mean polytypism, that is, parametrization by the \emph{shape} of data structures rather than their contents. To avoid confusion with other uses, we have coined the qualified term \emph{datatype-generic programming} for this purpose. In these lecture notes, we expand on the definition of datatype-generic programming, and present some examples of datatype-generic programs. We also explore the connection with \emph{design patterns} in object-oriented programming; in particular, we argue that certain design patterns are just higher-order datatype-generic programs.},
+	author = {Gibbons, Jeremy},
+	booktitle = {Datatype-Generic Programming},
+	date-added = {2013-04-23 07:10:10 +0000},
+	date-modified = {2021-09-27 14:17:19 +0800},
+	doi = {10.1007/978-3-540-76786-2_1},
+	pages = {1-71},
+	publisher = {Springer},
+	series = {Lecture Notes in Computer Science},
+	title = {Datatype-Generic Programming},
+	volume = {4719},
+	year = {2007},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCTLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0dpYmJvbnMgMjAwNyAtIERhdGF0eXBlLUdlbmVyaWMgUHJvZ3JhbW1pbmcucGRmTxECXAAAAAACXAACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H0dpYmJvbnMgMjAwNyAtIERhdCNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJMvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6R2liYm9ucyAyMDA3IC0gRGF0YXR5cGUtR2VuZXJpYyBQcm9ncmFtbWluZy5wZGYAAA4AYAAvAEcAaQBiAGIAbwBuAHMAIAAyADAAMAA3ACAALQAgAEQAYQB0AGEAdAB5AHAAZQAtAEcAZQBuAGUAcgBpAGMAIABQAHIAbwBnAHIAYQBtAG0AaQBuAGcALgBwAGQAZgAPAA4ABgBTAHkAcwB0AGUAbQASAJFVc2Vycy9qb3Noa28vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0dpYmJvbnMgMjAwNyAtIERhdGF0eXBlLUdlbmVyaWMgUHJvZ3JhbW1pbmcucGRmAAATAAEvAAAVAAIADf//AAAACAANABoAJAC6AAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAAAxo=}}
+
+@mastersthesis{de-Vries-masters-thesis,
+	abstract = {The Generic Haskell programming language allows functions to be defined by induction on the structure of data types. This gives rise to generic functions which can be applied to values of any conceivable data type.\par
+
+Compiling a Generic Haskell program amounts to generating a Haskell program in which all generic functions have been translated to ordinary Haskell functions. Since the Haskell language only allows functions to be defined on the values of a data type, translating generic functions defined on the structure of data types is not straightforward.\par
+
+The application of a generic function to a value involves specializing the function to the type of its parameter. For every distinct specialization of a generic function in a Generic Haskell program, an ordinary Haskell function is generated in the compilation process. Hence, the compilation of a generic function will typically yield several ordinary functions.\par
+
+The current method that is used to translate specializations is rather unsophisticated. At run-time, values are frequently converted back and forth to a structural representation which simplifies the code generation process considerably. This approach is often extremely detrimental to the space and time efficiency of the generated functions.\par
+
+In this thesis an optimization method is described which attempts to dialnate all structural conversions from the generated functions by applying partial evaluation in combination with a number of program transformations. This approach essentially evaluates all conversions in the representation of values at compile-time. The functions of the resulting optimized program approach the efficiency of hand-written Haskell functions in terms of space and time usage.\par
+
+An implementation of the described method is included as an optimizer in the final phase of the Generic Haskell compiler.},
+	author = {de Vries, Martijn},
+	date-added = {2021-11-18 19:34:44 +0800},
+	date-modified = {2021-11-18 19:42:00 +0800},
+	school = {University of Groningen},
+	title = {Specializing Type-Indexed Values by Partial Evaluation},
+	url = {https://fse.studenttheses.ub.rug.nl/8943/},
+	year = {2004},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCrLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L1ZyaWVzIDIwMDQgLSBTcGVjaWFsaXppbmcgVHlwZS1JbmRleGVkIFZhbHVlcyBieSBQYXJ0aWFsIEV2YWx1YXRpb24ucGRmTxECvAAAAAACvAACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H1ZyaWVzIDIwMDQgLSBTcGVjaSNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAKsvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6VnJpZXMgMjAwNCAtIFNwZWNpYWxpemluZyBUeXBlLUluZGV4ZWQgVmFsdWVzIGJ5IFBhcnRpYWwgRXZhbHVhdGlvbi5wZGYAAA4AkABHAFYAcgBpAGUAcwAgADIAMAAwADQAIAAtACAAUwBwAGUAYwBpAGEAbABpAHoAaQBuAGcAIABUAHkAcABlAC0ASQBuAGQAZQB4AGUAZAAgAFYAYQBsAHUAZQBzACAAYgB5ACAAUABhAHIAdABpAGEAbAAgAEUAdgBhAGwAdQBhAHQAaQBvAG4ALgBwAGQAZgAPAA4ABgBTAHkAcwB0AGUAbQASAKlVc2Vycy9qb3Noa28vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L1ZyaWVzIDIwMDQgLSBTcGVjaWFsaXppbmcgVHlwZS1JbmRleGVkIFZhbHVlcyBieSBQYXJ0aWFsIEV2YWx1YXRpb24ucGRmAAATAAEvAAAVAAIADf//AAAACAANABoAJADSAAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAAA5I=}}
+
+@inproceedings{Altenkirch-GP-within-DTP,
+	abstract = {We show how higher kinded generic programming can be represented faithfully within a dependently typed programming system. This development has been implemented using the \textsc{Oleg} system.\par
+
+The present work can be seen as evidence for our thesis that extensions of type systems can be done by \emph{programming} within a dependently typed language, using data as codes for types.},
+	author = {Altenkirch, Thorsten and McBride, Conor},
+	booktitle = {Generic Programming},
+	date-added = {2011-04-19 19:37:06 +0100},
+	date-modified = {2021-09-27 14:02:09 +0800},
+	doi = {10.1007/978-0-387-35672-3_1},
+	pages = {1-20},
+	publisher = {Springer},
+	read = {1},
+	series = {IFIP --- The International Federation for Information Processing},
+	title = {Generic Programming within Dependently Typed Programming},
+	volume = {115},
+	year = {2003},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxC4Li4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0FsdGVua2lyY2ggZXQgYWwgMjAwMyAtIEdlbmVyaWMgUHJvZ3JhbW1pbmcgd2l0aGluIERlcGVuZGVudGx5IFR5cGVkIFByb2dyYW1taW5nLnBkZk8RAu4AAAAAAu4AAgAABlN5c3RlbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCRAAB/////x9BbHRlbmtpcmNoIGV0IGFsIDIjRkZGRkZGRkYucGRmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAUABgAACiBjdQAAAAAAAAAAAAAAAAANQmliUmVwb3NpdG9yeQAAAgC4LzpVc2Vyczpqb3Noa286TGlicmFyeTpNb2JpbGUgRG9jdW1lbnRzOkpGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyOkRvY3VtZW50czpCaWJSZXBvc2l0b3J5OkFsdGVua2lyY2ggZXQgYWwgMjAwMyAtIEdlbmVyaWMgUHJvZ3JhbW1pbmcgd2l0aGluIERlcGVuZGVudGx5IFR5cGVkIFByb2dyYW1taW5nLnBkZgAOAKoAVABBAGwAdABlAG4AawBpAHIAYwBoACAAZQB0ACAAYQBsACAAMgAwADAAMwAgAC0AIABHAGUAbgBlAHIAaQBjACAAUAByAG8AZwByAGEAbQBtAGkAbgBnACAAdwBpAHQAaABpAG4AIABEAGUAcABlAG4AZABlAG4AdABsAHkAIABUAHkAcABlAGQAIABQAHIAbwBnAHIAYQBtAG0AaQBuAGcALgBwAGQAZgAPAA4ABgBTAHkAcwB0AGUAbQASALZVc2Vycy9qb3Noa28vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0FsdGVua2lyY2ggZXQgYWwgMjAwMyAtIEdlbmVyaWMgUHJvZ3JhbW1pbmcgd2l0aGluIERlcGVuZGVudGx5IFR5cGVkIFByb2dyYW1taW5nLnBkZgATAAEvAAAVAAIADf//AAAACAANABoAJADfAAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAAA9E=}}
+
+@book{Jones-partial-evaluation,
+	author = {Jones, Neil D. and Gomard, Carsten K. and Sestoft, Peter},
+	date-added = {2021-11-12 23:27:05 +0800},
+	date-modified = {2021-11-12 23:29:50 +0800},
+	isbn = {9780130202499},
+	publisher = {Prentice-Hall},
+	title = {Partial Evaluation and Automatic Program Generation},
+	url = {https://www.itu.dk/people/sestoft/pebook/},
+	year = {1993},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCuLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0pvbmVzIGV0IGFsIDE5OTMgLSBQYXJ0aWFsIEV2YWx1YXRpb24gYW5kIEF1dG9tYXRpYyBQcm9ncmFtIEdlbmVyYXRpb24ucGRmTxECxgAAAAACxgACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H0pvbmVzIGV0IGFsIDE5OTMgLSNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAK4vOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6Sm9uZXMgZXQgYWwgMTk5MyAtIFBhcnRpYWwgRXZhbHVhdGlvbiBhbmQgQXV0b21hdGljIFByb2dyYW0gR2VuZXJhdGlvbi5wZGYADgCWAEoASgBvAG4AZQBzACAAZQB0ACAAYQBsACAAMQA5ADkAMwAgAC0AIABQAGEAcgB0AGkAYQBsACAARQB2AGEAbAB1AGEAdABpAG8AbgAgAGEAbgBkACAAQQB1AHQAbwBtAGEAdABpAGMAIABQAHIAbwBnAHIAYQBtACAARwBlAG4AZQByAGEAdABpAG8AbgAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIArFVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvSm9uZXMgZXQgYWwgMTk5MyAtIFBhcnRpYWwgRXZhbHVhdGlvbiBhbmQgQXV0b21hdGljIFByb2dyYW0gR2VuZXJhdGlvbi5wZGYAEwABLwAAFQACAA3//wAAAAgADQAaACQA1QAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAOf}}

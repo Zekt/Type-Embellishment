@@ -485,7 +485,7 @@ The work is supported by the \grantsponsor{MOST}{Ministry of Science and Technol
 %% The next two lines define the bibliography style to be used, and
 %% the bibliography file.
 \bibliographystyle{ACM-Reference-Format}
-\bibliography{/Users/joshko/Documents/bib}
+\bibliography{bib}
 
 %%
 %% If your work has an appendix, this is the place to put it.
