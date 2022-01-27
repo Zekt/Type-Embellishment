@@ -1,5 +1,5 @@
 AGDA_BIN    ?= agda
-RTS_OPTIONS ?= +RTS -M10.0G -H3.5G -A128M -s -RTS -vprofile:7
+RTS_OPTIONS ?= +RTS -M8.5G -s -RTS -vprofile:7 -vprofile.definitions:10
 AGDA_EXEC   = $(AGDA_BIN) $(RTS_OPTIONS)
 
 test: Everything.agda
