@@ -205,3 +205,38 @@ endsIn : Type → Name → Bool
 endsIn (def f _)       u = f == u
 endsIn (`Π[ _ ∶ _ ] b) u = endsIn b u
 endsIn _               u = false
+
+
+-- renaming types
+unConflictType : Type → Type
+unConflictType t = unconflict [] t
+  where
+    mostElem : String → ℕ → List (String × ℕ)
+              → ℕ × (List (String × ℕ))
+    mostElem x n [] = n ,  [ (x , n) ]
+    mostElem x m ((s , n) ∷ ss) =
+      if x == s then
+        if m ≤? n then
+          (suc n) , (s , suc n) ∷ ss
+        else
+          (m , (s , m) ∷ ss)
+      else
+        let n' , ss' = mostElem x m ss
+        in  n' , (s , n) ∷ ss'
+
+    unconflict : List (String × ℕ) → Type → Type
+    unconflict ss (`Π[ s ∶ a ] x) =
+      let cs       = ⇑ s
+          cs'      = removeLast (lenTrailingNat cs) cs
+          n , ss' = mostElem (⇑ cs') (fromMaybe 0 (trailingNat cs)) ss
+          ns = if n == 0 then "" else show n
+        in `Π[ ⇑ cs' <> ns ∶ a ] unconflict ss' x
+    unconflict _ t = t
+
+renameTypeBy : Type → List String → Type
+renameTypeBy (`Π[ _ ∶ a ] x) (s ∷ ss) = `Π[ s ∶ a ] (renameTypeBy x ss)
+renameTypeBy t _ = t
+
+renameTelBy : Telescope → List String → Telescope
+renameTelBy ((_ , x) ∷ tel) (s ∷ ss) = (s , x) ∷ renameTelBy tel ss
+renameTelBy tel _ = tel
