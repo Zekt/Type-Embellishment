@@ -436,7 +436,7 @@ So, what features do we need to implement?}
 \todo[inline]{Axiom K is used for ornaments but this axiom is not generally desirable especially for homotopy type theory.
 This seemingly conflicting requirement in fact originates in the false belief that only one identity type is allowed in a type theory.
 Indeed, it is possible to have more than one identity type with different strength.
-For example, the two-level type theory proposed by Capriotti consists of a strict equality (satisfying the axiom K) and a weak equality compatible with the homotopy-theoretic interpretation.
+For example, the two-level type theory proposed by \citet{Capriotti2017} consists of a strict equality (satisfying the axiom K) and a weak equality compatible with the homotopy-theoretic interpretation.
 Agda has an experimental option \texttt{--two-level} in the cubical mode which introduces additional universes \texttt{SSet}. 
 This extra sort of universes will make our library portable to proof assistants based on homotopy type theory.
 (A bit of experiments should be performed to testify.)

@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{15}
+\begin{thebibliography}{16}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -80,6 +80,20 @@
 \urldef\tempurl%
 \url{https://doi.org/10.1007/978-0-387-35672-3_1}
 \showDOI{\tempurl}
+
+
+\bibitem[\protect\citeauthoryear{Capriotti}{Capriotti}{2016}]%
+        {Capriotti2017}
+\bibfield{author}{\bibinfo{person}{Paolo Capriotti}.}
+  \bibinfo{year}{2016}\natexlab{}.
+\newblock \emph{\bibinfo{title}{{Models of Type Theory with Strict Equality}}}.
+\newblock Doctoral Thesis. \bibinfo{school}{University of Nottingham}.
+\newblock
+\showeprint[arxiv]{1702.04912}
+\urldef\tempurl%
+\url{http://arxiv.org/abs/1702.04912}
+\showURL{%
+\tempurl}
 
 
 \bibitem[\protect\citeauthoryear{Chapman}{Chapman}{2009}]%
