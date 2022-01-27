@@ -126,24 +126,17 @@ rememberᶜˢ (D ∷ Ds) f fold (inr ns) all = inr (rememberᶜˢ Ds (f ∘ inr)
 
 remember : ∀ (n : Name) {P f} ⦃ _ : FoldC P f ⦄
            {N'} ⦃ _ : Named n (DataC ⌊ AlgOD P ⌋ᵈ N') ⦄ → IndP
-remember _ {P} {f} ⦃ C ⦄ {N'} ⦃ named C' ⦄ = indP where
-  open FoldP P
-  indP : IndP
-  IndP.Desc    indP = _
-  IndP.Native  indP = _
-  IndP.Conv    indP = Conv
-  IndP.#levels indP = #levels
-  IndP.level   indP = level
-  IndP.plevel  indP = _
-  IndP.Param   indP = Param
-  IndP.ParamV  indP = constTelInfo hidden
-  IndP.ParamN  indP = ParamN
-  IndP.param   indP = param
-  IndP.clevel  indP = _
-  IndP.Carrier indP ℓs ps is n = N' ℓs ps (is , f ℓs ps n , tt)
-  IndP.algebra indP ps ns all =
-    DataC.toN C'
+remember _ {P} {f} ⦃ C ⦄ {N'} ⦃ named C' ⦄ = let open FoldP P in record
+  { Conv    = Conv
+  ; #levels = #levels
+  ; level   = level
+  ; Param   = Param
+  ; param   = param
+  ; ParamV  = constTelInfo hidden
+  ; ParamN  = ParamN
+  ; Carrier = λ ℓs ps is n → N' ℓs ps (is , f ℓs ps n , tt)
+  ; algebra = λ ps ns all → DataC.toN C'
       (subst (λ x → ⟦ ⌊ AlgOD P ⌋ᵈ ⟧ᵈ (N' _ ps) (_ , x , tt))
              (sym (FoldC.equation C ns))
              (rememberᶜˢ (PDataD.applyP (DataD.applyL Desc _) (param ps))
-               (algebra ps) (f _ ps) ns all))
+               (algebra ps) (f _ ps) ns all)) }

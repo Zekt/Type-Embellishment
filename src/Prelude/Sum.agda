@@ -19,6 +19,8 @@ data _⊎ω_ {a} (A : Set a) (B : Setω) : Setω where
   inl : (x : A) → A ⊎ω B
   inr : (y : B) → A ⊎ω B
 
-[_,_]′ω : ∀ {a c} {A : Set a} {B : Setω} {C : Set c} → (A → C) → (B → C) → (A ⊎ω B → C)
-[ f , g ]′ω (inl x) = f x
-[ f , g ]′ω (inr y) = g y
+[_,_]ω : ∀ {a c} {A : Set a} {B : Setω} {C : A ⊎ω B → Set c} →
+        ((x : A) → C (inl x)) → ((x : B) → C (inr x)) →
+        ((x : A ⊎ω B) → C x)
+[ f , g ]ω (inl x) = f x
+[ f , g ]ω (inr y) = g y

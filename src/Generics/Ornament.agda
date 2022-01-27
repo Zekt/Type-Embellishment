@@ -102,19 +102,14 @@ eraseᵈ O {ℓs} = eraseᵖᵈ (DataO.applyL O ℓs)
 
 forget : ∀ (m n : Name) {D M} ⦃ DC : Named m (DataC D M) ⦄
        → ∀ {E N} ⦃ EC : Named n (DataC E N) ⦄ ⦃ O : DataO D E ⦄ → FoldP
-forget _ _ {D} ⦃ named DC ⦄ {N = N} ⦃ named EC ⦄ ⦃ O ⦄ = foldP where
-  foldP : FoldP
-  FoldP.Desc    foldP = _
-  FoldP.Native  foldP = _
-  FoldP.Conv    foldP = DC
-  FoldP.#levels foldP = DataD.#levels D
-  FoldP.level   foldP = id
-  FoldP.plevel  foldP = _
-  FoldP.Param   foldP ℓs = PDataD.Param (DataD.applyL D ℓs)
-  FoldP.param   foldP = id
-  FoldP.ParamV  foldP = constTelInfo hidden
-  FoldP.ParamN  foldP = constTelInfo "p"
-  FoldP.clevel  foldP = _
-  FoldP.Carrier foldP ℓs ps is = let Oᵖ = DataO.applyL O ℓs in
-    N (DataO.level O ℓs) (PDataO.param Oᵖ ps) (PDataO.index Oᵖ ps is)
-  FoldP.algebra foldP _ = DataC.toN EC ∘ eraseᵈ O
+forget _ _ {D} ⦃ named DC ⦄ {N = N} ⦃ named EC ⦄ ⦃ O ⦄ = record
+  { Conv    = DC
+  ; #levels = DataD.#levels D
+  ; level   = id
+  ; Param   = λ ℓs → PDataD.Param (DataD.applyL D ℓs)
+  ; param   = id
+  ; ParamV  = constTelInfo hidden
+  ; ParamN  = constTelInfo "p"
+  ; Carrier = λ ℓs ps is → let Oᵖ = DataO.applyL O ℓs in
+      N (DataO.level O ℓs) (PDataO.param Oᵖ ps) (PDataO.index Oᵖ ps is)
+  ; algebra = λ _ → DataC.toN EC ∘ eraseᵈ O }
