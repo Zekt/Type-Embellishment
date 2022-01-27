@@ -80,6 +80,13 @@ jobs:
           mkdir -p ${{ env.CABAL_BIN }}
           echo ${{ env.CABAL_BIN }} >> $GITHUB_PATH
 
+      - name: Checkout the repo
+        uses: actions/checkout@v2
+
+      - name: Generate Everything.agda
+        run: |
+          make Everything.agda 
+
       - name: Check out Agda from GitHub
         uses: actions/checkout@v2
         if: ${{ !steps.cache.outputs.cache-hit }}
@@ -95,10 +102,7 @@ jobs:
           ${{ env.CABAL_INSTALL }} -foptimise-heavily
           strip ${{ env.CABAL_BIN }}/agda
 
-      - name: Checkout the repo
-        uses: actions/checkout@v2
-
-      - name: Check everything
+      - name: Check Everything.agda
         run: |
           make 
 
