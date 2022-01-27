@@ -20,10 +20,10 @@ give v = λ hole → unify hole v
 define : Arg Name → Type → Clauses → TC ⊤
 define f a cs = declareDef f a >> defineFun (unArg f) cs
 
-define! : Type → Clauses → TC Name
-define! a cs = do
+define! : Arg Type → Clauses → TC Name
+define! (arg i a) cs = do
   f ← freshName "_"
-  define (vArg f) a cs
+  define (arg i f) a cs
   return f
 
 extend*Context : Telescope → TC A → TC A
@@ -69,15 +69,15 @@ inferNormalisedType t = withNormalisation true (inferType t)
 formatErrorPart : ErrorPart → TC String
 formatErrorPart = formatErrorParts ∘ [_]
 
-defineUnify : String → Type → Term → Tactic
-defineUnify ns ty tm hole = do
---  checkedHole ← checkType hole ty
-
+defineUnify : Arg String → Type → Term → Term → TC Name
+defineUnify (arg i ns) ty tm hole = do
   n ← freshName ns
-  declareDef (vArg n) ty
+  declareDef (arg i n) ty
   defineFun n [ [] ⊢ [] `= tm ]
 
   unify hole (def₀ n)
+
+  return n
   
 evalTC : TC A → Tactic
 evalTC {A = A} c hole = do

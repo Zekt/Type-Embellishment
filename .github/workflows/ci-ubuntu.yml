@@ -3,8 +3,6 @@
 name: Check Everything.agda
 on:
   push:
-    branches:
-      - master
     paths:
       - .github/workflows/ci-ubuntu.yml
       - GNUmakefile

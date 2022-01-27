@@ -77,27 +77,32 @@ uncurryIndP P d = let open IndP P in do
       return $ pat-lam₀ $
         ((`ℓs <> Γ <> Δ) ⊢ vArg p₁ ∷ vArg p₂ ∷ hArg p₃ ∷ [] `= def d (as₁ <> as₂ <> as₃) )
         ∷ []
-macro
-  genDataT : (D : DataD) → Name → Tactic
-  genDataT D d hole = do
-    `D ← quoteωTC D
+
+genDataTT : (D : DataD) → Name → Tactic
+genDataTT D d hole = do
+  `D ← quoteωTC D
 --    t ← uncurryDataD D d
 --    defineUnify "_" (def₁ (quote DataT) `D) t hole
-    checkType hole (def₁ (quote DataT) `D)
-    uncurryDataD D d >>= unify hole
+  checkType hole (def₁ (quote DataT) `D)
+  uncurryDataD D d >>= unify hole
 
-  genFoldT : (P : FoldP) → Name → Tactic
-  genFoldT P d hole = do
-    `P ← quoteωTC P
+genFoldTT : (P : FoldP) → Name → Tactic
+genFoldTT P d hole = do
+  `P ← quoteωTC P
 --    t ← uncurryFoldP P d
 --    defineUnify "_" (def₁ (quote FoldT) `P) t hole
-    checkType hole (def₁ (quote FoldT) `P)
-    uncurryFoldP P d >>= unify hole
+  checkType hole (def₁ (quote FoldT) `P)
+  uncurryFoldP P d >>= unify hole
 
-  genIndT : (P : IndP) → Name → Tactic
-  genIndT P d hole = do
-    `P ← quoteωTC P
-    t ← uncurryIndP P d
-    defineUnify "_" (def₁ (quote IndT) `P) t hole
---    checkType hole (def₁ (quote IndT) `P)
---    uncurryIndP P d >>= unify hole
+genIndTT : (P : IndP) → Name → Tactic
+genIndTT P d hole = do
+  `P ← quoteωTC P
+--  t ← uncurryIndP P d
+--  defineUnify (vArg "_") (def₁ (quote IndT) `P) t hole
+  checkType hole (def₁ (quote IndT) `P)
+  uncurryIndP P d >>= unify hole
+
+macro
+  genDataT = genDataTT
+  genFoldT = genFoldTT
+  genIndT  = genIndTT
