@@ -106,3 +106,6 @@ jobs:
         run: |
           make 
 
+      - name: Check Benchmark.agda
+        run: |
+          make benchmark

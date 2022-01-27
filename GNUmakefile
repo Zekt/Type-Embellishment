@@ -1,9 +1,9 @@
 AGDA_BIN    ?= agda
-RTS_OPTIONS ?= +RTS -M8.5G -s -RTS -vprofile:7 -vprofile.definitions:10
+RTS_OPTIONS ?= +RTS -M8.5G -H3.5G -A128M -s -RTS
 AGDA_EXEC   = $(AGDA_BIN) $(RTS_OPTIONS)
 
 test: Everything.agda
-	$(AGDA_EXEC) -i. -isrc README.agda
+	$(AGDA_EXEC) -i. -isrc README.agda -vprofile:7
 
 setup: Everything.agda
 
@@ -14,6 +14,10 @@ Everything.agda:
 # not found any problem running both commands with different versions
 # of cabal-install. See Issue #1001.
 	cabal run GenerateEverything
+
+benchmark : 
+	$(AGDA_EXEC) Benchmark.agda  -i. -vprofile.definitions:10
+	rm _build/*/agda/Benchmark.agdai
 
 clean :
 	find . -type f -name '*.agdai' -delete
