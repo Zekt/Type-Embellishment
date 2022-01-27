@@ -21,40 +21,42 @@ instance
 --------
 -- Fold operator and fusion theorem
 
-foldℕP : FoldP
-foldℕP = fold-operator (quote ℕ)
+private
+  foldℕP : FoldP
+  foldℕP = fold-operator (quote ℕ)
 
--- unquoteDecl foldℕ = defineFold (fold-operator NatC) foldℕ
-foldℕ : {X : Set ℓ} → X → (X → X) → ℕ → X
-foldℕ z s  zero   = z
-foldℕ z s (suc n) = s (foldℕ z s n)
+unquoteDecl foldℕ = defineFold foldℕP foldℕ
+-- foldℕ : {X : Set ℓ} → X → (X → X) → ℕ → X
+-- foldℕ z s  zero   = z
+-- foldℕ z s (suc n) = s (foldℕ z s n)
 
-foldℕT = genFoldT (fold-operator (quote ℕ)) foldℕ
+instance foldℕC = genFoldC foldℕP foldℕ
 
-instance
-  foldℕC : FoldC (fold-operator (quote ℕ)) foldℕT
-  FoldC.equation foldℕC (inl           refl  ) = refl
-  FoldC.equation foldℕC (inr (inl (_ , refl))) = refl
+private
+  foldℕ-fusionP : IndP
+  foldℕ-fusionP = fold-fusion (quote ℕ)
 
-foldℕ-fusionP : IndP
-foldℕ-fusionP = fold-fusion (quote ℕ)
-
+unquoteDecl foldℕ-fusion = defineInd foldℕ-fusionP foldℕ-fusion
 -- foldℕ-fusion :
---     {X : Set ℓ} {Y : Set ℓ'} (h : X → Y) (z : X) (s : X → X) (z' : Y) (s' : Y → Y)
+--     {X : Set ℓ} {Y : Set ℓ'} (h : X → Y)
+--     {z : X} {s : X → X} {z' : Y} {s' : Y → Y}
 --   → h z ≡ z' → ((x : X) (y : Y) → h x ≡ y → h (s x) ≡ s' y)
 --   → (n : ℕ) → h (foldℕ z s n) ≡ foldℕ z' s' n
--- foldℕ-fusion h z s z' s' hz hs  zero   = hz
--- foldℕ-fusion h z s z' s' hz hs (suc n) =
---   hs (foldℕ z s n) (foldℕ z' s' n) (foldℕ-fusion h z s z' s' hz hs n)
+-- foldℕ-fusion h hz hs  zero   = hz
+-- foldℕ-fusion h hz hs (suc n) = hs _ _ (foldℕ-fusion h hz hs n)
 
--- foldℕ-fusionC = genIndC (fold-fusion NatC foldℕC) foldℕ-fusion
+instance foldℕ-fusionC = genIndC foldℕ-fusionP foldℕ-fusion
 
--- --------
--- -- Induction operator
+--------
+-- Induction operator
 
--- -- unquoteDecl indℕ = defineInd (ind-operator NatC) indℕ
+private
+  indℕP : IndP
+  indℕP = ind-operator (quote ℕ)
+
+unquoteDecl indℕ = defineInd indℕP indℕ
 -- indℕ : {P : ℕ → Set ℓ} → P 0 → ((n : ℕ) → P n → P (suc n)) → (n : ℕ) → P n
 -- indℕ z s  zero   = z
 -- indℕ z s (suc n) = s n (indℕ z s n)
 
--- indℕC = genIndC (ind-operator NatC) indℕ
+instance indℕC = genIndC indℕP indℕ
