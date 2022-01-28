@@ -455,12 +455,42 @@ This extra sort of universes will make our library portable to proof assistants 
 
 \subsection{Automatic Resolution of Arguments to Generic Programs}
 
-\todo[inline]{Type class, instance arguemtnts}
+\todo[inline]{Type classes, instance arguments}
 \section{Discussion}
 
-\citet{Gibbons-DGP, Altenkirch-GP-within-DTP, Pickering-staged-SoP, Yallop-staged-generic-programming, de-Vries-masters-thesis, Jones-partial-evaluation, Chapman-type-theory-should-eat-itself, Christiansen-elaborator-reflection, Kovacs-universe-hierarchies, Allais-binding-syntax-universe-JFP, McBride-ornaments, Ko-OAOAOO, Chen-Mtac-Agda, Allais-n-ary-functions}
+\paragraph{Simply Typed DGP}
 
-\todo[inline]{Partial evaluation is more programmer-friendly than staging, and elaborator reflection provides, to some extent, the ability to do partial evaluation}
+\todo[inline]{\citet{Gibbons-DGP}.
+The Haskell programmer produces recursive function definitions~\citep{de-Vries-true-SoP}.
+We adopt the approach where generic function representations are non-recursive and then weaved into recursive definitions.
+Efficiency problem due to conversion between generic and native representations (see below).
+Deriving new datatypes?
+Put our work within the spectrum of generic libraries?~\citep{Magalhaes-GGP}}
+
+\paragraph{Dependently Typed DGP}
+
+\todo[inline]{\citet{Altenkirch-GP-within-DTP}; contrast with single generic representation offered by the generic |μ|, |fold|, and |induction| operators, which avoid code duplication/explosion but (potentially?) sacrificing efficiency~\citep{Allais-n-ary-functions}; interoperability between generic libraries and native entities~\citep{McBride-pivotal, Allais-binding-syntax-universe-JFP}}
+
+\paragraph{Ornaments}
+\todo[inline]{\citet{McBride-ornaments}; porting some constructions from \citet{Ko-OAOAOO}; more experimental developments~\citep{Ko-OrnJFP, Dagand-functional-ornaments}; theory and developments about function transportation in simply typed settings~\cite{Williams-principle-ornamentation, Williams-ornaments-in-practice}; realistic dependently typed application and automated synthesis of ornaments~\citep{Ringer-ornaments-Coq}}
+
+\paragraph{Metaprogramming}
+
+\todo[inline]{\citet{Christiansen-elaborator-reflection}: type checking and inference in metaprogramming; respond to their comments about datatype-generic programming (untyped vs typed metaprogramming)}
+
+\todo[inline]{Object-level binder-manipulating techniques~\citep{Chen-Mtac-Agda}}
+
+\todo[inline]{\citet{Pickering-staged-SoP, Yallop-staged-generic-programming, Jones-partial-evaluation, de-Vries-masters-thesis}; partial evaluation is more programmer-friendly than staging, and elaborator reflection provides, to some extent, the ability to do partial evaluation}
+
+\todo[inline]{One more step towards practical `type theory in type theory'~\citep{Chapman-type-theory-should-eat-itself} (not just theoretically interesting)}
+
+\todo[inline]{Typed metaprogramming~\citep{Xie-Typed-Template-Haskell, Jang-Moebius, Kiselyov-MetaOCaml, Davies-modal-staged-computation}}
+
+\paragraph{Universe polymorphism}
+
+\todo[inline]{A practical application and motivation~\citep{Kovacs-universe-hierarchies} (not just theoretically interesting); generic level quantification; universe-polymorphic definitions not polymorphic enough; more expressive universes}
+
+\section{Conclusion}
 
 \todo[inline]{From the angle of datatype-generic programming, the generic constructions should work on native datatypes and functions for maximum interoperability with language facilities and other libraries, and the gap between generic and native entities can be filled straightforwardly with (powerful enough) metaprogramming.
 From the angle of metaprogramming, one way to offer better correctness guarantees about the meta-level constructions is to introduce types, and (dependently typed) datatype-generic programming already provides a working solution for typing a good range of the constructions.
@@ -471,6 +501,8 @@ Each of the two programming disciplines works nicely as the other's natural exte
 \todo[inline]{Suggestions for the future evolution of Agda or the design of new languages with elaborator reflection}
 
 \todo[inline]{Our experience with untyped metaprogramming was painful, especially in contrast to the experience with datatype-generic programming (a form of typed metaprogramming, as we argued above)}
+
+\todo[inline]{Provide a practically relevant application whose foundation the theorists can investigate and formalise}
 
 %%
 %% The acknowledgments section is defined using the "acks" environment
