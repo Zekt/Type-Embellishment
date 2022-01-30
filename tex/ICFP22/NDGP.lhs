@@ -40,10 +40,13 @@
 
 \settopmatter{printacmref=false}
 
-\usepackage{bbold}
+%\usepackage{bbold}
 \usepackage[euler]{textgreek}
 
-\usepackage[color=yellow,textsize=footnotesize]{todonotes}
+\usepackage{cleveref}
+
+\usepackage[color=yellow,textsize=scriptsize]{todonotes}
+\setlength{\marginparwidth}{1.25cm}
 
 \newenvironment{halfcol}{\begin{minipage}{.45\textwidth}\setlength{\mathindent}{0em}}{\end{minipage}}
 
@@ -52,42 +55,25 @@
 \let\Bbbk\relax
 %include agda.fmt
 
-\setlength{\mathindent}{\parindent}
+\setlength{\mathindent}{.5\parindent}
 %\renewcommand{\Varid}{\texttt}
 %\renewcommand{\Conid}{\texttt}
 \newcommand{\iden}{\mathit}
 
 %format pattern = "\Keyword{pattern}"
 
-%format → = "\mathop{\to}"
-%format 𝟘 = "\mathbb{0}"
-%format 𝟙 = "\mathbb{1}"
-%format 𝕣 = "\mathbb{r}"
-%format × = "\mathop{\times}"
-%format ⊎ = "\mathop{\uplus}"
-%format ≡ = "\mathop{\equiv}"
-%format ∘ = "\mathop{\circ}"
-%format ⊔ = "\mathop{\sqcup}"
+%format : = "\mathop:"
+%format → = "\mathop\to"
+%format × = "\mathop\times"
+%format ⊎ = "\mathop\uplus"
+%format ≡ = "\mathop\equiv"
+%format ∘ = "\mathop\circ"
+%format ⊔ = "\mathop\sqcup"
 
-%format ᵖ = "_{\Conid P}"
-%format ⟦_⟧ᵖ = ⟦_⟧ ᵖ
-%format ⟧ᵖ = ⟧ ᵖ
-%format Algᵖ = Alg ᵖ
-%format depthᵖ = depth ᵖ
-%format fmapᵖ = fmap ᵖ
-%format Allᵖ = All ᵖ
-%format ind-fmapᵖ = ind-fmap ᵖ
-%format Dᵖ = D "\kern.5pt" ᵖ
-
-%format ˢ = "_{\Conid S}"
-%format ⟦_⟧ˢ = ⟦_⟧ ˢ
-%format ⟧ˢ = ⟧ ˢ
-%format Algˢ = Alg ˢ
-%format depthˢ = depth ˢ
-%format fmapˢ = fmap ˢ
-%format IndAlgˢ = IndAlg ˢ
-%format Allˢ = All ˢ
-%format ind-fmapˢ = ind-fmap ˢ
+%format Acc< = Acc "_<"
+%format Acc<D = Acc "_<\Conid{D}"
+%format foldAcc< = fold Acc<
+%format foldAcc<Alg = foldAcc< Alg
 
 %format ᵗ = "_{\Conid T}"
 %format ⟦_⟧ᵗ = ⟦_⟧ ᵗ
@@ -98,17 +84,27 @@
 %format ʳ = "_{\Conid R}"
 %format ⟦_⟧ʳ = ⟦_⟧ ʳ
 %format ⟧ʳ = ⟧ ʳ
+%format fmapʳ = fmap ʳ
 
 %format ᶜ = "_{\Conid C}"
+%format ⟦_⟧ᶜ = ⟦_⟧ ᶜ
+%format ⟧ᶜ = ⟧ ᶜ
+%format fmapᶜ = fmap ᶜ
 %format Algᶜ = Alg ᶜ
 %format FoldOpTᶜ = FoldOpT ᶜ
 %format fold-opᶜ = fold-op ᶜ
 
 %format ᶜˢ = "_{\Conid{Cs}}"
+%format ⟦_⟧ᶜˢ = ⟦_⟧ ᶜˢ
+%format ⟧ᶜˢ = ⟧ ᶜˢ
+%format fmapᶜˢ = fmap ᶜˢ
 %format Algᶜˢ = Alg ᶜˢ
 %format FoldOpTelᶜˢ = FoldOpTel ᶜˢ
 %format fold-opᶜˢ = fold-op ᶜˢ
 %format FoldOpTelᶜˢ = FoldOpTel ᶜˢ
+
+%format ᵖ = "_{\Conid P}"
+%format Dᵖ = D "\kern.5pt" ᵖ
 
 %format A = "\iden A"
 %format C = "\iden C"
@@ -121,17 +117,24 @@
 %format X = "\iden X"
 %format Y = "\iden Y"
 %format a = "\iden a"
+%format accs = "\iden{accs}"
+%format alg = "\iden{alg}"
 %format args = "\iden{args}"
 %format cb = "\iden{cb}"
 %format cbs = "\iden{cbs}"
 %format d = "\iden d"
 %format ds = "\iden{ds}"
+%format eq = "\iden{eq}"
 %format f = "\iden f"
 %format fs = "\iden{fs}"
 %format i = "\iden i"
+%format j = "\iden j"
 %format ℓs = "\iden{" ℓ "\kern-1pt s}"
+%format lt = "\iden{lt}"
+%format m = "\iden m"
 %format n = "\iden n"
 %format ns = "\iden{ns}"
+%format p = "\iden p"
 %format ps = "\iden{ps}"
 %format x = "\iden x"
 %format xs = "\iden{xs}"
@@ -243,131 +246,136 @@ $\bullet$ Simpler and less error-prone `object-level' binder-manipulating techni
 
 \todo[inline]{Typesetting conventions (in a footnote)}
 
-\citet{de-Vries-true-SoP}
-
-\begin{halfcol}\begin{code}
-data ProdD : Set₁ where
-  𝟙    : ProdD
-  𝕣    : ProdD → ProdD
-  _⊗_  : Set → ProdD → ProdD
-\end{code}\end{halfcol}%
-%
-\begin{halfcol}\begin{code}
-⟦_⟧ᵖ : ProdD → Set → Set
-⟦ 𝟙       ⟧ᵖ X = ⊤
-⟦ 𝕣    D  ⟧ᵖ X = X  × ⟦ D ⟧ᵖ X
-⟦ A ⊗  D  ⟧ᵖ X = A  × ⟦ D ⟧ᵖ X
-\end{code}\end{halfcol}
-
-\begin{halfcol}\begin{code}
-data SumD : Set₁ where
-  𝟘    : SumD
-  _⊕_  : ProdD → SumD → SumD
-\end{code}\end{halfcol}%
-%
-\begin{halfcol}\begin{code}
-⟦_⟧ˢ : SumD → Set → Set
-⟦ 𝟘       ⟧ˢ X = ⊥
-⟦ D ⊕ Ds  ⟧ˢ X = ⟦ D ⟧ᵖ X ⊎ ⟦ Ds ⟧ˢ X
-\end{code}\end{halfcol}
-
+We start from a recap of standard datatype-generic programming (DGP) within a dependently typed setting, but use a three-layered encoding of datatypes that more closely follows the structure of a native datatype definition, which has a list of constructors made up of a series of fields, some of which can be potentially higher-order recursive occurrences of the datatype being defined.%
+\footnote{This choice of layered structure has also been adopted elsewhere, for example by \citet{de-Vries-true-SoP}.}
+As a small example that covers all the essential components of datatype definitions (in particular higher-order recursive occurrence), consider this datatype |Acc<| of accessibility proofs:%
+\footnote{Although the meaning of |Acc<| is not important here, a quick explanation is that a proof |acc accs : Acc< n| that |n|~is accessible captures the fact that any descending chain from~|n| with respect to~|_<_| is finite: if we deconstruct the proof by applying |accs| to some~|m| such that |m < n|, we will get a proof of |Acc< m|, which we can keep deconstructing, but can only do so a finite number of times because |Acc<| is an inductive datatype.}
 \begin{code}
-data μ (D : SumD) : Set where
-  con : ⟦ D ⟧ˢ (μ D) → μ D
+data Acc< : ℕ → Set where
+  acc : {n : ℕ} (accs : (m : ℕ) (lt : m < n) → Acc< m) → Acc< n
+\end{code}
+The first layer is the list of constructors, which for |Acc<| consists of only |acc|;
+the type of |acc| has two fields |n|~and |accs|, which constitute the second layer;
+the type of the field |accs| is described in the third layer as it ends with the recursive occurrence |Acc< m|, in front of which there are function arguments |m|~and~|lt| (making the recursive occurrence higher-order).
+Corresponding to the three layers, we use three datatypes of \emph{datatype descriptions} ---all parametrised by an index type~|I|--- to encode datatype definitions,
+\begin{code}
+data ConDs (I : Set) : Set₁ where
+  []   : ConDs I
+  _∷_  : (D : ConD I) (Ds : ConDs I) → ConDs I
+
+data ConD (I : Set) : Set₁ where
+  ι  : (i : I) → ConD I
+  σ  : (A : Set) (D : A → ConD I) → ConD I
+  ρ  : (D : RecD I) (E : ConD I) → ConD I
+
+data RecD (I : Set) : Set₁ where
+  ι   : (i : I) → RecD I
+  π   : (A : Set) (D : A → RecD I) → RecD I
+\end{code}
+with which |Acc<| is described by
+\begin{code}
+Acc<D : ConDs ℕ
+Acc<D = (σ ℕ (λ n → ρ (π ℕ (λ m → π (m < n) (λ lt → ι m))) (ι n))) ∷ []
+\end{code}
+Inhabitants of |ConDs I| are just lists of constructor (type) descriptions of type |ConD I|.
+Inhabitants of |ConD I| are also list-like, where the elements can either be the type of an ordinary field, marked by~|σ|, or describe a recursive occurrence, marked by~|ρ|, and the `lists' end with~|ι|.
+Different from ordinary lists, in the case of |σ A D| a new variable of type~|A| is brought into the context of~|D| (for example, |n|~appears in the type of |accs|); this is done by making~|D| a function with an argument of type~|A|, using the host language's function space to extend the context.\todo{forward reference about detecting abuses}%
+\footnote{The expressive power of the host language's function space has been better utilised in the DGP literature (for example by \citet[Section~2.1]{McBride-ornaments}), but we will refrain from abusing the function space in the datatype descriptions for tasks beyond context extension, and it will be easy to detect abuses at the meta-level.}
+Moreover, the~|ι| at the end of a |ConD I| should specify the index targeted by the constructor (e.g., the final~|n| in the type of |acc|).
+Inhabitants of |RecD I| use the same structure to describe dependent function types ending with a recursive occurrence.
+
+In the standard recipe, a datatype description |D : ConDs I| is converted to an actual type family |μ D : I → Set| by the operator~|μ| which takes the least fixed point of the base functor |⟦ D ⟧ᶜˢ : (I → Set) → (I → Set)|:
+\begin{code}
+data μ (D : ConDs I) : I → Set where
+  con : ∀ {i} → ⟦ D ⟧ᶜˢ (μ D) i → μ D i
+\end{code}
+For example, we can redefine |Acc<| as
+\begin{code}
+Acc< : ℕ → Set
+Acc< = μ Acc<D
+\end{code}
+whose inhabitants are now constructed by the generic constructor |con|.
+The argument of |con| (of type |⟦ D ⟧ᶜˢ (μ D) i|) encodes the constructor choice and the arguments of the chosen constructor in a sum-of-products structure; for example, in Agda it is more convenient to use a pattern synonym to define |acc| in terms of |con|,
+\begin{code}
+pattern acc {n} accs = con (inl (n , accs , refl))
+\end{code}
+where the arguments |n|~and |accs| of |acc| are collected in a tuple, which is injected into a sum type by |inl|, and finally wrapped up with |con| as an inhabitant of |μ Acc<D n|.
+The equality proof |refl| at the end of the tuple needs a bit more explanation: in the type of |con|, the index~|i| is universally quantified, which seems to suggest that we could construct inhabitants of |μ D i| for any~|i|, but the equality proof forces~|i| to be~|n|, the index targeted by |acc|.
+The sum and product structures are defined respectively on the first two layers of datatype descriptions:
+\begin{code}
+⟦_⟧ᶜˢ : ConDs I → (I → Set) → (I → Set)
+⟦ []      ⟧ᶜˢ X i = ⊥
+⟦ D ∷ Ds  ⟧ᶜˢ X i = ⟦ D ⟧ᶜ X i ⊎ ⟦ Ds ⟧ᶜˢ X i
+
+⟦_⟧ᶜ : ConD I → (I → Set) → (I → Set)
+⟦ ι j      ⟧ᶜ X i = i ≡ j
+⟦ σ A  D   ⟧ᶜ X i = Σ[ a ∈ A ] ⟦ D a ⟧ᶜ X i
+⟦ ρ D  E   ⟧ᶜ X i = ⟦ D ⟧ʳ X × ⟦ E ⟧ᶜ X i
+\end{code}
+In the |ρ|~case we need to translate~|D| into the type of the recursive occurrence, which is done by
+\begin{code}
+⟦_⟧ʳ : RecD I → (I → Set) → Set
+⟦ ι i    ⟧ʳ X = X i
+⟦ π A D  ⟧ʳ X = (a : A) → ⟦ D a ⟧ʳ X
 \end{code}
 
+Now we can write programs on |Acc<|, for example its fold operator:%
+\footnote{This operator proves the strong induction principle on accessible natural numbers.}
 \begin{code}
-ListNatSP : SumD
-ListNatSP = 𝟙 ⊕ (Nat ⊗ 𝕣 𝟙) ⊕ 𝟘
+foldAcc< :  {P : ℕ → Set} → (∀ {n} → (∀ m → m < n → P m) → P n) →
+            ∀ {n} → Acc< n → P n
+foldAcc< p (acc accs) = p (λ m lt → foldAcc< p (accs m lt))
 \end{code}
-
+However, the point of using encoded datatypes such as |μ Acc<D| is that we do not have to write |foldAcc<| ourselves but can simply derive it as an instantiation of a generic grogram parametrised by a datatype description.
+One useful class of generic programs is ($F$-)algebras (where the functor~$F$ is always some base functor |⟦ D ⟧ᶜˢ| in this paper), whose type is defined by
 \begin{code}
-pattern []        = con (inl                 tt    )
-pattern _∷_ n ns  = con (inr (inl (n , ns ,  tt))  )
+Alg : ConDs I → (I → Set) → Set
+Alg D X = ∀ {i} → ⟦ D ⟧ᶜˢ X i → X i
 \end{code}
-
+An algebra of type |Alg D X| is the non-recursive part of a fold of type |∀ {i} → μ D i → X i|, while the recursive part can be expressed by this generic |fold| operator%
+\footnote{There are safer ways to make Agda see that |fold| is terminating than using the \textsc{terminating} pragma, but they are not important for our purposes since we will not use |fold| later in the paper.}
 \begin{code}
-decon : μ D → ⟦ D ⟧ˢ (μ D)
+{-# TERMINATING #-}
+fold : (D : ConDs I) → Alg D X → ∀ {i} → μ D i → X i
+fold D f = f ∘ fmapᶜˢ D (fold D f) ∘ decon
+\end{code}
+where |fmapᶜˢ D| is the functorial map for |⟦ D ⟧ᶜˢ| (which we will define shortly), and |decon| is the inverse of |con|:
+\begin{code}
+decon : ∀ {i} → μ D i → ⟦ D ⟧ᶜˢ (μ D) i
 decon (con ds) = ds
-
-con-decon : (d : μ D) → con (decon d) ≡ d
-con-decon (con _) = refl
 \end{code}
-
+For example, the (parametrised) algebra for |foldAcc<| is
 \begin{code}
-Algˢ : SumD → Set → Set
-Algˢ D X = ⟦ D ⟧ˢ X → X
+foldAcc<Alg :  {P : ℕ → Set} → (∀ {n} → (∀ m → m < n → P m) → P n) →
+               Alg Acc<D P
+foldAcc<Alg p (inl (_ , ps , refl)) = p ps
 \end{code}
-
+(which will be an instantiation of a generic program in \Cref{sec:fold-and-induction-operators} and will not need to be written manually), and we obtain |foldAcc<| by applying the |fold| operator to the algebra:
 \begin{code}
-Algᵖ : ProdD → Set → Set
-Algᵖ D X = ⟦ D ⟧ᵖ X → X
+foldAcc< :  {P : ℕ → Set} → (∀ {n} → (∀ m → m < n → P m) → P n) →
+            ∀ {n} → Acc< n → P n
+foldAcc< p = fold Acc<D (foldAcc<Alg p)
 \end{code}
-
-\todo[inline]{a typical layer-by-layer definition}
-
+It is instructive to take a closer look at the functorial map because it is a typical generic program, which is parametrised by a datatype description and analyses the description layer by layer:
 \begin{code}
-depthᵖ : (D : ProdD) → Algᵖ D Nat
-depthᵖ    𝟙        _          = 0
-depthᵖ (  𝕣    D)  (n  , ns)  = suc n ⊔  depthᵖ D ns
-depthᵖ (  A ⊗  D)  (_  , ns)  =          depthᵖ D ns
+fmapᶜˢ : (D : ConDs I) → (∀ {i} → X i → Y i) → ∀ {i} → ⟦ D ⟧ᶜˢ X i → ⟦ D ⟧ᶜˢ Y i
+fmapᶜˢ (D ∷ Ds) f (inl  xs) = inl  (fmapᶜ   D   f xs)
+fmapᶜˢ (D ∷ Ds) f (inr  xs) = inr  (fmapᶜˢ  Ds  f xs)
 
-depthˢ : (D : SumD) → Algˢ D Nat
-depthˢ (D ⊕ Ds) (inl  ns) = depthᵖ  D   ns
-depthˢ (D ⊕ Ds) (inr  ns) = depthˢ  Ds  ns
+fmapᶜ : (D : ConD I) → (∀ {i} → X i → Y i) → ∀ {i} → ⟦ D ⟧ᶜ X i → ⟦ D ⟧ᶜ Y i
+fmapᶜ (ι i     ) f eq             = eq
+fmapᶜ (σ A  D  ) f (a ,   xs   )  = a , fmapᶜ (D a) f xs
+fmapᶜ (ρ D  E  ) f (xs ,  xs'  )  = fmapʳ D f xs , fmapᶜ E f xs'
+
+fmapʳ : (D : RecD I) → (∀ {i} → X i → Y i) → ⟦ D ⟧ʳ X → ⟦ D ⟧ʳ Y
+fmapʳ (ι i    ) f x   = f x
+fmapʳ (π A D  ) f xs  = λ a → fmapʳ (D a) f (xs a)
 \end{code}
+The functorial map should apply a given function~|f| to all the recursive positions in a sum-of-products structure while leaving everything else intact, so |fmapᶜˢ| keeps the choices of |inl| or |inr|, |fmapᶜ| keeps the |σ|-fields and |ι|-equalities, and finally |fmapʳ| applies~|f| to its input of type |⟦ D ⟧ʳ X| ---which is (in general) a function--- pointwise.
 
-\begin{code}
-fmapᵖ : (D : ProdD) → (X → Y) → ⟦ D ⟧ᵖ X → ⟦ D ⟧ᵖ Y
-fmapᵖ    𝟙        f _          = tt
-fmapᵖ (  𝕣    D)  f (x  , xs)  = f x  , fmapᵖ D f xs
-fmapᵖ (  A ⊗  D)  f (a  , xs)  = a    , fmapᵖ D f xs
-
-fmapˢ : (D : SumD) → (X → Y) → ⟦ D ⟧ˢ X → ⟦ D ⟧ˢ Y
-fmapˢ (D ⊕ Ds) f (inl  xs) = inl  (fmapᵖ  D   f xs)
-fmapˢ (D ⊕ Ds) f (inr  xs) = inr  (fmapˢ  Ds  f xs)
-\end{code}
-
-\begin{code}
-{-# TERMINATING #-}
-fold : (D : SumD) → Algˢ D X → μ D → X
-fold D f = f ∘ fmapˢ D (fold D f) ∘ decon
-\end{code}
-
-\begin{code}
-IndAlgˢ : (D : SumD) → Alg D X → (X → Set) → Set
-IndAlgˢ {X} D f P = (xs : ⟦ D ⟧ˢ X) → Allˢ D P xs → P (f xs)
-\end{code}
-
-\begin{code}
-Allᵖ : (D : ProdD) → (X → Set) → ⟦ D ⟧ᵖ X → Set
-Allᵖ    𝟙        P _          = ⊤
-Allᵖ (  𝕣    D)  P (x  , xs)  = P x ×  Allᵖ D P xs
-Allᵖ (  A ⊗  D)  P (a  , xs)  =        Allᵖ D P xs
-
-Allˢ : (D : SumD) → (X → Set) → ⟦ D ⟧ˢ X → Set
-Allˢ (D ⊕ Ds) P (inl  xs) = Allᵖ  D   P xs
-Allˢ (D ⊕ Ds) P (inr  xs) = Allˢ  Ds  P xs
-\end{code}
-
-\begin{code}
-ind-fmapᵖ : (D : ProdD) → ((x : X) → P x) → (xs : ⟦ D ⟧ᵖ X) → Allᵖ D P xs
-ind-fmapᵖ    𝟙        f _          = tt
-ind-fmapᵖ (  𝕣    D)  f (x  , xs)  = f x ,  ind-fmapᵖ D f xs
-ind-fmapᵖ (  A ⊗  D)  f (a  , xs)  =        ind-fmapᵖ D f xs
-
-ind-fmapˢ : (D : SumD) → ((x : X) → P x) → (xs : ⟦ D ⟧ˢ X) → Allˢ D P xs
-ind-fmapˢ (D ⊕ Ds) f (inl  xs) = ind-fmapᵖ   D   f xs
-ind-fmapˢ (D ⊕ Ds) f (inr  xs) = ind-fmapˢ   Ds  f xs
-\end{code}
-
-\begin{code}
-{-# TERMINATING #-}
-ind : (D : SumD) → (P : μ D → Set) → IndAlgˢ D con P → (d : μ D) → P d
-ind D P f = subst P (con-decon _) ∘ f _ ∘ ind-fmapˢ D (ind D P f) ∘ decon
-\end{code}
-
-\section{Inductive Families}
+Being able to treat folds generically means that we are able to write generic programs whose types have the form |∀ {i} → μ D i → X i|, but this is not enough when, for example, we want to write generic proofs by induction on |d : μ D i| and the result types depend on~|d|, in which case the types of the proofs take the more complex form |∀ {i} (d : μ D i) → P d| for some |P : ∀ {i} → μ D i → Set|.
+Our library thus provides another set of definitions for treating induction generically.
+The treatment of induction is largely standard and analogous to the treatment of folds, however, so we omit the technical details from the presentation.
 
 \section{Datatype Parameters and Universe Polymorphism}
 
@@ -380,6 +388,7 @@ ind D P f = subst P (con-decon _) ∘ f _ ∘ ind-fmapˢ D (ind D P f) ∘ decon
 \section{Examples}
 
 \subsection{Fold and Induction Operators}
+\label{sec:fold-and-induction-operators}
 
 \todo[inline]{In contrast to an untyped approach, the datatype-generic version also proves that the arguments to the fold operator do constitute an algebra.}
 
@@ -437,7 +446,7 @@ So, what features do we need to implement?}
 This seemingly conflicting requirement in fact originates in the false belief that only one identity type is allowed in a type theory.
 Indeed, it is possible to have more than one identity type with different strength.
 For example, the two-level type theory proposed by \citet{Capriotti2017} consists of a strict equality (satisfying the axiom K) and a weak equality compatible with the homotopy-theoretic interpretation.
-Agda has an experimental option \texttt{--two-level} in the cubical mode which introduces additional universes \texttt{SSet}. 
+Agda has an experimental option \texttt{--two-level} in the cubical mode which introduces additional universes \texttt{SSet}.
 This extra sort of universes will make our library portable to proof assistants based on homotopy type theory.
 (A bit of experiments should be performed to testify.)
 }
@@ -482,13 +491,15 @@ Put our work within the spectrum of generic libraries?~\citep{Magalhaes-GGP}}
 
 \todo[inline]{\citet{Pickering-staged-SoP, Yallop-staged-generic-programming, Jones-partial-evaluation, de-Vries-masters-thesis}; partial evaluation is more programmer-friendly than staging, and elaborator reflection provides, to some extent, the ability to do partial evaluation}
 
-\todo[inline]{One more step towards practical `type theory in type theory'~\citep{Chapman-type-theory-should-eat-itself} (not just theoretically interesting)}
+\todo[inline]{One more step towards practical `type theory in type theory'~\citep{Chapman-type-theory-should-eat-itself} (not just theoretically interesting), although our encoding is `shallow'}
 
 \todo[inline]{Typed metaprogramming~\citep{Xie-Typed-Template-Haskell, Jang-Moebius, Kiselyov-MetaOCaml, Davies-modal-staged-computation}}
 
 \paragraph{Universe polymorphism}
 
-\todo[inline]{A practical application and motivation~\citep{Kovacs-universe-hierarchies} (not just theoretically interesting); generic level quantification; universe-polymorphic definitions not polymorphic enough; more expressive universes}
+\todo[inline]{A practical application and motivation~\citep{Kovacs-universe-hierarchies} (not just theoretically interesting); generic level quantification; no subject rejection; universe-polymorphic definitions not polymorphic enough (e.g., |Σ|-types); more expressive universes}
+
+\todo[inline]{\citet{Chapman-levitation} propose a more radical redesign of type theory where datatype definitions are first-class, but the theory is still at an early stage of development and lacks an implementation; our proposal is more practical and serves as a platform for the development of mature datatype-generic libraries, which can be ported to new platforms when ready}
 
 \section{Conclusion}
 
