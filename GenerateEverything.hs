@@ -47,11 +47,10 @@ withKModules = map modToFile
   , "Generics.Ornament.Algebraic"
   , "Generics.Ornament.Algebraic.Isomorphism"
   , "Generics.Ornament.Description"
-  , "Tests.JKTest"
-  , "Tests.SCMTest"
   , "Examples.List"
   , "Examples.STLC"
   , "Examples.BST"
+  , "Examples.Acc"
   , "Examples.W"
   ]
 

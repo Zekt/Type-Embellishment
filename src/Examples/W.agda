@@ -45,8 +45,9 @@ instance
     ; pos = (true ∷ tt ∷ []) ∷ []
     ; coe = λ _ → (refl ,ωω λ _ → lift tt) ,ωω lift tt }
 
-WAnyD : DataD
-WAnyD = AnyD (quote W)
+private
+  WAnyD : DataD
+  WAnyD = AnyD (quote W)
 
 -- unquoteDecl data WAny constructor c0 c1 = defineByDataD WAnyD WAny (c0 ∷ c1 ∷ [])
 data WAny {ℓ'' ℓ ℓ'} {A : Set ℓ} {B : A → Set ℓ'} (P : A → Set ℓ'') :
@@ -58,8 +59,9 @@ instance
   WAnyC : Named (quote WAny) _
   unNamed WAnyC = genDataC WAnyD WAnyT where WAnyT = genDataT WAnyD WAny
 
-lookupWAnyP : FoldP
-lookupWAnyP = lookupAny (quote W)
+private
+  lookupWAnyP : FoldP
+  lookupWAnyP = lookupAny (quote W)
 
 unquoteDecl lookupWAny = defineFold lookupWAnyP lookupWAny
 -- lookupWAny : ∀ {ℓ'' ℓ ℓ'} {A : Set ℓ} {B : A → Set ℓ'} {P : A → Set ℓ''} {w : W A B}
