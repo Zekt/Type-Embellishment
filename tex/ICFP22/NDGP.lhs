@@ -40,6 +40,8 @@
 
 \settopmatter{printacmref=false}
 
+\usepackage[hyperpageref]{backref} % this may be removed
+
 \usepackage[euler]{textgreek}
 
 \usepackage[capitalise]{cleveref}
