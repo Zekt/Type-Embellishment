@@ -47,6 +47,10 @@
 \usepackage[color=yellow,textsize=scriptsize]{todonotes}
 \setlength{\marginparwidth}{1.25cm}
 
+\newcommand{\LT}[1]{\todo[author=LT,inline,color=green!40]{{#1}}}
+\newcommand{\Josh}[1]{\todo[author=Josh,inline]{{#1}}}
+\newcommand{\Viktor}[1]{\todo[author=Viktor,inline,color=orange]{{#1}}}
+
 \newenvironment{halfcol}{\begin{minipage}{.45\textwidth}\setlength{\mathindent}{0em}}{\end{minipage}}
 
 \newcommand{\arXiv}[1]{\href{http://arxiv.org/abs/#1}{arXiv:\nolinkurl{#1}}}
@@ -251,13 +255,13 @@
 
 \todo[inline]{2 pages}
 
-\todo[inline]{Problems with the current state of dependently typed DGP (the kind of DGP discussed in this paper; no qualification thereafter)}
+\Josh{Problems with the current state of dependently typed DGP (the kind of DGP discussed in this paper; no qualification thereafter)}
 
-\todo[inline]{What we really want from generic libraries, using lists and vectors as familiar examples: we want to generate functions for native datatypes as if they are hand-written so that they are efficient to compute (no back-and-forth representation conversions), easy to reason about (again without the conversions and no excessive abstraction), and can fully benefit from whatever language facilities there are (e.g., Agda's interactive features and compiler optimisations); moreover, we want to generate not only, for example, fold operators but also their theorems such as fold fusion; particularly important in a dependently typed setting is the ability to generate new \emph{datatypes}, and then their functions and properties (e.g., algebraic ornamentation and the associated isomorphism)}
+\Josh{What we really want from generic libraries, using lists and vectors as familiar examples: we want to generate functions for native datatypes as if they are hand-written so that they are efficient to compute (no back-and-forth representation conversions), easy to reason about (again without the conversions and no excessive abstraction), and can fully benefit from whatever language facilities there are (e.g., Agda's interactive features and compiler optimisations); moreover, we want to generate not only, for example, fold operators but also their theorems such as fold fusion; particularly important in a dependently typed setting is the ability to generate new \emph{datatypes}, and then their functions and properties (e.g., algebraic ornamentation and the associated isomorphism)}
 
-\todo[inline]{Staging? No! Enter elaborator reflection.}
+\Josh{Staging? No! Enter elaborator reflection.}
 
-\todo[inline]{Some actual demo}
+\Josh{Some actual demo}
 
 \todo[inline]{
 Contributions:
@@ -273,14 +277,16 @@ $\bullet$ Simpler and less error-prone `object-level' binder-manipulating techni
 \section{A Recap of Datatype-Generic Programming}
 \label{sec:recap}
 
-\todo[inline]{3 pages}
+\Josh{3 pages}
 
-\todo[inline]{A recap of the standard approach (except for some minor details), also serving as an outline}
+\Josh{A recap of the standard approach (except for some minor details), also serving as an outline}
 
-\todo[inline]{Say somewhere `datatype' means `inductive families' in this paper}
+\Josh{Say somewhere `datatype' means `inductive families' in this paper}
 
-\todo[inline]{Typesetting conventions (in a footnote)}
+\Josh{Typesetting conventions (in a footnote)}
 
+\LT{Cite \cite{Dybjer1994,Dybjer1999} somewhere for the definition of inductive families.}
+\LT{Use \emph{(non)-inductive part/premise} instead of recursive part/premise as suggested by~\citet{Dybjer1999}}
 We start from a recap of standard datatype-generic programming (DGP) within a dependently typed setting, but use a three-layered encoding of datatypes that more closely follows the structure of a native datatype definition, which has a list of constructors made up of a series of fields, some of which can be potentially higher-order recursive occurrences of the datatype being defined.%
 \footnote{This choice of layered structure has also been adopted elsewhere, for example by \citet{de-Vries-true-SoP}.}
 As a small example that covers all the essential components of datatype definitions (in particular higher-order recursive occurrence), consider this datatype |Acc<| of accessibility proofs:%
@@ -314,7 +320,7 @@ Acc<D = (σ ℕ (λ n → ρ (π ℕ (λ m → π (m < n) (λ lt → ι m))) (ι
 \end{code}
 Inhabitants of |ConDs I| are just lists of constructor (type) descriptions of type |ConD I|.
 Inhabitants of |ConD I| are also list-like, where the elements can either be the type of an ordinary field, marked by~|σ|, or describe a recursive occurrence, marked by~|ρ|, and the `lists' end with~|ι|.
-Different from ordinary lists, in the case of |σ A D| a new variable of type~|A| is brought into the context of~|D| (for example, |n|~appears in the type of |accs|); this is done by making~|D| a function with an argument of type~|A|, using the host language's function space to extend the context --- we will continue to use this technique heavily in \cref{sec:parameters}.\todo{forward reference about detecting abuses}%
+Different from ordinary lists, in the case of |σ A D| a new variable of type~|A| is brought into the context of~|D| (for example, |n|~appears in the type of |accs|); this is done by making~|D| a function with an argument of type~|A|, using the host language's function space to extend the context --- we will continue to use this technique heavily in \cref{sec:parameters}.\Josh{forward reference about detecting abuses}%
 \footnote{The expressive power of the host language's function space has been better utilised in the DGP literature (for example by \citet[Section~2.1]{McBride-ornaments}), but we will refrain from abusing the function space in the descriptions for tasks beyond context extension, and it will be easy to detect abuses at the meta-level.}
 Moreover, the~|ι| at the end of a |ConD I| should specify the index targeted by the constructor (e.g., the final~|n| in the type of |acc|).
 Inhabitants of |RecD I| use the same structure to describe dependent function types ending with a recursive occurrence.
@@ -616,7 +622,7 @@ With |level-inequality|, we could even define a universe-polymorphic version of 
 \section{Datatype-Generic Programming without Fixed-Point Operators}
 \label{sec:generic-programs}
 
-\todo[inline]{Generic programs prefer uncurried forms, whereas customarily native programs are curried; conversion is only propositional on the generic side and problematic, whereas it is definitional on the native side and much easier to handle}
+\Josh{Generic programs prefer uncurried forms, whereas customarily native programs are curried; conversion is only propositional on the generic side and problematic, whereas it is definitional on the native side and much easier to handle}
 
 \section{Establishing Connections via Metaprogramming}
 \label{sec:metaprogramming}
@@ -628,7 +634,7 @@ With |level-inequality|, we could even define a universe-polymorphic version of 
 \subsection{Fold and Induction Operators}
 \label{sec:fold-and-induction-operators}
 
-\todo[inline]{In contrast to an untyped approach, the datatype-generic version also proves that the arguments to the fold operator do constitute an algebra.}
+\Josh{In contrast to an untyped approach, the datatype-generic version also proves that the arguments to the fold operator do constitute an algebra.}
 
 \begin{code}
 FoldOpTᶜ : (D : ConD I cb) → (I → Set ℓ) → Set (max-π cb ⊔ max-σ cb ⊔ ℓ)
@@ -677,14 +683,14 @@ fold-operator {D} C = record
 \subsection{Predicates on Simple Containers}
 \label{sec:simple-containers}
 
-\todo[inline]{There are not too many generic programs that work without assumptions on the range of datatypes they operate on.}
+\Josh{There are not too many generic programs that work without assumptions on the range of datatypes they operate on.}
 
 \section{Practical Issues}
 
 \subsection{Portability}
-\todo[inline]{Address the statement that our development is not specific to Agda.
+\LT{Address the statement that our development is not specific to Agda.
 So, what features do we need to implement?}
-\todo[inline]{Axiom K is used for ornaments but this axiom is not generally desirable especially for homotopy type theory.
+\LT{Axiom K is used for ornaments but this axiom is not generally desirable especially for homotopy type theory.
 This seemingly conflicting requirement in fact originates in the false belief that only one identity type is allowed in a type theory.
 Indeed, it is possible to have more than one identity type with different strength.
 For example, the two-level type theory proposed by \citet{Capriotti2017} consists of a strict equality (satisfying the axiom K) and a weak equality compatible with the homotopy-theoretic interpretation.
@@ -692,7 +698,7 @@ Agda has an experimental option \texttt{--two-level} in the cubical mode which i
 This extra sort of universes will make our library portable to proof assistants based on homotopy type theory.
 (A bit of experiments should be performed to testify.)
 }
-\todo[inline]{Elaborator reflection}
+\LT{Elaborator reflection}
 
 \subsection{Naming, Visibility, and Order of Arguments}
 
