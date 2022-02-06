@@ -782,7 +782,29 @@ Everything we did manually above was highly mechanical and deserves to be automa
 \section{Establishing Connections via Reflection}
 \label{sec:reflection}
 
-\todo[inline]{Introduction to reflection in Agda}
+\subsection{Introduction to Reflection in Agda}
+\Viktor{
+$\bullet$ TC monad, |macro| and |unquoteDecl|, problems of scope checking to be discussed in Section 7.
+
+$\bullet$ Important primitive operations (should we discuss |quote| and |quoteTerm|?).
+
+$\bullet$ Datatype and function descriptions.
+
+$\bullet$ Our to-be-proposed design of |defineData| and |unquoteDecl|
+}
+
+\subsection{Datatype}
+\Viktor{
+$\bullet$ Observe correspondence between reflected and generic descriptions.
+
+$\bullet$ Problems of universe polymorphism (one of which is strengthening).
+}
+\Viktor{Discuss weakening, strengthening and usage of extendContext}
+\Viktor{Enforce types on untyped operations using quoteTC/unquoteTC}
+\subsection{Recursion and Induction}
+\Viktor{Translate FoldP/IndP to function definition}
+
+\subsection{}
 
 \section{Examples}
 \label{sec:examples}
