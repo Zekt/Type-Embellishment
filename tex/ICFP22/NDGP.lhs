@@ -213,7 +213,7 @@
 \email{liang.ting.chen.tw@@gmail.com}
 \orcid{0000-0002-3250-1331}
 \author{Tzu-Chi Lin}
-%\orcid{0000-0000-0000-0000}
+\orcid{0000-0002-7656-6225}
 \email{vik@@iis.sinica.edu.tw}
 \affiliation{%
   \institution{Institute of Information Science, Academia Sinica}
