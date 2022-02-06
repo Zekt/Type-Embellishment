@@ -1,0 +1,12 @@
+push @generated_exts, 'tex'; # Remove generated .tex on clean-up
+
+# Use subroutine to do preprocessing and running pdflatex
+$pdflatex = 'internal mylatex %B %O';
+sub mylatex {
+  my $base = shift @_;
+  my $tex = "$base.tex";
+  # Run the preprocessor
+  system('lhs2TeX', '--agda', '-o', $tex, "$base.lhs") == 0 or return $?;
+  # Run pdflatex
+  return system('pdflatex', @_, $tex);
+}
