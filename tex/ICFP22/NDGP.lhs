@@ -50,9 +50,9 @@
 \usepackage[color=yellow,textsize=scriptsize]{todonotes}
 \setlength{\marginparwidth}{1.25cm}
 
-\newcommand{\LT}[1]{\todo[author=LT,inline,color=green!40]{{#1}}}
-\newcommand{\Josh}[1]{\todo[author=Josh,inline]{{#1}}}
-\newcommand{\Viktor}[1]{\todo[author=Viktor,inline,color=orange]{{#1}}}
+\newcommand{\LT}[1]{\todo[author=LT,inline,color=green!40,caption={}]{{#1}}}
+\newcommand{\Josh}[1]{\todo[author=Josh,inline,caption={}]{{#1}}}
+\newcommand{\Viktor}[1]{\todo[author=Viktor,inline,color=orange,caption={}]{{#1}}}
 
 \newenvironment{halfcol}{\begin{minipage}{.45\textwidth}\setlength{\mathindent}{0em}}{\end{minipage}}
 
@@ -68,6 +68,10 @@
 
 %format syntax = "\Keyword{syntax}"
 %format pattern = "\Keyword{pattern}"
+%format unquoteDecl = "\Keyword{unquoteDecl}"
+%format unquote = "\Keyword{unquote}"
+%format quote = "\Keyword{quote}"
+%format quoteTerm = "\Keyword{quoteTerm}"
 
 %format == = "\mathop="
 %format _ = "\char95"
@@ -792,7 +796,10 @@ Everything we did manually above was highly mechanical and deserves to be automa
 \section{Establishing Connections Using Elaborator Reflection}
 \label{sec:reflection}
 
-\subsection{Introduction to Reflection in Agda}
+\cite{Christiansen-elaborator-reflection}
+\subsection{Elaborator Reflection in Agda}
+\LT{Outlines the core of reflected syntax such as de Bruijn indices representation, name, |quoteTerm| and |quote|, definition declaration via macro |unquoteDecl|, and our experimental datatype declaration |unquoteDecl data|, double roles as a simplified abstract syntax and internal language, \emph{without} introducing telescope, data types, etc.}
+
 \Viktor{
 $\bullet$ TC monad, |macro| and |unquoteDecl|, problems of scope checking to be discussed in Section 7.
 
@@ -803,18 +810,26 @@ $\bullet$ Datatype and function descriptions.
 $\bullet$ Our to-be-proposed design of |defineData| and |unquoteDecl|
 }
 
-\subsection{Datatype}
 \Viktor{
 $\bullet$ Observe correspondence between reflected and generic descriptions.
 
 $\bullet$ Problems of universe polymorphism (one of which is strengthening).
 }
-\Viktor{Discuss weakening, strengthening and usage of extendContext}
-\Viktor{Enforce types on untyped operations using quoteTC/unquoteTC}
-\subsection{Recursion and Induction}
-\Viktor{Translate FoldP/IndP to function definition}
+\Viktor{Discuss weakening, strengthening and usage of |extendContext|}
+\Viktor{Enforce types on untyped operations using |quoteTC|/|unquoteTC|}
+\Viktor{Translate |FoldP|/|IndP| to function definition}
 
-\subsection{}
+\subsection{Representing and Splicing Telescopes}
+\LT{Discuss the difference between the higher-order and the plain representations of telescopes}
+\LT{Introduce |extendContext|, |unquoteTC|, and a more safe version |extendContextT|}
+
+\subsection{Eliminating Intermediate Structures}
+
+\LT{Introduce |normalise| and |checkType|}
+
+\subsection{Generating the Bridges between Curried and Uncurried Forms}
+
+\LT{It is not possible to to currying in the object-level, so we resort metaprograms to un/curry.}
 
 \section{Examples}
 \label{sec:examples}
