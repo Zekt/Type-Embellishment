@@ -40,6 +40,7 @@
 
 \settopmatter{printacmref=false}
 
+\usepackage[british]{babel}
 \usepackage[hyperpageref]{backref} % this may be removed
 
 \usepackage[euler]{textgreek}
