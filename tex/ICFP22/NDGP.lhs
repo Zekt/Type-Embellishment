@@ -274,7 +274,7 @@
 
 \Josh{What we really want from generic libraries, using lists and vectors as familiar examples: we want to generate functions for native datatypes as if they are hand-written so that they are efficient to compute (no back-and-forth representation conversions), easy to reason about (again without the conversions and no excessive abstraction), and can fully benefit from whatever language facilities there are (e.g., Agda's interactive features and compiler optimisations); moreover, we want to generate not only, for example, fold operators but also their theorems such as fold fusion; particularly important in a dependently typed setting is the ability to generate new \emph{datatypes}, and then their functions and properties (e.g., algebraic ornamentation and the associated isomorphism)}
 
-\Josh{There have been many attempts at removing overheads by compiler optimisation, but this is not enough for dependently typed programming, where programs may appear in later types and be reasoned about (and haven’t been processed by the compiler at all).
+\Josh{Old attempts at optimising DGP: There have been many attempts at removing overheads by compiler optimisation, but this is not enough for dependently typed programming, where programs may appear in later types and be reasoned about (and haven’t been processed by the compiler at all).
 And compiler optimisations need to be fine-tuned to produce what we want; why not just generate what we want in the first place?}
 
 \Josh{Staging? No! Enter elaborator reflection.}
@@ -291,6 +291,8 @@ $\bullet$ Better interoperability with native datatypes and functions (generatin
 $\bullet$ A new use case of elaborator reflection where traditional datatype-generic programs are simply normalised to yield native programs (and do not need more radical adaptations like staging)
 
 $\bullet$ Simpler and less error-prone `object-level' binder-manipulating techniques with (Agda's) elaborator reflection (bypassing the manipulation of de Bruijn indices; a tutorial for Agda's reflection mechanism)}
+
+\todo[inline]{Practically-oriented, inspiring future theories}
 
 \section{A Recap of Datatype-Generic Programming}
 \label{sec:recap}
@@ -316,7 +318,7 @@ data Acc< : ℕ → Set where
 The first layer is the list of constructors, which for |Acc<| consists of only |acc|;
 the type of |acc| has two fields |n|~and |as|, which constitute the second layer;
 the type of the field |as| is described in the third layer as it ends with the recursive occurrence |Acc< m|, in front of which there are function arguments |m|~and~|lt| (making the recursive occurrence higher-order).
-Corresponding to the three layers, we use three datatypes of \emph{descriptions} ---all parametrised by an index type~|I|--- to encode datatype definitions,
+Corresponding to the three layers, we use three datatypes of \emph{descriptions} ---all parametrised by an index type~|I|--- to encode datatype definitions,\todo{warning: this is not the final version}
 \begin{code}
 data ConDs (I : Set) : Set₁ where
   []   : ConDs I
@@ -338,7 +340,7 @@ Acc<D = (σ ℕ (λ n → ρ (π ℕ (λ m → π (m < n) (λ lt → ι m))) (ι
 \end{code}
 Inhabitants of |ConDs I| are just lists of constructor (type) descriptions of type |ConD I|.
 Inhabitants of |ConD I| are also list-like, where the elements can either be the type of an ordinary field, marked by~|σ|, or describe a recursive occurrence, marked by~|ρ|, and the `lists' end with~|ι|.
-Different from ordinary lists, in the case of |σ A D| a new variable of type~|A| is brought into the context of~|D| (for example, |n|~appears in the type of |as|); this is done by making~|D| a function with an argument of type~|A|, using the host language's function space to extend the context --- we will continue to use this technique heavily in \cref{sec:parameters}.\todo{forward reference about detecting abuses}%
+Different from ordinary lists, in the case of |σ A D| a new variable of type~|A| is brought into the context of~|D| (for example, |n|~appears in the type of |as|); this is done by making~|D| a function with an argument of type~|A|, using the host language's function space to extend the context --- we will continue to use this technique heavily in \cref{sec:parameters}.\todo{forward reference about detecting abuses; include a bit more discussion about HOAS}%
 \footnote{The expressive power of the host language's function space has been better utilised in the DGP literature (for example by \citet[Section~2.1]{McBride-ornaments}), but we will refrain from abusing the function space in the descriptions for tasks beyond context extension, and it will be easy to detect abuses at the meta-level.}
 Moreover, the~|ι| at the end of a |ConD I| should specify the index targeted by the constructor (e.g., the final~|n| in the type of |acc|).
 Inhabitants of |RecD I| use the same structure to describe dependent function types ending with a recursive occurrence.
@@ -361,7 +363,7 @@ Acc< : ℕ → Set
 Acc< = μ Acc<D
 \end{code}
 whose inhabitants are now constructed by the generic constructor |con|.
-The argument of |con| (of type |⟦ D ⟧ᶜˢ (μ D) i|) encodes the constructor choice and the arguments of the chosen constructor in a sum-of-products structure; for example, in Agda it is more convenient to use a pattern synonym to define |acc| in terms of |con|,
+The argument of |con| (of type |⟦ D ⟧ᶜˢ (μ D) i|) encodes the constructor choice and the arguments of the chosen constructor in a sum-of-products structure; for example, in Agda it is more convenient to use a pattern synonym\todo{Cite Pickering}\ to define |acc| in terms of |con|,
 \begin{code}
 pattern acc {n} as = con (inl (n , as , refl))
 \end{code}
@@ -398,7 +400,7 @@ One useful class of generic programs is ($F$-)algebras (where the functor~$F$ is
 Alg : ConDs I → (I → Set) → Set
 Alg D X = ∀ {i} → ⟦ D ⟧ᶜˢ X i → X i
 \end{code}
-An algebra of type |Alg D X| is the non-recursive part of a fold of type |∀ {i} → μ D i → X i|, while the recursive part can be expressed by this generic |fold| operator%
+An algebra of type |Alg D X| is the non-recursive part\todo{revise}\ of a fold of type |∀ {i} → μ D i → X i|, while the recursive part can be expressed by this generic |fold| operator\todo{more explanation; cite AoP}%
 \footnote{There are safer ways to make Agda see that |fold| is terminating than using the \textsc{terminating} pragma, but they are not important for our purposes since we will not use |fold| later in the paper.}
 \begin{code}
 {-# TERMINATING #-}
@@ -437,7 +439,7 @@ The functorial map should apply a given function~|f| to all the recursive positi
 
 Being able to treat folds generically means that we are able to write generic programs whose types have the form |∀ {i} → μ D i → X i|, but this is not enough when, for example, we want to prove generic theorems by induction on |d : μ D i|, in which case the types take the more complex form |∀ {i} (d : μ D i) → P d| (where |P : ∀ {i} → μ D i → Set|).
 Our library thus provides another set of definitions for treating induction generically.
-The treatment of induction is largely standard and analogous to the treatment of folds, however, so we omit the technical details of generic induction from the presentation.
+The treatment of induction is largely standard and analogous to the treatment of folds, so we omit the technical details of generic induction from the presentation.
 
 \section{Datatype Parameters and Universe Polymorphism}
 \label{sec:parameters}
@@ -462,9 +464,10 @@ and a parametrised description that looks like |Acc<D|.
 
 Unfortunately, we have already bumped into the limitation of Agda's current design of universe polymorphism, where only finite levels of type |Level| can be dealt with uniformly (via quantification over |Level|).
 Depending on whether a described datatype is universe-polymorphic or not, its parameter type may reside in a universe with a finite or infinite level: a non-universe-polymorphic parameter type, for example |Σ[ A ∶ Set ] (A → A → Set)|, resides in |Set|, which has a finite level, whereas the parameter type~|P| defined above for |Acc| ---call it |PAcc| for ease of reference--- cannot have type |Set ℓᵖ| for any |ℓᵖ : Level| because the type of one of its components is |Set ℓ| where |ℓ|~can be arbitrarily large, so the type/kind of~|PAcc| has to be |Setω|, the first universe with an infinite level.
-The mismatch between the range of levels we need to handle and the limited power of level quantification creates a load of problems, one of which is that the usual universe-polymorphic |Σ|-type former is not enough for defining~|PAcc| (and we will see one more at the end of \cref{sec:telescopes}).
+The mismatch between the range of levels we need to handle and the limited power of level quantification creates a load of problems, one of which is that the usual universe-polymorphic |Σ|-type former is not enough for defining~|PAcc| (and we will see one more at the end of \cref{sec:telescopes}).%
+\todo{a better reason?}
 
-To avoid some of the problems, we make a simplifying assumption, which holds for common universe-polymorphic datatypes: we assume that there is a list of level parameters separate from other parameters, and universe-polymorphic constructs refer to these level parameters only.
+To avoid some of the problems\todo{|Σ|-type former}, we make a simplifying assumption, which holds for common universe-polymorphic datatypes: we assume that there is a list of level parameters separate from other ordinary parameters\todo{use throughout}, and universe-polymorphic constructs\todo{revise}\ refer to these level parameters only.
 More formally, to describe a datatype, we start with a number |n : ℕ| of level parameters, from which we can compute a type |Level ^ n| of tuples of |n|~levels as defined by
 \begin{code}
 _^_ : Set → ℕ → Set
@@ -495,7 +498,7 @@ mutual
   ⟦ T ++  U  ⟧ᵗ = Σ[ t ∶ ⟦ T ⟧ᵗ ] ⟦ U t ⟧ᵗ
 \end{code}
 Again we use the host language's function space to bring variables of the types in the front of a telescope into the context of the rest of the telescope.
-Besides the usual cons constructor `|∷|', we also include telescope-appending as a constructor `|++|' (which requires induction-recursion to define), making our telescopes tree-shaped; the reason will be clear when we reach \cref{sec:examples}.
+Besides the usual cons constructor `|∷|', we also include a constructor `|++|' for appending telescopes (which requires induction-recursion to define), making our telescopes tree-shaped; the reason will be clear when we reach \cref{sec:examples}.
 The index~|ℓ| in the type |Tel ℓ| of a telescope~|T| is the maximum level appearing in~|T|.
 This level is important as it is the universe level of the type |⟦ T ⟧ᵗ|, which is a nested |Σ|-type inhabited by tuples whose components have the types in~|T|.
 %More subtly, the indexing also precludes overly universe-polymorphic telescopes like |Level ∷ (λ ℓ → Set ℓ ∷ (λ _ → []))|, since in a cons telescope (and similarly in an appended telescope), the maximum level~|ℓ'| in the tail has to be determined independently from the |A|-typed value in the context.
@@ -542,7 +545,7 @@ This level ---call it~|ℓ'|--- needs to be computed from |ℓ|~and the structur
 More generally, the need for non-trivial level computation naturally arises if we take universe polymorphism seriously, for example when we compute a new datatype from an old one, and need to specify the new levels in terms of the old ones --- \cref{sec:algebraic-ornamentation,sec:simple-containers} will give some such examples.
 
 To allow level computation to be performed as freely as possible, we choose to index the description datatypes with as much useful information as possible: the index in the type of a description is a list which not only contains the levels of the fields but also encodes the description constructors used.
-Starting from the simplest |RecD| datatype, we index it with |RecB = List Level|, recording the levels of the |π|-fields:
+Starting from the simplest |RecD| datatype, we index it with |RecB = List Level|, recording the levels of the |π|-fields:\todo{highlight differences from previous versions}
 \begin{code}
 data RecD (I : Set ℓⁱ) : RecB → Setω where
   ι  : (i : I) → RecD I []
@@ -593,7 +596,8 @@ It may appear that we skipped several steps applying the associativity and commu
 \subsection{Packing Up}
 \label{sec:DataD}
 
-We are now ready to pack what we have developed in this section into two new layers of datatype descriptions, mostly corresponding to the representation given in \cref{sec:level-parameters}.
+We are now ready to pack what we have developed in this section into two new layers of datatype descriptions, mostly corresponding to the representation given in \cref{sec:level-parameters}.%
+\todo{connect the dots}
 The outermost layer deals with universe-polymorphic level parameters,
 \begin{code}
 record DataD : Setω where
@@ -647,6 +651,10 @@ With |level-inequality|, we could even define a universe-polymorphic version of 
 \section{Connecting Generic and Native Entities}
 \label{sec:connections}
 
+\todo[inline]{Purpose: |DataC| and |FoldC| arguments of generic programs}
+
+\todo[inline]{Benefits and necessity of wrappers (using |DataC| and |FoldC| as examples)}
+
 Instead of a generic |μ|~operator~(\cref{sec:recap}), we will rely on Agda's reflection mechanism~(\cref{sec:reflection}) to manufacture a native datatype from a description of type |DataD|~(\cref{sec:DataD}).
 The native datatype will be in a curried form, but it is easier for generic programs to handle an uncurried form, which can be computed from the |DataD| by
 \begin{code}
@@ -679,8 +687,9 @@ AccC = record  {  toN        = λ { (inl (x , ps , refl))  → acc ps }
                ;  fromN-toN  = λ { (inl (x , ps , refl))  → refl }
                ;  toN-fromN  = λ { (acc ps)               → refl } }
 \end{code}
-What we have developed is essentially an architecture where generic and native entities can be kept in sync (reminiscent of `bidirectional transformations'~\citep{Abou-Saleh-BX-intro}): a datatype has a |DataD| description on the generic side and a definition on the native side, and these two entities are connected by a |DataC|; a small twist is that the native definition is in a curried form, which is converted to a more regular uncurried form using a wrapper to interface with the architecture.
-This architecture is symmetric: in addition to manufacturing a native datatype from a description, we can also compute a description of a native datatype; in either case, a connection is formed between the generic and native entities at the end.
+What we have developed is essentially an architecture\todo{emphasise update}\ where generic and native entities can be kept in sync: a datatype has a |DataD| description on the generic side and a definition on the native side, and these two entities are connected by a |DataC|; a small twist is that the native definition is in a curried form, which is converted to a more regular uncurried form using a wrapper to interface with the architecture.
+This architecture is symmetric: in addition to manufacturing a native datatype from a description, we can also compute a description of a native datatype; in either case, a connection is formed between the generic and native entities at the end.%
+\todo{\citet{Abou-Saleh-BX-intro} in a footnote}
 
 Following the same architecture, we are also going to connect algebras with the corresponding native fold functions.
 More precisely, the algebras are, in general, parametrised algebras like |foldAcc<Alg| from \cref{sec:recap}, and we start from a generic representation for them.
@@ -762,8 +771,8 @@ with which we can write
 \begin{code}
 foldAcc A R P p a = fold-base foldAccP foldAcc A R P p a
 \end{code}
-This definition, albeit a non-terminating one, implies the |FoldC.equation| because of the inverse property |DataC.fromN-toN|.
-To turn this into a terminating definition, we pattern-match~|a| with all the possible constructors, of which there is only one in this case:
+This definition, albeit a non-terminating one, implies the |FoldC.equation| because of the inverse property |DataC.fromN-toN|.\todo{The other inverse property}
+To turn this into a terminating definition, we pattern-match the variable~|a| with all the possible constructors, of which there is only one in this case:
 \begin{code}
 foldAcc A R P p (acc as) = fold-base foldAccP (foldAcc A R P p) (acc as)
 \end{code}
@@ -771,7 +780,7 @@ Finally we normalise the right-hand side,
 \begin{code}
 foldAcc A R P p (acc as) = p (λ y lt → foldAcc A R P p (as y lt))
 \end{code}
-and this final definition can be directly shown to satisfy the connecting equation:
+and this final definition can be directly shown to satisfy the connecting equation:\todo{relationship with inverse property}
 \begin{code}
 foldAccC : FoldC foldAccP foldAccT
 foldAccC = record { equation = λ { (inl (x , as , refl)) → refl } }
@@ -779,7 +788,7 @@ foldAccC = record { equation = λ { (inl (x , as , refl)) → refl } }
 
 Everything we did manually above was highly mechanical and deserves to be automated; this we do next in \cref{sec:reflection} using Agda's reflection mechanism, after which we will see some examples of datatype-generic programming with |DataC| and |FoldC| connections in \cref{sec:examples}.
 
-\section{Establishing Connections via Reflection}
+\section{Establishing Connections Using Elaborator Reflection}
 \label{sec:reflection}
 
 \subsection{Introduction to Reflection in Agda}
@@ -941,7 +950,7 @@ Each of the two programming disciplines works nicely as the other's natural exte
 
 \todo[inline]{The native world as the common playground of multiple generic libraries}
 
-\todo[inline]{Success of the App Store: dependent types need richer type structures and allow assumptions about datatype descriptions to derive more functionalities (boring if we can only automate Eq, Show, Read etc), so DGP has much more potential in dependently typed settings; also, keep generic programs natural so that libraries can be developed more easily — no staging!}
+\todo[inline]{Success of the App Store: dependent types need richer type structures and allow assumptions about datatype descriptions to derive more functionalities (boring if we can only automate Eq, Show, Read etc), so DGP has much more potential in dependently typed settings; also, keep generic programs natural so that libraries can be developed more easily — no staging (which is not in the current dependently typed languages anyway)!}
 
 \todo[inline]{Suggestions for the future evolution of Agda or the design of new languages with elaborator reflection}
 
