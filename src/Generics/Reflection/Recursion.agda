@@ -42,7 +42,6 @@ private
 
 defineFold : FoldP → Name → TC _
 defineFold P f = do
-  `P ← quoteωTC P
   `type ← prependLevels #levels <$> extendContextℓs #levels λ ℓs → do
       ss ← fromTelInfo (ParamN {ℓs})
       T  ← quoteTC! (FoldNT P ℓs)
@@ -50,6 +49,7 @@ defineFold P f = do
 
   declareDef (vArg f) (unConflictType `type)
 
+  `P ← quoteωTC P
   let rec = def₂ `fold-base `P (def₀ f)
   dummyRec ← define! (vArg `type) [ [] ⊢ [] `= rec ]
   pars , cs ← getDataDefinition =<< FoldPToNativeName P
@@ -66,7 +66,6 @@ defineFold P f = do
 
 defineInd : IndP → Name → TC _
 defineInd P f = do
-  `P    ← quoteωTC P
   `type ← prependLevels #levels <$> extendContextℓs #levels λ ℓs → do
     ss ← fromTelInfo (ParamN {ℓs})
     T  ← quoteTC! (IndNT P ℓs)
@@ -74,6 +73,7 @@ defineInd P f = do
 
   declareDef (vArg f) $ unConflictType `type
 
+  `P    ← quoteωTC P
   let ind = def₂ `ind-base `P (def₀ f)
   dummyRec ← define! (vArg `type) [ [] ⊢ [] `= ind ]
 

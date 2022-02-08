@@ -798,38 +798,36 @@ Everything we did manually above was highly mechanical and deserves to be automa
 
 \cite{Christiansen-elaborator-reflection}
 \subsection{Elaborator Reflection in Agda}
-\LT{Outlines the core of reflected syntax such as de Bruijn indices representation, name, |quoteTerm| and |quote|, definition declaration via macro |unquoteDecl|, and our experimental datatype declaration |unquoteDecl data|, double roles as a simplified abstract syntax and internal language, \emph{without} introducing telescope, data types, etc.}
-
-\Viktor{
-$\bullet$ TC monad, |macro| and |unquoteDecl|, problems of scope checking to be discussed in Section 7.
-
-$\bullet$ Important primitive operations (should we discuss |quote| and |quoteTerm|?).
-
-$\bullet$ Datatype and function descriptions.
-
-$\bullet$ Our to-be-proposed design of |defineData| and |unquoteDecl|
+\LT{
+  Outline the core of reflection: 
+  \begin{enumerate}
+    \item reflected syntax with informal symbols: variables, constructors, pi-types, sets, etc.,
+    \item telescope, function clauses,
+    \item |quoteTerm| and |quote|,
+    \item the double role as a checked and unchecked expression, 
+    \item type-checking state, TC monad,
+    \item function definition, datatype definition
+    \item a few primitives including |quoteTC|, |unquoteTC|, |inferType|, |checkType|
+  \end{enumerate}
 }
-
-\Viktor{
-$\bullet$ Observe correspondence between reflected and generic descriptions.
-
-$\bullet$ Problems of universe polymorphism (one of which is strengthening).
-}
-\Viktor{Discuss weakening, strengthening and usage of |extendContext|}
-\Viktor{Enforce types on untyped operations using |quoteTC|/|unquoteTC|}
-\Viktor{Translate |FoldP|/|IndP| to function definition}
-
-\subsection{Representing and Splicing Telescopes}
+  
+\subsection{Translation between Typed Higher-Order and Untyped First-Order Representations}
+\Viktor{Enforce types on untyped operations using |quoteTC|/|unquoteTC|; discuss the usage of |extendContext|}
+\Viktor{Observe correspondence between reflected and generic descriptions.}
+\Viktor{Our to-be-proposed design of |defineData| and |unquoteDecl data|}
 \LT{Discuss the difference between the higher-order and the plain representations of telescopes}
 \LT{Introduce |extendContext|, |unquoteTC|, and a more safe version |extendContextT|}
+\LT{Discuss parametric higher-order abstract syntax}
 
-\subsection{Eliminating Intermediate Structures}
+\subsection{Generating the Connections and Wrappers with |Level|}
+\LT{Address the universe problem here: currying for |Level|} 
 
+\subsection{Instantiating Generic Functions without Bureaucracy}
+\Viktor{Translate |FoldP|/|IndP| to function definition}
+\Viktor{definition declaration via macro |unquoteDecl|}
 \LT{Introduce |normalise| and |checkType|}
-
-\subsection{Generating the Bridges between Curried and Uncurried Forms}
-
-\LT{It is not possible to to currying in the object-level, so we resort metaprograms to un/curry.}
+\LT{The difference between unchecked and checked clauses; no subject reduction for abstract syntax,
+  so we have to normalise checked clauses with |fold-base| on the right hand side~\cite{Alimarine2004}}
 
 \section{Examples}
 \label{sec:examples}
