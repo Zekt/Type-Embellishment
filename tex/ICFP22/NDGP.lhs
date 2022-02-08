@@ -820,7 +820,7 @@ Everything we did manually above was highly mechanical and deserves to be automa
 \begin{code}
 data Tm : Set where
   set   : (t  : Tm)                  →  Tm
-  pi    : (t u : Ty)                 →  Tm
+  pi    : (t u : Type)               →  Tm
   lit   : (l  : Literal)             →  Tm
   lam   : (t  : Tm)                  →  Tm
   var   : (i  : ℕ)     (xs   : Tms)  →  Tm
@@ -844,7 +844,7 @@ data Literal where
   ...
 \end{code}
 \end{halfcol}%
-\caption{Reflected language for expressions (simplified), patterns, and literals}
+\caption{The reflected language for expressions (simplified), patterns, and literals}
 \end{figure}
 
 \begin{figure}[h]
@@ -989,7 +989,7 @@ data Term where
   pi        : (a : Arg Type) (b : Abs Type)       → Term
   lit       : (l : Literal)                       → Term
   lam       : (v : Visibility)  (t : Abs Term)    → Term
-  pat-lam   : (cs : Clauses)    (xs : Args Term)  → Term
+  pat-lam   : (cls : Clauses)   (xs : Args Term)  → Term
   var       : (i : ℕ)           (xs : Args Term)  → Term
   con       : (c : Name)        (xs : Args Term)  → Term
   def       : (f : Name)        (xs : Args Term)  → Term
@@ -1011,12 +1011,14 @@ data Sort where
 
 \begin{halfcol}
 \begin{code}
+postulate
+  Name : Set
+  Meta : Set
+
 data Abs (A : Set) : Set where
   abs : (s : String) (x : A) → Abs A
-
 data Arg (A : Set) : Set where
   arg : (i : ArgInfo) (x : A) → Arg A
-
 \end{code}
 \end{halfcol}%
 \begin{halfcol}
@@ -1024,9 +1026,13 @@ data Arg (A : Set) : Set where
 data ArgInfo : Set where
   arg-info : (v : Visibility) (m : Modality)
     → ArgInfo
+data Visibility : Set where
+  visible hidden instance′ : Visibility
+data Modality : Set where
+  ...
 \end{code}
 \end{halfcol}%
-\caption{Reflected language for expressions (actual)}
+\caption{A snippet of the reflected language for expressions (actual)}
 \end{figure}
 
 \begin{code}
