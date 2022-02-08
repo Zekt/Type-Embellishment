@@ -799,6 +799,9 @@ Everything we did manually above was highly mechanical and deserves to be automa
 \label{sec:reflection}
 
 \cite{Christiansen-elaborator-reflection}
+Elaborator reflection gives us access to Agda utilities which are otherwise only accessible deep down at Agda's implementation.
+Reflected syntax is used to interact with the |TC| moand, which serves as an interface to the Agda type checker.
+There are several differences between Agda and Idris, we will discuss them and their implications on our work in \cref{sec:discussion}.
 \subsection{Elaborator Reflection in Agda}
 \LT{
   Outline the core of reflection: 
@@ -815,6 +818,16 @@ Everything we did manually above was highly mechanical and deserves to be automa
   \end{enumerate}
 }
 
+We introduce a simplified version of Agda's reflected syntax (\cref{fig:reflected syntax} and \cref{fig:type abbrs}) to elaborate our usage of reflection in Agda.
+Agda supports classic metaprogramming using |quote|, |quoteTerm| and |unquote|.
+|quote| is a top-level primitive that generates the name (of type |Name|) of the quoted term upon typechecking,
+and similarly |quoteTerm| generates the reflected representation (of type |Tm|).
+|unquote| is capable of traslating reflected representation to native terms.
+For example, |quoteTerm ℕ| is equivalent to |def (quote ℕ) []| after typechecking, albeit their different appearences to programmers.
+These top-level primitives are limiting in usage and less interesting to us compared to more powerful primitives |quoteTC| and |unquoteTC|, so we won't go into their details.
+
+Built-in type |Tm| represents Agda terms, with each constructor corresponding to a class of terms.
+|pi t u| represents dependent function types |t → u|. |set t| represents the type |Set t| while |t| should be a term of |Level|. |lam| 
 \begin{figure}
 \begin{halfcol}%
 \begin{code}
@@ -845,9 +858,10 @@ data Literal where
 \end{code}
 \end{halfcol}%
 \caption{Reflected language for (simplified) expressions, patterns, and literals}
+\label{fig:reflected syntax}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}
 \begin{halfcol}
 \begin{code}
 postulate
@@ -865,11 +879,13 @@ Patterns   =  List Pattern
 \end{code}
 \end{halfcol}
 \caption{Built-in types and type abbreviations}
+\label{fig:type abbrs}
 \end{figure}
 
 \subsection{Translating between Typed Higher-Order and Untyped First-Order Representations}
 \LT{Discuss the difference between the typed higher-order and untyped first-order representations of telescopes}
 
+\subsection{Translation between Typed Higher-Order and Untyped First-Order Representations}
 \LT{Introduce |extendContext|, |unquoteTC|, and a more safe version |extendContextT|}
 \Viktor{Enforce types on untyped operations using |quoteTC|/|unquoteTC|; discuss the usage of |extendContext|}
 
@@ -992,6 +1008,7 @@ This extra sort of universes will make our library portable to proof assistants 
 
 \todo[inline]{Type classes, instance arguments}
 \section{Discussion}
+\label{sec:discussion}
 
 \paragraph{Higher-Order Representation}
 \LT{Discuss (parametric) higher-order abstract syntax}
