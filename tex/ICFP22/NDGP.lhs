@@ -818,13 +818,13 @@ Everything we did manually above was highly mechanical and deserves to be automa
 \begin{halfcol}%
 \begin{code}
 data Tm : Set where
-  unknown :                               Tm
   set   : (t  : Tm)                    →  Tm
   pi    : (s  : String)  (t u  : Ty)   →  Tm
   lam   : (s  : String)  (t    : Tm)   →  Tm
   var   : (x  : Nat)     (xs   : Tms)  →  Tm
   con   : (c  : Name)    (xs   : Tms)  →  Tm
   def   : (f  : Name)    (xs   : Tms)  →  Tm
+  unknown :                               Tm
 \end{code}
 \end{halfcol}%
 \begin{halfcol}
@@ -856,7 +856,7 @@ Tms      =  List Tm
 Names      =  List Name
 Patterns   =  List Pattern
 Clauses    =  List Clause
-Telescope   =  List (String × Ty)
+Telescope  =  List (String × Ty)
 \end{code}
 \end{halfcol}
 \caption{Built-in types and type abbreviations}
