@@ -54,7 +54,7 @@
 \newcommand{\Josh}[1]{\todo[author=Josh,inline,caption={}]{{#1}}}
 \newcommand{\Viktor}[1]{\todo[author=Viktor,inline,color=orange,caption={}]{{#1}}}
 
-\newenvironment{halfcol}{\begin{minipage}{.45\textwidth}\setlength{\mathindent}{0em}}{\end{minipage}}
+\newenvironment{halfcol}{\begin{minipage}{.5\textwidth}\setlength{\mathindent}{0em}}{\end{minipage}}
 
 \newcommand{\arXiv}[1]{\href{http://arxiv.org/abs/#1}{arXiv:\nolinkurl{#1}}}
 
@@ -72,6 +72,8 @@
 %format unquote = "\Keyword{unquote}"
 %format quote = "\Keyword{quote}"
 %format quoteTerm = "\Keyword{quoteTerm}"
+%format macro = "\Keyword{macro}"
+%format macro = "\Keyword{postulate}"
 
 %format == = "\mathop="
 %format _ = "\char95"
@@ -205,8 +207,6 @@
 %% allowing the author to define a "short title" to be used in page headers.
 \title{Datatype-Generic Programming Meets Metaprogramming}
 
-%%
-%% The "author" command and its associated commands are used to define
 %% the authors and their affiliations.
 %% Of note is the shared affiliation of the first two authors, and the
 %% "authornote" and "authornotemark" commands
@@ -807,27 +807,95 @@ Everything we did manually above was highly mechanical and deserves to be automa
     \item the double role as a checked and unchecked expression, 
     \item type-checking state, TC monad,
     \item function definition, datatype definition
-    \item a few primitives including |quoteTC|, |unquoteTC|, |inferType|, |checkType|
+    \item a few primitives including |quoteTC|, |unquoteTC|, |inferType|, |getContext|
+    \item introduce |macro| and |Tactic| with a small example
   \end{enumerate}
 }
-  
-\subsection{Translation between Typed Higher-Order and Untyped First-Order Representations}
-\Viktor{Enforce types on untyped operations using |quoteTC|/|unquoteTC|; discuss the usage of |extendContext|}
-\Viktor{Observe correspondence between reflected and generic descriptions.}
-\Viktor{Our to-be-proposed design of |defineData| and |unquoteDecl data|}
-\LT{Discuss the difference between the higher-order and the plain representations of telescopes}
+
+\begin{figure}[h]
+\begin{halfcol}%
+\begin{code}
+data Tm : Set where
+  set      : (t : Tm)                    →  Tm
+  litset   : (n : Nat)                   →  Tm
+  pi       : (s : String)  (a b  : Ty)   →  Tm
+  lam      : (s : String)  (t    : Tm)   →  Tm
+  var      : (x : Nat)     (xs   : Tms)  →  Tm
+  con      : (c : Name)    (xs   : Tms)  →  Tm
+  def      : (f : Name)    (xs   : Tms)  →  Tm
+  lit      : (l : Literal)               →  Tm
+  unknown  :                                Tm
+\end{code}
+\end{halfcol}%
+\begin{halfcol}
+\begin{code}
+data Pattern where
+  con     : (c : Name) (ps : Patterns)  → Pattern
+  dot     : (t : Tm)                    → Pattern
+  proj    : (f : Name)                  → Pattern
+  var     : (x : Nat)                   → Pattern
+  lit     : (l : Literal)               → Pattern
+  absurd  : (x : Nat)                   → Pattern
+
+data Literal : Set where
+  nat    : (n : Nat)    → Literal
+  ...
+\end{code}
+\end{halfcol}%
+\caption{Reflected syntax for (simplified) expressions, patterns, and literals}
+\end{figure}
+
+\begin{figure}
+\begin{halfcol}
+\begin{code}
+postulate
+  Name  :  Set
+
+Ty       =  Tm
+Tms      =  List Tm
+\end{code}
+\end{halfcol}%
+\begin{halfcol}
+\begin{code}
+Names      =  List Name
+Patterns   =  List Pattern
+Clauses    =  List Clause
+Telescope  =  List (String × Type)
+\end{code}
+\end{halfcol}
+\caption{Built-in types and type abbreviations}
+\end{figure}
+
+\begin{figure}
+\begin{code}
+data Clause : Set where
+  clause         :  (tel : Telescope)  (ps : Pats)  (t : Tm)  → Clause
+  absurd-clause  :  (tel : Telescope)  (ps : Pats)            → Clause
+
+data Definition : Set where
+  function    :  (cs   : Clauses)                → Definition
+  data-type   :  (#ps  : Nat)      (cs : Names)  → Definition
+  ...
+\end{code}
+\caption{A snippet of reflected declarations}
+\end{figure}
+
+\subsection{Translating between Typed Higher-Order and Untyped First-Order Representations}
+\LT{Discuss the difference between the typed higher-order and untyped first-order representations of telescopes}
+
 \LT{Introduce |extendContext|, |unquoteTC|, and a more safe version |extendContextT|}
-\LT{Discuss parametric higher-order abstract syntax}
+\Viktor{Enforce types on untyped operations using |quoteTC|/|unquoteTC|; discuss the usage of |extendContext|}
+
+\Viktor{Explain |defineData| and |unquoteDecl data|; a few macros}
 
 \subsection{Generating the Connections and Wrappers with |Level|}
 \LT{Address the universe problem here: currying for |Level|} 
 
 \subsection{Instantiating Generic Functions without Bureaucracy}
-\Viktor{Translate |FoldP|/|IndP| to function definition}
+\Viktor{Use |FoldP| to generate function definitions}
+\LT{Introduce |normalise| and |checkType|; explain the difference between unchecked and checked clauses; no subject reduction for abstract syntax, so we have to normalise checked clauses with |fold-base| on the right hand side~\cite{Alimarine2004}}
+
 \Viktor{definition declaration via macro |unquoteDecl|}
-\LT{Introduce |normalise| and |checkType|}
-\LT{The difference between unchecked and checked clauses; no subject reduction for abstract syntax,
-  so we have to normalise checked clauses with |fold-base| on the right hand side~\cite{Alimarine2004}}
 
 \section{Examples}
 \label{sec:examples}
@@ -919,6 +987,9 @@ This extra sort of universes will make our library portable to proof assistants 
 
 \todo[inline]{Type classes, instance arguments}
 \section{Discussion}
+
+\paragraph{Higher-Order Representation}
+\LT{Discuss (parametric) higher-order abstract syntax}
 
 \paragraph{Simply Typed DGP}
 
