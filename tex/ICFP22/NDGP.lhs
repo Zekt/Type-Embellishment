@@ -809,7 +809,8 @@ Everything we did manually above was highly mechanical and deserves to be automa
     \item the double role as a checked and unchecked expression, 
     \item type-checking state, TC monad,
     \item function definition, datatype definition
-    \item a few primitives including |quoteTC|, |unquoteTC|, |inferType|, |getContext|
+    \item a few primitives including |getDefinition|, |getContext|,
+    \item (?) |quoteTC| and |unquoteTC|
     \item introduce |macro| and |Tactic| with a small example
   \end{enumerate}
 }
@@ -818,13 +819,14 @@ Everything we did manually above was highly mechanical and deserves to be automa
 \begin{halfcol}%
 \begin{code}
 data Tm : Set where
-  set   : (t  : Tm)                    →  Tm
-  pi    : (s  : String)  (t u  : Ty)   →  Tm
-  lam   : (s  : String)  (t    : Tm)   →  Tm
-  var   : (x  : Nat)     (xs   : Tms)  →  Tm
-  con   : (c  : Name)    (xs   : Tms)  →  Tm
-  def   : (f  : Name)    (xs   : Tms)  →  Tm
-  unknown :                               Tm
+  pi    : (t u : Ty)                 →  Tm
+  set   : (t  : Tm)                  →  Tm
+  lam   : (t  : Tm)                  →  Tm
+  lit   : (l  : Literal)             →  Tm
+  var   : (i  : ℕ)     (xs   : Tms)  →  Tm
+  con   : (c  : Name)  (xs   : Tms)  →  Tm
+  def   : (f  : Name)  (xs   : Tms)  →  Tm
+  unknown :                             Tm
 \end{code}
 \end{halfcol}%
 \begin{halfcol}
@@ -832,47 +834,37 @@ data Tm : Set where
 data Pattern where
   con     : (c : Name) (ps : Patterns)  → Pattern
   proj    : (f : Name)                  → Pattern
-  var     : (x : Nat)                   → Pattern
-  absurd  : (x : Nat)                   → Pattern
+  var     : (i : ℕ)                     → Pattern
+  absurd  : (i : ℕ)                     → Pattern
   lit     : (l : Literal)               → Pattern
-  dot     : (t : Term)                  → Pattern
+  dot     : (t : Tm)                    → Pattern
+
+data Literal where
+  nat    : (n : ℕ)                      → Literal
+  ...
 \end{code}
 \end{halfcol}%
-\caption{Reflected language for (simplified) expressions and patterns}
+\caption{Reflected language for (simplified) expressions, patterns, and literals}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[h]
 \begin{halfcol}
 \begin{code}
 postulate
   Name  :  Set
 
 Ty       =  Tm
-Tms      =  List Tm
+Teles    =  List Ty
 \end{code}
 \end{halfcol}%
 \begin{halfcol}
 \begin{code}
+Tms        =  List Tm
 Names      =  List Name
 Patterns   =  List Pattern
-Clauses    =  List Clause
-Telescope  =  List (String × Ty)
 \end{code}
 \end{halfcol}
 \caption{Built-in types and type abbreviations}
-\end{figure}
-
-\begin{figure}
-\begin{code}
-data Definition : Set where
-  function    : (cls  : Clauses)           → Definition
-  data-type   : (#ps  : Nat) (cs : Names)  → Definition
-  ...
-data Clause : Set where
-  clause         :  (Δ : Telescope)  (ps : Patterns)  (t : Tm)  → Clause
-  absurd-clause  :  (Δ : Telescope)  (ps : Patterns)            → Clause
-\end{code}
-\caption{A snippet of reflected declarations}
 \end{figure}
 
 \subsection{Translating between Typed Higher-Order and Untyped First-Order Representations}
@@ -883,6 +875,24 @@ data Clause : Set where
 
 \Viktor{Explain |defineData| and |unquoteDecl data|; a few macros}
 
+
+\begin{figure}[h]
+\begin{code}
+data Clause : Set where
+  clause         :  (Δ : Teles)  (lhs : Patterns)  (rhs : Tm)  → Clause
+  absurd-clause  :  (Δ : Teles)  (lhs : Patterns)              → Clause
+\end{code}
+\caption{Clauses}
+\end{figure}
+
+\begin{figure}[h]
+\begin{code}
+data Definition : Set where
+  data-type   : (#ps  : ℕ) (cs : Names)  → Definition
+  ...
+\end{code}
+\caption{A snippet of reflected declarations}
+\end{figure}
 \subsection{Generating the Connections and Wrappers with |Level|}
 \LT{Address the universe problem here: currying for |Level|} 
 
