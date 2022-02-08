@@ -54,7 +54,7 @@
 \newcommand{\Josh}[1]{\todo[author=Josh,inline,caption={}]{{#1}}}
 \newcommand{\Viktor}[1]{\todo[author=Viktor,inline,color=orange,caption={}]{{#1}}}
 
-\newenvironment{halfcol}{\begin{minipage}{.5\textwidth}\setlength{\mathindent}{0em}}{\end{minipage}}
+\newenvironment{halfcol}{\begin{minipage}[t]{.5\textwidth}\setlength{\mathindent}{0em}}{\end{minipage}}
 
 \newcommand{\arXiv}[1]{\href{http://arxiv.org/abs/#1}{arXiv:\nolinkurl{#1}}}
 
@@ -83,6 +83,8 @@
 %format Σ[ = Σ [
 %format σ[ = σ [
 %format π[ = π [
+%format Γ = "\mathop\Gamma"
+%format Δ = "\mathop\Delta"
 %format ] = "\kern-2pt]"
 %format [[ = "|\kern-1.5pt[\kern-2pt"
 %format ]] = "\kern-2pt]\kern-1.5pt|"
@@ -812,37 +814,31 @@ Everything we did manually above was highly mechanical and deserves to be automa
   \end{enumerate}
 }
 
-\begin{figure}[h]
+\begin{figure}
 \begin{halfcol}%
 \begin{code}
 data Tm : Set where
-  set      : (t : Tm)                    →  Tm
-  litset   : (n : Nat)                   →  Tm
-  pi       : (s : String)  (a b  : Ty)   →  Tm
-  lam      : (s : String)  (t    : Tm)   →  Tm
-  var      : (x : Nat)     (xs   : Tms)  →  Tm
-  con      : (c : Name)    (xs   : Tms)  →  Tm
-  def      : (f : Name)    (xs   : Tms)  →  Tm
-  lit      : (l : Literal)               →  Tm
-  unknown  :                                Tm
+  unknown :                               Tm
+  set   : (t  : Tm)                    →  Tm
+  pi    : (s  : String)  (t u  : Ty)   →  Tm
+  lam   : (s  : String)  (t    : Tm)   →  Tm
+  var   : (x  : Nat)     (xs   : Tms)  →  Tm
+  con   : (c  : Name)    (xs   : Tms)  →  Tm
+  def   : (f  : Name)    (xs   : Tms)  →  Tm
 \end{code}
 \end{halfcol}%
 \begin{halfcol}
 \begin{code}
 data Pattern where
   con     : (c : Name) (ps : Patterns)  → Pattern
-  dot     : (t : Tm)                    → Pattern
   proj    : (f : Name)                  → Pattern
   var     : (x : Nat)                   → Pattern
-  lit     : (l : Literal)               → Pattern
   absurd  : (x : Nat)                   → Pattern
-
-data Literal : Set where
-  nat    : (n : Nat)    → Literal
-  ...
+  lit     : (l : Literal)               → Pattern
+  dot     : (t : Term)                  → Pattern
 \end{code}
 \end{halfcol}%
-\caption{Reflected syntax for (simplified) expressions, patterns, and literals}
+\caption{Reflected language for (simplified) expressions and patterns}
 \end{figure}
 
 \begin{figure}
@@ -860,7 +856,7 @@ Tms      =  List Tm
 Names      =  List Name
 Patterns   =  List Pattern
 Clauses    =  List Clause
-Telescope  =  List (String × Type)
+Telescope   =  List (String × Ty)
 \end{code}
 \end{halfcol}
 \caption{Built-in types and type abbreviations}
@@ -868,14 +864,13 @@ Telescope  =  List (String × Type)
 
 \begin{figure}
 \begin{code}
-data Clause : Set where
-  clause         :  (tel : Telescope)  (ps : Pats)  (t : Tm)  → Clause
-  absurd-clause  :  (tel : Telescope)  (ps : Pats)            → Clause
-
 data Definition : Set where
-  function    :  (cs   : Clauses)                → Definition
-  data-type   :  (#ps  : Nat)      (cs : Names)  → Definition
+  function    : (cls  : Clauses)           → Definition
+  data-type   : (#ps  : Nat) (cs : Names)  → Definition
   ...
+data Clause : Set where
+  clause         :  (Δ : Telescope)  (ps : Patterns)  (t : Tm)  → Clause
+  absurd-clause  :  (Δ : Telescope)  (ps : Patterns)            → Clause
 \end{code}
 \caption{A snippet of reflected declarations}
 \end{figure}
