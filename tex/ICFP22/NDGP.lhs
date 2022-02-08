@@ -819,10 +819,10 @@ Everything we did manually above was highly mechanical and deserves to be automa
 \begin{halfcol}%
 \begin{code}
 data Tm : Set where
-  pi    : (t u : Ty)                 →  Tm
   set   : (t  : Tm)                  →  Tm
-  lam   : (t  : Tm)                  →  Tm
+  pi    : (t u : Ty)                 →  Tm
   lit   : (l  : Literal)             →  Tm
+  lam   : (t  : Tm)                  →  Tm
   var   : (i  : ℕ)     (xs   : Tms)  →  Tm
   con   : (c  : Name)  (xs   : Tms)  →  Tm
   def   : (f  : Name)  (xs   : Tms)  →  Tm
@@ -844,7 +844,7 @@ data Literal where
   ...
 \end{code}
 \end{halfcol}%
-\caption{Reflected language for (simplified) expressions, patterns, and literals}
+\caption{Reflected language for expressions (simplified), patterns, and literals}
 \end{figure}
 
 \begin{figure}[h]
@@ -853,8 +853,8 @@ data Literal where
 postulate
   Name  :  Set
 
-Ty       =  Tm
-Teles    =  List Ty
+Type     =  Tm
+Teles    =  List Type
 \end{code}
 \end{halfcol}%
 \begin{halfcol}
@@ -979,6 +979,64 @@ This extra sort of universes will make our library portable to proof assistants 
 \LT{Elaborator reflection}
 
 \subsection{Naming, Visibility, and Order of Arguments}
+
+\begin{figure}
+
+\begin{minipage}[t]{.6\textwidth}\setlength{\mathindent}{0em}
+\begin{code}
+data Term where
+  agda-sort : (s : Sort)                          → Term
+  pi        : (a : Arg Type) (b : Abs Type)       → Term
+  lit       : (l : Literal)                       → Term
+  lam       : (v : Visibility)  (t : Abs Term)    → Term
+  pat-lam   : (cs : Clauses)    (xs : Args Term)  → Term
+  var       : (i : ℕ)           (xs : Args Term)  → Term
+  con       : (c : Name)        (xs : Args Term)  → Term
+  def       : (f : Name)        (xs : Args Term)  → Term
+  meta      : (x : Meta)        (xs : Args Term)  → Term
+  unknown   : Term
+\end{code}
+\end{minipage}%
+\begin{minipage}[t]{.4\textwidth}\setlength{\mathindent}{0em}
+\begin{code}
+data Sort where
+  set      : (t : Term)  →  Sort
+  lit      : (n : ℕ)     →  Sort
+  prop     : (t : Term)  →  Sort
+  propLit  : (n : ℕ)     →  Sort
+  inf      : (n : ℕ)     →  Sort
+  unknown  :                Sort
+\end{code}
+\end{minipage}
+
+\begin{halfcol}
+\begin{code}
+data Abs (A : Set) : Set where
+  abs : (s : String) (x : A) → Abs A
+
+data Arg (A : Set) : Set where
+  arg : (i : ArgInfo) (x : A) → Arg A
+
+\end{code}
+\end{halfcol}%
+\begin{halfcol}
+\begin{code}
+data ArgInfo : Set where
+  arg-info : (v : Visibility) (m : Modality)
+    → ArgInfo
+\end{code}
+\end{halfcol}%
+\caption{Reflected language for expressions (actual)}
+\end{figure}
+
+\begin{code}
+Args : Set ℓ → Set ℓ
+Args A = List (Arg A)
+\end{code}
+
+\begin{code}
+Telescope = List (String × Type)
+\end{code}
 
 \todo[inline]{Chosen by generic programs, dependency analysis, refactoring tools, heuristics, machine learning; interaction with generalised variables; the wrapper trick retains all these possibilities}
 
