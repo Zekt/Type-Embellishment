@@ -352,12 +352,13 @@ Different from ordinary lists, in the case of |σ A D| a new variable of type~|A
 Moreover, the~|ι| at the end of a |ConD I| should specify the index targeted by the constructor (e.g., the final~|n| in the type of |acc|).
 Inhabitants of |RecD I| use the same structure to describe dependent function types ending with a recursive occurrence.
 
-To make descriptions slightly easier to write and read, we can introduce a couple of syntax declarations for the binders:
+To make descriptions slightly easier to write and read, we can introduce a couple of syntax declarations in the spirit of de Bruijn's telescope notation~\cite{de-Bruijn-telescopes}:
 \begin{code}
-syntax π  A (λ a → D) = π[ a ∶ A ] D
-syntax σ  A (λ a → D) = σ[ a ∶ A ] D
+syntax π  A (λ a →  D)  = π[ a ∶  A ] D
+syntax σ  A (λ a →  D)  = σ[ a ∶  A ] D
+syntax ρ  R         D   = ρ[      R ] D
 \end{code}
-For example, |Acc<D| can be rewritten as |(σ[ n ∶ ℕ ] ρ (π[ m ∶ ℕ ] π[ lt ∶ m < n ] ι m) (ι n)) ∷ []|.
+For example, |Acc<D| can be rewritten as |(σ[ n ∶ ℕ ] ρ[ π[ m ∶ ℕ ] π[ lt ∶ m < n ] ι m ] ι n) ∷ []|.
 
 In the standard recipe, a description |D : ConDs I| is converted to a type family |μ D : I → Set| by the operator~|μ| which takes the least fixed point of the base functor |⟦ D ⟧ᶜˢ : (I → Set) → (I → Set)|:
 \begin{code}
@@ -646,7 +647,7 @@ AccD = record
      ;  level-inequality = refl
      ;  Param   = [ A ∶ Set ℓ ] [ R ∶ (A → A → Set ℓ') ] []
      ;  Index   = λ (A , _) → [ _ ∶ A ] []
-     ;  applyP  = λ (A , R , _) → (σ[ x ∶ A ] ρ (π[ y ∶ A ] π[ _ ∶ R y x ] ι (y , tt)) (ι (x , tt))) ∷ [] }{-"\kern-1.5pt"-}}
+     ;  applyP  = λ (A , R , _) → (σ[ x ∶ A ] ρ[ π[ y ∶ A ] π[ _ ∶ R y x ] ι (y , tt) ] ι (x , tt)) ∷ [] }{-"\kern-1.5pt"-}}
 \end{code}
 
 What remain to be explained are the fields |alevel| and |level-inequality|, which make sure that a corresponding datatype definition would pass Agda's universe checker.
@@ -982,7 +983,7 @@ This extra sort of universes will make our library portable to proof assistants 
 
 \begin{figure}
 
-\begin{minipage}[t]{.6\textwidth}\setlength{\mathindent}{0em}
+\begin{minipage}[t]{.62\textwidth}\setlength{\mathindent}{0em}
 \begin{code}
 data Term where
   agda-sort : (s : Sort)                          → Term
@@ -997,7 +998,7 @@ data Term where
   unknown   : Term
 \end{code}
 \end{minipage}%
-\begin{minipage}[t]{.4\textwidth}\setlength{\mathindent}{0em}
+\begin{minipage}[t]{.37\textwidth}\setlength{\mathindent}{0em}
 \begin{code}
 data Sort where
   set      : (t : Term)  →  Sort

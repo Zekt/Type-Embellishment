@@ -82,6 +82,7 @@ module _ (I : Set ℓⁱ) where
 
   syntax π A (λ a → D) = π[ a ∶ A ] D
   syntax σ A (λ a → D) = σ[ a ∶ A ] D
+  syntax ρ R        D  = ρ[     R ] D
 
 record PDataD : Setω where
   constructor pdatad
