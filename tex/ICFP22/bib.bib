@@ -1,12 +1,55 @@
 %% This BibTeX bibliography file was created using BibDesk.
-%% http://bibdesk.sourceforge.net/
+%% https://bibdesk.sourceforge.io/
 
-%% Created for Josh Ko at 2022-02-05 15:37:03 +0800 
+%% Created for Josh Ko at 2022-02-09 13:31:03 +0800 
 
 
 %% Saved with string encoding Unicode (UTF-8) 
 
 
+
+@inproceedings{Pickering-pattern-synonyms,
+	abstract = {Pattern matching has proven to be a convenient, expressive way of inspecting data. Yet this language feature, in its traditional form, is limited: patterns must be data constructors of concrete data types. No computation or abstraction is allowed. The data type in question must be concrete, with no ability to enforce any invariants. Any change in this data type requires all clients to update their code.\par
+
+This paper introduces \emph{pattern synonyms}, which allow programmers to abstract over patterns, painting over all the shortcomings listed above. Pattern synonyms are assigned types, enabling a compiler to check the validity of a synonym independent of its definition. These types are intricate; detailing how to assign a type to a pattern synonym is a key contribution of this work. We have implemented pattern synonyms in the Glasgow Haskell Compiler, where they have enjoyed immediate popularity, but we believe this feature could easily be exported to other languages that support pattern matching.},
+	author = {Pickering, Matthew and {\'E}rdi, Gergo Gerg{\H o} and Peyton Jones, Simon and Eisenberg, Richard A.},
+	booktitle = {International Symposium on Haskell},
+	date-added = {2022-02-09 13:31:02 +0800},
+	date-modified = {2022-02-09 13:31:02 +0800},
+	doi = {10.1145/2976002.2976013},
+	pages = {80--91},
+	publisher = {ACM},
+	title = {Pattern Synonyms},
+	year = 2016,
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCPLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L1BpY2tlcmluZyBldCBhbCAyMDE2IC0gUGF0dGVybiBTeW5vbnltcy5wZGZPEQJMAAAAAAJMAAIAAAZTeXN0ZW0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQkQAAf////8fUGlja2VyaW5nIGV0IGFsIDIwI0ZGRkZGRkZGLnBkZgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wAAAAAAAAAAAAAAAAAFAAYAAAogY3UAAAAAAAAAAAAAAAAADUJpYlJlcG9zaXRvcnkAAAIAjy86VXNlcnM6am9zaGtvOkxpYnJhcnk6TW9iaWxlIERvY3VtZW50czpKRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlcjpEb2N1bWVudHM6QmliUmVwb3NpdG9yeTpQaWNrZXJpbmcgZXQgYWwgMjAxNiAtIFBhdHRlcm4gU3lub255bXMucGRmAAAOAFgAKwBQAGkAYwBrAGUAcgBpAG4AZwAgAGUAdAAgAGEAbAAgADIAMAAxADYAIAAtACAAUABhAHQAdABlAHIAbgAgAFMAeQBuAG8AbgB5AG0AcwAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAjVVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvUGlja2VyaW5nIGV0IGFsIDIwMTYgLSBQYXR0ZXJuIFN5bm9ueW1zLnBkZgAAEwABLwAAFQACAA3//wAAAAgADQAaACQAtgAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAMG}}
+
+@phdthesis{Morris-thesis,
+	abstract = {Programming languages with an expressive language for defining data types often suffer from an excess in boiler-plate code and lack of re-usable, extendible libraries. Dependently typed programming languages are especially prone to such problems. With dependent types one can specify any number of relationships between data and types, to better specify the correct behaviour of programs. Thus one might begin with a single list type and extend it to lists on a known length, or ordered lists, or
+ordered lists of a known length. The possibilities are endless. Each of these `list-like' structures will support some kind of functorial map, yet each new variant must come with a new definition of $\mathit{map}$ that looks rather like all the others. Epigram is a dependently typed functional programming language which suffers from just this proliferation of types.\par
+
+This thesis suggests a solution to the data type proliferation problem for Epigram, combining universes and generic programming. Universes are a means to abstract over specific classes of types. Generic or polytypic programming is a technique by which functions are specialised on the structure of the type of their arguments. By using universes to abstract over the syntax of a class of data types, generic programming can be incorporated into Epigram without extending the language. Thus, functions
+like $\mathit{map}$ can be defined once, not just for list like structures but a whole range of types.\par
+
+The story begins with a class of simple types which are given a purely syntactic treatment and a second, semantic, interpretation, based on the theory of containers. The syntactic and semantic views permit complimentary access to generic programming with these types. It is then shown that the generalisation of these techniques to a rich class of types, is not a difficult jump. The system that results is strong enough to allow generic programming for any data type that can be defined in Epigram.},
+	author = {Peter Morris},
+	date-added = {2022-02-09 11:33:00 +0800},
+	date-modified = {2022-02-09 11:33:00 +0800},
+	read = {1},
+	school = {University of Nottingham},
+	title = {Constructing Universes for Generic Programming},
+	year = {2007},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCkLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L01vcnJpcyAyMDA3IC0gQ29uc3RydWN0aW5nIFVuaXZlcnNlcyBmb3IgR2VuZXJpYyBQcm9ncmFtbWluZy5wZGZPEQKeAAAAAAKeAAIAAAZTeXN0ZW0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQkQAAf////8fTW9ycmlzIDIwMDcgLSBDb25zI0ZGRkZGRkZGLnBkZgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wAAAAAAAAAAAAAAAAAFAAYAAAogY3UAAAAAAAAAAAAAAAAADUJpYlJlcG9zaXRvcnkAAAIApC86VXNlcnM6am9zaGtvOkxpYnJhcnk6TW9iaWxlIERvY3VtZW50czpKRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlcjpEb2N1bWVudHM6QmliUmVwb3NpdG9yeTpNb3JyaXMgMjAwNyAtIENvbnN0cnVjdGluZyBVbml2ZXJzZXMgZm9yIEdlbmVyaWMgUHJvZ3JhbW1pbmcucGRmAA4AggBAAE0AbwByAHIAaQBzACAAMgAwADAANwAgAC0AIABDAG8AbgBzAHQAcgB1AGMAdABpAG4AZwAgAFUAbgBpAHYAZQByAHMAZQBzACAAZgBvAHIAIABHAGUAbgBlAHIAaQBjACAAUAByAG8AZwByAGEAbQBtAGkAbgBnAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgCiVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9Nb3JyaXMgMjAwNyAtIENvbnN0cnVjdGluZyBVbml2ZXJzZXMgZm9yIEdlbmVyaWMgUHJvZ3JhbW1pbmcucGRmABMAAS8AABUAAgAN//8AAAAIAA0AGgAkAMsAAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAADbQ==}}
+
+@book{Bird-AoP,
+	author = {Bird, Richard and de Moor, Oege},
+	date-added = {2022-02-08 16:02:46 +0800},
+	date-modified = {2022-02-08 16:02:46 +0800},
+	isbn = {9780135072455},
+	publisher = {Prentice-Hall},
+	read = {1},
+	title = {Algebra of Programming},
+	year = {1997},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCQLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0JpcmQgZXQgYWwgMTk5NyAtIEFsZ2VicmEgb2YgUHJvZ3JhbW1pbmcucGRmTxECTgAAAAACTgACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H0JpcmQgZXQgYWwgMTk5NyAtICNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJAvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6QmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYADgBaACwAQgBpAHIAZAAgAGUAdAAgAGEAbAAgADEAOQA5ADcAIAAtACAAQQBsAGcAZQBiAHIAYQAgAG8AZgAgAFAAcgBvAGcAcgBhAG0AbQBpAG4AZwAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAjlVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvQmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYAEwABLwAAFQACAA3//wAAAAgADQAaACQAtwAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAMJ}}
 
 @incollection{Abou-Saleh-BX-intro,
 	abstract = {Bidirectional transformations (BX) serve to maintain consistency between different representations of related and often overlapping information, translating changes in one representation to the others. We present a brief introduction to the field, in order to provide some common background to the remainder of this volume, which constitutes the lecture notes from the \emph{Summer School on Bidirectional Transformations}, held in Oxford in July 2016 as one of the closing activities of the UK EPSRC-funded project \emph{A Theory of Least Change for Bidirectional Transformations}.},
@@ -38,17 +81,18 @@
 	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhbxCcAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAEwAaQBiAHIAYQByAHkALwBNAG8AYgBpAGwAZQAgAEQAbwBjAHUAbQBlAG4AdABzAC8ASgBGAEoAVwBXAFAANgA0AFEARAB+AGMAbwBtAH4AZwBvAG8AZABpAHcAYQByAGUAfgBHAG8AbwBkAFIAZQBhAGQAZQByAC8ARABvAGMAdQBtAGUAbgB0AHMALwBCAGkAYgBSAGUAcABvAHMAaQB0AG8AcgB5AC8ATQBhAGcAYQBsAGgAYQMDAGUAcwAgAGUAdAAgAGEAbAAgADIAMAAxADAAIAAtACAATwBwAHQAaQBtAGkAegBpAG4AZwAgAEcAZQBuAGUAcgBpAGMAcwAgAEkAcwAgAEUAYQBzAHkAIQAuAHAAZABmTxECggAAAAACggACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////FE1hZ2FsaGEjRkZGRkZGRkYucGRmLSBPcHRpbWl6aQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJ0vOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6TWFnYWxoYcyDZXMgZXQgYWwgMjAxMCAtIE9wdGltaXppbmcgR2VuZXJpY3MgSXMgRWFzeSEucGRmAAAOAHIAOABNAGEAZwBhAGwAaABhAwMAZQBzACAAZQB0ACAAYQBsACAAMgAwADEAMAAgAC0AIABPAHAAdABpAG0AaQB6AGkAbgBnACAARwBlAG4AZQByAGkAYwBzACAASQBzACAARQBhAHMAeQAhAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgCbVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9NYWdhbGhhzINlcyBldCBhbCAyMDEwIC0gT3B0aW1pemluZyBHZW5lcmljcyBJcyBFYXN5IS5wZGYAABMAAS8AABUAAgAN//8AAAAIAA0AGgAkAV8AAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAAD5Q==}}
 
 @article{Cockx-pattern-matching-without-K,
-abstract = {Dependent pattern matching is an intuitive way to write programs and proofs in dependently typed languages. It is reminiscent of both pattern matching in functional languages and case analysis in on-paper mathematics. However, in general, it is incompatible with new type theories such as homotopy type theory (HoTT). As a consequence, proofs in such theories are typically harder to write and to understand. The source of this incompatibility is the reliance of dependent pattern matching on the so-called K axiom – also known as the uniqueness of identity proofs – which is inadmissible in HoTT. In this paper, we propose a new criterion for dependent pattern matching without K, and prove it correct by a translation to eliminators in the style of Goguen et al . (2006 Algebra, Meaning, and Computation ). Our criterion is both less restrictive than existing proposals, and solves a previously undetected problem in the old criterion offered by Agda. It has been implemented in Agda and is the first to be supported by a formal proof. Thus, it brings the benefits of dependent pattern matching to contexts where we cannot assume K, such as HoTT.},
-author = {Cockx, Jesper and Devriese, Dominique and Piessens, Frank},
-doi = {10.1017/S0956796816000174},
-issn = {0956-7968},
-journal = {Journal of Functional Programming},
-pages = {e16},
-title = {{Eliminating dependent pattern matching without K}},
-url = {https://www.cambridge.org/core/product/identifier/S0956796816000174/type/journal{\_}article},
-volume = {26},
-year = {2016}
-}
+	abstract = {Dependent pattern matching is an intuitive way to write programs and proofs in dependently typed languages. It is reminiscent of both pattern matching in functional languages and case analysis in on-paper mathematics. However, in general, it is incompatible with new type theories such as homotopy type theory (HoTT). As a consequence, proofs in such theories are typically harder to write and to understand. The source of this incompatibility is the reliance of dependent pattern matching on the so-called K axiom -- also known as the uniqueness of identity proofs -- which is inadmissible in HoTT. In this paper, we propose a new criterion for dependent pattern matching without K, and prove it correct by a translation to eliminators in the style of Goguen et al . (2006 Algebra, Meaning, and Computation ). Our criterion is both less restrictive than existing proposals, and solves a previously undetected problem in the old criterion offered by Agda. It has been implemented in Agda and is the first to be supported by a formal proof. Thus, it brings the benefits of dependent pattern matching to contexts where we cannot assume K, such as HoTT.},
+	author = {Cockx, Jesper and Devriese, Dominique and Piessens, Frank},
+	doi = {10.1017/S0956796816000174},
+	issn = {0956-7968},
+	journal = {Journal of Functional Programming},
+	pages = {e16},
+	title = {{Eliminating dependent pattern matching without K}},
+	url = {https://www.cambridge.org/core/product/identifier/S0956796816000174/type/journal{\_}article},
+	volume = {26},
+	year = {2016},
+	bdsk-url-1 = {https://www.cambridge.org/core/product/identifier/S0956796816000174/type/journal%7B%5C_%7Darticle},
+	bdsk-url-2 = {https://doi.org/10.1017/S0956796816000174}}
 
 @article{de-Bruijn-telescopes,
 	abstract = {The paper develops notation for strings of abstractors in typed lambda calculus, and shows how to treat them more or less as single abstractors.},
@@ -502,49 +546,52 @@ Keywords: homotopy type theory, coherences, strict equality, homotopy type syste
 	bdsk-url-2 = {https://doi.org/10.4230/LIPIcs.CSL.2016.21}}
 
 @article{Dybjer1994,
-author = {Dybjer, Peter},
-doi = {10.1007/BF01211308},
-issn = {0934-5043},
-journal = {Formal Aspects of Computing},
-keywords = {Inductive definitions,Intuitionistic type theory,Natural deduction},
-number = {4},
-pages = {440--465},
-title = {Inductive families},
-url = {http://link.springer.com/10.1007/BF01211308},
-volume = {6},
-year = {1994}
-}
+	author = {Dybjer, Peter},
+	doi = {10.1007/BF01211308},
+	issn = {0934-5043},
+	journal = {Formal Aspects of Computing},
+	keywords = {Inductive definitions,Intuitionistic type theory,Natural deduction},
+	number = {4},
+	pages = {440--465},
+	title = {Inductive families},
+	url = {http://link.springer.com/10.1007/BF01211308},
+	volume = {6},
+	year = {1994},
+	bdsk-url-1 = {http://link.springer.com/10.1007/BF01211308},
+	bdsk-url-2 = {https://doi.org/10.1007/BF01211308}}
 
 @incollection{Dybjer1999,
-author = {Dybjer, Peter and Setzer, Anton},
-booktitle = {Typed Lambda Calculi and Applications. TLCA 1999},
-doi = {10.1007/3-540-48959-2_11},
-editor = {Girard, Jean-Yves},
-isbn = {3540657630},
-issn = {16113349},
-pages = {129--146},
-publisher = {Springer, Berlin, Heidelberg},
-series = {Lecture Notes in Computer Science},
-title = {A Finite Axiomatization of Inductive-Recursive Definitions},
-url = {http://link.springer.com/10.1007/3-540-48959-2{\_}11},
-volume = {1581},
-year = {1999}
-}
+	author = {Dybjer, Peter and Setzer, Anton},
+	booktitle = {Typed Lambda Calculi and Applications. TLCA 1999},
+	doi = {10.1007/3-540-48959-2_11},
+	editor = {Girard, Jean-Yves},
+	isbn = {3540657630},
+	issn = {16113349},
+	pages = {129--146},
+	publisher = {Springer, Berlin, Heidelberg},
+	series = {Lecture Notes in Computer Science},
+	title = {A Finite Axiomatization of Inductive-Recursive Definitions},
+	url = {http://link.springer.com/10.1007/3-540-48959-2{\_}11},
+	volume = {1581},
+	year = {1999},
+	bdsk-url-1 = {http://link.springer.com/10.1007/3-540-48959-2%7B%5C_%7D11},
+	bdsk-url-2 = {https://doi.org/10.1007/3-540-48959-2_11}}
 
 @incollection{Alimarine2004,
-abstract = {Generic functions are defined by induction on the structural representation of types. As a consequence, by defining just a single generic operation, one acquires this operation over any particular type. An instance on a specific type is generated by interpretation of the type's structure. A direct translation leads to extremely inefficient code that involves many conversions between types and their structural representations. In this paper we present an optimization technique based on compile-time symbolic evaluation. We prove that the optimization removes the overhead of the generated code for a considerable class of generic functions. The proof uses typing to identify intermediate data structures that should be eliminated. In essence, the output after optimization is similar to hand-written code. {\textcopyright} Springer-Verlag 2004.},
-author = {Alimarine, Artem and Smetsers, Sjaak},
-booktitle = {Mathematics of Program Construction. MPC 2004},
-doi = {10.1007/978-3-540-27764-4_3},
-editor = {Kozen, Dexter},
-file = {:Users/liang-tingchen/Dropbox/References/Alimarine, Smetsers - 2004 - Optimizing Generic Functions.pdf:pdf},
-isbn = {3540223800},
-issn = {16113349},
-pages = {16--31},
-publisher = {Springer, Berlin, Heidelberg},
-series = {Lecture Notes in Computer Science},
-title = {{Optimizing Generic Functions}},
-url = {http://link.springer.com/10.1007/978-3-540-27764-4{\_}3},
-volume = {3125},
-year = {2004}
-}
+	abstract = {Generic functions are defined by induction on the structural representation of types. As a consequence, by defining just a single generic operation, one acquires this operation over any particular type. An instance on a specific type is generated by interpretation of the type's structure. A direct translation leads to extremely inefficient code that involves many conversions between types and their structural representations. In this paper we present an optimization technique based on compile-time symbolic evaluation. We prove that the optimization removes the overhead of the generated code for a considerable class of generic functions. The proof uses typing to identify intermediate data structures that should be eliminated. In essence, the output after optimization is similar to hand-written code. {\textcopyright} Springer-Verlag 2004.},
+	author = {Alimarine, Artem and Smetsers, Sjaak},
+	booktitle = {Mathematics of Program Construction. MPC 2004},
+	doi = {10.1007/978-3-540-27764-4_3},
+	editor = {Kozen, Dexter},
+	file = {:Users/liang-tingchen/Dropbox/References/Alimarine, Smetsers - 2004 - Optimizing Generic Functions.pdf:pdf},
+	isbn = {3540223800},
+	issn = {16113349},
+	pages = {16--31},
+	publisher = {Springer, Berlin, Heidelberg},
+	series = {Lecture Notes in Computer Science},
+	title = {{Optimizing Generic Functions}},
+	url = {http://link.springer.com/10.1007/978-3-540-27764-4{\_}3},
+	volume = {3125},
+	year = {2004},
+	bdsk-url-1 = {http://link.springer.com/10.1007/978-3-540-27764-4%7B%5C_%7D3},
+	bdsk-url-2 = {https://doi.org/10.1007/978-3-540-27764-4_3}}

@@ -37,6 +37,7 @@
 %% Uncommenting
 %% the next command will enable that style.
 \citestyle{acmauthoryear}
+\setcitestyle{nosort}
 
 \settopmatter{printacmref=false}
 
@@ -62,8 +63,7 @@
 %include agda.fmt
 
 \setlength{\mathindent}{.5\parindent}
-%\renewcommand{\Varid}{\texttt}
-%\renewcommand{\Conid}{\texttt}
+\newcommand{\cons}[1]{\mathbf{#1}}
 \newcommand{\iden}{\mathit}
 
 %format syntax = "\Keyword{syntax}"
@@ -73,12 +73,13 @@
 %format quote = "\Keyword{quote}"
 %format quoteTerm = "\Keyword{quoteTerm}"
 %format macro = "\Keyword{macro}"
-%format macro = "\Keyword{postulate}"
+%format postulate = "\Keyword{postulate}"
 
 %format == = "\mathop="
 %format _ = "\char95"
 %format : = "\mathop:"
 %format → = "\mathop\to"
+%format ... = ".\kern.5pt.\kern.5pt.\kern.5pt"
 %format [ = "[\kern-2pt"
 %format Σ[ = Σ [
 %format σ[ = σ [
@@ -148,8 +149,30 @@
 %format fmapᵈ = fmap ᵈ
 
 %format ⁱ = "_{\Conid I}"
+%format ˣ = "_{\iden X}"
+%format ʸ = "_{\iden Y}"
+
+%format acc = "\cons{acc}"
+%format con = "\cons{con}"
+%format inl = "\cons{inl}"
+%format inr = "\cons{inr}"
+%format refl = "\cons{refl}"
+%format ι = "\textbf{\textiota}"
+%format σ = "\textbf{\textsigma}"
+%format ρ = "\textbf{\textrho}"
+%format π = "\textbf{\textpi}"
+%format zero = "\cons{zero}"
+%format suc = "\cons{suc}"
+%format set = "\cons{set}"
+%format pi = "\cons{pi}"
+%format lit = "\cons{lit}"
+%format lam = "\cons{lam}"
+%format var = "\cons{var}"
+%format def = "\cons{def}"
+%format unknown = "\cons{unknown}"
 
 %format A = "\iden A"
+%format B = "\iden B"
 %format C = "\iden C"
 %format D = "\iden D"
 %format E = "\iden E"
@@ -168,13 +191,18 @@
 %format as = "\iden{as}"
 %format alg = "\iden{alg}"
 %format args = "\iden{args}"
+%format calgs = "\iden{calgs}"
+%format calgsˣ = calgs ˣ
+%format calgsʸ = calgs ʸ
 %format cb = "\iden{cb}"
 %format cbs = "\iden{cbs}"
 %format d = "\iden d"
 %format ds = "\iden{ds}"
 %format eq = "\iden{eq}"
 %format f = "\iden f"
+%format fC = "\iden{fC}"
 %format fs = "\iden{fs}"
+%format h = "\iden h"
 %format i = "\iden i"
 %format is = "\iden{is}"
 %format j = "\iden j"
@@ -193,6 +221,7 @@
 %format p = "\iden p"
 %format ps = "\iden{ps}"
 %format rb = "\iden{rb}"
+%format rec = "\iden{rec}"
 %format t = "\iden t"
 %format u = "\iden u"
 %format x = "\iden x"
@@ -207,7 +236,7 @@
 %%
 %% The "title" command has an optional parameter,
 %% allowing the author to define a "short title" to be used in page headers.
-\title{Datatype-Generic Programming Meets Metaprogramming}
+\title{Datatype-Generic Programming Meets Elaborator Reflection}
 
 %% the authors and their affiliations.
 %% Of note is the shared affiliation of the first two authors, and the
@@ -274,14 +303,15 @@
 \maketitle
 
 \section{What Does the Dependently Typed Programmer Want from Datatype-Generic Libraries?}
+\label{sec:introduction}
 
 \todo[inline]{2 pages}
 
-\Josh{Problems with the current state of dependently typed DGP (the kind of DGP discussed in this paper; no qualification thereafter)}
+\Josh{Problems with the current state of dependently typed DGP (the kind of DGP discussed in this paper; no qualification hereafter)}
 
 \Josh{What we really want from generic libraries, using lists and vectors as familiar examples: we want to generate functions for native datatypes as if they are hand-written so that they are efficient to compute (no back-and-forth representation conversions), easy to reason about (again without the conversions and no excessive abstraction), and can fully benefit from whatever language facilities there are (e.g., Agda's interactive features and compiler optimisations); moreover, we want to generate not only, for example, fold operators but also their theorems such as fold fusion; particularly important in a dependently typed setting is the ability to generate new \emph{datatypes}, and then their functions and properties (e.g., algebraic ornamentation and the associated isomorphism)}
 
-\Josh{Old attempts at optimising DGP: There have been many attempts at removing overheads by compiler optimisation, but this is not enough for dependently typed programming, where programs may appear in later types and be reasoned about (and haven’t been processed by the compiler at all).
+\Josh{Old attempts at optimising DGP and why they don't work: There have been many attempts at removing overheads by compiler optimisation, but this is not enough for dependently typed programming, where programs may appear in later types and be reasoned about (and haven’t been processed by the compiler at all).
 And compiler optimisations need to be fine-tuned to produce what we want; why not just generate what we want in the first place?}
 
 \Josh{Staging? No! Enter elaborator reflection.}
@@ -304,28 +334,24 @@ $\bullet$ Simpler and less error-prone `object-level' binder-manipulating techni
 \section{A Recap of Datatype-Generic Programming}
 \label{sec:recap}
 
-\Josh{3 pages}
-
-\Josh{A recap of the standard approach (except for some minor details), also serving as an outline}
-
 \Josh{Say somewhere `datatype' means `inductive families' in this paper}
 
-\Josh{Typesetting conventions (in a footnote)}
-
 \LT{Cite \cite{Dybjer1994,Dybjer1999} somewhere for the definition of inductive families.}
-\LT{Use \emph{(non)-inductive part/premise} instead of recursive part/premise as suggested by~\citet{Dybjer1999}}
-We start from a recap of standard datatype-generic programming (DGP) within a dependently typed setting, but use a three-layered encoding of datatypes that more closely follows the structure of a native datatype definition, which has a list of constructors made up of a series of fields, some of which can be potentially higher-order recursive occurrences of the datatype being defined.%
+
+We start from a recap of standard datatype-generic programming in a dependently typed setting, and first of all we need to decide how datatype definitions are encoded as first-class entities.
+There have been quite a few variants of encoding~\citep{Morris-thesis,Chapman-levitation,McBride-ornaments,Dagand-functional-ornaments,Ko-OrnJFP}; here we use a three-layered version that more closely follows the structure of an Agda datatype definition,%
 \footnote{This choice of layered structure has also been adopted elsewhere, for example by \citet{de-Vries-true-SoP}.}
-As a small example that covers all the essential components of datatype definitions (in particular higher-order recursive occurrence), consider this datatype |Acc<| of accessibility proofs:%
-\footnote{Although the meaning of |Acc<| is not important here, a quick explanation is that a proof |acc as : Acc< n| that |n|~is accessible captures the fact that any descending chain from~|n| with respect to~|_<_| is finite: if we deconstruct the proof by applying |as| to some~|m| such that |m < n|, we will get a proof of |Acc< m|, which we can keep deconstructing, but can only do so a finite number of times because |Acc<| is an inductive datatype.}
+which has (i)~a list of constructors made up of (ii)~a series of fields, some of which can be (iii)~potentially higher-order recursive occurrences of the datatype being defined.
+As a small running example that covers all the essential components, consider this datatype |Acc<| of accessibility proofs:%
+\footnote{Although the meaning of |Acc<| is not important here, a quick explanation is that a proof |acc as : Acc< n| that |n|~is accessible captures the fact that any descending chain from~|n| with respect to~|_<_| is finite: if we deconstruct the proof by applying~|as| to some~|m| such that |m < n|, we will get a proof of |Acc< m|, which we can keep deconstructing, but can only do so a finite number of times because |Acc<| is an inductive datatype.}
 \begin{code}
 data Acc< : ℕ → Set where
-  acc : {n : ℕ} (as : (m : ℕ) (lt : m < n) → Acc< m) → Acc< n
+  acc : (n : ℕ) (as : (m : ℕ) (lt : m < n) → Acc< m) → Acc< n
 \end{code}
 The first layer is the list of constructors, which for |Acc<| consists of only |acc|;
 the type of |acc| has two fields |n|~and |as|, which constitute the second layer;
 the type of the field |as| is described in the third layer as it ends with the recursive occurrence |Acc< m|, in front of which there are function arguments |m|~and~|lt| (making the recursive occurrence higher-order).
-Corresponding to the three layers, we use three datatypes of \emph{descriptions} ---all parametrised by an index type~|I|--- to encode datatype definitions,\todo{warning: this is not the final version}
+Corresponding to the three layers, we use three datatypes of `descriptions' ---all parametrised by an index type~|I|--- to encode datatype definitions,
 \begin{code}
 data ConDs (I : Set) : Set₁ where
   []  :                                ConDs I
@@ -346,21 +372,22 @@ Acc<D : ConDs ℕ
 Acc<D = (σ ℕ (λ n → ρ (π ℕ (λ m → π (m < n) (λ lt → ι m))) (ι n))) ∷ []
 \end{code}
 Inhabitants of |ConDs I| are just lists of constructor (type) descriptions of type |ConD I|.
-Inhabitants of |ConD I| are also list-like, where the elements can either be the type of an ordinary field, marked by~|σ|, or describe a recursive occurrence, marked by~|ρ|, and the `lists' end with~|ι|.
-Different from ordinary lists, in the case of |σ A D| a new variable of type~|A| is brought into the context of~|D| (for example, |n|~appears in the type of |as|); this is done by making~|D| a function with an argument of type~|A|, using the host language's function space to extend the context --- we will continue to use this technique heavily in \cref{sec:parameters}.\todo{forward reference about detecting abuses; include a bit more discussion about HOAS}%
-\footnote{The expressive power of the host language's function space has been better utilised in the DGP literature (for example by \citet[Section~2.1]{McBride-ornaments}), but we will refrain from abusing the function space in the descriptions for tasks beyond context extension, and it will be easy to detect abuses at the meta-level.}
-Moreover, the~|ι| at the end of a |ConD I| should specify the index targeted by the constructor (e.g., the final~|n| in the type of |acc|).
+Inhabitants of |ConD I| are also list-like, where the elements can either be the type of a non-recursive field, marked by~|σ|, or describe a recursive occurrence, marked by~|ρ|, and the `lists' end with~|ι|.
+Different from ordinary lists, in the case of |σ A D| a new variable of type~|A| is brought into the context of~|D| (for example, |n|~appears in the type of~|as|); this is done by making~|D| a function with an argument of type~|A|, using the host language's function space to extend the context --- we will continue to use this technique heavily in \cref{sec:parameters}.%
+\footnote{The expressive power of the host language's function space has been better utilised in the datatype-generic programming literature (for example by \citet[Section~2.1]{McBride-ornaments}), but we will refrain from abusing the function space in the descriptions for tasks beyond context extension, keeping our descriptions in correspondence with native datatypes.
+In general, if there are abuses, they will be detected at the meta-level, as we will see in \cref{sec:reflection}.}
+Moreover, the~|ι| at the end of a |ConD I| should specify the index targeted by the constructor (for example, the final~|n| in the type of |acc|).
 Inhabitants of |RecD I| use the same structure to describe dependent function types ending with a recursive occurrence.
+(This version of descriptions is close to but not the final version, which we will see in \cref{sec:parameters}.)
 
-To make descriptions slightly easier to write and read, we can introduce a couple of syntax declarations inspired by de Bruijn's telescope notation~\cite{de-Bruijn-telescopes}:
+To make descriptions of specific datatypes slightly easier to write and read, we introduce a couple of syntax declarations for the binders,
 \begin{code}
 syntax π  A (λ a →  D)  = π[ a ∶  A ] D
 syntax σ  A (λ a →  D)  = σ[ a ∶  A ] D
-syntax ρ  R         D   = ρ[      R ] D
 \end{code}
-For example, |Acc<D| can be rewritten as |(σ[ n ∶ ℕ ] ρ[ π[ m ∶ ℕ ] π[ lt ∶ m < n ] ι m ] ι n) ∷ []|.
+with which |Acc<D| can be rewritten as |(σ[ n ∶ ℕ ] ρ (π[ m ∶ ℕ ] π[ lt ∶ m < n ] ι m) (ι n)) ∷ []|.
 
-In the standard recipe, a description |D : ConDs I| is converted to a type family |μ D : I → Set| by the operator~|μ| which takes the least fixed point of the base functor |⟦ D ⟧ᶜˢ : (I → Set) → (I → Set)|:
+In the standard recipe, a description |D : ConDs I| is converted to a type family |μ D : I → Set| by taking the least fixed point of the base functor |⟦ D ⟧ᶜˢ : (I → Set) → (I → Set)|:
 \begin{code}
 data μ (D : ConDs I) : I → Set where
   con : ∀ {i} → ⟦ D ⟧ᶜˢ (μ D) i → μ D i
@@ -371,13 +398,17 @@ Acc< : ℕ → Set
 Acc< = μ Acc<D
 \end{code}
 whose inhabitants are now constructed by the generic constructor |con|.
-The argument of |con| (of type |⟦ D ⟧ᶜˢ (μ D) i|) encodes the constructor choice and the arguments of the chosen constructor in a sum-of-products structure; for example, in Agda it is more convenient to use a pattern synonym\todo{Cite Pickering}\ to define |acc| in terms of |con|,
+Specified by the definition of the base functor |⟦ D ⟧ᶜˢ| (which we will see below), the argument of |con| encodes the choice of a constructor and the arguments of the chosen constructor in a sum-of-products structure; for example, in Agda it is customary to use a pattern synonym~\citep{Pickering-pattern-synonyms} to define |acc| in terms of |con|,
 \begin{code}
-pattern acc {n} as = con (inl (n , as , refl))
+pattern acc n as = con (inl (n , as , refl))
 \end{code}
-where the arguments |n|~and |as| of |acc| are collected in a tuple, which is injected into a sum type by |inl|, and finally wrapped up with |con| as an inhabitant of |μ Acc<D n|.
+where the arguments |n|~and~|as| of |acc| are collected in a tuple (product structure), tagged by |inl| (left injection into a sum type), and finally wrapped up with |con| as an inhabitant of |μ Acc<D n|.
+In general, when there are multiple constructors, the injection parts will look like |inl ...|, |inr (inl ...)|, |inr (inr (inl ...))|, etc, specifying the branch of the sum structure to inject into in Peano-style.
 The equality proof |refl| at the end of the tuple needs a bit more explanation: in the type of |con|, the index~|i| is universally quantified, which seems to suggest that we could construct inhabitants of |μ D i| for any~|i|, but the equality proof forces~|i| to be~|n|, the index targeted by |acc|.
-The sum and product structures are defined respectively on the first two layers of descriptions:
+The sum and product structures are defined respectively on the first two layers of descriptions:%
+\footnote{|⊥|~is the empty type with no constructors.
+|A ⊎ B| is the sum of the types |A|~and~|B| with constructors |inl : A → A ⊎ B| and |inr : B → A ⊎ B|.
+|Σ[ a ∶ A ] B| is a dependent pair type, where |Σ[ a ∶ A ]| binds the variable~|a|, which can appear in~|B|.}
 \begin{code}
 ⟦_⟧ᶜˢ : ConDs I → (I → Set) → (I → Set)
 ⟦ []      ⟧ᶜˢ  X i = ⊥
@@ -388,7 +419,7 @@ The sum and product structures are defined respectively on the first two layers 
 ⟦ σ A  D  ⟧ᶜ   X i = Σ[ a ∶ A ] ⟦ D a ⟧ᶜ X i
 ⟦ ρ D  E  ⟧ᶜ   X i = ⟦ D ⟧ʳ X × ⟦ E ⟧ᶜ X i
 \end{code}
-In the |ρ|~case we need to translate~|D| into the type of the recursive occurrence, which is done by
+In the |ρ|~case we need to translate~|D| to the type of the recursive occurrence, which is done by
 \begin{code}
 ⟦_⟧ʳ : RecD I → (I → Set) → Set
 ⟦ ι i    ⟧ʳ X = X i
@@ -398,37 +429,44 @@ In the |ρ|~case we need to translate~|D| into the type of the recursive occurre
 Now we can write programs on |Acc<|, for example its fold operator:%
 \footnote{This operator proves the strong induction principle on accessible natural numbers.}
 \begin{code}
-foldAcc< :  {P : ℕ → Set} → (∀ {n} → (∀ m → m < n → P m) → P n) →
+foldAcc< :  {P : ℕ → Set} → (∀ n → (∀ m → m < n → P m) → P n) →
             ∀ {n} → Acc< n → P n
-foldAcc< p (acc as) = p (λ m lt → foldAcc< p (as m lt))
+foldAcc< p (acc n as) = p n (λ m lt → foldAcc< p (as m lt))
 \end{code}
-However, the point of using described datatypes such as |μ Acc<D| is that we do not have to write |foldAcc<| ourselves but can simply derive it as an instantiation of a generic grogram parametrised by a description.
-One useful class of generic programs is ($F$-)algebras (where the functor~$F$ is always some base functor |⟦ D ⟧ᶜˢ| in this paper), whose type is defined by
+However, the point of using described datatypes such as |μ Acc<D| is that we do not have to write |foldAcc<| ourselves but can simply derive it as an instantiation of a generic grogram.
+The class of generic programs we will focus on in this paper is `($F$-)algebras'~\citep{Bird-AoP} (where the functor~$F$ is always some base functor |⟦ D ⟧ᶜˢ| in this paper), whose type is defined by
 \begin{code}
 Alg : ConDs I → (I → Set) → Set
 Alg D X = ∀ {i} → ⟦ D ⟧ᶜˢ X i → X i
 \end{code}
-An algebra of type |Alg D X| is the non-recursive part\todo{revise}\ of a fold of type |∀ {i} → μ D i → X i|, while the recursive part can be expressed by this generic |fold| operator\todo{more explanation; cite AoP}%
-\footnote{There are safer ways to make Agda see that |fold| is terminating than using the \textsc{terminating} pragma, but they are not important for our purposes since we will not use |fold| later in the paper.}
+Algebras are useful because they are the interesting part of a fold function:
+By a `fold function' we mean a function defined recursively on an argument of some datatype by (i)~pattern-matching the argument with all possible constructors, (ii)~applying the function recursively to all the recursive positions, and (iii)~somehow computing the final result from the recursively computed sub-results and the non-recursive fields.
+For example, |foldAcc<| is a fold function, and so are a lot of common functions such as |length| from \cref{sec:introduction}.\todo{a few more examples from \cref{sec:introduction}}
+The first two steps are the same for all fold functions on the same datatype, whereas the third step is customisable and represented by an algebra, whose argument of type |⟦ D ⟧ᶜˢ X i| represents exactly the input of step~(iii).
+We can define a generic |fold| operator that expresses the computation pattern of fold functions and can be specialised to an algebra,
 \begin{code}
 {-# TERMINATING #-}
 fold : (D : ConDs I) → Alg D X → ∀ {i} → μ D i → X i
 fold D f (con ds) = f (fmapᶜˢ D (fold D f) ds)
 \end{code}
-where |fmapᶜˢ D| is the functorial map for |⟦ D ⟧ᶜˢ| (which we will define shortly).
-For example, the (parametrised) algebra for |foldAcc<| is
+where |fmapᶜˢ D| is the functorial map for |⟦ D ⟧ᶜˢ| (which we will see below), used here to apply |fold D f| to the recursive positions in~|ds|.
+Libraries may provide generic programs in the form of algebras parametrised by descriptions, and the user gets a fold function for their datatype by applying |fold| to an algebra specialised to the description of the datatype.
+For example, by specialising a generic program in \cref{sec:fold-operators}, we get an algebra (with some parameters of its own)
 \begin{code}
-foldAcc<Alg :  {P : ℕ → Set} → (∀ {n} → (∀ m → m < n → P m) → P n) →
+foldAcc<Alg :  {P : ℕ → Set} → (∀ n → (∀ m → m < n → P m) → P n) →
                Alg Acc<D P
-foldAcc<Alg p (inl (_ , ps , refl)) = p ps
+foldAcc<Alg p (inl (n , ps , refl)) = p n ps
 \end{code}
-(which will be an instantiation of a generic program in \cref{sec:fold-and-induction-operators} and will not need to be written manually), and we obtain |foldAcc<| by applying the |fold| operator to the algebra:
+which we then use to specialise |fold| to get |foldAcc<|:
 \begin{code}
-foldAcc< :  {P : ℕ → Set} → (∀ {n} → (∀ m → m < n → P m) → P n) →
+foldAcc< :  {P : ℕ → Set} → (∀ n → (∀ m → m < n → P m) → P n) →
             ∀ {n} → Acc< n → P n
 foldAcc< p = fold Acc<D (foldAcc<Alg p)
 \end{code}
-It is instructive to take a closer look at the functorial map because it is a typical generic program, which is parametrised by a description and analyses the description layer by layer:
+Instead of |fold|, however, we will provide an alternative way to get from algebras to fold functions through elaborator reflection~(\cref{sec:reflection}).
+
+For most of the generic programs in this paper we will provide only a sketch, because they are not too different from those that can be found in the literature.
+But as a more detailed example, here we take a closer look at the functorial map, which is a typical generic program parametrised by a description and analyses the description layer by layer:
 \begin{code}
 fmapᶜˢ : (D : ConDs I) → (∀ {i} → X i → Y i) → ∀ {i} → ⟦ D ⟧ᶜˢ X i → ⟦ D ⟧ᶜˢ Y i
 fmapᶜˢ (D ∷ Ds) f (inl  xs) = inl  (fmapᶜ   D   f xs)
@@ -443,16 +481,16 @@ fmapʳ : (D : RecD I) → (∀ {i} → X i → Y i) → ⟦ D ⟧ʳ X → ⟦ D 
 fmapʳ (ι i    ) f x   = f x
 fmapʳ (π A D  ) f xs  = λ a → fmapʳ (D a) f (xs a)
 \end{code}
-The functorial map should apply a given function~|f| to all the recursive positions in a sum-of-products structure while leaving everything else intact, so |fmapᶜˢ| keeps the choices of |inl| or |inr|, |fmapᶜ| keeps the |σ|-fields and |ι|-equalities, and finally |fmapʳ| applies~|f| to its input of type |⟦ D ⟧ʳ X| ---which is (in general) a function--- pointwise.
+The functorial map should apply a given function~|f| to all the recursive positions in a sum-of-products structure while leaving everything else intact, so |fmapᶜˢ| keeps the choices of |inl| or |inr|, |fmapᶜ| keeps the |σ|-fields and |ι|-equalities, and finally |fmapʳ| applies~|f| to the recursive positions (of type~|X i| for some~|i|) pointwise.
 
 Being able to treat folds generically means that we are able to write generic programs whose types have the form |∀ {i} → μ D i → X i|, but this is not enough when, for example, we want to prove generic theorems by induction on |d : μ D i|, in which case the types take the more complex form |∀ {i} (d : μ D i) → P d| (where |P : ∀ {i} → μ D i → Set|).
-Our library thus provides another set of definitions for treating induction generically.
-The treatment of induction is largely standard and analogous to the treatment of folds, so we omit the technical details of generic induction from the presentation.
+Therefore we have another set of definitions for generic induction, corresponding to the scheme of elimination rules of inductive families~\citep[Section~3.3]{Dybjer1994}.
+The technical details of generic induction are omitted from the presentation, however, since the treatment is largely standard (closely following, for example, \citet{McBride-ornaments}), and our metaprograms in \cref{sec:reflection} work in the same way for fold and inductive functions.
 
 \section{Datatype Parameters and Universe Polymorphism}
 \label{sec:parameters}
 
-The datatype descriptions presented in the previous section missed a couple of important features --- it was probably tempting to generalise |Acc<| to a version parametrised by a type~|A| and a binary relation~|R| on~|A|, and moreover, by the levels of the universes in which |A|~and~|R| reside:
+The datatype descriptions presented in \cref{sec:recap} missed a couple of important features --- it was probably tempting to generalise |Acc<| to a version parametrised by a type~|A| and a binary relation~|R| on~|A|, and moreover, by the levels of the universes in which |A|~and~|R| reside:
 \begin{code}
 data Acc {ℓ ℓ' : Level} {A : Set ℓ} (R : A → A → Set ℓ') : A → Set (ℓ ⊔ ℓ') where
   acc : {x : A} → ((y : A) → R y x → Acc R y) → Acc R x
@@ -541,6 +579,8 @@ CurriedL (  suc n)  X = (ℓ : Level) → CurriedL n (λ ℓs → X (ℓ , ℓs)
 we will not be able to fill in the hole `?' since it should be a finite level when |n|~is zero (meaning that there is no level quantification), or~|ω| when |n|~is non-zero, going beyond the current capabilities of Agda's universe polymorphism.
 To deal with level parameters, we will resort to metaprogramming techniques in \cref{sec:reflection}.
 
+\Josh{The representation looks more messy, but they will actually lead to cleaner native datatypes.}
+
 \subsection{Universe-Polymorphic Descriptions}
 \label{sec:universe-polymorphic-descriptions}
 
@@ -603,6 +643,8 @@ maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓ) cbs ⊔ hasCon?
 where the first line is the level of |⟦ D ⟧ᶜ X i| and the second line is inductively the level of |⟦ Ds ⟧ᶜˢ X i|, and indeed the level of the sum type is their maximum.
 It may appear that we skipped several steps applying the associativity and commutativity of~`⊔', but in fact these properties (along with some others) are built into Agda's definitional equality on |Level|, so the definition of |⟦_⟧ᶜˢ| type-checks without any manual proofs about levels.
 
+\todo[inline]{Side effect: works as a first-order, albeit partial, representation of datatypes}
+
 \subsection{Packing Up}
 \label{sec:DataD}
 
@@ -663,6 +705,8 @@ With |level-inequality|, we could even define a universe-polymorphic version of 
 
 \todo[inline]{Purpose: |DataC| and |FoldC| arguments of generic programs}
 
+\todo[inline]{Compare with \citet{Dybjer1994}}
+
 \todo[inline]{Benefits and necessity of wrappers (using |DataC| and |FoldC| as examples)}
 
 Instead of a generic |μ|~operator~(\cref{sec:recap}), we will rely on Agda's reflection mechanism~(\cref{sec:reflection}) to manufacture a native datatype from a description of type |DataD|~(\cref{sec:DataD}).
@@ -703,7 +747,7 @@ This architecture is symmetric: in addition to manufacturing a native datatype f
 
 Following the same architecture, we are also going to connect algebras with the corresponding native fold functions.
 More precisely, the algebras are, in general, parametrised algebras like |foldAcc<Alg| from \cref{sec:recap}, and we start from a generic representation for them.
-Analogously to |DataD|, the universe-polymorphic level parameters of a parametrised algebra are separated from the other parameters, whose types are represented as a telescope to allow currying, and all the parameter information is packed with the algebra into a record type |FoldP| of `fold programs':
+Analogously to |DataD|, the universe-polymorphic level parameters of a parametrised algebra are separated from the other parameters, whose types are represented as a telescope to allow currying, and all the parameter information is packed with the algebra into a record type |FoldP| of `fold programs':\todo{separate into two layers}
 \begin{code}
 record FoldP : Setω where
   field
@@ -716,9 +760,12 @@ record FoldP : Setω where
     Param     :  ∀ ℓs → Tel (plevel ℓs)
     param     :  Level ^ #levels → Level
     Carrier   :  ∀ ℓs ps → ⟦ Desc .applyL (level ℓs) .Index (param ps) ⟧ᵗ → Set (clevel ℓs)
-    algebra   :  ∀ {ℓs} ps {is} →
-                 ⟦ Desc .applyL (level ℓs) .applyP (param ps) ⟧ᶜˢ (Carrier ℓs ps) is →
-                 Carrier ℓs ps is
+    algebra   :  ∀ {ℓs} ps → Alg (Desc .applyL (level ℓs) .applyP (param ps)) (Carrier ℓs ps)
+\end{code}
+where the type |Alg| of algebras is the same as the one in \cref{sec:recap} except for a bit of universe-polymorphic adaptations:
+\begin{code}
+Alg : ConDs I cbs → (I → Set ℓ) → Set _
+Alg D X = ∀ {i} → ⟦ D ⟧ᶜˢ X i → X i
 \end{code}
 A |FoldP| includes a field |Conv : DataC| connecting the datatype description |Desc| on which the |algebra| operates to a native datatype, which will be operated on by the corresponding native fold function.
 The functions |level| and |param| are used to compute the parameters for the native datatype argument from the parameters of the fold function (see |FoldT| below).
@@ -750,7 +797,7 @@ record FoldC (F : FoldP) (f : FoldT P) : Setω where
                      f ps (Conv .toN ns) ≡ algebra ps (fmapᵈ Desc (f ps) ns)
 \end{code}
 
-Now let us try to transform |foldAccP| to a function |foldAcc| manually, and develop some generic facilities along the way.
+Now let us transform |foldAccP| to a function |foldAcc| manually, and develop some generic facilities along the way.
 First we need a type for |foldAcc|, which we can write a function to compute:
 \begin{code}
 FoldNT : (F : FoldP) (ℓs : Level ^ (F .#levels)) → Set _
@@ -798,6 +845,10 @@ foldAccC = record { equation = λ { (inl (x , as , refl)) → refl } }
 
 Everything we did manually above was highly mechanical and deserves to be automated; this we do next in \cref{sec:reflection} using Agda's reflection mechanism, after which we will see some examples of datatype-generic programming with |DataC| and |FoldC| connections in \cref{sec:examples}.
 
+\todo[inline]{Although we do not present the details of generic induction, the definitions (|IndP|, |IndT|, etc) are largely the same as what we have formulated for folds above.
+When we get to examples that require induction in \cref{sec:examples}, which will only be sketched informally, it should suffice to think of those programs as a more complex kind of parametrised algebra with induction hypotheses.}
+
+
 \section{Establishing Connections Using Elaborator Reflection}
 \label{sec:reflection}
 
@@ -807,12 +858,12 @@ Reflected syntax is used to interact with the |TC| moand, which serves as an int
 There are several differences between Agda and Idris, we will discuss them and their implications on our work in \cref{sec:discussion}.
 \subsection{Elaborator Reflection in Agda}
 \LT{
-  Outline the core of reflection: 
+  Outline the core of reflection:
   \begin{enumerate}
     \item reflected syntax with informal symbols: variables, constructors, pi-types, sets, etc.,
     \item telescope, function clauses,
     \item |quoteTerm| and |quote|,
-    \item the double role as a checked and unchecked expression, 
+    \item the double role as a checked and unchecked expression,
     \item type-checking state, TC monad,
     \item function definition, datatype definition
     \item a few primitives including |getDefinition|, |getContext|,
@@ -929,7 +980,7 @@ data Definition : Set where
 \label{fig:full reflected syntax}
 \end{figure}
 \subsection{Generating the Connections and Wrappers with |Level|}
-\LT{Address the universe problem here: currying for |Level|} 
+\LT{Address the universe problem here: currying for |Level|}
 
 \subsection{Instantiating Generic Functions without Bureaucracy}
 \Viktor{Use |FoldP| to generate function definitions}
@@ -940,51 +991,87 @@ data Definition : Set where
 \section{Examples}
 \label{sec:examples}
 
-\subsection{Fold and Induction Operators}
-\label{sec:fold-and-induction-operators}
+\todo[inline]{Some missed opportunities, not new stuff: generic constructions that the dependently typed programmer could have benefited from}
 
-\Josh{In contrast to an untyped approach, the datatype-generic version also proves that the arguments to the fold operator do constitute an algebra.}
+\subsection{Fold Operators}
+\label{sec:fold-operators}
 
+As a more familiar example, let us write a datatype-generic program
 \begin{code}
-FoldOpTᶜ : (D : ConD I cb) → (I → Set ℓ) → Set (max-π cb ⊔ max-σ cb ⊔ ℓ)
-FoldOpTᶜ (ι  i     ) X = X i
-FoldOpTᶜ (σ  A  D  ) X = (a : A) → FoldOpTᶜ (D a) X
-FoldOpTᶜ (ρ  D  E  ) X = ⟦ D ⟧ʳ X → FoldOpTᶜ E X
+fold-operator : DataC D N → FoldP
+\end{code}
+that gives rise to fold operators on native datatypes such as |foldAcc|.
+Given |C : DataC D N|, the parameters in |fold-operator C| are essentially a |D|-algebra where sums are separated and products are curried, so what we need to do is just cosmetic work: at type level, compute the parameter types, which are the curried types of the constructors of~|D| where all the recursive occurrences are replaced with a given carrier, and at program level, uncurry and assemble the parameters into a |D|-algebra.
+
+Part~(i) is computed by
+\begin{code}
+FoldOpTel :  (D : ConDs I cbs) → (I → Set ℓ) →
+             Tel (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ hasCon? ℓ cbs)
+FoldOpTel []        X = []
+FoldOpTel (D ∷ Ds)  X = [ _ ∶ FoldOpT D X ] FoldOpTel Ds X
+\end{code}
+which converts each constructor description to a type by |FoldOpT| and collects the types in a telescope.
+The actual conversion by |FoldOpT| produces the required curried type:
+\begin{code}
+FoldOpT : (D : ConD I cb) → (I → Set ℓ) → Set (max-π cb ⊔ max-σ cb ⊔ ℓ)
+FoldOpT (ι i     ) X = X i
+FoldOpT (σ A  D  ) X = (a : A)   → FoldOpT (D a) X
+FoldOpT (ρ D  E  ) X = ⟦ D ⟧ʳ X  → FoldOpT E X
+\end{code}
+For example, given a predicate |P : A → Set ℓ| as the carrier, the description of |acc| is converted to
+\begin{code}
+   FoldOpT (σ[ x ∶ A ] ρ (π[ y ∶ A ] π[ _ ∶ R y x ] ι y) (ι x)) P
+=  (x : A) → ((y : A) → R y x → P y) → P x
 \end{code}
 
+For part~(ii), we are given a list of functions of the types in a telescope computed by |FoldOpTel|, from which we should construct an algebra; this is done by performing a case analysis on the argument of the algebra ---which is a sum structure--- to determine which function to apply:
 \begin{code}
-FoldOpTelᶜˢ :  (D : ConDs I cbs) → (I → Set ℓ) →
-               Tel (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ hasCon? ℓ cbs)
-FoldOpTelᶜˢ []        X = []
-FoldOpTelᶜˢ (D ∷ Ds)  X = [ _ ∶ FoldOpTᶜ D X ] FoldOpTelᶜˢ Ds X
+fold-op : (D : ConDs I cbs) → ⟦ FoldOpTel D X ⟧ᵗ → Alg D X
+fold-op (D ∷ Ds) (f , fs) (inl  xs) = fold-opᶜ  D   f   xs
+fold-op (D ∷ Ds) (f , fs) (inr  xs) = fold-op   Ds  fs  xs
 \end{code}
-
+The task of the next layer |fold-opᶜ| is also constructing a |D|-algebra, but here |D|~is a single constructor description (|ConD|) rather than a list of constructor descriptions (|ConDs|).
+For convenience, define
 \begin{code}
-fold-opᶜ : (D : ConD I cb) → FoldOpTᶜ D X → Algᶜ D X
-fold-opᶜ (ι  i     ) f refl           = f
-fold-opᶜ (σ  A  D  ) f (a   , xs   )  = fold-opᶜ (  D a)  (f  a   ) xs
-fold-opᶜ (ρ  D  E  ) f (xs  , xs'  )  = fold-opᶜ    E     (f  xs  ) xs'
+Algᶜ : ConD I cb → (I → Set ℓ) → Set _
+Algᶜ D X = ∀ {i} → ⟦ D ⟧ᶜ X i → X i
 \end{code}
-
+so that the type of |fold-opᶜ| can be written in a form corresponding to the type of |fold-op|:
 \begin{code}
-fold-opᶜˢ : (D : ConDs I cbs) → ⟦ FoldOpTelᶜˢ D X ⟧ᵗ → Algᶜˢ D X
-fold-opᶜˢ (D ∷ Ds) (f , fs) (inl  xs) = fold-opᶜ   D   f   xs
-fold-opᶜˢ (D ∷ Ds) (f , fs) (inr  xs) = fold-opᶜˢ  Ds  fs  xs
+fold-opᶜ : (D : ConD I cb) → FoldOpT D X → Algᶜ D X
+fold-opᶜ (ι  i     ) x  refl           = x
+fold-opᶜ (σ  A  D  ) f  (a   , xs   )  = fold-opᶜ (  D a)  (f  a   ) xs
+fold-opᶜ (ρ  D  E  ) f  (xs  , xs'  )  = fold-opᶜ    E     (f  xs  ) xs'
 \end{code}
+The definition of |fold-opᶜ| is essentially uncurrying, gradually applying a given function to the argument of the algebra --- which is a tuple.
 
+Finally we pack everything into the definition of |fold-operator|:
 \begin{code}
 fold-operator : DataC D N → FoldP
 fold-operator {D} C = record
   {  Conv     =  C
-  ;  #levels  =  suc (#levels D)
+  ;  #levels  =  suc (D .#levels)
   ;  level    =  snd
-  ;  Param    =  λ (ℓ , ℓs) → let Dᵖ = applyL D ℓs in
-                   [[ ps ∶ Param Dᵖ ]] [ X ∶ Curriedᵗ true (Index Dᵖ ps) (λ _ → Set ℓ) ]
-                   FoldOpTelᶜˢ (applyP Dᵖ ps) (uncurryᵗ X)
+  ;  Param    =  λ (ℓ , ℓs) → let Dᵖ = D .applyL ℓs in
+                   [[ ps ∶ Dᵖ .Param ]] [ X ∶ Curriedᵗ (Dᵖ .Index ps) (λ _ → Set ℓ) ]
+                   FoldOpTel (Dᵖ .applyP ps) (uncurryᵗ X)
   ;  param    =  fst
-  ;  Carrier  =  λ _ (_ , X , _) → uncurryᵗ X
-  ;  algebra  =  λ (ps , _ , args) → fold-opᶜˢ (applyP (applyL D _) ps) args }
+  ;  Carrier  =  λ _  (ps , X , calgs) → uncurryᵗ X
+  ;  algebra  =  λ    (ps , X , calgs) → fold-op (D .applyL _ .applyP ps) calgs }
 \end{code}
+The level parameters of |fold-operator C| include those of~|D| and one more for the carrier~|X| appearing in the |Param| telescope, which also includes the ordinary parameters of~|D| and the parameters computed by |FoldOpTel|.
+The type of~|X| is specified to be in a curried form, which is then uncurried for |FoldOpTel| and the |Carrier| field --- a common pattern where curried entities seen by the user are converted to uncurried forms for processing by generic programs.
+The |Param| telescope is the first place where we see the use of telescope appending, with which the parameters are divided into three `groups' |ps|, |X|, and |calgs|, making it convenient to distribute them to relevant parts of the generic definition.
+The benefit is even clearer in the next example and also in \cref{sec:algebraic-ornamentation}.
+
+It would not be too interesting if we could only manufacture functions but not prove some of their properties.
+For fold operators, one of the most useful theorems is the fusion theorem~\citep{Bird-AoP}, which states that a function~|h| composed with a fold can be fused into the fold if |h|~is a homomorphism between the algebras of the two folds.%
+\todo{List version in \cref{sec:introduction}}
+The theorem can be represented as a generic program
+\begin{code}
+fold-fusion : (C : DataC D N) (fC : FoldC (fold-operator C) f) → IndP
+\end{code}
+which we apply to a datatype connection~|C| and a fold connection |fC| ---which essentially says that a function~|f| is a fold operator--- to get a specialised version of the theorem.
 
 \subsection{Algebraic Ornamentation}
 \label{sec:algebraic-ornamentation}
@@ -1118,11 +1205,11 @@ Put our work within the spectrum of generic libraries?~\citep{Magalhaes-GGP}}
 
 \todo[inline]{One more step towards practical `type theory in type theory'~\citep{Chapman-type-theory-should-eat-itself} (not just theoretically interesting), although our encoding is `shallow'}
 
-\todo[inline]{Typed metaprogramming~\citep{Xie-Typed-Template-Haskell, Jang-Moebius, Kiselyov-MetaOCaml, Davies-modal-staged-computation}}
+\todo[inline]{Typed metaprogramming~\citep{Xie-Typed-Template-Haskell, Jang-Moebius, Kiselyov-MetaOCaml, Davies-modal-staged-computation}: In contrast to an untyped approach, |fold-operator| also serves as a proof that the arguments of a fold operator do constitute an algebra.}
 
 \paragraph{Universe polymorphism}
 
-\todo[inline]{A practical application and motivation~\citep{Kovacs-universe-hierarchies} (not just theoretically interesting); generic level quantification; no subject rejection; universe-polymorphic definitions not polymorphic enough (e.g., |Σ|-types); more expressive universes}
+\todo[inline]{A practical application and motivation~\citep{Kovacs-universe-hierarchies} (not just theoretically interesting); generic level quantification; no subject reduction; universe-polymorphic definitions not polymorphic enough (e.g., |Σ|-types); more expressive universes}
 
 \todo[inline]{\citet{Chapman-levitation} propose a more radical redesign of type theory where datatype definitions are first-class, but the theory is still at an early stage of development and lacks an implementation; our proposal is more practical and serves as a platform for the development of mature datatype-generic libraries, which can be ported to new platforms when ready}
 
