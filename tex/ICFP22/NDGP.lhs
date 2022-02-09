@@ -327,18 +327,18 @@ the type of |acc| has two fields |n|~and |as|, which constitute the second layer
 the type of the field |as| is described in the third layer as it ends with the recursive occurrence |Acc< m|, in front of which there are function arguments |m|~and~|lt| (making the recursive occurrence higher-order).
 Corresponding to the three layers, we use three datatypes of \emph{descriptions} ---all parametrised by an index type~|I|--- to encode datatype definitions,\todo{warning: this is not the final version}
 \begin{code}
-data ConDs (I : Set) : Set₁ where
-  []   : ConDs I
-  _∷_  : (D : ConD I) (Ds : ConDs I) → ConDs I
+data ConDs (I : Set)  : Set₁ where
+  []   :                                ConDs I
+  _∷_  : (D : ConD I) (Ds : ConDs I) →  ConDs I
 
-data ConD (I : Set) : Set₁ where
-  ι  : (i : I) → ConD I
-  σ  : (A : Set) (D : A → ConD I) → ConD I
-  ρ  : (D : RecD I) (E : ConD I) → ConD I
+data ConD (I : Set)  : Set₁ where
+  ι  : (i : I)                          → ConD I
+  σ  : (A : Set)      (D : A →  ConD I)  → ConD I
+  ρ  : (D : RecD I)   (E :      ConD I)  → ConD I
 
 data RecD (I : Set) : Set₁ where
-  ι   : (i : I) → RecD I
-  π   : (A : Set) (D : A → RecD I) → RecD I
+  ι  : (i : I)                          → RecD I
+  π  : (A : Set)      (D : A →  RecD I)  → RecD I
 \end{code}
 with which |Acc<| is described by
 \begin{code}
@@ -352,7 +352,7 @@ Different from ordinary lists, in the case of |σ A D| a new variable of type~|A
 Moreover, the~|ι| at the end of a |ConD I| should specify the index targeted by the constructor (e.g., the final~|n| in the type of |acc|).
 Inhabitants of |RecD I| use the same structure to describe dependent function types ending with a recursive occurrence.
 
-To make descriptions slightly easier to write and read, we can introduce a couple of syntax declarations in the spirit of de Bruijn's telescope notation~\cite{de-Bruijn-telescopes}:
+To make descriptions slightly easier to write and read, we can introduce a couple of syntax declarations inspired by de Bruijn's telescope notation~\cite{de-Bruijn-telescopes}:
 \begin{code}
 syntax π  A (λ a →  D)  = π[ a ∶  A ] D
 syntax σ  A (λ a →  D)  = σ[ a ∶  A ] D
@@ -491,19 +491,19 @@ We will pack all these data in two record types in \cref{sec:DataD}, after we ma
 
 At some point we will need to convert a description to a datatype definition, and it would be unsatisfactory in practice if the parameter and index types in the datatype definition were not in the conventional curried form.
 When currying, the encoding of multiple types in one nested |Σ|-type is ambiguous --- how do we know whether a |Σ|-type is supposed to be interpreted as two types, with the latter depending on the former, or just one type?
-A natural solution is to use telescopes~\citep{de-Bruijn-telescopes} to represent lists of parameter or index types:
+A natural solution is to use telescopes to represent lists of parameter or index types:
 \begin{code}
 mutual
 
   data Tel : Level → Setω where
     []     : Tel lzero
-    _∷_    : (A : Set  ℓ) (T  : A → Tel ℓ') → Tel (ℓ ⊔ ℓ')
-    _++_   : (T : Tel  ℓ) (U  : ⟦ T ⟧ᵗ → Tel ℓ') → Tel (ℓ ⊔ ℓ')
+    _∷_    : (A : Set  ℓ) (T  : A       → Tel ℓ') → Tel (ℓ ⊔ ℓ')
+    _++_   : (T : Tel  ℓ) (U  : ⟦ T ⟧ᵗ  → Tel ℓ') → Tel (ℓ ⊔ ℓ')
 
   ⟦_⟧ᵗ : Tel ℓ → Set ℓ
   ⟦ []       ⟧ᵗ = ⊤
-  ⟦ A ∷   T  ⟧ᵗ = Σ[ a ∶ A ] ⟦ T a ⟧ᵗ
-  ⟦ T ++  U  ⟧ᵗ = Σ[ t ∶ ⟦ T ⟧ᵗ ] ⟦ U t ⟧ᵗ
+  ⟦ A ∷   T  ⟧ᵗ = Σ[ a ∶ A       ] ⟦ T a ⟧ᵗ
+  ⟦ T ++  U  ⟧ᵗ = Σ[ t ∶ ⟦ T ⟧ᵗ  ] ⟦ U t ⟧ᵗ
 \end{code}
 Again we use the host language's function space to bring variables of the types in the front of a telescope into the context of the rest of the telescope.
 Besides the usual cons constructor `|∷|', we also include a constructor `|++|' for appending telescopes (which requires induction-recursion to define), making our telescopes tree-shaped; the reason will be clear when we reach \cref{sec:examples}.
@@ -554,23 +554,25 @@ More generally, the need for non-trivial level computation naturally arises if w
 
 To allow level computation to be performed as freely as possible, we choose to index the description datatypes with as much useful information as possible: the index in the type of a description is a list which not only contains the levels of the fields but also encodes the description constructors used.
 Starting from the simplest |RecD| datatype, we index it with |RecB = List Level|, recording the levels of the |π|-fields:\todo{highlight differences from previous versions}
+\savecolumns
 \begin{code}
 data RecD (I : Set ℓⁱ) : RecB → Setω where
-  ι  : (i : I) → RecD I []
-  π  : (A : Set ℓ) (D : A → RecD I rb) → RecD I (ℓ ∷ rb)
+  ι  : (i : I)                                → RecD I []
+  π  : (A : Set ℓ)      (D : A →  RecD I rb)  → RecD I (ℓ ∷ rb)
 \end{code}
 For |ConD|, the index type is |ConB = List (Level ⊎ RecB)|, whose element sum type is used to record whether a field is |σ|~or~|ρ|:
+\restorecolumns
 \begin{code}
 data ConD (I : Set ℓⁱ) : ConB → Setω where
-  ι  : (i : I) → ConD I []
-  σ  : (A : Set ℓ) (D : A → ConD I cb) → ConD I (inl ℓ ∷ cb)
-  ρ  : (D : RecD I rb) (E : ConD I cb) → ConD I (inr rb ∷ cb)
+  ι  : (i : I)                                → ConD I []
+  σ  : (A : Set ℓ)      (D : A →  ConD I cb)  → ConD I (inl ℓ ∷ cb)
+  ρ  : (D : RecD I rb)  (E :      ConD I cb)  → ConD I (inr rb ∷ cb)
 \end{code}
 Finally, |ConDs| is indexed with |ConBs = List ConB|, collecting information from all the constructors into one list:
 \begin{code}
 data ConDs (I : Set ℓⁱ) : ConBs → Setω where
-  []   : ConDs I []
-  _∷_  : (D : ConD I cb) (Ds : ConDs I cbs) → ConDs I (cb ∷ cbs)
+  []   :                                       ConDs I []
+  _∷_  : (D : ConD I cb) (Ds : ConDs I cbs) →  ConDs I (cb ∷ cbs)
 \end{code}
 
 With some helper functions, which constitute a small domain-specific language for level computation, we can now specify the output level of |⟦_⟧ᶜˢ|:
