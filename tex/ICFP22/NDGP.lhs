@@ -821,16 +821,29 @@ There are several differences between Agda and Idris, we will discuss them and t
   \end{enumerate}
 }
 
-We introduce a simplified version of Agda's reflected syntax (\cref{fig:reflected syntax} and \cref{fig:type abbrs}) to elaborate our usage of reflection in Agda.
-Agda supports classic metaprogramming using |quote|, |quoteTerm| and |unquote|.
+We present a simplified version of Agda's reflected syntax (\cref{fig:reflected syntax} and \cref{fig:type abbrs}) instead of the implemented one in Agda (\cref{fig:full reflected syntax}) to introduce some basic ideas of elaborator reflection and our usage of it.
+
+Notably, Agda supports classic metaprogramming using |quote|, |quoteTerm| and |unquote|.
 |quote| is a top-level primitive that generates the name (of type |Name|) of the quoted term upon typechecking,
-and similarly |quoteTerm| generates the reflected representation (of type |Tm|).
+similarly |quoteTerm| generates the reflected representation (of type |Tm|).
 |unquote| is capable of traslating reflected representation to native terms.
 For example, |quoteTerm ℕ| is judgementally equal to |def (quote ℕ) []|, albeit their different appearences to programmers.
 These top-level primitives are limiting in usage and less interesting to us compared to more powerful primitives |quoteTC| and |unquoteTC|, so we won't go into their details.
 
-Built-in type |Tm| represents Agda terms, with each constructor corresponding to a class of terms.
-|pi t u| represents dependent function types |t → u|. |set t| represents the type |Set t| while |t| should be a term of |Level|. |lam| 
+The built-in type |Tm| represents Agda terms, with each constructor corresponding to a class of terms.
+The constructor fully applied to arguments |pi t u| represents dependent function types |T → U|, in which |T| and |U| are represented by |t| and |u|.
+Fully-applied constructor |set t| represents universe types |Set ℓ| while |t| should represent a term |ℓ| of type |Level|.
+Note that |t| is not guaranteed to represent terms of type |Level|, because the representation is unityped.
+Each of variable representations |var i xs| is De Bruijn indexed by a natural number |i|, applied to arguments that are represented by |xs|.
+
+It's crucial that reflected terms and variable indices are subject to arbitrary manipulation without type enforcement.
+This untypeable nature gives us great freedom to perform operations not possible under Agda's type system, therefore allowing translation from some programs of generic definitions, which are more expressive than Agda's type system, to their native counterparts.
+However this double-edged sword also puts programmers in great danger of dealing with structures that are not safeguarded by types, such as intermediate terms of strengthening and weakening.
+This may leads to bugs in metaprograms uncaught by types.
+Fortunately, we can exploit Agda's type checker so we can focus on interesting manipulations on terms, while letting the type checker handle more typical and error-prone operations.
+We will discuss in the next subsection how we interact with the |TC| monad to do so.
+
+Fully-applied |lam t| represents lambda terms |λ x → T| where |T| is represented by |t| and |x| is omitted since occurrences of |x| in |T| are translated to De Bruijn indices.
 \begin{figure}
 \begin{halfcol}%
 \begin{code}
@@ -888,10 +901,8 @@ Patterns   =  List Pattern
 \end{halfcol}
 \end{figure}
 
-\subsection{Translating between Typed Higher-Order and Untyped First-Order Representations}
-\LT{Discuss the difference between the typed higher-order and untyped first-order representations of telescopes}
-
 \subsection{Translation between Typed Higher-Order and Untyped First-Order Representations}
+\LT{Discuss the difference between the typed higher-order and untyped first-order representations of telescopes}
 \LT{Introduce |extendContext|, |unquoteTC|, and a more safe version |extendContextT|}
 \Viktor{Enforce types on untyped operations using |quoteTC|/|unquoteTC|; discuss the usage of |extendContext|}
 
@@ -915,6 +926,7 @@ data Definition : Set where
   ...
 \end{code}
 \caption{A snippet of reflected declarations}
+\label{fig:full reflected syntax}
 \end{figure}
 \subsection{Generating the Connections and Wrappers with |Level|}
 \LT{Address the universe problem here: currying for |Level|} 
