@@ -827,8 +827,10 @@ data Tm : Set where
   var   : (i  : ℕ)     (xs   : Tms)  →  Tm
   con   : (c  : Name)  (xs   : Tms)  →  Tm
   def   : (f  : Name)  (xs   : Tms)  →  Tm
+  meta  : (x  : Meta)  (xs   : Tms)  →  Tm
   unknown :                             Tm
 \end{code}
+\caption{Reflected expressions (simplified)}
 \end{halfcol}%
 \begin{halfcol}
 \begin{code}
@@ -840,32 +842,35 @@ data Pattern where
   lit     : (l : Literal)               → Pattern
   dot     : (t : Tm)                    → Pattern
 
-data Literal where
-  nat    : (n : ℕ)                      → Literal
-  ...
 \end{code}
-\end{halfcol}%
-\caption{The reflected language for expressions (simplified), patterns, and literals}
+\caption{Reflected patterns}
+\end{halfcol}
 \end{figure}
 
 \begin{figure}[h]
 \begin{halfcol}
 \begin{code}
 postulate
-  Name  :  Set
+  Name  : Set
+  Meta  : Set
 
-Type     =  Tm
-Teles    =  List Type
+data Literal where
+  nat    : (n : ℕ) → Literal
+  ...
+
 \end{code}
+\caption{Other built-in types for reflection}
 \end{halfcol}%
 \begin{halfcol}
 \begin{code}
+Type       =  Tm
+Teles      =  List Type
 Tms        =  List Tm
 Names      =  List Name
 Patterns   =  List Pattern
 \end{code}
+\caption{Type abbreviations}
 \end{halfcol}
-\caption{Built-in types and type abbreviations}
 \end{figure}
 
 \subsection{Translating between Typed Higher-Order and Untyped First-Order Representations}
@@ -889,7 +894,8 @@ data Clause : Set where
 \begin{figure}[h]
 \begin{code}
 data Definition : Set where
-  data-type   : (#ps  : ℕ) (cs : Names)  → Definition
+  function    :             (cls  : Clauses)  → Definition
+  data-type   : (#ps  : ℕ)  (cs   : Names)    → Definition
   ...
 \end{code}
 \caption{A snippet of reflected declarations}
@@ -1010,30 +1016,26 @@ data Sort where
 \end{code}
 \end{minipage}
 
-\begin{halfcol}
+\begin{minipage}[t]{.45\textwidth}\setlength{\mathindent}{0em}
 \begin{code}
-postulate
-  Name : Set
-  Meta : Set
-
-data Abs (A : Set) : Set where
-  abs : (s : String) (x : A) → Abs A
-data Arg (A : Set) : Set where
-  arg : (i : ArgInfo) (x : A) → Arg A
+data Abs (A : Set)  : Set where
+  abs : (s : String)   (x : A) → Abs A
+data Arg (A : Set)  : Set where
+  arg : (i : ArgInfo)  (x : A) → Arg A
 \end{code}
-\end{halfcol}%
-\begin{halfcol}
+\end{minipage}%
+\begin{minipage}[t]{.55\textwidth}\setlength{\mathindent}{0em}
 \begin{code}
-data ArgInfo : Set where
-  arg-info : (v : Visibility) (m : Modality)
-    → ArgInfo
-data Visibility : Set where
+data ArgInfo     : Set where
+  arg-info : (v : Visibility) (m : Modality) → ArgInfo
+data Visibility  : Set where
   visible hidden instance′ : Visibility
-data Modality : Set where
+data Modality    : Set where
   ...
 \end{code}
-\end{halfcol}%
-\caption{A snippet of the reflected language for expressions (actual)}
+\end{minipage}
+  
+\caption{A snippet of the reflected expressions (actual)}
 \end{figure}
 
 \begin{code}
