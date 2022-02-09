@@ -45,7 +45,7 @@ constTelInfo i {T ++ U} = constTelInfo i ++ λ _ → constTelInfo i
 
 Curriedᵗ : (T : Tel ℓ) → TelInfo Visibility T → (⟦ T ⟧ᵗ → Set ℓ') → Set (ℓ ⊔ ℓ')
 Curriedᵗ []       _                X = X tt
-Curriedᵗ (A ∷  T) (visible   ∷ vs) X = ( a : A ) → Curriedᵗ (T a) (vs a) (curry X a)
+Curriedᵗ (A ∷  T) (visible   ∷ vs) X = ( a : A ) → Curriedᵗ (T a) (vs a) λ t → X (a , t)
 Curriedᵗ (A ∷  T) (hidden    ∷ vs) X = { a : A } → Curriedᵗ (T a) (vs a) (curry X a)
 Curriedᵗ (A ∷  T) (instance′ ∷ vs) X = ⦃ a : A ⦄ → Curriedᵗ (T a) (vs a) (curry X a)
 Curriedᵗ (T ++ U) (vs ++ vs')      X = Curriedᵗ  T     vs     λ t →
@@ -54,7 +54,7 @@ Curriedᵗ (T ++ U) (vs ++ vs')      X = Curriedᵗ  T     vs     λ t →
 curryᵗ : {T : Tel ℓ} {vs : TelInfo Visibility T} {X : ⟦ T ⟧ᵗ → Set ℓ'}
        → ((t : ⟦ T ⟧ᵗ) → X t) → Curriedᵗ T vs X
 curryᵗ {T = []    }                  f = f tt
-curryᵗ {T = A ∷  T} {visible   ∷ vs} f = λ a → curryᵗ (curry f a)
+curryᵗ {T = A ∷  T} {visible   ∷ vs} f = λ a        → curryᵗ λ u → f (a , u)
 curryᵗ {T = A ∷  T} {hidden    ∷ vs} f = curryᵗ (curry f _)
 curryᵗ {T = A ∷  T} {instance′ ∷ vs} f = curryᵗ (curry f _)
 curryᵗ {T = T ++ U} {vs ++ vs'}      f = curryᵗ λ t → curryᵗ λ u → f (t , u)

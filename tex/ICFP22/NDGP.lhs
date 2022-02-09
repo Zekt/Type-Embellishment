@@ -327,18 +327,18 @@ the type of |acc| has two fields |n|~and |as|, which constitute the second layer
 the type of the field |as| is described in the third layer as it ends with the recursive occurrence |Acc< m|, in front of which there are function arguments |m|~and~|lt| (making the recursive occurrence higher-order).
 Corresponding to the three layers, we use three datatypes of \emph{descriptions} ---all parametrised by an index type~|I|--- to encode datatype definitions,\todo{warning: this is not the final version}
 \begin{code}
-data ConDs (I : Set)  : Set₁ where
-  []   :                                ConDs I
-  _∷_  : (D : ConD I) (Ds : ConDs I) →  ConDs I
+data ConDs (I : Set) : Set₁ where
+  []  :                                ConDs I
+  _∷_ : (D : ConD I) (Ds : ConDs I) →  ConDs I
 
-data ConD (I : Set)  : Set₁ where
+data ConD (I : Set)    : Set₁ where
   ι  : (i : I)                          → ConD I
-  σ  : (A : Set)      (D : A →  ConD I)  → ConD I
-  ρ  : (D : RecD I)   (E :      ConD I)  → ConD I
+  σ  : (A : Set)     (D : A →  ConD I)  → ConD I
+  ρ  : (D : RecD I)  (E :      ConD I)  → ConD I
 
-data RecD (I : Set) : Set₁ where
+data RecD (I : Set)    : Set₁ where
   ι  : (i : I)                          → RecD I
-  π  : (A : Set)      (D : A →  RecD I)  → RecD I
+  π  : (A : Set)     (D : A →  RecD I)  → RecD I
 \end{code}
 with which |Acc<| is described by
 \begin{code}
@@ -522,8 +522,8 @@ From a telescope~|T| it is straightforward to compute a curried function type |C
 \begin{code}
 Curriedᵗ : (T : Tel ℓ) → (⟦ T ⟧ᵗ → Set ℓ') → Set (ℓ ⊔ ℓ')
 Curriedᵗ []          X = X tt
-Curriedᵗ (A  ∷   T)  X = (a : A) → Curriedᵗ (T a) (curry X a)
-Curriedᵗ (T  ++  U)  X = Curriedᵗ T (λ t → Curriedᵗ (U t) (λ u → X (t , u)))
+Curriedᵗ (A  ∷   T)  X = (a : A)          → Curriedᵗ (T a) (λ t → X (a , t))
+Curriedᵗ (T  ++  U)  X = Curriedᵗ T (λ t  → Curriedᵗ (U t) (λ u → X (t , u)))
 \end{code}
 It is also straightforward to convert between this curried function type and its uncurried counterpart with the functions
 \begin{code}
@@ -558,15 +558,15 @@ Starting from the simplest |RecD| datatype, we index it with |RecB = List Level|
 \begin{code}
 data RecD (I : Set ℓⁱ) : RecB → Setω where
   ι  : (i : I)                                → RecD I []
-  π  : (A : Set ℓ)      (D : A →  RecD I rb)  → RecD I (ℓ ∷ rb)
+  π  : (A : Set ℓ)      (D : A →  RecD I rb)  → RecD I (ℓ       ∷ rb)
 \end{code}
 For |ConD|, the index type is |ConB = List (Level ⊎ RecB)|, whose element sum type is used to record whether a field is |σ|~or~|ρ|:
 \restorecolumns
 \begin{code}
 data ConD (I : Set ℓⁱ) : ConB → Setω where
   ι  : (i : I)                                → ConD I []
-  σ  : (A : Set ℓ)      (D : A →  ConD I cb)  → ConD I (inl ℓ ∷ cb)
-  ρ  : (D : RecD I rb)  (E :      ConD I cb)  → ConD I (inr rb ∷ cb)
+  σ  : (A : Set ℓ)      (D : A →  ConD I cb)  → ConD I (inl ℓ   ∷ cb)
+  ρ  : (D : RecD I rb)  (E :      ConD I cb)  → ConD I (inr rb  ∷ cb)
 \end{code}
 Finally, |ConDs| is indexed with |ConBs = List ConB|, collecting information from all the constructors into one list:
 \begin{code}
@@ -683,10 +683,10 @@ These are what we need to know about the native datatype, which are summarised i
 \begin{code}
 record DataC (D : DataD) (N : DataT D) : Setω where
   field
-    toN        : ⟦ D ⟧ᵈ (N ℓs ps) is → N ℓs ps is
-    fromN      : N ℓs ps is → ⟦ D ⟧ᵈ (N ℓs ps) is
-    fromN-toN  : (ns : ⟦ D ⟧ᵈ (N ℓs ps) is) → fromN (toN ns) ≡ ns
-    toN-fromN  : (n : N ℓs ps is) → toN (fromN n) ≡ n
+    toN        : ⟦ D ⟧ᵈ (N ℓs ps) is  → N ℓs ps is
+    fromN      : N ℓs ps is           → ⟦ D ⟧ᵈ (N ℓs ps) is
+    fromN-toN  : (ns  : ⟦ D ⟧ᵈ (N ℓs ps) is)   → fromN (toN ns)  ≡ ns
+    toN-fromN  : (n   : N ℓs ps is)            → toN (fromN n)   ≡ n
 \end{code}
 The content of a |DataC D N| performs invertible conversion between the branches of the sum structure in~|D| with the constructors of~|N|.
 For example,
