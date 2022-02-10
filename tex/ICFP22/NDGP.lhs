@@ -44,6 +44,7 @@
 \usepackage[british]{babel}
 \usepackage[hyperpageref]{backref} % this may be removed
 
+\usepackage{mathtools}
 \usepackage[euler]{textgreek}
 
 \usepackage[capitalise]{cleveref}
@@ -65,6 +66,14 @@
 \setlength{\mathindent}{.5\parindent}
 \newcommand{\cons}[1]{\mathbf{#1}}
 \newcommand{\iden}{\mathit}
+
+\newcommand{\awa}[2]{\mathrlap{#2}\phantom{#1}} % as wide as
+
+\usepackage{xcolor}
+\definecolor{addition}{RGB}{204,255,216}
+\newcommand{\highlight}[2]{\smash{\text{\colorbox{#1}{\kern-.1em\vphantom{\vrule height 1.2ex depth 0.1ex}\smash{\ensuremath{#2}}\kern-.1em}}}}
+
+%format (HL(t)) = "\highlight{addition}{" t "}"
 
 %format syntax = "\Keyword{syntax}"
 %format pattern = "\Keyword{pattern}"
@@ -443,7 +452,7 @@ Algebras are useful because they are the interesting part of a fold function:
 By a `fold function' we mean a function defined recursively on an argument of some datatype by (i)~pattern-matching the argument with all possible constructors, (ii)~applying the function recursively to all the recursive positions, and (iii)~somehow computing the final result from the recursively computed sub-results and the non-recursive fields.
 For example, |foldAcc<| is a fold function, and so are a lot of common functions such as |length| from \cref{sec:introduction}.\todo{a few more examples from \cref{sec:introduction}}
 The first two steps are the same for all fold functions on the same datatype, whereas the third step is customisable and represented by an algebra, whose argument of type |⟦ D ⟧ᶜˢ X i| represents exactly the input of step~(iii).
-We can define a generic |fold| operator that expresses the computation pattern of fold functions and can be specialised to an algebra,
+We can define a generic |fold| operator that expresses the computation pattern of fold functions and can be specialised with an algebra,
 \begin{code}
 {-# TERMINATING #-}
 fold : (D : ConDs I) → Alg D X → ∀ {i} → μ D i → X i
@@ -490,12 +499,15 @@ The technical details of generic induction are omitted from the presentation, ho
 \section{Datatype Parameters and Universe Polymorphism}
 \label{sec:parameters}
 
-The datatype descriptions presented in \cref{sec:recap} missed a couple of important features --- it was probably tempting to generalise |Acc<| to a version parametrised by a type~|A| and a binary relation~|R| on~|A|, and moreover, by the levels of the universes in which |A|~and~|R| reside:
+The datatype descriptions presented in \cref{sec:recap} missed a couple of important features --- it was probably tempting to generalise |Acc<| to a version parametrised by a type~|A| and a binary relation~|R| on~|A|, and moreover, by the levels of the universes in which |A|~and~|R| reside:%
+\footnote{Agda's finite universe levels have a type |Level : Set|.
+We can use the primitives |lzero : Level| and |lsuc : Level → Level| to construct finite levels in the same way as we construct natural numbers, but we cannot pattern-match levels with |lzero| and |lsuc|.
+There is also an operator |_⊔_ : Level → Level → Level| that computes the maximum of two levels.}
 \begin{code}
 data Acc {ℓ ℓ' : Level} {A : Set ℓ} (R : A → A → Set ℓ') : A → Set (ℓ ⊔ ℓ') where
   acc : {x : A} → ((y : A) → R y x → Acc R y) → Acc R x
 \end{code}
-We ought to extend our datatype descriptions to express this kind of parametric and universe-polymorphic datatypes as they are prevalent in Agda codebases.
+We ought to extend our datatype descriptions to express this kind of parametric and universe-polymorphic datatypes given their prevalence in Agda codebases.
 Conceptually this is straightforward: parameters are just variables in the context which can be referred to by the index type, datatype level, and constructor types, and we know an easy way to extend the context --- just use the host language's function space.
 So a parametrised and universe-polymorphic datatype could be described by a parameter type~|P|, a parametrised index type |I : (p : P) → Set (ℓⁱ p)| (where |ℓⁱ : P → Level|), a parametrised datatype level |ℓᵈ : P → Level|, and a parametrised list of constructor descriptions |(p : P) → ConDs (I p)| (where |ConDs| needs to be enriched with levels, which we will do in \cref{sec:universe-polymorphic-descriptions}).
 For example, we could describe |Acc| with
@@ -508,20 +520,22 @@ and a parametrised description that looks like |Acc<D|.
 \subsection{Level Parameters}
 \label{sec:level-parameters}
 
-Unfortunately, we have already bumped into the limitation of Agda's current design of universe polymorphism, where only finite levels of type |Level| can be dealt with uniformly (via quantification over |Level|).
+Unfortunately, we have in fact already bumped into the limitation of Agda's current design of universe polymorphism, where only finite levels can be dealt with uniformly (via quantification over |Level|).
 Depending on whether a described datatype is universe-polymorphic or not, its parameter type may reside in a universe with a finite or infinite level: a non-universe-polymorphic parameter type, for example |Σ[ A ∶ Set ] (A → A → Set)|, resides in |Set|, which has a finite level, whereas the parameter type~|P| defined above for |Acc| ---call it |PAcc| for ease of reference--- cannot have type |Set ℓᵖ| for any |ℓᵖ : Level| because the type of one of its components is |Set ℓ| where |ℓ|~can be arbitrarily large, so the type/kind of~|PAcc| has to be |Setω|, the first universe with an infinite level.
-The mismatch between the range of levels we need to handle and the limited power of level quantification creates a load of problems, one of which is that the usual universe-polymorphic |Σ|-type former is not enough for defining~|PAcc| (and we will see one more at the end of \cref{sec:telescopes}).%
+Generic programs taking the extended version of descriptions as input have to quantify the level of~|P|, but currently Agda does not allow such quantification.
+This is one of the many problems created by the mismatch between the range of levels we need to handle and the limited power of level quantification; another problem is that the usual universe-polymorphic |Σ|-type former ---with which we can only construct |Σ|-types with finite levels--- is actually not enough for defining~|PAcc|, and we will see one more at the end of \cref{sec:telescopes}.%
 \todo{a better reason?}
 
-To avoid some of the problems\todo{|Σ|-type former}, we make a simplifying assumption, which holds for common universe-polymorphic datatypes: we assume that there is a list of level parameters separate from other ordinary parameters\todo{use throughout}, and universe-polymorphic constructs\todo{revise}\ refer to these level parameters only.
-More formally, to describe a datatype, we start with a number |n : ℕ| of level parameters, from which we can compute a type |Level ^ n| of tuples of |n|~levels as defined by
+To avoid some of the problems (including the two mentioned above), we make a simplifying assumption, which holds for common universe-polymorphic datatypes: we assume that there is a list of level parameters separate from other ordinary parameters\todo{use throughout}, and only the level parameters are used to achieve universe polymorphism.
+More formally, to describe a datatype, we start with a number |n : ℕ| of level parameters, from which we can compute a type |Level ^ n| of tuples of |n|~levels as defined by%
+\footnote{|⊤| is the unit type with one constructor~|tt|.}
 \begin{code}
 _^_ : Set → ℕ → Set
 A ^    zero    = ⊤
 A ^ (  suc n)  = A × (A ^ n)
 \end{code}
-Parameterised by |ℓs : Level ^ n|, the rest of the description can be written more succinctly as |λ ℓs → (ℓᵈ , ℓᵖ , ℓⁱ , P , I , D)| where |ℓᵈ|~is the datatype level, |P : Set ℓᵖ| the parameter type, |I : P → Set ℓⁱ| the parametrised index type, and |D : (p : P) → ConDs (I p)| the parametrised list of constructors.
-Note that, given~|ℓs|, the type~|P| (which is |Σ[ A ∶ Set ℓ ] (A → A → Set ℓ')| in the case of |Acc|) always has a finite level now.
+Parameterised by |ℓs : Level ^ n|, the rest of the description can be written more succinctly as |λ ℓs → (ℓᵈ , ℓᵖ , ℓⁱ , P , I , D)| where |ℓᵈ|~is the datatype level, |P : Set ℓᵖ| the ordinary parameter type, |I : P → Set ℓⁱ| the parametrised index type, and |D : (p : P) → ConDs (I p)| the parametrised list of constructors.
+Note that the datatype level~|ℓᵈ| depends only on the level parameters~|ℓs|, not the ordinary parameter of type~|P|; moreover, given~|ℓs|, the type~|P| (which is |Σ[ A ∶ Set ℓ ] (A → A → Set ℓ')| in the case of |Acc|) always has a finite level now, avoiding the two problems above.
 We will pack all these data in two record types in \cref{sec:DataD}, after we make some more necessary refinements.
 
 \subsection{Telescopes}
@@ -529,7 +543,7 @@ We will pack all these data in two record types in \cref{sec:DataD}, after we ma
 
 At some point we will need to convert a description to a datatype definition, and it would be unsatisfactory in practice if the parameter and index types in the datatype definition were not in the conventional curried form.
 When currying, the encoding of multiple types in one nested |Σ|-type is ambiguous --- how do we know whether a |Σ|-type is supposed to be interpreted as two types, with the latter depending on the former, or just one type?
-A natural solution is to use telescopes to represent lists of parameter or index types:
+A natural solution is to use telescopes~\citep{de-Bruijn-telescopes} to represent lists of parameter or index types:
 \begin{code}
 mutual
 
@@ -546,7 +560,7 @@ mutual
 Again we use the host language's function space to bring variables of the types in the front of a telescope into the context of the rest of the telescope.
 Besides the usual cons constructor `|∷|', we also include a constructor `|++|' for appending telescopes (which requires induction-recursion to define), making our telescopes tree-shaped; the reason will be clear when we reach \cref{sec:examples}.
 The index~|ℓ| in the type |Tel ℓ| of a telescope~|T| is the maximum level appearing in~|T|.
-This level is important as it is the universe level of the type |⟦ T ⟧ᵗ|, which is a nested |Σ|-type inhabited by tuples whose components have the types in~|T|.
+This level is important since it is the universe level of the type |⟦ T ⟧ᵗ|, which is a nested |Σ|-type inhabited by tuples whose components have the types in~|T|.
 %More subtly, the indexing also precludes overly universe-polymorphic telescopes like |Level ∷ (λ ℓ → Set ℓ ∷ (λ _ → []))|, since in a cons telescope (and similarly in an appended telescope), the maximum level~|ℓ'| in the tail has to be determined independently from the |A|-typed value in the context.
 
 A couple of syntax declarations will make telescopes slightly easier to write and read:
@@ -560,8 +574,8 @@ From a telescope~|T| it is straightforward to compute a curried function type |C
 \begin{code}
 Curriedᵗ : (T : Tel ℓ) → (⟦ T ⟧ᵗ → Set ℓ') → Set (ℓ ⊔ ℓ')
 Curriedᵗ []          X = X tt
-Curriedᵗ (A  ∷   T)  X = (a : A)          → Curriedᵗ (T a) (λ t → X (a , t))
-Curriedᵗ (T  ++  U)  X = Curriedᵗ T (λ t  → Curriedᵗ (U t) (λ u → X (t , u)))
+Curriedᵗ (A  ∷   T)  X = (a : A)          → Curriedᵗ (T a) (λ t  → X (a  , t  ))
+Curriedᵗ (T  ++  U)  X = Curriedᵗ T (λ t  → Curriedᵗ (U t) (λ u  → X (t  , u  )))
 \end{code}
 It is also straightforward to convert between this curried function type and its uncurried counterpart with the functions
 \begin{code}
@@ -570,6 +584,7 @@ uncurryᵗ  : Curriedᵗ T X → ((t : ⟦ T ⟧ᵗ) → X t)
 \end{code}
 whose definitions are omitted.
 With these, we will be able to compute curried forms of parameters and indices when they appear in types (e.g., the type of the fold operator of |Acc|).
+
 Incidentally, if we attempt a similar construction for |Level ^ n| (which can be viewed as a kind of specialised telescope) to produce curried forms of level parameters as well,
 \begin{code}
 CurriedL : (n : ℕ) {f : Level ^ n → Level} → ((ℓs : Level ^ n) → Set (f ℓs)) → Set ?
@@ -579,52 +594,50 @@ CurriedL (  suc n)  X = (ℓ : Level) → CurriedL n (λ ℓs → X (ℓ , ℓs)
 we will not be able to fill in the hole `?' since it should be a finite level when |n|~is zero (meaning that there is no level quantification), or~|ω| when |n|~is non-zero, going beyond the current capabilities of Agda's universe polymorphism.
 To deal with level parameters, we will resort to metaprogramming techniques in \cref{sec:reflection}.
 
-\Josh{The representation looks more messy, but they will actually lead to cleaner native datatypes.}
-
 \subsection{Universe-Polymorphic Descriptions}
 \label{sec:universe-polymorphic-descriptions}
 
 It remains to adapt the description datatypes |ConDs|, |ConD|, and |RecD| from \cref{sec:recap} for universe polymorphism.
-A first instinct might be copying what has been done for |Tel| (as constructor descriptions can be viewed as a slightly more complex kind of telescopes), enriching the |Set|-arguments to |Set ℓ| and perhaps indexing the datatypes with the maximum level, but this is not enough.
-Consider how we should enrich the type of a base functor |⟦ D ⟧ᶜˢ|:
+A first instinct might be copying what has been done for |Tel| (as constructor descriptions can be viewed as a slightly more complex kind of telescopes), enriching the |Set|-arguments to |Set ℓ| and perhaps indexing the datatypes with the maximum level, but this is not enough:
+In the case of |Tel|, the range of derived definitions (such as |⟦_⟧ᵗ| and |Curriedᵗ|) is limited and requires only the computation of the maximum level, so indexing suffices; on the other hand, generic libraries built on the description datatypes may construct whatever they want from descriptions, and the need for non-trivial level computation will naturally arise if those constructions are universe-polymorphic --- for example, in \cref{sec:algebraic-ornamentation,sec:simple-containers} we will compute new universe-polymorphic datatypes from old ones, and will need to specify the new levels in terms of the old ones (and even reason about them).
+As a concrete example we can look at now, consider how the type of a base functor |⟦ D ⟧ᶜˢ| should be enriched:
 One place where we use the base functor is the type of an algebra |{i : I} → ⟦ D ⟧ᶜˢ X i → X i| where |X : I → Set ℓ|~is the result type, which can have any level depending on what the algebra computes, so |ℓ|~should be universally quantified in the type of |⟦ D ⟧ᶜˢ|.
 But then, what should the level of the type |⟦ D ⟧ᶜˢ X i| be?
 This level ---call it~|ℓ'|--- needs to be computed from |ℓ|~and the structure of~|D|, and the computation is non-trivial --- for example, if |D|~is |[]|, then |⟦ D ⟧ᶜˢ X i = ⊥|, in which case |ℓ'|~is simply |lzero|; if |D|~is non-empty, then |ℓ|~may or may not appear in~|ℓ'|, depending on whether there is a constructor with a |ρ|-field or not.
-More generally, the need for non-trivial level computation naturally arises if we take universe polymorphism seriously, for example when we compute a new datatype from an old one, and need to specify the new levels in terms of the old ones --- \cref{sec:algebraic-ornamentation,sec:simple-containers} will give some such examples.
 
 To allow level computation to be performed as freely as possible, we choose to index the description datatypes with as much useful information as possible: the index in the type of a description is a list which not only contains the levels of the fields but also encodes the description constructors used.
-Starting from the simplest |RecD| datatype, we index it with |RecB = List Level|, recording the levels of the |π|-fields:\todo{highlight differences from previous versions}
+Starting from the simplest |RecD| datatype, we index it with |RecB == List Level|, recording the levels of the |π|-fields (the differences from the previous version are highlighted):
 \savecolumns
 \begin{code}
-data RecD (I : Set ℓⁱ) : RecB → Setω where
-  ι  : (i : I)                                → RecD I []
-  π  : (A : Set ℓ)      (D : A →  RecD I rb)  → RecD I (ℓ       ∷ rb)
+data RecD (I : Set (HL ℓⁱ)) : (HL RecB) → Set{-"_{\highlight{addition}{\text\textomega}}"-} where
+  ι  : (i : I)                                          → RecD I (HL [])
+  π  : (A : Set (HL ℓ))      (D : A →  RecD I (HL rb))  → RecD I (HL((ℓ ∷ rb)))
 \end{code}
-For |ConD|, the index type is |ConB = List (Level ⊎ RecB)|, whose element sum type is used to record whether a field is |σ|~or~|ρ|:
+For |ConD|, the index type is |ConB == List (Level ⊎ RecB)|, whose element sum type is used to record whether a field is |σ|~or~|ρ|:
 \restorecolumns
 \begin{code}
-data ConD (I : Set ℓⁱ) : ConB → Setω where
-  ι  : (i : I)                                → ConD I []
-  σ  : (A : Set ℓ)      (D : A →  ConD I cb)  → ConD I (inl ℓ   ∷ cb)
-  ρ  : (D : RecD I rb)  (E :      ConD I cb)  → ConD I (inr rb  ∷ cb)
+data ConD (I : Set (HL ℓⁱ)) : (HL ConB) → Set{-"_{\highlight{addition}{\text\textomega}}"-} where
+  ι  : (i : I)                                          → ConD I (HL [])
+  σ  : (A : Set (HL ℓ))      (D : A →  ConD I (HL cb))  → ConD I (HL(({-"\awa{\cons{inr}}{\cons{inl}}\;\awa{\iden{rb}}{\ell}\;"-} ∷ cb)))
+  ρ  : (D : RecD I (HL rb))  (E :      ConD I (HL cb))  → ConD I (HL((inr rb ∷ cb)))
 \end{code}
-Finally, |ConDs| is indexed with |ConBs = List ConB|, collecting information from all the constructors into one list:
+Finally, |ConDs| is indexed with |ConBs == List ConB|, collecting information from all the constructors into one list:
 \begin{code}
-data ConDs (I : Set ℓⁱ) : ConBs → Setω where
-  []   :                                       ConDs I []
-  _∷_  : (D : ConD I cb) (Ds : ConDs I cbs) →  ConDs I (cb ∷ cbs)
+data ConDs (I : Set (HL ℓⁱ)) : (HL ConBs) → Set{-"_{\highlight{addition}{\text\textomega}}"-} where
+  []   :                                                 ConDs I (HL [])
+  _∷_  : (D : ConD I (HL cb)) (Ds : ConDs I (HL cbs)) →  ConDs I (HL((cb ∷ cbs)))
 \end{code}
 
 With some helper functions, which constitute a small domain-specific language for level computation, we can now specify the output level of |⟦_⟧ᶜˢ|:
 \begin{code}
-⟦_⟧ᶜˢ :  {I : Set ℓⁱ} → ConDs I cbs → (I → Set ℓ) →
-         (I → Set (  maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔
-                     maxMap (hasRec? ℓ) cbs ⊔ hasCon? ℓⁱ cbs))
+⟦_⟧ᶜˢ :  {I : Set (HL ℓⁱ)} → ConDs I (HL cbs) → (I → Set (HL ℓ)) →
+         (I → Set (  (HL(maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔))
+                     (HL(maxMap (hasRec? ℓ) cbs ⊔ hasCon? ℓⁱ cbs))))
 ⟦ []      ⟧ᶜˢ X i = ⊥
 ⟦ D ∷ Ds  ⟧ᶜˢ X i = ⟦ D ⟧ᶜ X i ⊎ ⟦ Ds ⟧ᶜˢ X i
 \end{code}
 In prose, the output level is the maximum among the maximum level of the |π|-fields, the maximum level of the |σ|-fields, |ℓ| if the description has a |ρ|-field, and |ℓⁱ| if the description has a constructor.
-For our library, the approach works surprisingly well (even though the level expressions may look somewhat scary sometimes): we are able to write fully universe-polymorphic types while keeping almost all of the programs as they were --- for example, the universe-polymorphic program of |⟦_⟧ᶜˢ| is exactly the same as the non-universe-polymorphic one in \cref{sec:recap}.
+For our constructions, the approach works surprisingly well (even though the level expressions may look somewhat scary sometimes): we are able to write fully universe-polymorphic types while keeping almost all of the programs as they were --- for example, the universe-polymorphic program of |⟦_⟧ᶜˢ| is exactly the same as the non-universe-polymorphic one in \cref{sec:recap}.
 To see how the universe-polymorphic version of |⟦_⟧ᶜˢ| is type-checked, we need to show a couple of definitions:
 \begin{code}
 maxMap : (A → Level) → List A → Level
@@ -634,8 +647,8 @@ maxMap f (a ∷ as)  = f a ⊔ maxMap f as
 hasCon? : Level → ConBs → Level
 hasCon? ℓ = maxMap (λ _ → ℓ)
 \end{code}
-It is easy to see that the output level in the |[]|~case is |lzero|, which is indeed the level of~|⊥|.
-In the |D ∷ Ds| case where |D : ConD I cb| and |Ds : ConDs I cbs|, the output level expands to
+It is easy to see that the output level in the |⟦ [] ⟧ᶜˢ| case is |lzero|, which is indeed the level of~|⊥|.
+In the |⟦ D ∷ Ds ⟧ᶜˢ| case where |D : ConD I cb| and |Ds : ConDs I cbs|, the output level expands to
 \begin{code}
 max-π cb ⊔ max-σ cb ⊔ hasRec? ℓ cb ⊔ ℓⁱ ⊔
 maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓ) cbs ⊔ hasCon? ℓⁱ cbs
@@ -643,21 +656,18 @@ maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ maxMap (hasRec? ℓ) cbs ⊔ hasCon?
 where the first line is the level of |⟦ D ⟧ᶜ X i| and the second line is inductively the level of |⟦ Ds ⟧ᶜˢ X i|, and indeed the level of the sum type is their maximum.
 It may appear that we skipped several steps applying the associativity and commutativity of~`⊔', but in fact these properties (along with some others) are built into Agda's definitional equality on |Level|, so the definition of |⟦_⟧ᶜˢ| type-checks without any manual proofs about levels.
 
-\todo[inline]{Side effect: works as a first-order, albeit partial, representation of datatypes}
-
 \subsection{Packing Up}
 \label{sec:DataD}
 
-We are now ready to pack what we have developed in this section into two new layers of datatype descriptions, mostly corresponding to the representation given in \cref{sec:level-parameters}.%
-\todo{connect the dots}
-The outermost layer deals with universe-polymorphic level parameters,
+We are now ready to pack what we have developed in this section into two new layers of datatype descriptions, mostly corresponding to the representation given in \cref{sec:level-parameters}.
+The outermost layer |DataD| contains the number of level parameters and brings those level parameters into the context for the next layer |PDataD| (for `parametrised datatype' or `pre-datatype'):
 \begin{code}
 record DataD : Setω where
   field
     #levels  : ℕ
     applyL   : Level ^ #levels → PDataD
 \end{code}
-and the next layer deals with ordinary parameters and indices:
+|PDataD| contains the ordinary parameter types in the |Param| telescope (with maximum level |plevel|), the index types in the parametrised |Index| telescope (with maximum level |ilevel|), and the parametrised list of constructor descriptions (whose structure is recorded in |struct|):
 \begin{code}
 record PDataD : Setω where
   field
@@ -670,7 +680,19 @@ record PDataD : Setω where
     Index       : ⟦ Param ⟧ᵗ → Tel ilevel
     applyP      : (ps : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index ps ⟧ᵗ struct
 \end{code}
-For convenience, we lift the definitions of base functor to the |DataD| layer:
+Before explaining the rest of the fields, it may be helpful to see an example first: the |Acc| datatype can now be described by
+\begin{code}
+AccD : DataD
+AccD = record
+  {  #levels  = 2
+  ;  applyL   = λ (ℓ , ℓ' , _) → record
+     {  alevel  = ℓ'
+     ;  level-inequality = refl
+     ;  Param   = [ A ∶ Set ℓ ] [ R ∶ (A → A → Set ℓ') ] []
+     ;  Index   = λ (A , _) → [ _ ∶ A ] []
+     ;  applyP  = λ (A , R , _) → (σ[ x ∶ A ] ρ (π[ y ∶ A ] π[ _ ∶ R y x ] ι (y , tt)) (ι (x , tt))) ∷ [] }{-"\kern-1.5pt"-}}
+\end{code}
+The names |applyL| and |applyP| work better when used in the postfix projection syntax to apply descriptions to parameters, as shown in the following definitions of base functor lifted to the |DataD| layer (which we will use later):
 \begin{code}
 ⟦_⟧ᵈ :  (D : DataD) → ∀ {ℓs ps} →
         let I == ⟦ D .applyL ℓs .Index ps ⟧ᵗ in (I → Set ℓ) → (I → Set _)
@@ -681,19 +703,6 @@ fmapᵈ :  (D : DataD) → ∀ {ℓs ps} →
          (∀ {i} → X i → Y i) → ∀ {i} → ⟦ D ⟧ᵈ X i → ⟦ D ⟧ᵈ Y i
 fmapᵈ D {ℓs} {ps} = fmapᶜˢ (D .applyL ℓs .applyP ps)
 \end{code}
-For example, the |Acc| datatype can now be described by
-\begin{code}
-AccD : DataD
-AccD = record
-  {  #levels  = 2
-  ;  applyL   = λ (ℓ , ℓ' , _) → record
-     {  alevel  = ℓ'
-     ;  level-inequality = refl
-     ;  Param   = [ A ∶ Set ℓ ] [ R ∶ (A → A → Set ℓ') ] []
-     ;  Index   = λ (A , _) → [ _ ∶ A ] []
-     ;  applyP  = λ (A , R , _) → (σ[ x ∶ A ] ρ[ π[ y ∶ A ] π[ _ ∶ R y x ] ι (y , tt) ] ι (x , tt)) ∷ [] }{-"\kern-1.5pt"-}}
-\end{code}
-
 What remain to be explained are the fields |alevel| and |level-inequality|, which make sure that a corresponding datatype definition would pass Agda's universe checker.
 Here we are using the more conservative and simpler datatype level--checking rule employed when Agda's \verb"--without-K" option~\citep{Cockx-pattern-matching-without-K} is turned on: the level of a datatype should at least be the maximum level of its index types, which is |ilevel| in our descriptions.
 If there are more components in the datatype level, they are specified in |alevel|, and the final datatype level is |alevel ⊔ ilevel|.
@@ -751,16 +760,21 @@ Analogously to |DataD|, the universe-polymorphic level parameters of a parametri
 \begin{code}
 record FoldP : Setω where
   field
-    {Desc}    :  DataD
-    {Native}  :  DataT Desc
-    Conv      :  DataC Desc Native
-    #levels   :  ℕ
-    level     :  Level ^ #levels → Level ^ (Desc .#levels)
-    {plevel}  :  Level ^ #levels → Level
-    Param     :  ∀ ℓs → Tel (plevel ℓs)
-    param     :  Level ^ #levels → Level
-    Carrier   :  ∀ ℓs ps → ⟦ Desc .applyL (level ℓs) .Index (param ps) ⟧ᵗ → Set (clevel ℓs)
-    algebra   :  ∀ {ℓs} ps → Alg (Desc .applyL (level ℓs) .applyP (param ps)) (Carrier ℓs ps)
+    {Desc    }  : DataD
+    {Native  }  : DataT  Desc
+    Conv        : DataC  Desc Native
+    #levels     : ℕ
+    level       : Level ^ #levels → Level ^ (Desc .#levels)
+    applyL      : ∀ ℓs → AlgP (Desc .applyL (level ℓs))
+
+record AlgP (D : PDataD) : Setω where
+  field
+    {plevel   }  : Level
+    {clevel   }  : Level
+    Param        : Tel plevel
+    param        : ⟦ Param ⟧ᵗ → ⟦ D .Param ⟧ᵗ
+    Carrier      : ∀ ps → ⟦ D .Index (param ps) ⟧ᵗ → Set clevel
+    applyP       : ∀ ps → Alg (D .applyP (param ps)) (Carrier ps)
 \end{code}
 where the type |Alg| of algebras is the same as the one in \cref{sec:recap} except for a bit of universe-polymorphic adaptations:
 \begin{code}
@@ -1098,6 +1112,10 @@ which we apply to a datatype connection~|C| and a fold connection |fC| ---which 
 
 \subsection{Algebraic Ornamentation}
 \label{sec:algebraic-ornamentation}
+
+\todo[inline]{Side effect of level indexing: works as a first-order, albeit partial, representation of datatypes}
+
+\Josh{The representation looks more messy, but they will actually lead to cleaner native datatypes.}
 
 \subsection{Predicates on Simple Containers}
 \label{sec:simple-containers}
