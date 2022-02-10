@@ -851,12 +851,34 @@ When we get to examples that require induction in \cref{sec:examples}, which wil
 
 \section{Establishing Connections Using Elaborator Reflection}
 \label{sec:reflection}
-
 \cite{Christiansen-elaborator-reflection}
-Elaborator reflection gives us access to Agda utilities which are otherwise only accessible deep down at Agda's implementation.
-Reflected syntax is used to interact with the |TC| moand, which serves as an interface to the Agda type checker.
-There are several differences between Agda and Idris, we will discuss them and their implications on our work in \cref{sec:discussion}.
+
+\Viktor{The translation between generic definitions and native ones is non-trivial due to the nature of the former being more expressive than the latter.}
+
+We want to generate first-class datatype and function definitions from defined descriptions, a classic use case for metaprogramming.
+\Viktor{Justify out usage of elaborator reflection?}
+
+A reflected syntax is used to interact with the |TC| moand, which serves as an interface to the type checker.
+We present a simplified version of Agda's reflected syntax (\cref{fig:reflected syntax} and \cref{fig:type abbrs}) instead of the actual implementation (\cref{fig:full reflected syntax}) to more conveniently introduce basic ideas of elaborator reflection and our usage of it.
+
+The built-in type |Tm| represents all reflected terms, with each constructor corresponding to a class of terms.
+It's crucial that reflected terms are unityped by |Tm|, meaning they are subject to arbitrary manipulation without type enforcement.
+This untypeable nature gives us freedom to perform operations not possible under the object language's type system, therefore allowing translation from programs defined with generic description, which is more expressive than the object language, to their native counterparts.
+However it's a double-edged sword that also puts programmers in great danger of dealing with structures that are not safeguarded by types, such as intermediate terms of strengthening and weakening.
+This may leads to bugs in metaprograms uncaught by types.
+Fortunately, we can exploit the type checker via elaborator reflection so we can focus on interesting manipulations on terms, while letting the type checker handle more typical and otherwise error-prone operations.
+We will discuss in \cref{sec:translation} how we interact with the |TC| monad to do so.
+
+Notably, Agda supports metaprogramming using top-level primitives |quote|, |quoteTerm| and |unquote|.
+|quote| generates the name (of type |Name|) of the quoted term at call site upon type checking,
+similarly |quoteTerm| generates the reflected representation (of type |Tm|).
+|unquote| is capable of traslating reflected representation to native terms.
+For example, |quoteTerm ℕ| is judgementally equal to |def (quote ℕ) []|, albeit their different appearences to programmers.
+These top-level primitives are limiting in usage and less interesting to us compared to more powerful primitives |quoteTC| and |unquoteTC|, so we won't go into their details.
+
+There are several differences between the elaborator reflection mechanisms of Agda and Idris, we will discuss them and their implications on our work in \cref{sec:discussion}.
 \subsection{Elaborator Reflection in Agda}
+\label{sec:elab}
 \LT{
   Outline the core of reflection:
   \begin{enumerate}
@@ -872,29 +894,27 @@ There are several differences between Agda and Idris, we will discuss them and t
   \end{enumerate}
 }
 
-We present a simplified version of Agda's reflected syntax (\cref{fig:reflected syntax} and \cref{fig:type abbrs}) instead of the implemented one in Agda (\cref{fig:full reflected syntax}) to introduce some basic ideas of elaborator reflection and our usage of it.
+\Viktor{What is the TC monad?}
 
-Notably, Agda supports classic metaprogramming using |quote|, |quoteTerm| and |unquote|.
-|quote| is a top-level primitive that generates the name (of type |Name|) of the quoted term upon typechecking,
-similarly |quoteTerm| generates the reflected representation (of type |Tm|).
-|unquote| is capable of traslating reflected representation to native terms.
-For example, |quoteTerm ℕ| is judgementally equal to |def (quote ℕ) []|, albeit their different appearences to programmers.
-These top-level primitives are limiting in usage and less interesting to us compared to more powerful primitives |quoteTC| and |unquoteTC|, so we won't go into their details.
+The |TC| monad in Agda, accompanied by primitive operations that end in |TC A| (|A| may be any type depending on the operations in question), provides us an interface to utilities which are otherwise only accessible in the type checking implementation.
 
-The built-in type |Tm| represents Agda terms, with each constructor corresponding to a class of terms.
-The constructor fully applied to arguments |pi t u| represents dependent function types |T → U|, in which |T| and |U| are represented by |t| and |u|.
+For examples, |checkType : Term → Type → TC Term| is a primitive that invokes the type checker to check if the second argument is the type of the first one, and solve some or all constraints and metavariables in the process, then return the type checked term.
+|getContext : TC (List (Arg Type))| returns the types in the current type checking context, which |extendContext : ∀ {a} {A : Set a} → Arg Type → TC A → TC A| can be used to extend.
+
+We give a brief introduction on |Tm| and its constructors.
 Fully-applied constructor |set t| represents universe types |Set ℓ| while |t| should represent a term |ℓ| of type |Level|.
 Note that |t| is not guaranteed to represent terms of type |Level|, because the representation is unityped.
-Each of variable representations |var i xs| is De Bruijn indexed by a natural number |i|, applied to arguments that are represented by |xs|.
+The constructor fully applied to arguments |pi t u| represents dependent function types |T → U|, in which |T| and |U| are represented by |t| and |u|.
+|lit l| represents literals, i.e. numbers, characters and strings.
+Fully-applied |lam t| represents lambda terms |λ x → T| where |T| is represented by |t| and |x| is omitted since occurrences of |x| in |T| are translated to de Bruijn indices.
+Each of variable representations |var i xs| is de Bruijn indexed by a natural number |i|, applied to arguments that are represented by |xs|.
+Constructor and function applications have similar representations |con c xs| and |def f xs|, where |c| and |f| are the constructor/function names, |xs| represents the arguments they are applied to.
+|unknown| represents terms we would not provide, for example, when there are parts of a type we conclude Agda could derive for us, they can be formed with |unknown|and fed to the |checkType| primitive, this is equivelant to putting underscore |_| in native Agda terms.
 
-It's crucial that reflected terms and variable indices are subject to arbitrary manipulation without type enforcement.
-This untypeable nature gives us great freedom to perform operations not possible under Agda's type system, therefore allowing translation from some programs of generic definitions, which are more expressive than Agda's type system, to their native counterparts.
-However this double-edged sword also puts programmers in great danger of dealing with structures that are not safeguarded by types, such as intermediate terms of strengthening and weakening.
-This may leads to bugs in metaprograms uncaught by types.
-Fortunately, we can exploit Agda's type checker so we can focus on interesting manipulations on terms, while letting the type checker handle more typical and error-prone operations.
-We will discuss in the next subsection how we interact with the |TC| monad to do so.
+We now need to use metaprograms after understanding how to write them. An intended usage is summoning the keyword |macro| to declare metaprograms as macros.
+Types of these metaprograms are required to end in |Term → TC ⊤|.
+A macro can appear at wherever a hole can be.
 
-Fully-applied |lam t| represents lambda terms |λ x → T| where |T| is represented by |t| and |x| is omitted since occurrences of |x| in |T| are translated to De Bruijn indices.
 \begin{figure}
 \begin{halfcol}%
 \begin{code}
@@ -924,6 +944,7 @@ data Pattern where
 \end{code}
 \caption{Reflected patterns}
 \end{halfcol}
+\label{fig:reflected syntax}
 \end{figure}
 
 \begin{figure}[h]
@@ -950,9 +971,11 @@ Patterns   =  List Pattern
 \end{code}
 \caption{Type abbreviations}
 \end{halfcol}
+\label{fig:type abbrs}
 \end{figure}
 
 \subsection{Translation between Typed Higher-Order and Untyped First-Order Representations}
+\label{sec:translation}
 \LT{Discuss the difference between the typed higher-order and untyped first-order representations of telescopes}
 \LT{Introduce |extendContext|, |unquoteTC|, and a more safe version |extendContextT|}
 \Viktor{Enforce types on untyped operations using |quoteTC|/|unquoteTC|; discuss the usage of |extendContext|}
