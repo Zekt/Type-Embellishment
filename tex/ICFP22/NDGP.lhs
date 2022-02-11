@@ -172,13 +172,33 @@
 %format π = "\textbf{\textpi}"
 %format zero = "\cons{zero}"
 %format suc = "\cons{suc}"
+%format agda-sort = "\cons{agda\textsf{-}sort}"
 %format set = "\cons{set}"
 %format pi = "\cons{pi}"
 %format lit = "\cons{lit}"
 %format lam = "\cons{lam}"
+%format pat-lam = "\cons{pat\textsf{-}lam}"
 %format var = "\cons{var}"
 %format def = "\cons{def}"
+%format meta = "\cons{meta}"
 %format unknown = "\cons{unknown}"
+%format proj = "\cons{proj}"
+%format absurd = "\cons{absurd}"
+%format dot = "\cons{dot}"
+%format prop = "\cons{prop}"
+%format propLit = "\cons{propLit}"
+%format inf = "\cons{inf}"
+%format abs = "\cons{abs}"
+%format arg = "\cons{arg}"
+%format arg-info = "\cons{arg\textsf{-}info}"
+%format visible = "\cons{visible}"
+%format hidden = "\cons{hidden}"
+%format instance′ = "\cons{instance′}"
+%format nat = "\cons{nat}"
+%format clause = "\cons{clause}"
+%format absurd-clause = "\cons{absurd\textsf{-}clause}"
+%format function = "\cons{function}"
+%format data-type = "\cons{data\textsf{-}type}"
 
 %format A = "\iden A"
 %format B = "\iden B"
@@ -870,21 +890,21 @@ When we get to examples that require induction in \cref{sec:examples}, which wil
 \Viktor{The translation between generic definitions and native ones is non-trivial due to the nature of the former being more expressive than the latter.}
 
 We want to generate first-class datatype and function definitions from defined descriptions, a classic use case for metaprogramming.
-\Viktor{Justify out usage of elaborator reflection?}
+\Viktor{Justify our usage of elaborator reflection?}
 
-A reflected syntax is used to interact with the |TC| moand, which serves as an interface to the type checker.
-We present a simplified version of Agda's reflected syntax (\cref{fig:reflected syntax} and \cref{fig:type abbrs}) instead of the actual implementation (\cref{fig:full reflected syntax}) to more conveniently introduce basic ideas of elaborator reflection and our usage of it.
+A reflected syntax is used to interact with the |TC| moand, which serves as an interface to the type-checker.
+We present a simplified version of Agda's reflected syntax (\cref{fig:reflected term} and \cref{fig:reflected pattern}) instead of the actual implementation (\cref{fig:full reflected syntax}) to more conveniently introduce basic ideas of elaborator reflection and our usage of it.
 
 The built-in type |Tm| represents all reflected terms, with each constructor corresponding to a class of terms.
 It's crucial that reflected terms are unityped by |Tm|, meaning they are subject to arbitrary manipulation without type enforcement.
 This untypeable nature gives us freedom to perform operations not possible under the object language's type system, therefore allowing translation from programs defined with generic description, which is more expressive than the object language, to their native counterparts.
 However it's a double-edged sword that also puts programmers in great danger of dealing with structures that are not safeguarded by types, such as intermediate terms of strengthening and weakening.
 This may leads to bugs in metaprograms uncaught by types.
-Fortunately, we can exploit the type checker via elaborator reflection so we can focus on interesting manipulations on terms, while letting the type checker handle more typical and otherwise error-prone operations.
+Fortunately, we can exploit the type-checker via elaborator reflection so we can focus on interesting manipulations on terms, while letting the type-checker handle more typical and otherwise error-prone operations.
 We will discuss in \cref{sec:translation} how we interact with the |TC| monad to do so.
 
 Notably, Agda supports metaprogramming using top-level primitives |quote|, |quoteTerm| and |unquote|.
-|quote| generates the name (of type |Name|) of the quoted term at call site upon type checking,
+|quote| generates the name (of type |Name|) of the quoted term at call site upon type-checking,
 similarly |quoteTerm| generates the reflected representation (of type |Tm|).
 |unquote| is capable of traslating reflected representation to native terms.
 For example, |quoteTerm ℕ| is judgementally equal to |def (quote ℕ) []|, albeit their different appearences to programmers.
@@ -910,24 +930,28 @@ There are several differences between the elaborator reflection mechanisms of Ag
 
 \Viktor{What is the TC monad?}
 
-The |TC| monad in Agda, accompanied by primitive operations that end in |TC A| (|A| may be any type depending on the operations in question), provides us an interface to utilities which are otherwise only accessible in the type checking implementation.
+The |TC| monad in Agda, accompanied by primitive operations that end in |TC A| (|A| can be any type depending on the operations in question), provides us an interface to utilities which are otherwise only accessible in the type-checker implementation.
 
-For examples, |checkType : Term → Type → TC Term| is a primitive that invokes the type checker to check if the second argument is the type of the first one, and solve some or all constraints and metavariables in the process, then return the type checked term.
-|getContext : TC (List (Arg Type))| returns the types in the current type checking context, which |extendContext : ∀ {a} {A : Set a} → Arg Type → TC A → TC A| can be used to extend.
+For examples, |checkType : Term → Type → TC Term| is a primitive that checks if the second argument is the type of the first one, and solve some or all constraints and metavariables in the process, then return the type-checked term.
+
+|getContext : TC (List (Arg Type))| returns the types in the current type-checking context, and |extendContext : ∀ {a} {A : Set a} → Arg Type → TC A → TC A| extends it with one type, represented by the first argument.
 
 We give a brief introduction on |Tm| and its constructors.
-Fully-applied constructor |set t| represents universe types |Set ℓ| while |t| should represent a term |ℓ| of type |Level|.
-Note that |t| is not guaranteed to represent terms of type |Level|, because the representation is unityped.
+The applied constructor |set t| represents universe types |Set ℓ| while |t| should represent a term |ℓ| of type |Level|.
+Note that terms represented by |t| are not guaranteed be of type |Level|, because the representation is unityped.
 The constructor fully applied to arguments |pi t u| represents dependent function types |T → U|, in which |T| and |U| are represented by |t| and |u|.
 |lit l| represents literals, i.e. numbers, characters and strings.
-Fully-applied |lam t| represents lambda terms |λ x → T| where |T| is represented by |t| and |x| is omitted since occurrences of |x| in |T| are translated to de Bruijn indices.
+The applied |lam t| represents lambda terms |λ x → T| where |T| is represented by |t| and |x| is omitted since occurrences of |x| in |T| are translated to de Bruijn indices.
 Each of variable representations |var i xs| is de Bruijn indexed by a natural number |i|, applied to arguments that are represented by |xs|.
-Constructor and function applications have similar representations |con c xs| and |def f xs|, where |c| and |f| are the constructor/function names, |xs| represents the arguments they are applied to.
-|unknown| represents terms we would not provide, for example, when there are parts of a type we conclude Agda could derive for us, they can be formed with |unknown|and fed to the |checkType| primitive, this is equivelant to putting underscore |_| in native Agda terms.
+Constructor and function applications have similar representations |con c xs| and |def f xs|, where |c| and |f| are the constructor/function names, and |xs| represents the arguments they are applied to.
+|unknown| represents terms that are not provided, for example, when there are parts of a type we conclude Agda could derive for us, they can be formed containing |unknown| and fed to the |checkType| primitive.
+Checking reflected terms containing |unknown| is equivelant of checking hand-tailored terms containing underscores |_|.
 
-We now need to use metaprograms after understanding how to write them. An intended usage is summoning the keyword |macro| to declare metaprograms as macros.
-Types of these metaprograms are required to end in |Term → TC ⊤|.
-A macro can appear at wherever a hole can be.
+We need to know how to use metaprograms after understanding how to write them.
+An intended usage is summoning the keyword |macro| to declare metaprograms as macros.
+Types of macros are required to end in |Term → TC ⊤| as known as |Tactic|.
+A macro can be used at a term position, the call site is treated as a metavariable |x : Meta|, and the |f : Tactic| the macro returns is evaluated as |f (meta x)| when type-checked.
+It's expected that macros solve the metavariables upon evaluation, so it is common to have the primitive |unify : Term → Term → TC ⊤| in macros, which unifies the first argument (assumed to be a metavariable) with the second one.
 
 \begin{figure}
 \begin{halfcol}%
@@ -944,6 +968,7 @@ data Tm : Set where
   unknown :                             Tm
 \end{code}
 \caption{Reflected expressions (simplified)}
+\label{fig:reflected term}
 \end{halfcol}%
 \begin{halfcol}
 \begin{code}
@@ -957,8 +982,8 @@ data Pattern where
 
 \end{code}
 \caption{Reflected patterns}
+\label{fig:reflected pattern}
 \end{halfcol}
-\label{fig:reflected syntax}
 \end{figure}
 
 \begin{figure}[h]
@@ -984,8 +1009,8 @@ Names      =  List Name
 Patterns   =  List Pattern
 \end{code}
 \caption{Type abbreviations}
-\end{halfcol}
 \label{fig:type abbrs}
+\end{halfcol}
 \end{figure}
 
 \subsection{Translation between Typed Higher-Order and Untyped First-Order Representations}
@@ -1014,7 +1039,6 @@ data Definition : Set where
   ...
 \end{code}
 \caption{A snippet of reflected declarations}
-\label{fig:full reflected syntax}
 \end{figure}
 \subsection{Generating the Connections and Wrappers with |Level|}
 \LT{Address the universe problem here: currying for |Level|}
@@ -1192,6 +1216,7 @@ data Modality    : Set where
 \end{minipage}
   
 \caption{A snippet of reflected expressions (actual)}
+\label{fig:full reflected syntax}
 \end{figure}
 
 \begin{code}
