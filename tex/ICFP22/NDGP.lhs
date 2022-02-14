@@ -885,7 +885,6 @@ Everything we did manually above was highly mechanical and deserves to be automa
 \todo[inline]{Although we do not present the details of generic induction, the definitions (|IndP|, |IndT|, etc) are largely the same as what we have formulated for folds above.
 When we get to examples that require induction in \cref{sec:examples}, which will only be sketched informally, it should suffice to think of those programs as a more complex kind of parametrised algebra with induction hypotheses.}
 
-
 \section{Establishing Connections Using Elaborator Reflection}
 \label{sec:reflection}
 \cite{Christiansen-elaborator-reflection}
@@ -895,27 +894,13 @@ When we get to examples that require induction in \cref{sec:examples}, which wil
 We want to generate datatype and function definitions from defined descriptions, a classic use case for metaprogramming.
 \Viktor{Justify our usage of elaborator reflection?}
 
-\Viktor{
-A reflected syntax is used to interact with the |TC| moand, which serves as an interface to the elaborator.
-We present a simplified version of Agda's reflected syntax (\cref{fig:reflected term} and \cref{fig:reflected pattern}) instead of the actual implementation (\cref{fig:full reflected syntax}) to more conveniently introduce basic ideas of elaborator reflection and our usage of it.
-}
-
-The built-in type |Tm| represents all reflected terms, with each constructor corresponding to a class of terms.
-It's crucial that reflected terms are unityped by |Tm|, meaning they are subject to arbitrary manipulation without type enforcement.
+The built-in type |Term| (\cref{fig:full reflected syntax}) represents all reflected terms, with each constructor corresponding to a class of terms.
+It's crucial that reflected terms are unityped by |Term|, meaning they are subject to arbitrary manipulation without type enforcement.
 This untypeable nature gives us freedom to perform operations not possible under the object language's type system, therefore allowing translation from programs defined with generic description, which is more expressive than the object language, to their native counterparts.
 However it's a double-edged sword that also puts programmers in great danger of dealing with structures that are not safeguarded by types, such as intermediate terms of strengthening and weakening.
 This may leads to bugs in metaprograms uncaught by types.
 Fortunately, we can exploit the elaborator via elaborator reflection so we can focus on interesting manipulations on terms, while letting the elaborator handle more typical and otherwise error-prone operations.
 We will discuss in \cref{sec:translation} how we interact with the |TC| monad to do so.
-
-\Viktor{
-Notably, Agda supports top-level primitives |quote|, |quoteTerm| and |unquote|.
-|quote| generates the name (of type |Name|) of the quoted term at call site upon elaborating,
-similarly |quoteTerm| generates the reflected representation (of type |Tm|).
-|unquote| is capable of traslating reflected representation to native terms.
-For example, |quoteTerm ℕ| is judgementally equal to |def (quote ℕ) []|, albeit their different appearences to programmers.
-These top-level primitives are limiting in usage and less interesting to us compared to more powerful primitives |quoteTC| and |unquoteTC|, so we won't go into their details.
-}
 
 There are several differences between the elaborator reflection mechanisms of Agda and Idris, we will discuss them and their implications on our work in \cref{sec:discussion}.
 \subsection{Elaborator Reflection in Agda}
@@ -938,41 +923,79 @@ There are several differences between the elaborator reflection mechanisms of Ag
 \Viktor{What is the TC monad?}
 \Viktor{Maybe we should have an example program before introducing any expression.}
 
-The |TC| monad in Agda, accompanied by primitive operations that end in |TC A| (|A| can be any type depending on the operations in question), provides us an interface to utilities which are otherwise only accessible in the elaborator.
+The |TC| monad in Agda, accompanied by primitive operations of types that end in |TC A| (|A| can be any type depending on the operations in question), provides us an interface to utilities which are otherwise only accessible to the elaborator.
 
-For examples, |checkType : Term → Type → TC Term| is a primitive that checks if the second argument is the type of the first one, and solve some or all constraints and metavariables in the process, then return the type-checked term.
-
+For examples, |checkType : Term → Type → TC Term| is a primitive that checks if the second argument is the type of the first one, then return a type-checked term whose constraints and metavariables are solved if possible.
 |getContext : TC (List (Arg Type))| returns the types in the current type-checking context, and |extendContext : ∀ {a} {A : Set a} → Arg Type → TC A → TC A| extends it with one type, represented by the first argument.
 
-\Viktor{These primitives can be composed into larger metaprograms...}
+There are multiple ways to run a metaprogram (|TC| computation).
+An intended usage is to declare metaprograms as macros using the keyword |macro|.
 
-|Tm| represents reflected expressions:
+\begin{figure}[h]
+\begin{code}
+macro
+  evalTC : {ℓ : Level} → {A : Set ℓ} → TC A → Term → TC
+  evalTC c hole = do
+    v  ← c
+    `v ← quoteTC v
+    unify hole `v
+
+Listℕ : Set
+Listℕ = evalTC (unquoteTC (def (quote List) [ vArg (def (quote ℕ) []) ]))
+\end{code}
+\caption{A macro example}
+\label{fig:macro}
+\end{figure}
+\Viktor{Cite https://github.com/UlfNorell/agda-prelude}
+
+Types of macros are required to end in |Term → TC ⊤| as known as |Tactic|.
+A fully-applied macro can be invoked as a term, the call site is treated as a metavariable |x : Meta|, and the |f : Tactic| the macro returns is evaluated as |f (meta x)| when elaborated.
+
+For example, the macro |evalTC| in \cref{fig:macro} evaluates the metaprogram that is the first argument, gets the reflected representation of the result, and unifies the metavariable at call site with it.
+|Listℕ| is defined as the result of the metaprogram |unquoteTC ...| which is judgementally equal to |List ℕ|.
+
+The primitive |quoteTC : {a : Level} {A : Set a} → A → TC Term| returns the reflected representation of the given term of type |A|.
+
+Conversely, |unquoteTC : {a : Level} {A : Set a} → Term → TC A| takes a reflected representation and translate it to a native term.
+|unify : Term → Term → TC ⊤| unifies the first term with the second one, and solves metavariables if possible.
+
+\Viktor{Do we really need |Tm|?}
+
+For the convenience of explanation, we present |Tm|, a simplified version of Agda's reflected representation (\cref{fig:reflected term} and \cref{fig:reflected pattern}) instead of the actual implementation (\cref{fig:full reflected syntax}):
+
 \begin{enumerate*}
 	\item The fully-applied constructor |set t| represents universe types |Set ℓ| while |t| represents |ℓ|;
 	\item |pi t u| represents dependent function types |T → U|, in which |T| and |U| are represented by |t| and |u|;
 	\item |lit l| represents literals, i.e. numbers, characters and strings;
 	\item |lam t| represents lambda terms |λ x → T| where |T| is represented by |t| and |x| is omitted since occurrences of |x| in |T| are translated to de Bruijn indices;
 	\item |var i xs| represents variables, de Bruijn indexed by natural numbers |i|, applied to arguments that are represented by |xs|;
-	\item |con c xs| and |def f xs| represents constructor and function applications respectively, where |c| and |f| are the constructor/function names, and |xs| represents the arguments they are applied to.
+	\item |con c xs| and |def f xs| represents constructor and function applications respectively, where |c| and |f| are the constructor/function names, and |xs| represents the arguments they are applied to;
+	\item |unknown| represents terms that are not provided.
+	      For example, when there are parts of a type we conclude Agda could derive for us, we can fill them as |unknown| and feed the type to the |checkType| primitive, expecting the result would be devoid of |unknown|s.
 \end{enumerate*}
 \Viktor{
 Note that terms represented by |t| are not guaranteed be of type |Level|, because the representation is unityped.
 }
 \Viktor{
-|unknown| represents terms that are not provided, for example, when there are parts of a type we conclude Agda could derive for us, they can be formed containing |unknown| and fed to the |checkType| primitive.
 Checking reflected terms containing |unknown| is equivelant of checking hand-tailored terms containing underscores |_|.
 }
 
-We need to know how to use metaprograms after understanding how to write them.
-An intended usage is summoning the keyword |macro| to declare metaprograms as macros.
-Types of macros are required to end in |Term → TC ⊤| as known as |Tactic|.
-A macro can be invoked as a term, the call site is treated as a metavariable |x : Meta|, and the |f : Tactic| the macro returns is evaluated as |f (meta x)| when elaborated.
-A metavariable can be unified with another term using the primitive |unify : Term → Term → TC ⊤|.
+Agda also supports top-level primitives |quote|, |quoteTerm| and |unquote|.
+|quote| generates the name (of type |Name|) of the quoted term at call site upon elaborating, similarly |quoteTerm| generates the reflected representation (of type |Tm|).
+|unquote| is the underlying primitive for macros, it takes a function |m : Term → TC A|, creates a fresh metavariable |hole| and its quoted representation |qhole|, then execute |m qhole|.
+More precisely, when a macro is called, its |Term| and |Name| arguments are quoted before being passed to it.
+When a macro |f : Term → Name → Bool → Term → TC ⊤| is called, |f u v w| desugars to |unquote (f (quoteTerm u) (quote v) w)|.
+\Viktor{Taken from doc!}
+For example, |quoteTerm ℕ| is judgementally equal to |def (quote ℕ) []|, albeit their different appearences to programmers.
+It's recommanded to avoid using these top-level primitives directly so we won't go into their details.
 
-Another usage of metaprogram is to define top-level definitions.
-By Agda's design, top-level definitions must be in scope before elaborating to be used elsewhere, therefore the keyword |unquoteDecl| is used to introduce names of definitions into scope before they are defined by metaprograms.
-|unquoteDecl f = T| treats the |f| as a name of a to-be-defined function, where |T| is a metaprogram of type |TC ⊤| that should define |f|.
-This had been the only usage of |unquoteDecl|, and we have proposed a change in design such that |unquoteDecl D constructor c d e = T| would introduce the name |D| as a datatype and |c|, |d|, |e| as constructors into scope, which should be defined by |T|.
+Now we can check that the reflected term in \cref{fig:macro} (|def (quote List) [ vArg (def (quote ℕ) []) ]|) does represent |List ℕ|.
+
+Another usage of metaprograms is to define top-level definitions.
+In Agda, top-level definitions must be in scope before elaborating to be used elsewhere, the keyword |unquoteDecl| introduces names of definitions into scope before they can be defined by metaprograms.
+In declaration |unquoteDecl f = T|, |f| is treated as a name of a to-be-defined function, where |T| is a metaprogram of type |TC ⊤| that should define |f|.
+Function declaration and definition had been the only usages of |unquoteDecl|.
+We have proposed a change in design such that |unquoteDecl D constructor c d e = T| would introduce |D| as a datatype name and |c|, |d|, |e| as constructor names into scope, which should be defined by |T|.
 
 \begin{figure}
 \begin{halfcol}%
