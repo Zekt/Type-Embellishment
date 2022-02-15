@@ -899,7 +899,7 @@ It's crucial that reflected terms are unityped by |Term|, meaning they are subje
 This untypeable nature gives us freedom to perform operations not possible under the object language's type system, therefore allowing translation from programs defined with generic description, which is more expressive than the object language, to their native counterparts.
 However it's a double-edged sword that also puts programmers in great danger of dealing with structures that are not safeguarded by types, such as intermediate terms of strengthening and weakening.
 This may leads to bugs in metaprograms uncaught by types.
-Fortunately, we can exploit the elaborator via elaborator reflection so we can focus on interesting manipulations on terms, while letting the elaborator handle more typical and otherwise error-prone operations.
+Fortunately, we can exploit elaborator reflection to focus on interesting manipulations on terms, while leaving more typical and otherwise error-prone operations to the elaborator.
 We will discuss in \cref{sec:translation} how we interact with the |TC| monad to do so.
 
 There are several differences between the elaborator reflection mechanisms of Agda and Idris, we will discuss them and their implications on our work in \cref{sec:discussion}.
@@ -926,7 +926,8 @@ There are several differences between the elaborator reflection mechanisms of Ag
 The |TC| monad in Agda, accompanied by primitive operations of types that end in |TC A| (|A| can be any type depending on the operations in question), provides us an interface to utilities which are otherwise only accessible to the elaborator.
 
 For examples, |checkType : Term → Type → TC Term| is a primitive that checks if the second argument is the type of the first one, then return a type-checked term whose constraints and metavariables are solved if possible.
-|getContext : TC (List (Arg Type))| returns the types in the current type-checking context, and |extendContext : ∀ {a} {A : Set a} → Arg Type → TC A → TC A| extends it with one type, represented by the first argument.
+|getContext : TC (List (Arg Type))| returns the types in the current type-checking context.
+|extendContext : ∀ {a} {A : Set a} → Arg Type → TC A → TC A| extends the current context with one type and evaluates a given metaprogram in it.
 
 There are multiple ways to run a metaprogram (|TC| computation).
 An intended usage is to declare metaprograms as macros using the keyword |macro|.
@@ -959,7 +960,7 @@ The primitive |quoteTC : {a : Level} {A : Set a} → A → TC Term| returns the 
 Conversely, |unquoteTC : {a : Level} {A : Set a} → Term → TC A| takes a reflected representation and translate it to a native term.
 |unify : Term → Term → TC ⊤| unifies the first term with the second one, and solves metavariables if possible.
 
-\Viktor{Do we really need |Tm|?}
+\Viktor{Do we really need |Tm|? For now |Tm| and |Term| are used interchangeably.}
 
 For the convenience of explanation, we present |Tm|, a simplified version of Agda's reflected representation (\cref{fig:reflected term} and \cref{fig:reflected pattern}) instead of the actual implementation (\cref{fig:full reflected syntax}):
 
@@ -983,11 +984,11 @@ Checking reflected terms containing |unknown| is equivelant of checking hand-tai
 Agda also supports top-level primitives |quote|, |quoteTerm| and |unquote|.
 |quote| generates the name (of type |Name|) of the quoted term at call site upon elaborating, similarly |quoteTerm| generates the reflected representation (of type |Tm|).
 |unquote| is the underlying primitive for macros, it takes a function |m : Term → TC A|, creates a fresh metavariable |hole| and its quoted representation |qhole|, then execute |m qhole|.
-More precisely, when a macro is called, its |Term| and |Name| arguments are quoted before being passed to it.
-When a macro |f : Term → Name → Bool → Term → TC ⊤| is called, |f u v w| desugars to |unquote (f (quoteTerm u) (quote v) w)|.
+More precisely, when a macro is invoked, its |Term| and |Name| arguments are quoted before being passed to it.
+For a macro |f : Term → Name → Bool → Term → TC ⊤|, |f u v w| desugars to |unquote (f (quoteTerm u) (quote v) w)|.
 \Viktor{Taken from doc!}
 For example, |quoteTerm ℕ| is judgementally equal to |def (quote ℕ) []|, albeit their different appearences to programmers.
-It's recommanded to avoid using these top-level primitives directly so we won't go into their details.
+It's recommanded to avoid using these top-level primitives directly so we won't explore them further.
 
 Now we can check that the reflected term in \cref{fig:macro} (|def (quote List) [ vArg (def (quote ℕ) []) ]|) does represent |List ℕ|.
 
