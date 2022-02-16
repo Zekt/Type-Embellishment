@@ -898,7 +898,8 @@ record FoldC (F : FoldP) (f : FoldT F) : Setω where field
 \label{fig:FoldC}
 \end{figure}
 
-As a concrete example, let us transform the following |FoldP| to a native fold function ---which will be the universe-polymorphic fold operator for |Acc|--- and develop some generic facilities along the way for mechanising the transformation:
+In this paper we are only interested in manufacturing native fold functions from |FoldP| (and establishing |FoldC| at the end), leaving the opposite direction as future work.
+As a concrete example, let us manufacture the universe-polymorphic fold operator for |Acc| from
 \begin{code}
 foldAccP : FoldP
 foldAccP = record { Con = AccC;{-"~~"-} #levels = 3
@@ -910,6 +911,8 @@ foldAccP = record { Con = AccC;{-"~~"-} #levels = 3
      ;  Carrier  =  λ    (A , R , P , p , _) (x , _) → P x
      ;  applyP   =  λ {  (A , R , P , p , _) (inl (x , ps , refl)) → p x ps } } }
 \end{code}
+(which is an instantiation of a generic program in \cref{sec:fold-operators}).
+Along the way we will develop some generic facilities for mechanising the manufacturing process.
 First we need a curried type for the fold function, which can be computed by a variant of |FoldT| that uses |Curriedᵗ|~(\cref{sec:telescopes}):
 \begin{code}
 FoldNT : (F : FoldP) (ℓs : Level ^ (F .#levels)) → Set _
