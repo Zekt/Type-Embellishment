@@ -1,12 +1,25 @@
 %% This BibTeX bibliography file was created using BibDesk.
-%% https://bibdesk.sourceforge.io/
+%% http://bibdesk.sourceforge.net/
 
-%% Created for Josh Ko at 2022-02-14 15:14:30 +0800 
+%% Created for Josh Ko at 2022-02-16 11:10:56 +0800 
 
 
 %% Saved with string encoding Unicode (UTF-8) 
 
 
+
+@inproceedings{McDonell-Ghostbuster,
+	abstract = {Generalized Algebraic Dataypes, or simply GADTs, can encode non-trivial properties in the types of the constructors. Once such properties are encoded in a datatype, however, \emph{all} code manipulating that datatype must provide proof that it maintains these properties in order to typecheck. In this paper, we take a step towards \emph{gradualizing} these obligations. We introduce a tool, Ghostbuster, that produces simplified versions of GADTs which elide selected type parameters, thereby weakening the guarantees of the simplified datatype in exchange for reducing the obligations necessary to manipulate it. Like \emph{ornaments}, these simplified datatypes preserve the recursive structure of the original, but unlike ornaments we focus on information-preserving bidirectional transformations. Ghostbuster generates type-safe conversion functions between the original and simplified datatypes, which we prove are the identity function when composed. We evaluate a prototype tool for Haskell against thousands of GADTs found on the Hackage package database, generating simpler Haskell'98 datatypes and round-trip conversion functions between the two.},
+	author = {McDonell, Trevor L. and Zakian, Timothy A. K. and Cimini, Matteo and Newton, Ryan R.},
+	booktitle = {International Conference on Functional Programming (ICFP)},
+	date-added = {2022-02-16 11:10:54 +0800},
+	date-modified = {2022-02-16 11:10:54 +0800},
+	doi = {10.1145/3022670.2951914},
+	pages = {338-350},
+	publisher = {ACM},
+	title = {{Ghostbuster}: A Tool for Simplifying and Converting {GADTs}},
+	year = {2016},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxC1Li4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L01jRG9uZWxsIGV0IGFsIDIwMTYgLSBHaG9zdGJ1c3RlciBBIFRvb2wgZm9yIFNpbXBsaWZ5aW5nIGFuZCBDb252ZXJ0aW5nIEdBRFRzLnBkZk8RAuQAAAAAAuQAAgAABlN5c3RlbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCRAAB/////x9NY0RvbmVsbCBldCBhbCAyMDEjRkZGRkZGRkYucGRmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAUABgAACiBjdQAAAAAAAAAAAAAAAAANQmliUmVwb3NpdG9yeQAAAgC1LzpVc2Vyczpqb3Noa286TGlicmFyeTpNb2JpbGUgRG9jdW1lbnRzOkpGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyOkRvY3VtZW50czpCaWJSZXBvc2l0b3J5Ok1jRG9uZWxsIGV0IGFsIDIwMTYgLSBHaG9zdGJ1c3RlciBBIFRvb2wgZm9yIFNpbXBsaWZ5aW5nIGFuZCBDb252ZXJ0aW5nIEdBRFRzLnBkZgAADgCkAFEATQBjAEQAbwBuAGUAbABsACAAZQB0ACAAYQBsACAAMgAwADEANgAgAC0AIABHAGgAbwBzAHQAYgB1AHMAdABlAHIAIABBACAAVABvAG8AbAAgAGYAbwByACAAUwBpAG0AcABsAGkAZgB5AGkAbgBnACAAYQBuAGQAIABDAG8AbgB2AGUAcgB0AGkAbgBnACAARwBBAEQAVABzAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgCzVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9NY0RvbmVsbCBldCBhbCAyMDE2IC0gR2hvc3RidXN0ZXIgQSBUb29sIGZvciBTaW1wbGlmeWluZyBhbmQgQ29udmVydGluZyBHQURUcy5wZGYAABMAAS8AABUAAgAN//8AAAAIAA0AGgAkANwAAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAADxA==}}
 
 @inproceedings{Stevens-multiary-BX,
 	abstract = {The model-driven development of systems involves multiple models, metamodels and transformations, and relationships between them. A bidirectional transformation (bx) is usually defined as a means of maintaining consistency between "two (or more)" models. This includes cases where one model may be generated from one or more others, as well as more complex ("symmetric") cases where models record partially overlapping information. In recent years binary bx, those relating two models, have been extensively studied. Multiary1 bx, those relating more than two models, have received less attention. In this paper we consider how a multiary consistency relation may be defined in terms of binary consistency relations, and how consistency restoration may be carried out on a network of models and relationships between them. We relate this to megamodelling and discuss further research that is needed.},
@@ -62,7 +75,7 @@ The story begins with a class of simple types which are given a purely syntactic
 	read = {1},
 	title = {Algebra of Programming},
 	year = {1997},
-	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCQLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0JpcmQgZXQgYWwgMTk5NyAtIEFsZ2VicmEgb2YgUHJvZ3JhbW1pbmcucGRmTxECTgAAAAACTgACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H0JpcmQgZXQgYWwgMTk5NyAtICNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJAvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6QmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYADgBaACwAQgBpAHIAZAAgAGUAdAAgAGEAbAAgADEAOQA5ADcAIAAtACAAQQBsAGcAZQBiAHIAYQAgAG8AZgAgAFAAcgBvAGcAcgBhAG0AbQBpAG4AZwAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAjlVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvQmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYAEwABLwAAFQACAA3//wAAAAgADQAaACQAtwAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAMJ}}
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCQLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0JpcmQgZXQgYWwgMTk5NyAtIEFsZ2VicmEgb2YgUHJvZ3JhbW1pbmcucGRmTxECTgAAAAACTgACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H0JpcmQgZXQgYWwgMTk5NyAtICNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAUERGIENBUk8ABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJAvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6QmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYADgBaACwAQgBpAHIAZAAgAGUAdAAgAGEAbAAgADEAOQA5ADcAIAAtACAAQQBsAGcAZQBiAHIAYQAgAG8AZgAgAFAAcgBvAGcAcgBhAG0AbQBpAG4AZwAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAjlVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvQmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYAEwABLwAAFQACAA3//wAAAAgADQAaACQAtwAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAMJ}}
 
 @incollection{Abou-Saleh-BX-intro,
 	abstract = {Bidirectional transformations (BX) serve to maintain consistency between different representations of related and often overlapping information, translating changes in one representation to the others. We present a brief introduction to the field, in order to provide some common background to the remainder of this volume, which constitutes the lecture notes from the \emph{Summer School on Bidirectional Transformations}, held in Oxford in July 2016 as one of the closing activities of the UK EPSRC-funded project \emph{A Theory of Least Change for Bidirectional Transformations}.},
