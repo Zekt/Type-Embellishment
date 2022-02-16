@@ -86,6 +86,7 @@
 %format quoteTerm = "\Keyword{quoteTerm}"
 %format macro = "\Keyword{macro}"
 %format postulate = "\Keyword{postulate}"
+%format do = "\Keyword{do}"
 
 %format == = "\mathop="
 %format _ = "\char95"
@@ -925,9 +926,13 @@ There are several differences between the elaborator reflection mechanisms of Ag
 
 The |TC| monad in Agda, accompanied by primitive operations of types that end in |TC A| (|A| can be any type depending on the operations in question), provides us an interface to utilities which are otherwise only accessible to the elaborator.
 
-For examples, |checkType : Term → Type → TC Term| is a primitive that checks if the second argument is the type of the first one, then return a type-checked term whose constraints and metavariables are solved if possible.
-|getContext : TC (List (Arg Type))| returns the types in the current type-checking context.
-|extendContext : ∀ {a} {A : Set a} → Arg Type → TC A → TC A| extends the current context with one type and evaluates a given metaprogram in it.
+For examples, \\
+\centerline{|checkType : Tm → Type → TC Tm|} \\
+is a primitive that checks if the second argument is the type of the first one, then returns a type-checked term whose constraints and metavariables are solved if possible. \\
+\centerline{|getContext : TC (List (Arg Type))|} \\
+returns the types in the current type-checking context. \\
+\centerline{|extendContext : ∀ {a} {A : Set a} → Arg Type → TC A → TC A|} \\
+extends the current context with one type and evaluates the given metaprogram in it.
 
 There are multiple ways to run a metaprogram (|TC| computation).
 An intended usage is to declare metaprograms as macros using the keyword |macro|.
@@ -935,7 +940,7 @@ An intended usage is to declare metaprograms as macros using the keyword |macro|
 \begin{figure}[h]
 \begin{code}
 macro
-  evalTC : {ℓ : Level} → {A : Set ℓ} → TC A → Term → TC
+  evalTC : {ℓ : Level} → {A : Set ℓ} → TC A → Tm → TC
   evalTC c hole = do
     v  ← c
     `v ← quoteTC v
@@ -949,16 +954,20 @@ Listℕ = evalTC (unquoteTC (def (quote List) [ vArg (def (quote ℕ) []) ]))
 \end{figure}
 \Viktor{Cite https://github.com/UlfNorell/agda-prelude}
 
-Types of macros are required to end in |Term → TC ⊤| as known as |Tactic|.
+Types of macros are required to end in |Tm → TC ⊤| as known as |Tactic|.
 A fully-applied macro can be invoked as a term, the call site is treated as a metavariable |x : Meta|, and the |f : Tactic| the macro returns is evaluated as |f (meta x)| when elaborated.
 
 For example, the macro |evalTC| in \cref{fig:macro} evaluates the metaprogram that is the first argument, gets the reflected representation of the result, and unifies the metavariable at call site with it.
 |Listℕ| is defined as the result of the metaprogram |unquoteTC ...| which is judgementally equal to |List ℕ|.
 
-The primitive |quoteTC : {a : Level} {A : Set a} → A → TC Term| returns the reflected representation of the given term of type |A|.
-
-Conversely, |unquoteTC : {a : Level} {A : Set a} → Term → TC A| takes a reflected representation and translate it to a native term.
-|unify : Term → Term → TC ⊤| unifies the first term with the second one, and solves metavariables if possible.
+The primitive \\
+\centerline{|quoteTC : {a : Level} {A : Set a} → A → TC Tm|} \\
+returns the reflected representation of the given term of type |A|.
+Conversely, \\
+\centerline{|unquoteTC : {a : Level} {A : Set a} → Tm → TC A|} \\
+takes a reflected representation and translate it to a native term. \\
+\centerline{|unify : Tm → Tm → TC ⊤|} \\
+unifies the first term with the second one, and solves metavariables if possible.
 
 \Viktor{Do we really need |Tm|? For now |Tm| and |Term| are used interchangeably.}
 
@@ -983,18 +992,24 @@ Checking reflected terms containing |unknown| is equivelant of checking hand-tai
 
 Agda also supports top-level primitives |quote|, |quoteTerm| and |unquote|.
 |quote| generates the name (of type |Name|) of the quoted term at call site upon elaborating, similarly |quoteTerm| generates the reflected representation (of type |Tm|).
-|unquote| is the underlying primitive for macros, it takes a function |m : Term → TC A|, creates a fresh metavariable |hole| and its quoted representation |qhole|, then execute |m qhole|.
-More precisely, when a macro is invoked, its |Term| and |Name| arguments are quoted before being passed to it.
-For a macro |f : Term → Name → Bool → Term → TC ⊤|, |f u v w| desugars to |unquote (f (quoteTerm u) (quote v) w)|.
+|unquote| is the underlying primitive for macros, it takes a function |m : Tm → TC A|, creates a fresh metavariable |hole| and its quoted representation |qhole|, then execute |m qhole|.
+Notably, when a macro is invoked, its |Tm| and |Name| arguments are quoted before being passed to it, while other arguments are passed as-is.
 \Viktor{Taken from doc!}
+For a macro \\
+\centerline{|f : Tm → Name → Bool → Tm → TC ⊤|,}  \\
+|f u v w| desugars to |unquote (f (quoteTerm u) (quote v) w)|.
 For example, |quoteTerm ℕ| is judgementally equal to |def (quote ℕ) []|, albeit their different appearences to programmers.
 It's recommanded to avoid using these top-level primitives directly so we won't explore them further.
 
-Now we can check that the reflected term in \cref{fig:macro} (|def (quote List) [ vArg (def (quote ℕ) []) ]|) does represent |List ℕ|.
+Now we can check that the reflected term in \cref{fig:macro} \\
+\centerline{|def (quote List) [ vArg (def (quote ℕ) []) ]|} \\
+does represent |List ℕ|.
 
 Another usage of metaprograms is to define top-level definitions.
-In Agda, top-level definitions must be in scope before elaborating to be used elsewhere, the keyword |unquoteDecl| introduces names of definitions into scope before they can be defined by metaprograms.
-In declaration |unquoteDecl f = T|, |f| is treated as a name of a to-be-defined function, where |T| is a metaprogram of type |TC ⊤| that should define |f|.
+In Agda, elaboration happens after scope-checking, Agda wouldn't know a name is valid when scope-checking if it's only introduced by elaborator reflection.
+I.e. they must be top-level definitions.
+The keyword |unquoteDecl| introduces names of definitions into scope before they can be defined by metaprograms.
+In a declaration |unquoteDecl f = T|, |f| is treated as a name of a to-be-defined function, where |T| is a metaprogram of type |TC ⊤| that should define |f|.
 Function declaration and definition had been the only usages of |unquoteDecl|.
 We have proposed a change in design such that |unquoteDecl D constructor c d e = T| would introduce |D| as a datatype name and |c|, |d|, |e| as constructor names into scope, which should be defined by |T|.
 
@@ -1063,9 +1078,6 @@ Patterns   =  List Pattern
 \LT{Discuss the difference between the typed higher-order and untyped first-order representations of telescopes}
 \LT{Introduce |extendContext|, |unquoteTC|, and a more safe version |extendContextT|}
 \Viktor{Enforce types on untyped operations using |quoteTC|/|unquoteTC|; discuss the usage of |extendContext|}
-
-\Viktor{Explain |defineData| and |unquoteDecl data|; a few macros}
-
 
 \begin{figure}[h]
 \begin{code}
