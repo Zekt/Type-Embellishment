@@ -1154,6 +1154,7 @@ Patterns   =  List Pattern
 \Viktor{Enforce types on untyped operations using |quoteTC|/|unquoteTC|; discuss the usage of |extendContext|}
 
 \begin{figure}[h]
+\codefigure
 \begin{code}
 data Clause : Set where
   clause         :  (Δ : Teles)  (lhs : Patterns)  (rhs : Tm)  → Clause
@@ -1163,6 +1164,7 @@ data Clause : Set where
 \end{figure}
 
 \begin{figure}[h]
+\codefigure
 \begin{code}
 data Definition : Set where
   function    :             (cls  : Clauses)  → Definition
@@ -1299,52 +1301,50 @@ This extra sort of universes will make our library portable to proof assistants 
 \subsection{Naming, Visibility, and Order of Arguments}
 
 \begin{figure}
-
-\begin{minipage}[t]{.62\textwidth}\setlength{\mathindent}{0em}
-\begin{code}
-data Term where
-  agda-sort : (s : Sort)                          → Term
-  pi        : (a : Arg Type) (b : Abs Type)       → Term
-  lit       : (l : Literal)                       → Term
-  lam       : (v : Visibility)  (t : Abs Term)    → Term
-  pat-lam   : (cls : Clauses)   (xs : Args Term)  → Term
-  var       : (i : ℕ)           (xs : Args Term)  → Term
-  con       : (c : Name)        (xs : Args Term)  → Term
-  def       : (f : Name)        (xs : Args Term)  → Term
-  meta      : (x : Meta)        (xs : Args Term)  → Term
-  unknown   : Term
-\end{code}
-\end{minipage}%
-\begin{minipage}[t]{.37\textwidth}\setlength{\mathindent}{0em}
-\begin{code}
-data Sort where
-  set      : (t : Term)  →  Sort
-  lit      : (n : ℕ)     →  Sort
-  prop     : (t : Term)  →  Sort
-  propLit  : (n : ℕ)     →  Sort
-  inf      : (n : ℕ)     →  Sort
-  unknown  :                Sort
-\end{code}
-\end{minipage}
-
+\codefigure
 \begin{minipage}[t]{.45\textwidth}\setlength{\mathindent}{0em}
 \begin{code}
-data Abs (A : Set)  : Set where
-  abs : (s : String)   (x : A) → Abs A
-data Arg (A : Set)  : Set where
-  arg : (i : ArgInfo)  (x : A) → Arg A
+mutual
+  data (HL (Sort : Set)) where
+    set      : (t : Term)  →  Sort
+    lit      : (n : ℕ)     →  Sort
+    prop     : (t : Term)  →  Sort
+    propLit  : (n : ℕ)     →  Sort
+    inf      : (n : ℕ)     →  Sort
+    unknown  :                Sort
+
+  data (HL (Abs (A : Set)  : Set)) where
+    abs : (s : String)   (x : A) → Abs A
+
+  data (HL (Arg (A : Set)  : Set)) where
+    arg : (i : ArgInfo)  (x : A) → Arg A
+
+  data (HL (ArgInfo     : Set)) where
+    arg-info : (v : Visibility) (m : Modality) → ArgInfo
+  ...
 \end{code}
 \end{minipage}%
 \begin{minipage}[t]{.55\textwidth}\setlength{\mathindent}{0em}
 \begin{code}
-data ArgInfo     : Set where
-  arg-info : (v : Visibility) (m : Modality) → ArgInfo
-data Visibility  : Set where
-  visible hidden instance′ : Visibility
-data Modality    : Set where
-  ...
+{-" "-}
+data Term : Set where
+  (HL agda-sort)  : (s : Sort)                                      → Term
+  pi              : (a : (HL Arg) Type) (b : (HL Abs) Type  )       → Term
+  lit             : (l : Literal)                                   → Term
+  lam             : ((HL(v : Visibility)))   (t : (HL Abs) Term)    → Term
+  (HL pat-lam)    : (cls : Clauses)          (xs : Args Term)       → Term
+  var             : (i : ℕ)                  (xs : (HL Args) Term)  → Term
+  con             : (c : Name)               (xs : (HL Args) Term)  → Term
+  def             : (f : Name)               (xs : (HL Args) Term)  → Term
+  meta            : (x : Meta)               (xs : (HL Args) Term)  → Term
+  unknown         : Term
 \end{code}
 \end{minipage}
+
+\begin{minipage}[t]{.6\textwidth}\setlength{\mathindent}{0em}
+\begin{code}
+\end{code}
+\end{minipage}%
   
 \caption{A snippet of reflected expressions (actual)}
 \label{fig:full reflected syntax}
