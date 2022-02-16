@@ -657,22 +657,23 @@ To deal with level parameters, we will resort to metaprogramming techniques in \
 
 \begin{figure}
 \codefigure
-\begin{minipage}[t]{.4\textwidth}
+\begin{minipage}[t]{.41\textwidth}
 \begin{code}
-record DataD : Setω where field
-  #levels  : ℕ
-  applyL   : Level ^ #levels → PDataD
+record DataD : Setω where
+  field
+    #levels  : ℕ
+    applyL   : Level ^ #levels → PDataD
 
-record PDataD : Setω where field
-  alevel {plevel} {ilevel} : Level
-  {struct} : ConBs
-  level-ineq :  maxMap max-π  struct ⊔
-                maxMap max-σ  struct
-                  ⊑ alevel ⊔ ilevel
-  Param   :  Tel plevel
-  Index   :  ⟦ Param ⟧ᵗ → Tel ilevel
-  applyP  :  (ps : ⟦ Param ⟧ᵗ) →
-             ConDs ⟦ Index ps ⟧ᵗ struct
+record PDataD : Setω where
+  field
+    alevel {plevel} {ilevel} : Level
+    {struct} : ConBs
+    level-ineq :  maxMap max-π struct
+               ⊔  maxMap max-σ struct
+               ⊑  alevel ⊔ ilevel
+    Param   :  Tel plevel
+    Index   :  ⟦ Param ⟧ᵗ → Tel ilevel
+    applyP  :  (ps : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index ps ⟧ᵗ struct
 \end{code}
 \end{minipage}%
 \begin{minipage}[t]{.6\textwidth}
@@ -683,10 +684,8 @@ data ConDs (I : Set (HL ℓⁱ)) : (HL ConBs) → Set{-"_{\highlight{addition}{\
 
 data ConD (I : Set (HL ℓⁱ)) : (HL ConB) → Set{-"_{\highlight{addition}{\text\textomega}}"-} where
   ι  : I                                          →  ConD I (HL [])
-  σ  : (A : Set (HL ℓ))  → (A →  ConD I (HL cb))  →  ConD I
-                                                       (HL(({-"\awa{\cons{inr}}{\cons{inl}}\;\awa{\iden{rb}}{\ell}\;"-} ∷ cb)))
-  ρ  : RecD I (HL rb)    →       ConD I (HL cb)   →  ConD I
-                                                       (HL((inr rb ∷ cb)))
+  σ  : (A : Set (HL ℓ))  → (A →  ConD I (HL cb))  →  ConD I (HL(({-"\awa{\cons{inr}}{\cons{inl}}\;\awa{\iden{rb}}{\ell}\;"-} ∷ cb)))
+  ρ  : RecD I (HL rb)    →       ConD I (HL cb)   →  ConD I (HL((inr rb ∷ cb)))
 
 data RecD (I : Set (HL ℓⁱ)) : (HL RecB) → Set{-"_{\highlight{addition}{\text\textomega}}"-} where
   ι  : I                                          →  RecD I (HL [])
