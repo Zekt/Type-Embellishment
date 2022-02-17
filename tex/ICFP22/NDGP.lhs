@@ -229,6 +229,7 @@
 %format as = "\iden{as}"
 %format alg = "\iden{alg}"
 %format args = "\iden{args}"
+%format c = "\iden{c}"
 %format calgs = "\iden{calgs}"
 %format calgsˣ = calgs ˣ
 %format calgsʸ = calgs ʸ
@@ -254,6 +255,7 @@
 %format ℓˣ = "\iden{" ℓ "_X}"
 %format ℓʸ = "\iden{" ℓ "_Y}"
 %format ℓs = "\iden{" ℓ "\kern-1pt s}"
+%format l = "\iden{l}"
 %format lhs = "\iden{lhs}"
 %format lt = "\iden{lt}"
 %format m = "\iden m"
@@ -366,9 +368,9 @@ And compiler optimisations need to be fine-tuned to produce what we want; why no
 \todo[inline]{
 Contributions:
 
-$\bullet$ Encoding of universe-polymorphic and parametrised inductive families (precise calculation of universe levels)
-
 $\bullet$ Better interoperability with native datatypes and functions (generating new native datatypes and functions, and connecting with existing ones for which generic constructions are specialised)
+
+$\bullet$ Encoding of universe-polymorphic and parametrised inductive families (precise calculation of universe levels)
 
 $\bullet$ A new use case of elaborator reflection where traditional datatype-generic programs are simply normalised to yield native programs (and do not need more radical adaptations like staging)
 
@@ -617,7 +619,7 @@ At some point we will need to convert a description to a datatype definition, an
 When currying, the encoding of multiple types in one nested |Σ|-type is ambiguous --- how do we know whether a |Σ|-type is supposed to be interpreted as two types, with the latter depending on the former, or just one type?
 A natural solution is to use telescopes~\citep{de-Bruijn-telescopes} to represent lists of parameter or index types, as shown in \cref{fig:telescopes}.
 Again we use the host language's function space to bring variables of the types in the front of a telescope into the context of the rest of the telescope.
-Besides the usual cons constructor `|∷|', we also include a constructor `|++|' for appending telescopes (which requires induction-recursion to define), making our telescopes tree-shaped; the reason will be clear when we reach \cref{sec:examples}.
+Besides the usual cons constructor `|∷|', we also include a constructor `|++|' for appending telescopes (which requires index induction-recursion~\citep{Dybjer-indexed-induction-recursion} to define), making our telescopes tree-shaped; the reason will be clear when we reach \cref{sec:examples}.
 The index~|ℓ| in the type |Tel ℓ| of a telescope~|T| is the maximum level appearing in~|T|.
 This level is important since it is the universe level of the type |⟦ T ⟧ᵗ|, which is a nested |Σ|-type inhabited by tuples whose components have the types in~|T|.
 %More subtly, the indexing also precludes overly universe-polymorphic telescopes like |Level ∷ (λ ℓ → Set ℓ ∷ (λ _ → []))|, since in a cons telescope (and similarly in an appended telescope), the maximum level~|ℓ'| in the tail has to be determined independently from the |A|-typed value in the context.
@@ -645,11 +647,11 @@ With these, we will be able to compute curried forms of parameters and indices w
 
 Incidentally, if we attempt a similar construction for |Level ^ n| (which can be viewed as a kind of specialised telescope) to produce curried forms of level parameters as well,
 \begin{code}
-CurriedL : (n : ℕ) {f : Level ^ n → Level} → ((ℓs : Level ^ n) → Set (f ℓs)) → Set (HL ?)
+CurriedL : (n : ℕ) {f : Level ^ n → Level} → ((ℓs : Level ^ n) → Set (f ℓs)) → Set {! !}
 CurriedL    zero    X = X tt
 CurriedL (  suc n)  X = (ℓ : Level) → CurriedL n (λ ℓs → X (ℓ , ℓs))
 \end{code}
-we will not be able to fill in the hole `|(HL ?)|' since it should be a finite level when |n|~is zero (meaning that there is no level quantification), or~|ω| when |n|~is non-zero, going beyond the current capabilities of Agda's universe polymorphism.
+we will not be able to fill in the hole `|{! !}|' since it should be a finite level when |n|~is zero (meaning that there is no level quantification), or~|ω| when |n|~is non-zero, going beyond the current capabilities of Agda's universe polymorphism.
 To deal with level parameters, we will resort to metaprogramming techniques in \cref{sec:reflection}.
 
 \subsection{Universe-Polymorphic Descriptions}
@@ -937,8 +939,8 @@ fold-base F {ℓs} rec = let open FoldP F; open PFoldP (F .applyL ℓs) in
   curryᵗ λ ps → curryᵗ λ is →
   applyP ps ∘ fmapᵈ Desc (λ {is} → uncurryᵗ (uncurryᵗ rec ps) is) ∘ Con .fromN
 \end{code}
-This definition of |foldAcc|, albeit a non-terminating one, implies the |FoldC.equation| because of the inverse property |DataC.fromN-toN|.
-To turn this into a terminating definition, we pattern-match the variable~|a| with all the possible constructors, although there is only one in this case:
+This definition of |foldAcc|, albeit one deemed non-terminating by Agda, implies the |FoldC.equation| because of the inverse property |DataC.fromN-toN|.
+To turn this into a valid definition, we pattern-match the variable~|a| with all the possible constructors, although there is only one in this case:
 \begin{code}
 foldAcc A R P p x (acc as) = fold-base foldAccP foldAcc A R P p x (acc as)
 \end{code}
@@ -1020,6 +1022,7 @@ Unlike other approaches using staging~\cite{Yallop-staged-generic-programming,Pi
 An intended usage is to declare metaprograms as macros using the keyword |macro|.}
 
 \begin{figure}[h]
+\codefigure
 \begin{code}
 macro
   evalTC : {ℓ : Level} → {A : Set ℓ} → TC A → Tm → TC
@@ -1290,16 +1293,15 @@ which we apply to a datatype connection~|C| and a fold connection |fC| ---which 
 
 \subsection{Portability}
 \LT{Address the statement that our development is not specific to Agda.
-So, what features do we need to implement?}
-\LT{Axiom K is used for ornaments but this axiom is not generally desirable especially for homotopy type theory.
-This seemingly conflicting requirement in fact originates in the false belief that only one identity type is allowed in a type theory.
-Indeed, it is possible to have more than one identity type with different strength.
-For example, the two-level type theory proposed by \citet{Capriotti2017} consists of a strict equality (satisfying the axiom K) and a weak equality compatible with the homotopy-theoretic interpretation.
-Agda has an experimental option \texttt{--two-level} in the cubical mode which introduces additional universes \texttt{SSet}.
-This extra sort of universes will make our library portable to proof assistants based on homotopy type theory.
-(A bit of experiments should be performed to testify.)
-}
-\LT{Elaborator reflection}
+So, what features do we need to implement?
+(Elaborator reflection)}
+%\LT{Axiom K is used for ornaments but this axiom is not generally desirable especially for homotopy type theory.
+%This seemingly conflicting requirement in fact originates in the false belief that only one identity type is allowed in a type theory.
+%Indeed, it is possible to have more than one identity type with different strength.
+%For example, the two-level type theory proposed by \citet{Capriotti2017} consists of a strict equality (satisfying the axiom K) and a weak equality compatible with the homotopy-theoretic interpretation.
+%Agda has an experimental option \texttt{--two-level} in the cubical mode which introduces additional universes \texttt{SSet}.
+%This extra sort of universes will make our library portable to proof assistants based on homotopy type theory.
+%(A bit of experiments should be performed to testify.)
 
 \subsection{Naming, Visibility, and Order of Arguments}
 
@@ -1373,64 +1375,67 @@ Telescope = List (String × Type)
 \subsection{Automatic Resolution of Arguments to Generic Programs}
 
 \todo[inline]{Type classes, instance arguments}
+
 \section{Discussion}
 \label{sec:discussion}
 
-\Josh{List achievements and future work in relation to existing work.}
+\paragraph{Interoperability}
 
-\paragraph{Higher-Order Representation}
-\LT{Discuss (parametric) higher-order abstract syntax}
-\Josh{Might not be strictly necessary as we're just following the standard approach}
+\Josh{Instead of a most generic representation~\citep{Magalhaes-GGP}, just use the native datatypes, and instantiate all generic constructions to native entities.}
 
-\paragraph{Simply Typed DGP}
-
-\todo[inline]{\citet{Gibbons-DGP}.
-The Haskell programmer produces recursive function definitions~\citep{de-Vries-true-SoP}.
-We adopt the approach where generic function representations are non-recursive and then weaved into recursive definitions.
-Efficiency problem~\citep{Magalhaes-optimising-generics} due to conversion between generic and native representations (see below).
-Deriving new datatypes?
-Put our work within the spectrum of generic libraries?~\citep{Magalhaes-GGP}}
-
-\paragraph{Dependently Typed DGP}
-
-\todo[inline]{\citet{Altenkirch-GP-within-DTP}; contrast with single generic representation offered by the generic |μ|, |fold|, and |induction| operators, which avoid code duplication/explosion but (potentially?) sacrificing efficiency~\citep{Allais-n-ary-functions}; interoperability between generic libraries and native entities~\citep{McBride-pivotal, Allais-binding-syntax-universe-JFP}}
-
-\paragraph{Ornaments}
-\todo[inline]{\citet{McBride-ornaments}; porting some constructions from \citet{Ko-OAOAOO}; more experimental developments~\citep{Ko-OrnJFP, Dagand-functional-ornaments}; theory and developments about function transportation in simply typed settings~\cite{Williams-principle-ornamentation, Williams-ornaments-in-practice}; realistic dependently typed application and automated synthesis of ornaments~\citep{McDonell-Ghostbuster,Ringer-ornaments-Coq}}
-
-\paragraph{Metaprogramming}
-
-\todo[inline]{\citet{Christiansen-elaborator-reflection}: type checking and inference in metaprogramming; respond to their comments about datatype-generic programming (untyped vs typed metaprogramming)}
-
-\todo[inline]{Object-level binder-manipulating techniques~\citep{Chen-Mtac-Agda}}
-
-\todo[inline]{\citet{Pickering-staged-SoP, Yallop-staged-generic-programming, Jones-partial-evaluation, de-Vries-masters-thesis}; partial evaluation is more programmer-friendly than staging, and elaborator reflection provides, to some extent, the ability to do partial evaluation}
-
-\todo[inline]{One more step towards practical `type theory in type theory'~\citep{Chapman-type-theory-should-eat-itself} (not just theoretically interesting), although our encoding is `shallow'}
-
-\todo[inline]{Typed metaprogramming~\citep{Xie-Typed-Template-Haskell, Jang-Moebius, Kiselyov-MetaOCaml, Davies-modal-staged-computation}: In contrast to an untyped approach, |fold-operator| also serves as a proof that the arguments of a fold operator do constitute an algebra.}
-
-\paragraph{Universe polymorphism}
-
-\todo[inline]{A practical application and motivation~\citep{Kovacs-universe-hierarchies} (not just theoretically interesting); generic level quantification; no subject reduction; universe-polymorphic definitions not polymorphic enough (e.g., |Σ|-types); more expressive universes}
-
-\todo[inline]{\citet{Chapman-levitation} propose a more radical redesign of type theory where datatype definitions are first-class, but the theory is still at an early stage of development and lacks an implementation; our proposal is more practical and serves as a platform for the development of mature datatype-generic libraries, which can be ported to new platforms when ready}
+\todo[inline]{The native world as the common playground of multiple generic libraries; delta-based bidirectional transformations~\citep[Section~3.3]{Abou-Saleh-BX-intro} and bx network~\citep{Stevens-multiary-BX}; the need for syncing may be unavoidable since representation matters in practice}
 
 \todo[inline]{Missing the feature that converts fold functions to algebras, although there seems to be some overlap between this feature and the functionalities of the termination checker; update the reflection API?}
 
-\todo[inline]{}
+\paragraph{Code generation vs first-class datatypes}
+
+\Josh{\citet{Benke-generic-universes,Altenkirch-GP-within-DTP,Gibbons-DGP}.
+The Haskell programmer produces recursive function definitions~\citep{de-Vries-true-SoP}.
+We adopt the approach where generic function representations are non-recursive and then weaved into recursive definitions.
+The language supports a single generic representation akin to the generic |μ| and |fold| operators, which avoid code duplication/explosion but (potentially?) sacrificing efficiency~\citep{Allais-n-ary-functions}.
+No development since levitation~\citep{Chapman-levitation}, in particular no implementation.
+Our work provides a foundation for the development of generic libraries \emph{now}.
+Feel free to port the libraries to a new foundation when it's ready.}
+
+\paragraph{Datatype-generic libraries for dependently typed programming}
+
+\Josh{Our work enables the practical development and applications of datatype-generic libraries.
+Duplicated code in Standard Library.
+Ornaments have been used to lift functions, but its original purpose ---organisation of datatypes--- should not be forgotten (\citet{McBride-ornaments}; porting some constructions from \citet{Ko-OAOAOO}; more experimental developments~\citep{Ko-OrnJFP, Dagand-functional-ornaments}; theory and developments about function transportation in simply typed settings~\cite{Williams-principle-ornamentation, Williams-ornaments-in-practice}; realistic dependently typed application and automated synthesis of ornaments~\citep{McDonell-Ghostbuster,Ringer-ornaments-Coq}).
+Make \citet{McBride-pivotal, Allais-binding-syntax-universe-JFP} native.}
+
+\todo[inline]{Success of the App Store: dependent types need richer type structures and allow assumptions about datatype descriptions to derive more functionalities (boring if we can only automate Eq, Show, Read etc), so DGP has much more potential in dependently typed settings; also, keep generic programs natural so that libraries can be developed more easily — no staging (which is not in the current dependently typed languages anyway)!}
+
+\paragraph{Universe polymorphism}
+
+\LT{A practical application and motivation~\citep{Kovacs-universe-hierarchies} (not just theoretically interesting); generic level quantification; no subject reduction; universe-polymorphic definitions not polymorphic enough (e.g., |Σ|-types); more expressive universes}
+
+\paragraph{Typed metaprogramming}
+
+\LT{Emphasise object-level binder-manipulating techniques~\citep{Chen-Mtac-Agda}.}
+
+\paragraph{Foundation of typed metaprogramming}
+
+\LT{One more step towards practical `type theory in type theory'~\citep{Chapman-type-theory-should-eat-itself} (not just theoretically interesting), although our encoding is `shallow'.
+Our experience with untyped metaprogramming was painful, especially in contrast to the experience with datatype-generic programming --- a form of typed metaprogramming.
+Respond to \varcitet{Christiansen-elaborator-reflection}{'s} comments about datatype-generic programming (untyped vs typed metaprogramming): in contrast to an untyped approach, |fold-operator| also serves as a proof that the arguments of a fold operator do constitute an algebra.
+Other work on typed metaprogramming~\citep{Xie-Typed-Template-Haskell, Jang-Moebius, Kiselyov-MetaOCaml, Davies-modal-staged-computation} may benefit from considering practical applications.}
+
+\todo[inline]{\citet{Chapman-levitation} propose a more radical redesign of type theory where datatype definitions are first-class, but the theory is still at an early stage of development and lacks an implementation; our proposal is more practical and serves as a platform for the development of mature datatype-generic libraries, which can be ported to new platforms when ready}
+
+\paragraph{Optimisation of datatype-generic programs}
+
+\Viktor{\citet{Pickering-staged-SoP, Yallop-staged-generic-programming, Jones-partial-evaluation, de-Vries-masters-thesis, Alimarine2004}; partial evaluation is more programmer-friendly than staging, and elaborator reflection provides, to some extent, the ability to do partial evaluation.
+Staging may be better for controlling what appears in the final code, but there's no implementation for dependently typed languages.
+Efficiency problem due to conversion between generic and native representations (see below) since the Haskell era~\citep{Magalhaes-optimising-generics}.}
+
+\paragraph{Conclusion}
 
 \todo[inline]{From the angle of datatype-generic programming, the generic constructions should work on native datatypes and functions for maximum interoperability with language facilities and other libraries, and the gap between generic and native entities can be filled straightforwardly with (powerful enough) metaprogramming.
 From the angle of metaprogramming, one way to offer better correctness guarantees about the meta-level constructions is to introduce types, and (dependently typed) datatype-generic programming already provides a working solution for typing a good range of the constructions.
 Each of the two programming disciplines works nicely as the other's natural extension.}
 
-\todo[inline]{The native world as the common playground of multiple generic libraries; delta-based bidirectional transformations~\citep[Section~3.3]{Abou-Saleh-BX-intro} and bx network~\citep{Stevens-multiary-BX}; the need for syncing may be unavoidable since representation matters in practice}
-
-\todo[inline]{Success of the App Store: dependent types need richer type structures and allow assumptions about datatype descriptions to derive more functionalities (boring if we can only automate Eq, Show, Read etc), so DGP has much more potential in dependently typed settings; also, keep generic programs natural so that libraries can be developed more easily — no staging (which is not in the current dependently typed languages anyway)!}
-
 \todo[inline]{Suggestions for the future evolution of Agda or the design of new languages with elaborator reflection}
-
-\todo[inline]{Our experience with untyped metaprogramming was painful, especially in contrast to the experience with datatype-generic programming (a form of typed metaprogramming, as we argued above)}
 
 \todo[inline]{Provide a practically relevant application whose foundation the theorists can investigate and formalise}
 
