@@ -67,7 +67,6 @@
 \let\Bbbk\relax
 %include agda.fmt
 
-\setlength{\mathindent}{.5\parindent}
 \newcommand{\cons}[1]{\mathbf{#1}}
 \newcommand{\iden}{\mathit}
 
@@ -280,6 +279,8 @@
 %%
 %% end of the preamble, start of the body of the document source.
 \begin{document}
+
+\setlength{\mathindent}{.5\parindent}
 
 %%
 %% The "title" command has an optional parameter,
