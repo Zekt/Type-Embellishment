@@ -1,22 +1,40 @@
 %% This BibTeX bibliography file was created using BibDesk.
 %% https://bibdesk.sourceforge.io/
 
-%% Created for Josh Ko at 2022-02-17 10:19:30 +0800 
+%% Created for Josh Ko at 2022-02-18 17:27:34 +0800 
 
 
 %% Saved with string encoding Unicode (UTF-8) 
 
 
 
+@article{Alon-code2vec,
+	abstract = {We present a neural model for representing snippets of code as continuous distributed vectors (``code embeddings''). The main idea is to represent a code snippet as a single fixed-length \emph{code vector}, which can be used to predict semantic properties of the snippet. To this end, code is first decomposed to a collection of paths in its abstract syntax tree. Then, the network learns the atomic representation of each path while \emph{simultaneously} learning how to aggregate a set of them.\par
+
+We demonstrate the effectiveness of our approach by using it to predict a method's name from the vector representation of its body. We evaluate our approach by training a model on a dataset of 12M methods. We show that code vectors trained on this dataset can predict method names from files that were unobserved during training. Furthermore, we show that our model learns useful method name vectors that capture semantic similarities, combinations, and analogies.\par
+
+A comparison of our approach to previous techniques over the same dataset shows an improvement of more than 75\%, making it the first to successfully predict method names based on a large, cross-project corpus. Our trained model, visualizations and vector similarities are available as an interactive online demo at http://code2vec.org. The code, data and trained models are available at https://github.com/tech-srl/code2vec.},
+	author = {Alon, Uri and Zilberstein, Meital and Levy, Omer and Yahav, Eran},
+	date-added = {2022-02-18 17:27:34 +0800},
+	date-modified = {2022-02-18 17:27:34 +0800},
+	doi = {10.1145/3290353},
+	journal = {Proceedings of the ACM on Programming Languages},
+	number = {POPL},
+	pages = {40:1--29},
+	title = {{code2vec}: Learning Distributed Representations of Code},
+	volume = {3},
+	year = 2019,
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCvLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0Fsb24gZXQgYWwgMjAxOSAtIGNvZGUydmVjIExlYXJuaW5nIERpc3RyaWJ1dGVkIFJlcHJlc2VudGF0aW9ucyBvZiBDb2RlLnBkZk8RAswAAAAAAswAAgAABlN5c3RlbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCRAAB/////x9BbG9uIGV0IGFsIDIwMTkgLSAjRkZGRkZGRkYucGRmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAUABgAACiBjdQAAAAAAAAAAAAAAAAANQmliUmVwb3NpdG9yeQAAAgCvLzpVc2Vyczpqb3Noa286TGlicmFyeTpNb2JpbGUgRG9jdW1lbnRzOkpGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyOkRvY3VtZW50czpCaWJSZXBvc2l0b3J5OkFsb24gZXQgYWwgMjAxOSAtIGNvZGUydmVjIExlYXJuaW5nIERpc3RyaWJ1dGVkIFJlcHJlc2VudGF0aW9ucyBvZiBDb2RlLnBkZgAADgCYAEsAQQBsAG8AbgAgAGUAdAAgAGEAbAAgADIAMAAxADkAIAAtACAAYwBvAGQAZQAyAHYAZQBjACAATABlAGEAcgBuAGkAbgBnACAARABpAHMAdAByAGkAYgB1AHQAZQBkACAAUgBlAHAAcgBlAHMAZQBuAHQAYQB0AGkAbwBuAHMAIABvAGYAIABDAG8AZABlAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgCtVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9BbG9uIGV0IGFsIDIwMTkgLSBjb2RlMnZlYyBMZWFybmluZyBEaXN0cmlidXRlZCBSZXByZXNlbnRhdGlvbnMgb2YgQ29kZS5wZGYAABMAAS8AABUAAgAN//8AAAAIAA0AGgAkANYAAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAADpg==}}
+
 @article{Dybjer-indexed-induction-recursion,
 	author = {Dybjer, Peter and Setzer, Anton},
 	date-added = {2022-02-17 10:19:28 +0800},
-	date-modified = {2022-02-17 10:19:28 +0800},
+	date-modified = {2022-02-17 14:56:06 +0800},
 	doi = {10.1016/j.jlap.2005.07.001},
 	journal = {Journal of Logic and Algebraic Programming},
 	number = {1},
 	pages = {1-49},
-	title = {Indexed induction-recursion},
+	title = {Indexed Induction-Recursion},
 	volume = {66},
 	year = {2006},
 	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCXLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0R5YmplciBldCBhbCAyMDA2IC0gSW5kZXhlZCBpbmR1Y3Rpb24tcmVjdXJzaW9uLnBkZk8RAmwAAAAAAmwAAgAABlN5c3RlbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCRAAB/////x9EeWJqZXIgZXQgYWwgMjAwNiAjRkZGRkZGRkYucGRmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAUABgAACiBjdQAAAAAAAAAAAAAAAAANQmliUmVwb3NpdG9yeQAAAgCXLzpVc2Vyczpqb3Noa286TGlicmFyeTpNb2JpbGUgRG9jdW1lbnRzOkpGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyOkRvY3VtZW50czpCaWJSZXBvc2l0b3J5OkR5YmplciBldCBhbCAyMDA2IC0gSW5kZXhlZCBpbmR1Y3Rpb24tcmVjdXJzaW9uLnBkZgAADgBoADMARAB5AGIAagBlAHIAIABlAHQAIABhAGwAIAAyADAAMAA2ACAALQAgAEkAbgBkAGUAeABlAGQAIABpAG4AZAB1AGMAdABpAG8AbgAtAHIAZQBjAHUAcgBzAGkAbwBuAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgCVVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9EeWJqZXIgZXQgYWwgMjAwNiAtIEluZGV4ZWQgaW5kdWN0aW9uLXJlY3Vyc2lvbi5wZGYAABMAAS8AABUAAgAN//8AAAAIAA0AGgAkAL4AAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAADLg==}}
@@ -123,9 +141,9 @@ The story begins with a class of simple types which are given a purely syntactic
 @inproceedings{Magalhaes-optimising-generics,
 	abstract = {Datatype-generic programming increases program reliability by reducing code duplication and enhancing reusability and modularity. Several generic programming libraries for Haskell have been developed in the past few years. These libraries have been compared in detail with respect to expressiveness, extensibility, typing issues, etc., but performance comparisons have been brief, limited, and preliminary. It is widely believed that generic programs run slower than hand-written code. In this paper we present an extensive benchmark suite for generic functions and analyze the potential for automatic code optimization at compilation time. Our benchmark confirms that generic programs, when compiled with the standard optimization flags of the Glasgow Haskell Compiler (GHC), are substantially slower than their hand-written counterparts. However, we also find that more advanced optimization capabilities of GHC can be used to further optimize generic functions, sometimes achieving the same efficiency as hand-written code.},
 	author = {Magalh{\~a}es, Jos{\'e} Pedro and Holdermans, Stefan and Jeuring, Johan and L{\"o}h, Andres},
-	booktitle = {Workshop on Partial evaluation and program manipulation (PEPM)},
+	booktitle = {Workshop on Partial Evaluation and Program Manipulation (PEPM)},
 	date-added = {2022-02-04 15:34:20 +0800},
-	date-modified = {2022-02-04 15:34:20 +0800},
+	date-modified = {2022-02-17 14:56:53 +0800},
 	doi = {10.1145/1706356.1706366},
 	pages = {33-42},
 	publisher = {ACM},
@@ -599,14 +617,12 @@ Keywords: homotopy type theory, coherences, strict equality, homotopy type syste
 
 @article{Dybjer1994,
 	author = {Dybjer, Peter},
+	date-modified = {2022-02-17 14:55:45 +0800},
 	doi = {10.1007/BF01211308},
-	issn = {0934-5043},
 	journal = {Formal Aspects of Computing},
-	keywords = {Inductive definitions,Intuitionistic type theory,Natural deduction},
 	number = {4},
 	pages = {440--465},
-	title = {Inductive families},
-	url = {http://link.springer.com/10.1007/BF01211308},
+	title = {Inductive Families},
 	volume = {6},
 	year = {1994},
 	bdsk-url-1 = {http://link.springer.com/10.1007/BF01211308},
@@ -629,20 +645,16 @@ Keywords: homotopy type theory, coherences, strict equality, homotopy type syste
 	bdsk-url-1 = {http://link.springer.com/10.1007/3-540-48959-2%7B%5C_%7D11},
 	bdsk-url-2 = {https://doi.org/10.1007/3-540-48959-2_11}}
 
-@incollection{Alimarine2004,
+@inproceedings{Alimarine2004,
 	abstract = {Generic functions are defined by induction on the structural representation of types. As a consequence, by defining just a single generic operation, one acquires this operation over any particular type. An instance on a specific type is generated by interpretation of the type's structure. A direct translation leads to extremely inefficient code that involves many conversions between types and their structural representations. In this paper we present an optimization technique based on compile-time symbolic evaluation. We prove that the optimization removes the overhead of the generated code for a considerable class of generic functions. The proof uses typing to identify intermediate data structures that should be eliminated. In essence, the output after optimization is similar to hand-written code. {\textcopyright} Springer-Verlag 2004.},
 	author = {Alimarine, Artem and Smetsers, Sjaak},
-	booktitle = {Mathematics of Program Construction. MPC 2004},
+	booktitle = {International Conference on Mathematics of Program Construction (MPC)},
+	date-modified = {2022-02-17 14:54:26 +0800},
 	doi = {10.1007/978-3-540-27764-4_3},
-	editor = {Kozen, Dexter},
-	file = {:Users/liang-tingchen/Dropbox/References/Alimarine, Smetsers - 2004 - Optimizing Generic Functions.pdf:pdf},
-	isbn = {3540223800},
-	issn = {16113349},
 	pages = {16--31},
-	publisher = {Springer, Berlin, Heidelberg},
+	publisher = {Springer},
 	series = {Lecture Notes in Computer Science},
-	title = {{Optimizing Generic Functions}},
-	url = {http://link.springer.com/10.1007/978-3-540-27764-4{\_}3},
+	title = {Optimizing Generic Functions},
 	volume = {3125},
 	year = {2004},
 	bdsk-url-1 = {http://link.springer.com/10.1007/978-3-540-27764-4%7B%5C_%7D3},
@@ -650,10 +662,9 @@ Keywords: homotopy type theory, coherences, strict equality, homotopy type syste
 
 @misc{Norell2016,
 	author = {Norell, Ulf},
-	month = {jan},
-	title = {{Agda reflection overhaul}},
+	date-modified = {2022-02-17 14:57:46 +0800},
+	title = {{Agda} Reflection Overhaul},
 	url = {https://lists.chalmers.se/pipermail/agda/2016/008414.html},
-	urldate = {2019-05-23},
 	year = {2016},
 	bdsk-url-1 = {https://lists.chalmers.se/pipermail/agda/2016/008414.html}}
 

@@ -96,7 +96,7 @@
 %format _ = "\char95"
 %format : = "\mathop:"
 %format → = "\mathop\to"
-%format -> = "\mathop{\kern-.5pt\to\kern-.5pt}" 
+%format -> = "\mathop{\kern-.5pt\to\kern-.5pt}"
 %format ... = ".\kern.5pt.\kern.5pt.\kern.5pt"
 %format [ = "[\kern-2pt"
 %format Σ[ = Σ [
@@ -128,6 +128,7 @@
 %format foldAcc<Alg = foldAcc< Alg
 %format μ = "\text\textmugreek"
 %format CurriedL = Curried "_{\Conid L}"
+%format genFoldC' = genFoldC "^\prime"
 
 %format ᵗ = "_{\Conid T}"
 %format ⟦_⟧ᵗ = ⟦_⟧ ᵗ
@@ -241,6 +242,7 @@
 %format d = "\iden d"
 %format ds = "\iden{ds}"
 %format eq = "\iden{eq}"
+%format e = "\iden e"
 %format f = "\iden f"
 %format fC = "\iden{fC}"
 %format fs = "\iden{fs}"
@@ -369,6 +371,26 @@ Unlike other approaches using staging~\cite{Yallop-staged-generic-programming,Pi
 \Josh{No radically new datatype-generic programming techniques, just adaptations for practical Agda programming (parameters, universe polymorphism, and visibility and curried forms; compare with \citet{Dybjer1994}); pointing out an ignored direction worth following}
 
 \Josh{Some actual demo}
+
+\begin{code}
+data List (A : Set ℓ) : Set ℓ where
+  []   : List A
+  _∷_  : A → List A → List A
+\end{code}
+
+\begin{code}
+foldr : {A : Set ℓ} {B : Set ℓ'} → (A → B → B) → B → List A → B
+foldr f e []        = e
+foldr f e (a ∷ as)  = f a (foldr f e as)
+\end{code}
+
+$|length| = |foldr (const suc) zero|$
+
+\begin{code}
+data Vec (A : Set ℓ) : ℕ → Set ℓ where
+  []   : Vec A zero
+  _∷_  : A → {n : ℕ} → Vec A n → Vec A (suc n)
+\end{code}
 
 \todo[inline]{
 Contributions:
@@ -523,8 +545,7 @@ Algebras are useful because they are the interesting part of a fold function:
 By a `fold function' we mean a function defined recursively on an argument of some datatype by (i)~pattern-matching the argument with all possible constructors, (ii)~applying the function recursively to all the recursive fields, and (iii)~somehow computing the final result from the recursively computed sub-results and the non-recursive fields.
 For example, |foldAcc<| is a fold function, and so are a lot of common functions such as list |length|.\todo{a few more examples from \cref{sec:introduction}}
 The first two steps are the same for all fold functions on the same datatype, whereas the third step is customisable and represented by an algebra, whose argument of type |⟦ D ⟧ᶜˢ X i| represents exactly the input of step~(iii).
-We can define a generic |fold| operator that expresses the computation pattern of fold functions and can be specialised with an algebra,%
-\footnote{The unsafe \textsc{terminating} pragma will not be a problem because we will not rely on this generic |fold| operator in this paper.}
+We can define a generic |fold| operator that expresses the computation pattern of fold functions and can be specialised with an algebra,
 \begin{code}
 {-# TERMINATING #-}
 fold : (D : ConDs I) → Alg D X → ∀ {i} → μ D i → X i
@@ -535,6 +556,7 @@ where |fmapᶜˢ| is the functorial map for |⟦ D ⟧ᶜˢ| (defined in \cref{f
 But as a more detailed example, the functorial map~(\cref{fig:fmap}) is a typical generic program:
 The functorial map should apply a given function~|f| to all the recursive fields in a sum-of-products structure while leaving everything else intact, and it does so by analysing the input description layer by layer --- |fmapᶜˢ| keeps the choices of |inl| or |inr|, |fmapᶜ| keeps the |σ|-fields and |ι|-equalities, and finally |fmapʳ| applies~|f| to the recursive fields (of type~|X i| for some~|i|) pointwise.}
 used here to apply |fold D f| to the recursive fields in~|ds|.
+(The unsafe \textsc{terminating} pragma is not be a problem because our work does not use |fold|.)
 Libraries may provide generic programs in the form of algebras parametrised by descriptions, and the user gets a fold function for their datatype by applying |fold| to an algebra specialised to the description of the datatype.
 For example, by specialising a generic program in \cref{sec:fold-operators}, we get an algebra (with some parameters of its own)
 \begin{code}
@@ -888,6 +910,9 @@ So, given |F : FoldP|, it can be connected to some |f : FoldT F|, but what shoul
 Since |f|~is supposed to replace an instantiation of the generic |fold| operator, what we need to know about~|f| is that it satisfies a suitably instantiated version of the defining equation of |fold|.
 This |equation| constitutes the only field of the record type |FoldC| in \cref{fig:FoldC}.
 
+Incidentally, although we do not present the details of generic induction, the definitions are largely the same as what we have formulated for folds above, including |IndP|, |IndT|, |IndC|, etc.
+When we get to examples that require induction in \cref{sec:examples}, it should suffice to think of those generic programs as a more complex kind of parametrised algebras.
+
 \begin{figure}
 \codefigure
 \begin{code}
@@ -963,9 +988,6 @@ where |foldAccT _ (A , R , P , p , _) {x , _} == foldAcc A R P p x| is a wrapper
 (The inverse property |DataC.fromN-toN| does not appear in the proof, but we need it at the meta-level to argue generically that the proof always works.)
 
 %Everything we did manually above was highly mechanical and deserves to be automated; this we do next in \cref{sec:reflection} using Agda's reflection mechanism, after which we will see some examples of datatype-generic programming with |DataC| and |FoldC| connections in \cref{sec:examples}.
-
-%\todo[inline]{Although we do not present the details of generic induction, the definitions (|IndP|, |IndT|, etc) are largely the same as what we have formulated for folds above.
-%When we get to examples that require induction in \cref{sec:examples}, which will only be sketched informally, it should suffice to think of those programs as a more complex kind of parametrised algebra with induction hypotheses.}
 
 \section{Establishing Connections Using Elaborator Reflection}
 \label{sec:reflection}
@@ -1166,103 +1188,108 @@ data Definition : Set where
 \section{Examples}
 \label{sec:examples}
 
-\todo[inline]{Some missed opportunities, not new stuff: generic constructions that the dependently typed programmer could have benefited from}
+\todo[inline]{Some missed opportunities, not new stuff: generic constructions that the dependently typed programmer could have benefited from; no space for details, just demos and highlights}
 
 \subsection{Fold Operators}
 \label{sec:fold-operators}
 
-As a more familiar example, let us write a datatype-generic program
+The generic program that instantiates to fold operators on native datatypes is given the type
 \begin{code}
-fold-operator : DataC D N → FoldP
+fold-operator : (C : DataC D N) → FoldP
 \end{code}
-that gives rise to fold operators on native datatypes such as |foldAcc|.
-Given |C : DataC D N|, the parameters in |fold-operator C| are essentially a |D|-algebra where sums are separated and products are curried, so what we need to do is just cosmetic work: at type level, compute the parameter types, which are the curried types of the constructors of~|D| where all the recursive occurrences are replaced with a given carrier, and at program level, uncurry and assemble the parameters into a |D|-algebra.
+As an example of instantiating the generic program, suppose that we have written the datatype |Acc| manually, and want to derive its fold operator.
+First we generate the description |AccD| by the macro |genDataD Acc|, and then the datatype connection |AccC| by |genDataC AccD (genDataT AccD Acc)|.
+Now |fold-operator AccC| is exactly the fold program |foldAccP|, and the fold operator/function |foldAcc| can be manufactured from and connected with |foldAccP| by |defineFold foldAccP foldAcc| and |genFoldC foldAccP foldAcc|.
+(The macros are manually invoked for now, but the process could be streamlined as, say, pressing a few buttons of an interactive editor.)
 
-Part~(i) is computed by
+Let us look at |fold-operator| in a bit more detail.
+The parameters of |fold-operator C| are mainly a |⟦ D ⟧ᵈ|-algebra in a curried form, so what |fold-operator| does is just cosmetic work:
+at type level, compute the types of a curried algebra, which are the curried types of the constructors of~|D| where all the recursive fields are replaced with a given carrier, and at program level, uncurry a curried algebra.
+The level parameters of |fold-operator C| include those of~|D| and one more for the carrier~|X| appearing in the |Param| telescope shown below, which also contains the ordinary parameters of~|D| and a curried algebra represented as a telescope computed (by |FoldOpTel|) from the list of constructor descriptions in~|D|:
 \begin{code}
-FoldOpTel :  (D : ConDs I cbs) → (I → Set ℓ) →
-             Tel (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ hasCon? ℓ cbs)
-FoldOpTel []        X = []
-FoldOpTel (D ∷ Ds)  X = [ _ ∶ FoldOpT D X ] FoldOpTel Ds X
+fold-operator {D} C .applyL (ℓ , ℓs) .Param
+  = let Dᵖ == D .applyL ℓs in  [[ ps ∶ Dᵖ .Param ]] [ X ∶ Curriedᵗ (Dᵖ .Index ps) (λ _ → Set ℓ) ]
+                               FoldOpTel (Dᵖ .applyP ps) (uncurryᵗ X)
 \end{code}
-which converts each constructor description to a type by |FoldOpT| and collects the types in a telescope.
-The actual conversion by |FoldOpT| produces the required curried type:
+(The reader may want to compare this generic definition with the instantiated |Param| field of |foldAccP|.)
+The type of~|X| is in a curried form, which is then uncurried for |FoldOpTel| and other parts of the definition of |fold-operator|, for example the |Carrier| field:
 \begin{code}
-FoldOpT : (D : ConD I cb) → (I → Set ℓ) → Set (max-π cb ⊔ max-σ cb ⊔ ℓ)
-FoldOpT (ι i     ) X = X i
-FoldOpT (σ A  D  ) X = (a : A)   → FoldOpT (D a) X
-FoldOpT (ρ D  E  ) X = ⟦ D ⟧ʳ X  → FoldOpT E X
+fold-operator C .applyL (ℓ , ℓs) .Carrier = λ (ps , X , calgs) → uncurryᵗ X
 \end{code}
-For example, given a predicate |P : A → Set ℓ| as the carrier, the description of |acc| is converted to
-\begin{code}
-   FoldOpT (σ[ x ∶ A ] ρ (π[ y ∶ A ] π[ _ ∶ R y x ] ι y) (ι x)) P
-=  (x : A) → ((y : A) → R y x → P y) → P x
-\end{code}
+This is a common pattern where curried forms exposed to the library user are converted to uncurried forms for processing by generic programs.
+The |Param| telescope is the first place we use telescope appending (disguised with the syntax |[[ ... ]]|), with which the parameters are separated into three groups |ps|, |X|, and |calgs|, making it convenient to refer to each group like in |Carrier| above.
 
-For part~(ii), we are given a list of functions of the types in a telescope computed by |FoldOpTel|, from which we should construct an algebra; this is done by performing a case analysis on the argument of the algebra ---which is a sum structure--- to determine which function to apply:
-\begin{code}
-fold-op : (D : ConDs I cbs) → ⟦ FoldOpTel D X ⟧ᵗ → Alg D X
-fold-op (D ∷ Ds) (f , fs) (inl  xs) = fold-opᶜ  D   f   xs
-fold-op (D ∷ Ds) (f , fs) (inr  xs) = fold-op   Ds  fs  xs
-\end{code}
-The task of the next layer |fold-opᶜ| is also constructing a |D|-algebra, but here |D|~is a single constructor description (|ConD|) rather than a list of constructor descriptions (|ConDs|).
-For convenience, define
-\begin{code}
-Algᶜ : ConD I cb → (I → Set ℓ) → Set _
-Algᶜ D X = ∀ {i} → ⟦ D ⟧ᶜ X i → X i
-\end{code}
-so that the type of |fold-opᶜ| can be written in a form corresponding to the type of |fold-op|:
-\begin{code}
-fold-opᶜ : (D : ConD I cb) → FoldOpT D X → Algᶜ D X
-fold-opᶜ (ι  i     ) x  refl           = x
-fold-opᶜ (σ  A  D  ) f  (a   , xs   )  = fold-opᶜ (  D a)  (f  a   ) xs
-fold-opᶜ (ρ  D  E  ) f  (xs  , xs'  )  = fold-opᶜ    E     (f  xs  ) xs'
-\end{code}
-The definition of |fold-opᶜ| is essentially uncurrying, gradually applying a given function to the argument of the algebra --- which is a tuple.
+%Part~(i) is computed by
+%\begin{code}
+%FoldOpTel :  (D : ConDs I cbs) → (I → Set ℓ) →
+%             Tel (maxMap max-π cbs ⊔ maxMap max-σ cbs ⊔ hasCon? ℓ cbs)
+%FoldOpTel []        X = []
+%FoldOpTel (D ∷ Ds)  X = [ _ ∶ FoldOpT D X ] FoldOpTel Ds X
+%\end{code}
+%which converts each constructor description to a type by |FoldOpT| and collects the types in a telescope.
+%The actual conversion by |FoldOpT| produces the required curried type:
+%\begin{code}
+%FoldOpT : (D : ConD I cb) → (I → Set ℓ) → Set (max-π cb ⊔ max-σ cb ⊔ ℓ)
+%FoldOpT (ι i     ) X = X i
+%FoldOpT (σ A  D  ) X = (a : A)   → FoldOpT (D a) X
+%FoldOpT (ρ D  E  ) X = ⟦ D ⟧ʳ X  → FoldOpT E X
+%\end{code}
 
-Finally we pack everything into the definition of |fold-operator|:
-\begin{code}
-fold-operator : DataC D N → FoldP
-fold-operator {D} C = record
-  {  Conv     =  C
-  ;  #levels  =  suc (D .#levels)
-  ;  level    =  snd
-  ;  Param    =  λ (ℓ , ℓs) → let Dᵖ = D .applyL ℓs in
-                   [[ ps ∶ Dᵖ .Param ]] [ X ∶ Curriedᵗ (Dᵖ .Index ps) (λ _ → Set ℓ) ]
-                   FoldOpTel (Dᵖ .applyP ps) (uncurryᵗ X)
-  ;  param    =  fst
-  ;  Carrier  =  λ _  (ps , X , calgs) → uncurryᵗ X
-  ;  algebra  =  λ    (ps , X , calgs) → fold-op (D .applyL _ .applyP ps) calgs }
-\end{code}
-The level parameters of |fold-operator C| include those of~|D| and one more for the carrier~|X| appearing in the |Param| telescope, which also includes the ordinary parameters of~|D| and the parameters computed by |FoldOpTel|.
-The type of~|X| is specified to be in a curried form, which is then uncurried for |FoldOpTel| and the |Carrier| field --- a common pattern where curried entities seen by the user are converted to uncurried forms for processing by generic programs.
-The |Param| telescope is the first place where we see the use of telescope appending, with which the parameters are divided into three `groups' |ps|, |X|, and |calgs|, making it convenient to distribute them to relevant parts of the generic definition.
-The benefit is even clearer in the next example and also in \cref{sec:algebraic-ornamentation}.
+%For part~(ii), we are given a list of functions of the types in a telescope computed by |FoldOpTel|, from which we should construct an algebra; this is done by performing a case analysis on the argument of the algebra ---which is a sum structure--- to determine which function to apply:
+%\begin{code}
+%fold-op : (D : ConDs I cbs) → ⟦ FoldOpTel D X ⟧ᵗ → Alg D X
+%fold-op (D ∷ Ds) (f , fs) (inl  xs) = fold-opᶜ  D   f   xs
+%fold-op (D ∷ Ds) (f , fs) (inr  xs) = fold-op   Ds  fs  xs
+%\end{code}
+%The task of the next layer |fold-opᶜ| is also constructing a |D|-algebra, but here |D|~is a single constructor description (|ConD|) rather than a list of constructor descriptions (|ConDs|).
+%For convenience, define
+%\begin{code}
+%Algᶜ : ConD I cb → (I → Set ℓ) → Set _
+%Algᶜ D X = ∀ {i} → ⟦ D ⟧ᶜ X i → X i
+%\end{code}
+%so that the type of |fold-opᶜ| can be written in a form corresponding to the type of |fold-op|:
+%\begin{code}
+%fold-opᶜ : (D : ConD I cb) → FoldOpT D X → Algᶜ D X
+%fold-opᶜ (ι  i     ) x  refl           = x
+%fold-opᶜ (σ  A  D  ) f  (a   , xs   )  = fold-opᶜ (  D a)  (f  a   ) xs
+%fold-opᶜ (ρ  D  E  ) f  (xs  , xs'  )  = fold-opᶜ    E     (f  xs  ) xs'
+%\end{code}
+%The definition of |fold-opᶜ| is essentially uncurrying, gradually applying a given function to the argument of the algebra --- which is a tuple.
 
 It would not be too interesting if we could only manufacture functions but not prove some of their properties.
-For fold operators, one of the most useful theorems is the fusion theorem~\citep{Bird-AoP}, which states that a function~|h| composed with a fold can be fused into the fold if |h|~is a homomorphism between the algebras of the two folds.%
-\todo{List version in \cref{sec:introduction}}
-The theorem can be represented as a generic program
+For fold operators, one of the most useful theorems is the fusion theorem~\citep{Bird-AoP}, whose instantiation for |List| was shown in \cref{sec:introduction}.
+The theorem is represented as a generic program
 \begin{code}
 fold-fusion : (C : DataC D N) (fC : FoldC (fold-operator C) f) → IndP
 \end{code}
-which we apply to a datatype connection~|C| and a fold connection |fC| ---which essentially says that a function~|f| is a fold operator--- to get a specialised version of the theorem.
+which we apply to a datatype connection~|C| and a fold connection |fC| ---stating that a function~|f| is a fold operator--- to get a specialised version of the theorem.
+It even specialises for the version of |foldr| in Agda's Standard Library (also shown in \cref{sec:introduction}), which is not manufactured by |defineFold| from the fold program $|foldListP| = |fold-operator ListC|$ (where |ListC| is the datatype connection for |List|); notably, the arguments of |foldr| are in a different order from that specified by |foldListP|.
+In this case we can still manually write a wrapper $|foldrT| = |λ _ ((A , _) , B , e , f , _) → foldr f e| : |FoldT foldListP|$ and manufacture a fold connection |foldrC| by |genFoldC' foldListP foldrT|.
+Then |fold-fusion ListC foldrC| specialises to the fusion theorem on |foldr|.
+
+In general, if the library user is not satisfied with the form of a manufactured function (argument order, visibility, etc), they can print the function definition, change it into a form they want, and connect the customised version back to the library in the same way as we treated |foldr|.
+This customisation can be tiresome if it has to be done frequently, however, and there should be ways to get the manufactured forms right most of the time.
+We have implemented a cheap solution where argument name suggestions (for definition-printing) and visibility specifications are included in |FoldP| (and |IndP|) and processed by relevant components such as |Curriedᵗ|\todo{and something in \cref{sec:reflection}}, and the solution works well for our small selection of examples, although more systematic solutions are probably needed for larger libraries, for example name suggestion based on machine learning~\citep{Alon-code2vec} and visibility calculation by analysing which arguments can be inferred by unification.
 
 \subsection{Algebraic Ornamentation}
 \label{sec:algebraic-ornamentation}
 
-\todo[inline]{Side effect of level indexing: works as a first-order, albeit partial, representation of datatypes}
+\todo[inline]{Computation of datatypes, especially universe-polymorphic ones, which may require non-trivial level computation and reasoning}
 
-\Josh{The representation looks more messy, but they will actually lead to cleaner native datatypes.}
+\todo[inline]{Emphasise the cosmetic benefit of telescopes (indices of |Vec| and |Len|)}
+
+\todo[inline]{instance arguments}
+
+\todo[inline]{Another useful application of algebraic ornamentation: conversion between extrinsically and intrinsically typed $\lambda$-terms}
 
 \subsection{Predicates on Simple Containers}
 \label{sec:simple-containers}
 
-\Josh{There are not too many generic programs that work without assumptions on the range of datatypes they operate on.}
+\todo[inline]{There are not too many generic programs that work without assumptions on the range of datatypes they operate on; allow assumptions about data type descriptions to derive more functionalities (boring if we can only automate Eq, Show, Read etc).}
 
-\Josh{Allow assumptions about data type descriptions to derive more functionalities (boring if we can only automate Eq, Show, Read etc)}
+\todo[inline]{Side effect of level indexing: works as a first-order, albeit partial, representation of datatypes}
 
-\Josh{There are not too many generic programs that work without assumptions on the range of datatypes they operate on.}
+\todo[inline]{|List| is perhaps too mundane; how about 2-3 trees?}
 
 \section{Practical Issues}
 
