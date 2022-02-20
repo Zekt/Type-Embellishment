@@ -1,12 +1,68 @@
 %% This BibTeX bibliography file was created using BibDesk.
-%% https://bibdesk.sourceforge.io/
+%% http://bibdesk.sourceforge.net/
 
-%% Created for Josh Ko at 2022-02-18 17:27:34 +0800 
+%% Created for Josh Ko at 2022-02-20 22:31:46 +0800 
 
 
 %% Saved with string encoding Unicode (UTF-8) 
 
 
+
+@inproceedings{Devriese-instance-arguments,
+	abstract = {We present instance arguments: an alternative to type classes and related features in the dependently typed, purely functional programming language/proof assistant Agda. They are a new, general type of function arguments, resolved from call-site scope in a type-directed way. The mechanism is inspired by both Scala's implicits and Agda's existing implicit arguments, but differs from both in important ways. Our mechanism is designed and implemented for Agda, but our design choices can be applied to other programming languages as well.\par
+
+Like Scala's implicits, we do not provide a separate structure for type classes and their instances, but instead rely on Agda's standard dependently typed records, so that standard language mechanisms provide features that are missing or expensive in other proposals. Like Scala, we support the equivalent of local instances. Unlike Scala, functions taking our new arguments are first-class citizens and can be abstracted over and manipulated in standard ways. Compared to other proposals, we avoid the pitfall of introducing a separate type-level computational model through the instance search mechanism. All values in scope are automatically candidates for instance resolution. A final novelty of our approach is that existing Agda libraries using records gain the benefits of type classes without any modification.\par
+
+We discuss our implementation in Agda (to be part of Agda 2.2.12) and we use monads as an example to show how it allows existing concepts in the Agda standard library to be used in a similar way as corresponding Haskell code using type classes. We also demonstrate and discuss equivalents and alternatives to some advanced type class-related patterns from the literature and some new patterns specific to our system.},
+	author = {Devriese, Dominique and Piessens, Frank},
+	booktitle = {International Conference on Functional Programming (ICFP)},
+	date-added = {2022-02-20 20:32:44 +0800},
+	date-modified = {2022-02-20 20:32:44 +0800},
+	doi = {10.1145/2034773.2034796},
+	pages = {143-155},
+	publisher = {ACM},
+	title = {On the Bright Side of Type Classes: Instance Arguments in {A}gda},
+	year = {2011},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxC7Li4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0RldnJpZXNlIGV0IGFsIDIwMTEgLSBPbiB0aGUgQnJpZ2h0IFNpZGUgb2YgVHlwZSBDbGFzc2VzIEluc3RhbmNlIEFyZ3VtZW50cyBpbiBBZ2RhLnBkZk8RAvwAAAAAAvwAAgAABlN5c3RlbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCRAAB/////x9EZXZyaWVzZSBldCBhbCAyMDEjRkZGRkZGRkYucGRmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAUABgAACiBjdQAAAAAAAAAAAAAAAAANQmliUmVwb3NpdG9yeQAAAgC7LzpVc2Vyczpqb3Noa286TGlicmFyeTpNb2JpbGUgRG9jdW1lbnRzOkpGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyOkRvY3VtZW50czpCaWJSZXBvc2l0b3J5OkRldnJpZXNlIGV0IGFsIDIwMTEgLSBPbiB0aGUgQnJpZ2h0IFNpZGUgb2YgVHlwZSBDbGFzc2VzIEluc3RhbmNlIEFyZ3VtZW50cyBpbiBBZ2RhLnBkZgAADgCwAFcARABlAHYAcgBpAGUAcwBlACAAZQB0ACAAYQBsACAAMgAwADEAMQAgAC0AIABPAG4AIAB0AGgAZQAgAEIAcgBpAGcAaAB0ACAAUwBpAGQAZQAgAG8AZgAgAFQAeQBwAGUAIABDAGwAYQBzAHMAZQBzACAASQBuAHMAdABhAG4AYwBlACAAQQByAGcAdQBtAGUAbgB0AHMAIABpAG4AIABBAGcAZABhAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgC5VXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9EZXZyaWVzZSBldCBhbCAyMDExIC0gT24gdGhlIEJyaWdodCBTaWRlIG9mIFR5cGUgQ2xhc3NlcyBJbnN0YW5jZSBBcmd1bWVudHMgaW4gQWdkYS5wZGYAABMAAS8AABUAAgAN//8AAAAIAA0AGgAkAOIAAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAAD4g==}}
+
+@misc{Kokke-PLFA,
+	author = {Kokke, Wen and Wadler, Philip and Siek, Jeremy G.},
+	date-added = {2022-02-20 20:13:53 +0800},
+	date-modified = {2022-02-20 20:13:53 +0800},
+	title = {Programming Language Foundations in {Agda} (Version 20.07)},
+	url = {http://plfa.inf.ed.ac.uk/20.07/},
+	year = {2020},
+	bdsk-url-1 = {https://plfa.github.io}}
+
+@article{Ko-pcOrn,
+	abstract = {Dependently typed programmers are encouraged to use inductive families to integrate constraints with data construction. Different constraints are used in different contexts, leading to different versions of datatypes for the same data structure. For example, sequences might be constrained by length or by an ordering on elements, giving rise to different datatypes ``vectors'' and ``sorted lists'' for the same underlying data structure of sequences. Modular implementation of common operations for these structurally similar datatypes has been a longstanding problem. We propose a datatype-generic solution, in which we axiomatise a family of isomorphisms between datatypes and their more refined versions as datatype refinements, and show that McBride's ornaments can be translated into such refinements. With the ornament-induced refinements, relevant properties of the operations can be separately proven for each constraint, and after the programmer selects several constraints to impose on a basic datatype and synthesises a new datatype incorporating those constraints, the operations can be routinely upgraded to work with the synthesised datatype.
+},
+	author = {Ko, Hsiang-Shang and Gibbons, Jeremy},
+	date-added = {2022-02-20 19:34:11 +0800},
+	date-modified = {2022-02-20 19:34:11 +0800},
+	doi = {10.2201/NiiPi.2013.10.5},
+	journal = {Progress in Informatics},
+	pages = {65-88},
+	read = {1},
+	title = {Modularising Inductive Families},
+	volume = {10},
+	year = {2013},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCXLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0tvIGV0IGFsIDIwMTMgLSBNb2R1bGFyaXNpbmcgaW5kdWN0aXZlIGZhbWlsaWVzLnBkZk8RAmwAAAAAAmwAAgAABlN5c3RlbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCRAAB/////x9LbyBldCBhbCAyMDEzIC0gTW8jRkZGRkZGRkYucGRmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAUABgAACiBjdQAAAAAAAAAAAAAAAAANQmliUmVwb3NpdG9yeQAAAgCXLzpVc2Vyczpqb3Noa286TGlicmFyeTpNb2JpbGUgRG9jdW1lbnRzOkpGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyOkRvY3VtZW50czpCaWJSZXBvc2l0b3J5OktvIGV0IGFsIDIwMTMgLSBNb2R1bGFyaXNpbmcgaW5kdWN0aXZlIGZhbWlsaWVzLnBkZgAADgBoADMASwBvACAAZQB0ACAAYQBsACAAMgAwADEAMwAgAC0AIABNAG8AZAB1AGwAYQByAGkAcwBpAG4AZwAgAGkAbgBkAHUAYwB0AGkAdgBlACAAZgBhAG0AaQBsAGkAZQBzAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgCVVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9LbyBldCBhbCAyMDEzIC0gTW9kdWxhcmlzaW5nIGluZHVjdGl2ZSBmYW1pbGllcy5wZGYAABMAAS8AABUAAgAN//8AAAAIAA0AGgAkAL4AAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAADLg==},
+	bdsk-file-2 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCYLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0tvIGV0IGFsIDIwMTMgLSBNb2R1bGFyaXNpbmcgaW5kdWN0aXZlIGZhbWlsaWVzYS5wZGZPEQJuAAAAAAJuAAIAAAZTeXN0ZW0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQkQAAf////8fS28gZXQgYWwgMjAxMyAtIE1vI0ZGRkZGRkZGLnBkZgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wAAAAAAAAAAAAAAAAAFAAYAAAogY3UAAAAAAAAAAAAAAAAADUJpYlJlcG9zaXRvcnkAAAIAmC86VXNlcnM6am9zaGtvOkxpYnJhcnk6TW9iaWxlIERvY3VtZW50czpKRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlcjpEb2N1bWVudHM6QmliUmVwb3NpdG9yeTpLbyBldCBhbCAyMDEzIC0gTW9kdWxhcmlzaW5nIGluZHVjdGl2ZSBmYW1pbGllc2EucGRmAA4AagA0AEsAbwAgAGUAdAAgAGEAbAAgADIAMAAxADMAIAAtACAATQBvAGQAdQBsAGEAcgBpAHMAaQBuAGcAIABpAG4AZAB1AGMAdABpAHYAZQAgAGYAYQBtAGkAbABpAGUAcwBhAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgCWVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9LbyBldCBhbCAyMDEzIC0gTW9kdWxhcmlzaW5nIGluZHVjdGl2ZSBmYW1pbGllc2EucGRmABMAAS8AABUAAgAN//8AAAAIAA0AGgAkAL8AAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAADMQ==}}
+
+@article{Ko-metamorphisms-in-Agda,
+	abstract = {In \emph{dependently typed programming}, proofs of basic, structural properties can be embedded implicitly into programs and do not need to be written explicitly. Besides saving the effort of writing separate proofs, a most distinguishing and fascinating aspect of dependently typed programming is that it makes the idea of \emph{interactive type-driven development} much more powerful, where expressive type information becomes useful hints that help the programmer to complete a program. There have not been many attempts at exploiting the full potential of the idea, though. As a departure from the usual properties dealt with in dependently typed programming, and as a demonstration that the idea of interactive type-driven development has more potential to be discovered, we conduct an experiment in `type-driven algorithm design': we develop algorithms from their specifications encoded in sophisticated types, to see how useful the hints provided by a type-aware interactive development environment can be. The algorithmic problem we choose is \emph{metamorphisms}, whose definitional behaviour is consuming a data structure to compute an intermediate value and then producing a codata structure from that value, but there are other ways to compute metamorphisms. We develop Gibbons's streaming algorithm and Nakano's jigsaw model in the interactive development environment provided by the dependently typed language Agda, turning intuitive ideas about these algorithms into formal conditions and programs that are correct by construction.},
+	author = {Ko, Hsiang-Shang},
+	date-added = {2022-02-20 19:01:47 +0800},
+	date-modified = {2022-02-20 19:01:47 +0800},
+	doi = {10.22152/programming-journal.org/2021/5/7},
+	journal = {The Art, Science, and Engineering of Programming},
+	number = {2},
+	pages = {7:1-34},
+	title = {Programming Metamorphic Algorithms: An Experiment in Type-driven Algorithm Design},
+	volume = {5},
+	year = {2021},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxDCLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0tvIDIwMjEgLSBQcm9ncmFtbWluZyBNZXRhbW9ycGhpYyBBbGdvcml0aG1zIEFuIEV4cGVyaW1lbnQgaW4gVHlwZS1kcml2ZW4gQWxnb3JpdGhtIERlc2lnbi5wZGZPEQMWAAAAAAMWAAIAAAZTeXN0ZW0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQkQAAf////8fS28gMjAyMSAtIFByb2dyYW1tI0ZGRkZGRkZGLnBkZgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wAAAAAAAAAAAAAAAAAFAAYAAAogY3UAAAAAAAAAAAAAAAAADUJpYlJlcG9zaXRvcnkAAAIAwi86VXNlcnM6am9zaGtvOkxpYnJhcnk6TW9iaWxlIERvY3VtZW50czpKRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlcjpEb2N1bWVudHM6QmliUmVwb3NpdG9yeTpLbyAyMDIxIC0gUHJvZ3JhbW1pbmcgTWV0YW1vcnBoaWMgQWxnb3JpdGhtcyBBbiBFeHBlcmltZW50IGluIFR5cGUtZHJpdmVuIEFsZ29yaXRobSBEZXNpZ24ucGRmAA4AvgBeAEsAbwAgADIAMAAyADEAIAAtACAAUAByAG8AZwByAGEAbQBtAGkAbgBnACAATQBlAHQAYQBtAG8AcgBwAGgAaQBjACAAQQBsAGcAbwByAGkAdABoAG0AcwAgAEEAbgAgAEUAeABwAGUAcgBpAG0AZQBuAHQAIABpAG4AIABUAHkAcABlAC0AZAByAGkAdgBlAG4AIABBAGwAZwBvAHIAaQB0AGgAbQAgAEQAZQBzAGkAZwBuAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgDAVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9LbyAyMDIxIC0gUHJvZ3JhbW1pbmcgTWV0YW1vcnBoaWMgQWxnb3JpdGhtcyBBbiBFeHBlcmltZW50IGluIFR5cGUtZHJpdmVuIEFsZ29yaXRobSBEZXNpZ24ucGRmABMAAS8AABUAAgAN//8AAAAIAA0AGgAkAOkAAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAAEAw==}}
 
 @article{Alon-code2vec,
 	abstract = {We present a neural model for representing snippets of code as continuous distributed vectors (``code embeddings''). The main idea is to represent a code snippet as a single fixed-length \emph{code vector}, which can be used to predict semantic properties of the snippet. To this end, code is first decomposed to a collection of paths in its abstract syntax tree. Then, the network learns the atomic representation of each path while \emph{simultaneously} learning how to aggregate a set of them.\par
@@ -120,7 +176,7 @@ The story begins with a class of simple types which are given a purely syntactic
 	read = {1},
 	title = {Algebra of Programming},
 	year = {1997},
-	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCQLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0JpcmQgZXQgYWwgMTk5NyAtIEFsZ2VicmEgb2YgUHJvZ3JhbW1pbmcucGRmTxECTgAAAAACTgACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H0JpcmQgZXQgYWwgMTk5NyAtICNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJAvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6QmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYADgBaACwAQgBpAHIAZAAgAGUAdAAgAGEAbAAgADEAOQA5ADcAIAAtACAAQQBsAGcAZQBiAHIAYQAgAG8AZgAgAFAAcgBvAGcAcgBhAG0AbQBpAG4AZwAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAjlVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvQmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYAEwABLwAAFQACAA3//wAAAAgADQAaACQAtwAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAMJ}}
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCQLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0JpcmQgZXQgYWwgMTk5NyAtIEFsZ2VicmEgb2YgUHJvZ3JhbW1pbmcucGRmTxECTgAAAAACTgACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H0JpcmQgZXQgYWwgMTk5NyAtICNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAUERGIENBUk8ABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJAvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6QmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYADgBaACwAQgBpAHIAZAAgAGUAdAAgAGEAbAAgADEAOQA5ADcAIAAtACAAQQBsAGcAZQBiAHIAYQAgAG8AZgAgAFAAcgBvAGcAcgBhAG0AbQBpAG4AZwAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAjlVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvQmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYAEwABLwAAFQACAA3//wAAAAgADQAaACQAtwAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAMJ}}
 
 @incollection{Abou-Saleh-BX-intro,
 	abstract = {Bidirectional transformations (BX) serve to maintain consistency between different representations of related and often overlapping information, translating changes in one representation to the others. We present a brief introduction to the field, in order to provide some common background to the remainder of this volume, which constitutes the lecture notes from the \emph{Summer School on Bidirectional Transformations}, held in Oxford in July 2016 as one of the closing activities of the UK EPSRC-funded project \emph{A Theory of Least Change for Bidirectional Transformations}.},
@@ -669,34 +725,35 @@ Keywords: homotopy type theory, coherences, strict equality, homotopy type syste
 	bdsk-url-1 = {https://lists.chalmers.se/pipermail/agda/2016/008414.html}}
 
 @incollection{Moura2021a,
-author = {de Moura, Leonardo and Ullrich, Sebastian},
-booktitle = {Automated Deduction – {CADE} 28. {CADE} 2021},
-doi = {10.1007/978-3-030-79876-5_37},
-editor = {Platzer, Andr{\'{e}} and Sutcliffe, Geoff},
-isbn = {9783030798758},
-issn = {16113349},
-pages = {625--635},
-publisher = {Springer, Cham},
-series = {Lecture Notes in Computer Science},
-title = {{The Lean 4 Theorem Prover and Programming Language}},
-url = {http://dx.doi.org/10.1007/978-3-030-79876-5{\_}37 https://link.springer.com/10.1007/978-3-030-79876-5{\_}37},
-volume = {12699},
-year = {2021}
-}
+	author = {de Moura, Leonardo and Ullrich, Sebastian},
+	booktitle = {Automated Deduction -- {CADE} 28. {CADE} 2021},
+	doi = {10.1007/978-3-030-79876-5_37},
+	editor = {Platzer, Andr{\'{e}} and Sutcliffe, Geoff},
+	isbn = {9783030798758},
+	issn = {16113349},
+	pages = {625--635},
+	publisher = {Springer, Cham},
+	series = {Lecture Notes in Computer Science},
+	title = {{The Lean 4 Theorem Prover and Programming Language}},
+	url = {http://dx.doi.org/10.1007/978-3-030-79876-5{\_}37 https://link.springer.com/10.1007/978-3-030-79876-5{\_}37},
+	volume = {12699},
+	year = {2021},
+	bdsk-url-1 = {http://dx.doi.org/10.1007/978-3-030-79876-5%7B%5C_%7D37%20https://link.springer.com/10.1007/978-3-030-79876-5%7B%5C_%7D37},
+	bdsk-url-2 = {http://dx.doi.org/10.1007/978-3-030-79876-5_37}}
 
 @incollection{Kokke2015,
-author = {Kokke, Pepijn and Swierstra, Wouter},
-booktitle = {Mathematics of Program Construction. MPC 2015},
-doi = {10.1007/978-3-319-19797-5_14},
-editor = {Hinze, Ralf and Voigtl{\"{a}}nder, Janis},
-isbn = {9783319197968},
-issn = {16113349},
-pages = {276--301},
-publisher = {Springer, Cham},
-series = {Lecture Notes in Computer Science},
-title = {{Auto in Agda}},
-url = {http://link.springer.com/10.1007/978-3-319-19797-5{\_}14},
-volume = {9129},
-year = {2015}
-}
-  
+	author = {Kokke, Pepijn and Swierstra, Wouter},
+	booktitle = {Mathematics of Program Construction. MPC 2015},
+	doi = {10.1007/978-3-319-19797-5_14},
+	editor = {Hinze, Ralf and Voigtl{\"{a}}nder, Janis},
+	isbn = {9783319197968},
+	issn = {16113349},
+	pages = {276--301},
+	publisher = {Springer, Cham},
+	series = {Lecture Notes in Computer Science},
+	title = {{Auto in Agda}},
+	url = {http://link.springer.com/10.1007/978-3-319-19797-5{\_}14},
+	volume = {9129},
+	year = {2015},
+	bdsk-url-1 = {http://link.springer.com/10.1007/978-3-319-19797-5%7B%5C_%7D14},
+	bdsk-url-2 = {https://doi.org/10.1007/978-3-319-19797-5_14}}

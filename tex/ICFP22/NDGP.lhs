@@ -101,24 +101,27 @@
 %format Σ[ = Σ [
 %format σ[ = σ [
 %format π[ = π [
+%format cΔ[ = cΔ [
 %format Γ = "\mathop\Gamma"
 %format Δ = "\mathop\Delta"
 %format ] = "\kern-2pt]"
 %format [[ = "|\kern-1.5pt[\kern-2pt"
 %format ]] = "\kern-2pt]\kern-1.5pt|"
-%format ⦃ = "\{\kern-2.75pt\{\kern-2pt"
-%format ⦄ = "\kern-2pt\}\kern-2.75pt\}"
+%format ⦃ = "\{\kern-.9pt\vrule width .75pt height 7.125pt depth 1.975pt\kern-1.5pt"
+%format ⦄ = "\kern-1.5pt\vrule width .75pt height 7.125pt depth 1.975pt\kern-.9pt\}"
 %format ⟦ = "⟦\kern-1.5pt"
 %format ⟧ = "\kern-1.5pt⟧"
 %format × = "\mathop\times"
 %format ⊎ = "\mathop\uplus"
 %format ≡ = "\mathop\equiv"
+%format (EQ(t)) = "\mathop{\equiv_{\," t "}}"
 %format ∘ = "\mathop\circ"
 %format ⊔ = "\mathop\sqcup"
 %format ⊑ = "\mathop\sqsubseteq"
 %format ^ = "\kern-1.5pt\text{\char94}\kern-1.5pt"
 %format ++ = "{+}\kern-3pt{+}"
 %format _++_ = _ ++ _
+%format ∺ = ∷ "\kern-3.75pt\raisebox{1.95pt}{\rule{3.25pt}{.5pt}}"
 
 %format Setω = Set "_{\text\textomega}"
 %format Acc< = Acc "_<"
@@ -136,10 +139,14 @@
 %format curryᵗ = curry ᵗ
 %format uncurryᵗ = uncurry ᵗ
 
+%format ᵇ = "_{\Conid B}"
+%format SCᵇ = SC ᵇ
+
 %format ʳ = "_{\Conid R}"
 %format ⟦_⟧ʳ = ⟦_⟧ ʳ
 %format ⟧ʳ = ⟧ ʳ
 %format fmapʳ = fmap ʳ
+%format algDʳ = algD ʳ
 
 %format ᶜ = "_{\Conid C}"
 %format ⟦_⟧ᶜ = ⟦_⟧ ᶜ
@@ -148,6 +155,8 @@
 %format Algᶜ = Alg ᶜ
 %format FoldOpTᶜ = FoldOpT ᶜ
 %format fold-opᶜ = fold-op ᶜ
+%format algDᶜ = algD ᶜ
+%format SCᶜ = SC ᶜ
 
 %format ᶜˢ = "_{\Conid{Cs}}"
 %format ⟦_⟧ᶜˢ = ⟦_⟧ ᶜˢ
@@ -157,9 +166,11 @@
 %format FoldOpTelᶜˢ = FoldOpTel ᶜˢ
 %format fold-opᶜˢ = fold-op ᶜˢ
 %format FoldOpTelᶜˢ = FoldOpTel ᶜˢ
+%format SCᶜˢ = SC ᶜˢ
 
 %format ᵖ = "_{\Conid P}"
 %format Dᵖ = D "\kern.5pt" ᵖ
+%format SCᵖ = SC ᵖ
 
 %format ᵈ = "_{\Conid D}"
 %format ⟦_⟧ᵈ = ⟦_⟧ ᵈ
@@ -171,6 +182,8 @@
 %format ʸ = "_{\iden Y}"
 
 %format acc = "\cons{acc}"
+%format app = "\cons{app}"
+%format base = "\cons{base}"
 %format con = "\cons{con}"
 %format inl = "\cons{inl}"
 %format inr = "\cons{inr}"
@@ -179,6 +192,7 @@
 %format σ = "\textbf{\textsigma}"
 %format ρ = "\textbf{\textrho}"
 %format π = "\textbf{\textpi}"
+%format cΔ = "\textbf{\textDelta}"
 %format zero = "\cons{zero}"
 %format suc = "\cons{suc}"
 %format agda-sort = "\cons{agda\textsf{-}sort}"
@@ -209,6 +223,13 @@
 %format function = "\cons{function}"
 %format data-type = "\cons{data\textsf{-}type}"
 %format tt = "\cons{tt}"
+%format false = "\cons{false}"
+%format true = "\cons{true}"
+%format here = "\cons{here}"
+%format there = "\cons{there}"
+%format node₀ = "\cons{node_0}"
+%format node₂ = "\cons{node_2}"
+%format node₃ = "\cons{node_3}"
 
 %format A = "\iden A"
 %format B = "\iden B"
@@ -217,6 +238,7 @@
 %format E = "\iden E"
 %format F = "\iden F"
 %format Ds = "\iden{Ds}"
+%format vΓ = "\iden\Gamma"
 %format I = "\iden I"
 %format N = "\iden N"
 %format P = "\iden P"
@@ -230,6 +252,7 @@
 %format as = "\iden{as}"
 %format alg = "\iden{alg}"
 %format args = "\iden{args}"
+%format b = "\iden b"
 %format c = "\iden{c}"
 %format calgs = "\iden{calgs}"
 %format calgsˣ = calgs ˣ
@@ -266,11 +289,17 @@
 %format p = "\iden p"
 %format ps = "\iden{ps}"
 %format #ps = "\iden{\#ps}"
+%format r = "\iden r"
 %format rb = "\iden{rb}"
 %format rec = "\iden{rec}"
 %format rhs = "\iden{rhs}"
+%format s = "\iden s"
+%format ss = "\iden{ss}"
+%format vσ = "\iden\sigma"
 %format t = "\iden t"
+%format τ = "\iden\tau"
 %format u = "\iden u"
+%format v = "\iden v"
 %format x = "\iden x"
 %format xs = "\iden{xs}"
 %format xs' = "\iden{xs^\prime}"
@@ -867,7 +896,7 @@ In particular, the forms of native datatypes and constructors (curried versus un
 
 \begin{figure}
 \codefigure
-\begin{minipage}[t]{.5\textwidth}
+\begin{minipage}[t]{.49\textwidth}
 \begin{code}
 record FoldP : Setω where field
   {Desc}    : DataD
@@ -880,7 +909,7 @@ record FoldP : Setω where field
     ∀ ℓs → PFoldP (Desc .applyL (level ℓs))
 \end{code}
 \end{minipage}%
-\begin{minipage}[t]{.5\textwidth}
+\begin{minipage}[t]{.51\textwidth}
 \begin{code}
 record PFoldP (D : PDataD) : Setω where field
   {plevel} {clevel} : Level
@@ -979,7 +1008,6 @@ Now normalise the right-hand side,
 \begin{equation}\label{eq:fold-base-after}
 |foldAcc A R P p x (acc as) = p x (λ y lt → foldAcc A R P p y (as y lt))|
 \end{equation}
-
 and this final definition can be directly shown to satisfy the connecting equation
 \begin{code}
 foldAccC : FoldC foldAccP foldAccT
@@ -1189,7 +1217,10 @@ data Definition : Set where
 \section{Examples}
 \label{sec:examples}
 
-\todo[inline]{Some missed opportunities, not new stuff: generic constructions that the dependently typed programmer could have benefited from; no space for details, just demos and highlights}
+As a demo of our framework, here we provide some samples of generic constructions that should have been made available to the dependently typed programmer.
+To be more precise, these constructions are not new (or not too novel compared to those in the literature), but they have not been in the main toolbox of the dependently typed programmer, who prefers to work with native datatypes and functions;
+our framework makes it possible to instantiate these constructions for native entities.
+We will omit most of the details except those related to the design of our framework, and briefly discuss mechanisms that could make these constructions more convenient to use.
 
 \subsection{Fold Operators}
 \label{sec:fold-operators}
@@ -1217,8 +1248,8 @@ The type of~|X| is in a curried form, which is then uncurried for |FoldOpTel| an
 \begin{code}
 fold-operator C .applyL (ℓ , ℓs) .Carrier = λ (ps , X , calgs) → uncurryᵗ X
 \end{code}
-This is a common pattern where curried forms exposed to the library user are converted to uncurried forms for processing by generic programs.
-The |Param| telescope is the first place we use telescope appending (disguised with the syntax |[[ ... ]]|), with which the parameters are separated into three groups |ps|, |X|, and |calgs|, making it convenient to refer to each group like in |Carrier| above.
+This is a common pattern: curried forms are exposed to the library user whereas uncurried forms are processed by generic programs.
+Notably, the pattern is facilitated by the telescope-appending constructor, which appears in |Param| above (but disguised with the syntax |[[ ... ]]|): the parameters are instantiated in a curried form for the user, but for generic programs they are separated into three groups |ps|, |X|, and |calgs|, making it convenient to refer to each group like in |Carrier| above.
 
 %Part~(i) is computed by
 %\begin{code}
@@ -1259,38 +1290,186 @@ The |Param| telescope is the first place we use telescope appending (disguised w
 
 It would not be too interesting if we could only manufacture functions but not prove some of their properties.
 For fold operators, one of the most useful theorems is the fusion theorem~\citep{Bird-AoP}, whose instantiation for |List| was shown in \cref{sec:introduction}.
-The theorem is represented as a generic program
+The theorem is represented as
 \begin{code}
 fold-fusion : (C : DataC D N) (fC : FoldC (fold-operator C) f) → IndP
 \end{code}
-which we apply to a datatype connection~|C| and a fold connection |fC| ---stating that a function~|f| is a fold operator--- to get a specialised version of the theorem.
+which we apply to a datatype connection~|C| and a fold connection |fC| ---stating that the function~|f| is a fold operator--- to specialise the theorem for~|f|.
 It even specialises for the version of |foldr| in Agda's Standard Library (also shown in \cref{sec:introduction}), which is not manufactured by |defineFold| from the fold program $|foldListP| = |fold-operator ListC|$ (where |ListC| is the datatype connection for |List|); notably, the arguments of |foldr| are in a different order from that specified by |foldListP|.
 In this case we can still manually write a wrapper $|foldrT| = |λ _ ((A , _) , B , e , f , _) → foldr f e| : |FoldT foldListP|$ and manufacture a fold connection |foldrC| by |genFoldC' foldListP foldrT|.
 Then |fold-fusion ListC foldrC| specialises to the fusion theorem on |foldr|.
 
-In general, if the library user is not satisfied with the form of a manufactured function (argument order, visibility, etc), they can print the function definition, change it into a form they want, and connect the customised version back to the library in the same way as we treated |foldr|.
+In general, if the library user is not satisfied with the form of a manufactured function (argument order, visibility, etc), they can print the function definition, change it to a form they want, and connect the customised version back to the library in the same way as we treated |foldr|.
 This customisation can be tiresome if it has to be done frequently, however, and there should be ways to get the manufactured forms right most of the time.
-We have implemented a cheap solution where argument name suggestions (for definition-printing) and visibility specifications are included in |FoldP| (and |IndP|) and processed by relevant components such as |Curriedᵗ|\todo{and something in \cref{sec:reflection}}, and the solution works well for our small selection of examples, although more systematic solutions are probably needed for larger libraries, for example name suggestion based on machine learning~\citep{Alon-code2vec} and visibility calculation by analysing which arguments can be inferred by unification.
+We have implemented a cheap solution where argument name suggestions (for definition-printing) and visibility specifications are included in |FoldP| (and |IndP|) and processed by relevant components such as |Curriedᵗ|\todo{and something in \cref{sec:reflection}}, and the solution works well for our small selection of examples.
+More systematic solutions are probably needed for larger libraries though, for example name suggestion based on machine learning~\citep{Alon-code2vec} and visibility calculation by analysing which arguments can be inferred by unification.
 
 \subsection{Algebraic Ornamentation}
 \label{sec:algebraic-ornamentation}
 
-\todo[inline]{Computation of datatypes, especially universe-polymorphic ones, which may require non-trivial level computation and reasoning}
+Ornaments~\citep{McBride-ornaments} are descriptions of relationships between two structurally similar datatype descriptions, with one having more information than the other.
+For example, the following ornament states that |List| is the same as~|ℕ| except for the additional element field (marked by~|cΔ|):
+\begin{code}
+ListO : DataO ListD NatD
+ListO = record { level = λ _ → tt ;{-"~~"-} applyL = λ (ℓ , _) → record
+  { param = λ _ → tt;{-"~~"-} index = λ _ _ → tt;{-"~~"-} applyP = λ _ → ι ∷ ∺ (cΔ[ _ ] ρ ι ι) ∷ ∺ [] } }
+\end{code}
+Do not worry about the details --- the point here is that it is not difficult to write ornaments between concrete datatypes (and it will be even easier if there is a (semi-)automatic inference algorithm~\citep{Ringer-ornaments-Coq} or an editing interface showing two datatypes and allowing the user to mark their differences).
+Moreover, the ornament is the only thing the user needs to write to derive all the entities related to |List| and~|ℕ| below.
 
-\todo[inline]{Emphasise the cosmetic benefit of telescopes (indices of |Vec| and |Len|)}
+The first thing we can derive from an ornament is a forgetful function; in the case of |ListO|, the derived forgetful function is |length|, which discards the additional element field.
+More can be derived from special kinds of ornaments, a notable example being `algebraic ornaments'.
+In our formulation, given a fold program |F : FoldP| we can compute a more informative version of |F .Desc| and an ornament between them:
+\begin{code}
+AlgD : FoldP → DataD{-"\,"-};{-"\quad"-} AlgO : (F : FoldP) → DataO (AlgD F) (F .Desc)
+\end{code}
+The new datatype described by |AlgD F| has the parameters of~|F| and an extra index that is the result of the fold corresponding to~|F|.
+For example, the following datatype of `algebraic lists'~\citep{Ko-metamorphisms-in-Agda} can be obtained by applying the macro |defineByDataD| to the description |AlgD (fold-operator ListC)|:
+\begin{code}
+data AlgList {A : Set ℓ} {B : Set ℓ'} (e : B) (f : A → B → B) : B → Set (ℓ ⊔ ℓ') where
+  []   : AlgList e f e
+  _∷_  : (a : A) → ∀ {b} → AlgList e f b → AlgList e f (f a b)
+\end{code}
+But it is usually easier to program with more specialised datatypes such as |Vec|, which is the standard example of algebraic ornamentation, using the forgetful function derived from |ListO|.
+From the algebraic ornament between |Vec| and |List|, in addition to a forgetful function |fromV| we can also derive its inverse |toV| and the inverse properties:
+\begin{code}
+fromV  : Vec A n → List A
+toV    : (as : List A) → Vec A (length as)
 
-\todo[inline]{instance arguments}
+from-toV  : (as : List  A)    → fromV (toV as) ≡ as
+to-fromV  : (as : Vec   A n)  → (length (fromV as) , toV (fromV as)) (EQ(Σ ℕ (Vec A))) (n , as)
+\end{code}
+Note that we have derived an isomorphism between |List A| and |Σ ℕ (Vec A)| from the ornament |ListO|, allowing us to promote a natural number~|n| to a list if a vector of type |Vec A n| can be supplied (or the other way around).
+In general, every ornament gives rise to such a `promotion isomorphism'~\citep{Ko-OAOAOO}.
+We can repeat the construction for the ornament between |Vec| and |List|: the new datatype is the inductive predicate stating that a list has a particular length,
+\begin{code}
+data Len {A : Set ℓ} : ℕ → List A → Set ℓ where
+  zero  :                          Len    zero    []
+  suc   : ∀ {a n as} → Len n as →  Len (  suc n)  (a ∷ as)
+\end{code}
+and the isomorphism is between |Vec A n| and |Σ (List A) (Len n)|, allowing us to promote a list to a vector of type |Vec A n| if the list has length~|n|.
+A more interesting and notable example is the conversion between extrinsically and intrinsically typed \textlambda-terms~\citep[Part~2]{Kokke-PLFA}:\\[-.5\baselineskip]
+\begin{minipage}[t]{.35\textwidth}
+\begin{code}
+data Λ : Set where
+  var  : ℕ → Λ
+  app  : Λ → Λ → Λ
+  lam  : Λ → Λ
 
-\todo[inline]{Another useful application of algebraic ornamentation: conversion between extrinsically and intrinsically typed $\lambda$-terms}
+data Ty : Set where
+  base  : Ty
+  _⇒_   : Ty → Ty → Ty
+\end{code}
+\end{minipage}%
+\begin{minipage}[t]{.65\textwidth}
+\begin{code}
+data _⊢_ : List Ty → Ty → Set where
+  var  : vΓ ∋ τ → vΓ ⊢ τ
+  app  : vΓ ⊢ vσ ⇒ τ → vΓ ⊢ vσ → vΓ ⊢ τ
+  lam  : vσ ∷ vΓ ⊢ τ → vΓ ⊢ vσ ⇒ τ
+
+data _⊢_∶_ : List Ty → Λ → Ty → Set where
+  var  : (i : vΓ ∋ τ) → vΓ ⊢ var (toℕ i) ∶ τ
+  app  : vΓ ⊢ t ∶ vσ ⇒ τ → vΓ ⊢ u ∶ vσ → vΓ ⊢ app t u ∶ τ
+  lam  : vσ ∷ vΓ ⊢ t ∶ τ → vΓ ⊢ lam t ∶ vσ ⇒ τ
+\end{code}
+\end{minipage}\\
+(The list membership relation~`|_∋_|' will be defined in \cref{sec:simple-containers}.)
+Write an ornament between the datatypes |Λ|~and~`|_⊢_|' of untyped and intrinsically typed \textlambda-terms, and we get the typing relation `|_⊢_∶_|' and an isomorphism between |Γ ⊢ τ| and |Σ[ t ∶ Λ ] Γ ⊢ t ∶ τ| for free.
+
+We have deliberately omitted the types of the generic programs because they are somewhat verbose --- for example, the generic programs proving the inverse properties need connections for the original and the new datatypes, the fold used to compute the algebraic ornament, and the `from' and `to' functions.
+It will be much easier if we can invoke the generic programs with only a minimal amount of information, and then the generic programs automatically look for the connections and other information they need.
+Luckily, in Agda this kind of automatic lookup can be achieved with instance arguments~\citep{Devriese-instance-arguments}, which work well for all our generic programs ---
+for example, |to-fromV| can be derived by supplying just the names |Vec| and |List| (and a proof that |Vec| is `finitary', which we omit from the presentation).
+
+Finally, we should briefly mention how |AlgD| handles universe polymorphism.
+The most important change from |F .Desc| to |AlgD F| is adding a suitably typed |σ|-field (for example, the |b|~field of |AlgList|) before every |ρ|-field; this is mirrored in the computation of  the |struct| field of |AlgD F| from that of |F .Desc|, primarily using the function
+\begin{code}
+algConB : Level → ConB → ConB
+algConB ℓ []              = []
+algConB ℓ (inl ℓ'  ∷ cb)  = inl ℓ' ∷ algConB ℓ cb
+algConB ℓ (inr rb  ∷ cb)  = inl (max-ℓ rb ⊔ ℓ) ∷ inr rb ∷ algConB ℓ cb
+\end{code}
+(where |max-ℓ rb| is the maximum level in |rb|).
+Subsequently we need to prove |level-ineq| for |AlgD F|, which requires non-trivial reasoning and involves properties about |algConB| such as |max-σ (algConB ℓ cb) ≡ max-π cb ⊔ max-σ cb ⊔ hasRec? ℓ cb|.
+The reasoning is not difficult, but is probably one of the first examples of non-trivial reasoning about levels.
 
 \subsection{Predicates on Simple Containers}
 \label{sec:simple-containers}
 
-\todo[inline]{There are not too many generic programs that work without assumptions on the range of datatypes they operate on; allow assumptions about data type descriptions to derive more functionalities (boring if we can only automate Eq, Show, Read etc).}
+\begin{figure}
+\codefigure
+\begin{minipage}[t]{.39\textwidth}
+\begin{code}
+SC : DataD → Setω
+SC D = ∀ {ℓs} → SCᵖ (D .applyL ℓs)
+
+SCᵇ : ConB → Set
+SCᵇ = ListAll (λ  {  (inl  _) → Bool
+                  ;  (inr  _) → ⊤})
+\end{code}
+\end{minipage}%
+\begin{minipage}[t]{.61\textwidth}
+\begin{code}
+record SCᵖ (D : PDataD) : Setω where field
+  {elevel} : Level
+  El   :  ⟦ D .Param ⟧ᵗ → Set elevel
+  pos  :  ListAll SCᵇ (D .struct)
+  coe  :  (ps : ⟦ D .Param ⟧ᵗ) → SCᶜˢ (D .applyP ps) pos (El ps)
+\end{code}
+\end{minipage}\\[.5\baselineskip]
+\begin{minipage}[t]{\textwidth}
+\begin{code}
+SCᶜˢ  : {I : Set ℓⁱ} → ConDs I cbs → ListAll SCᵇ cbs → Set ℓ → Setω
+SCᶜˢ  []           _             X = ⊤
+SCᶜˢ  (D ∷ Ds)     (s ∷ ss)      X = SCᶜ D s E × SCᶜˢ Ds ss X
+
+SCᶜ   : {I : Set ℓⁱ} → ConD I cb → SCᵇ cb → Set ℓ → Setω
+SCᶜ   (ι i      )  _             X = ⊤
+SCᶜ   (σ  A  D  )  (false  ∷ s)  X = (a : A) → SCᶜ (D a) s X
+SCᶜ   (σ  A  D  )  (true   ∷ s)  X = ((_ , A) (EQ(Σ[ ℓ ∶ Level ] Set ℓ)) (_ , X)) × ((a : A) → SCᶜ (D a) s X)
+SCᶜ   (ρ  D  E  )  (_      ∷ s)  X =  SCᶜ E s X
+\end{code}
+\end{minipage}
+\caption{Definition of simple containers}
+\label{fig:SC}
+\end{figure}
+
+\todo[inline]{There are not too many generic programs that work without assumptions on the range of datatypes they operate on}
 
 \todo[inline]{Side effect of level indexing: works as a first-order, albeit partial, representation of datatypes}
 
+\begin{code}
+data PredList {A : Set ℓ} (P : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
+  []   :                             PredList P
+  _∷_  : ∀ {a} → P a → PredList P →  PredList P
+\end{code}
+
+\begin{code}
+data ListAny {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') where
+  here   : ∀ {a as} → P a           → ListAny P (a ∷ as)
+  there  : ∀ {a as} → ListAny P as  → ListAny P (a ∷ as)
+\end{code}
+
+$|xs ∋ x| = |ListAny (λ y → x ≡ y) xs|$
+
+\begin{code}
+data AccAny {A : Set ℓ} {R : A → A → Set ℓ'} (P : A → Set ℓ'') :
+  (x : A) → Acc R x → Set (ℓ ⊔ ℓ' ⊔ ℓ'') where
+  here   : ∀ {x as}                → P x                  → AccAny P x (acc as)
+  there  : ∀ {x as y} (r : R y x)  → AccAny P y (as y r)  → AccAny P x (acc as)
+\end{code}
+
 \todo[inline]{|List| is perhaps too mundane; how about 2-3 trees?}
+
+$|Height| = |ℕ|$, $|Value| = |ℕ|$
+
+\begin{code}
+data B23T : Height → Value → Value → Set where
+  node₀  : ⦃ l ≤ r ⦄                                              → B23T    zero    l r
+  node₂  : (x    : Value) → B23T h l x → B23T h x r               → B23T (  suc h)  l r
+  node₃  : (x y  : Value) → B23T h l x → B23T h x y → B23T h y r  → B23T (  suc h)  l r
+\end{code}
 
 \section{Practical Issues}
 
