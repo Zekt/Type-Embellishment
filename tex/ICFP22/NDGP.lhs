@@ -835,7 +835,7 @@ With |level-ineq|, we could even define a universe-polymorphic version of the |�
 
 Instead of a generic |μ|~operator~(\cref{sec:recap}), we will rely on Agda's elaborator reflection~(\cref{sec:reflection}) to manufacture a native datatype~|N| from a description |D : DataD|~(\cref{sec:DataD}).
 Subsequently we may need to compute from~|D| a new description that refers to~|N| and its constructors.
-For example, in \cref{sec:simple-containers} we will define a datatype-generic predicate |All| stating that a given predicate~|P| holds for all the elements in a container-like structure; for lists, |All| specialises to
+For example, in \cref{sec:simple-containers} we will define a datatype-generic predicate |All P| stating that a given predicate~|P| holds for all the elements in a container-like structure; for lists, |All| specialises to
 \begin{code}
 data ListAll {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') where
   []   :                                        ListAll P []
@@ -1224,7 +1224,7 @@ If |unknown| is checked against the unit type |⊤|, then |checkType| returns th
 As a demo of our framework, here we provide some samples of generic constructions that should have been made available to the dependently typed programmer.
 To be more precise, these constructions are not new (or not too novel compared to those in the literature), but they have not been in the main toolbox of the dependently typed programmer, who prefers to work with native datatypes and functions;
 our framework makes it possible to instantiate these constructions for native entities.
-We will omit most of the details except those related to the design of our framework, and briefly discuss mechanisms that could make these constructions more convenient to use.
+We will omit the details except those related to the design of our framework, and briefly discuss mechanisms that could make these constructions more convenient to use.
 
 \subsection{Fold Operators}
 \label{sec:fold-operators}
@@ -1252,7 +1252,7 @@ The type of~|X| is in a curried form, which is then uncurried for |FoldOpTel| an
 \begin{code}
 fold-operator C .applyL (ℓ , ℓs) .Carrier = λ (ps , X , calgs) → uncurryᵗ X
 \end{code}
-This is a common pattern: curried forms are exposed to the library user whereas uncurried forms are processed by generic programs.
+This is a common pattern\todo{connect with \cref{sec:DataC}}: curried forms are exposed to the library user whereas uncurried forms are processed by generic programs.
 Notably, the pattern is facilitated by the telescope-appending constructor, which appears in |Param| above (but disguised with the syntax |[[ ... ]]|): the parameters are instantiated in a curried form for the user, but for generic programs they are separated into three groups |ps|, |X|, and |calgs|, making it convenient to refer to each group like in |Carrier| above.
 
 %Part~(i) is computed by
@@ -1311,15 +1311,15 @@ More systematic solutions are probably needed for larger libraries though, for e
 \subsection{Algebraic Ornamentation}
 \label{sec:algebraic-ornamentation}
 
-Ornaments~\citep{McBride-ornaments} are descriptions of relationships between two structurally similar datatype descriptions, with one having more information than the other.
-For example, the following ornament states that |List| is the same as~|ℕ| except for the additional element field (marked by~|cΔ|):
+Ornaments~\citep{McBride-ornaments} are descriptions of relationships between two structurally similar datatype descriptions, one of which has more information than the other.
+For example, after computing the descriptions |ListD| and |NatD| of |List| and~|ℕ| using |genDataD|, the following ornament states that |List| ---having an additional element field--- is a more informative version of~|ℕ|:
 \begin{code}
 ListO : DataO ListD NatD
 ListO = record { level = λ _ → tt ;{-"~~"-} applyL = λ (ℓ , _) → record
   { param = λ _ → tt;{-"~~"-} index = λ _ _ → tt;{-"~~"-} applyP = λ _ → ι ∷ ∺ (cΔ[ _ ] ρ ι ι) ∷ ∺ [] } }
 \end{code}
-Do not worry about the details --- the point here is that it is not difficult to write ornaments between concrete datatypes (and it will be even easier if there is a (semi-)automatic inference algorithm~\citep{Ringer-ornaments-Coq} or an editing interface showing two datatypes and allowing the user to mark their differences).
-Moreover, the ornament is the only thing the user needs to write to derive all the entities related to |List| and~|ℕ| below.
+Do not worry about the details --- the point here is that it is not difficult to write ornaments between concrete datatypes (and it will be even easier if there is a (semi-)automatic inference algorithm~\citep{Ringer-ornaments-Coq} or an editing interface showing two datatypes side by side and allowing the user to mark their differences).
+%Moreover, the ornament is the only thing the user needs to write to derive all the entities related to |List| and~|ℕ| below.
 
 The first thing we can derive from an ornament is a forgetful function; in the case of |ListO|, the derived forgetful function is |length|, which discards the additional element field.
 More can be derived from special kinds of ornaments, a notable example being `algebraic ornaments'.
@@ -1344,14 +1344,14 @@ from-toV  : (as : List  A)    → fromV (toV as) ≡ as
 to-fromV  : (as : Vec   A n)  → (length (fromV as) , toV (fromV as)) (EQ(Σ ℕ (Vec A))) (n , as)
 \end{code}
 Note that we have derived an isomorphism between |List A| and |Σ ℕ (Vec A)| from the ornament |ListO|, allowing us to promote a natural number~|n| to a list if a vector of type |Vec A n| can be supplied (or the other way around).
-In general, every ornament gives rise to such a `promotion isomorphism'~\citep{Ko-OAOAOO}.
-We can repeat the construction for the ornament between |Vec| and |List|: the new datatype is the inductive predicate stating that a list has a particular length,
-\begin{code}
-data Len {A : Set ℓ} : ℕ → List A → Set ℓ where
-  zero  :                          Len    zero    []
-  suc   : ∀ {a n as} → Len n as →  Len (  suc n)  (a ∷ as)
-\end{code}
-and the isomorphism is between |Vec A n| and |Σ (List A) (Len n)|, allowing us to promote a list to a vector of type |Vec A n| if the list has length~|n|.
+In general, every ornament gives rise to such a `promotion isomorphism'~\citep{Ko-pcOrn}.
+%We can repeat the construction for the ornament between |Vec| and |List|: the new datatype is the inductive predicate stating that a list has a particular length,
+%\begin{code}
+%data Len {A : Set ℓ} : ℕ → List A → Set ℓ where
+%  zero  :                          Len    zero    []
+%  suc   : ∀ {a n as} → Len n as →  Len (  suc n)  (a ∷ as)
+%\end{code}
+%and the isomorphism is between |Vec A n| and |Σ (List A) (Len n)|, allowing us to promote a list to a vector of type |Vec A n| if the list has length~|n|.
 A more interesting and notable example is the conversion between extrinsically and intrinsically typed \textlambda-terms~\citep[Part~2]{Kokke-PLFA}:\\[-.5\baselineskip]
 \begin{minipage}[t]{.35\textwidth}
 \begin{code}
@@ -1379,7 +1379,7 @@ data _⊢_∶_ : List Ty → Λ → Ty → Set where
 \end{code}
 \end{minipage}\\
 (The list membership relation~`|_∋_|' will be defined in \cref{sec:simple-containers}.)
-Write an ornament between the datatypes |Λ|~and~`|_⊢_|' of untyped and intrinsically typed \textlambda-terms, and we get the typing relation `|_⊢_∶_|' and an isomorphism between |Γ ⊢ τ| and |Σ[ t ∶ Λ ] Γ ⊢ t ∶ τ| for free.
+Write an ornament between the datatypes |Λ|~and~`|_⊢_|' of untyped and intrinsically typed \textlambda-terms, and we get the typing relation `|_⊢_∶_|' and an isomorphism between |vΓ ⊢ τ| and |Σ[ t ∶ Λ ] vΓ ⊢ t ∶ τ| for free, allowing us to promote an untyped term~|t| to an intrinsically typed one if a typing derivation for~|t| can be supplied.
 
 We have deliberately omitted the types of the generic programs because they are somewhat verbose --- for example, the generic programs proving the inverse properties need connections for the original and the new datatypes, the fold used to compute the algebraic ornament, and the `from' and `to' functions.
 It will be much easier if we can invoke the generic programs with only a minimal amount of information, and then the generic programs automatically look for the connections and other information they need.
@@ -1387,16 +1387,16 @@ Luckily, in Agda this kind of automatic lookup can be achieved with instance arg
 for example, |to-fromV| can be derived by supplying just the names |Vec| and |List| (and a proof that |Vec| is `finitary', which we omit from the presentation).
 
 Finally, we should briefly mention how |AlgD| handles universe polymorphism.
-The most important change from |F .Desc| to |AlgD F| is adding a suitably typed |σ|-field (for example, the |b|~field of |AlgList|) before every |ρ|-field; this is mirrored in the computation of  the |struct| field of |AlgD F| from that of |F .Desc|, primarily using the function
+Given |F : FoldP|, the most important change from |F .Desc| to |AlgD F| is adding a suitably typed |σ|-field (for example, the field~|b| in |AlgList|) in front of every |ρ|-field; this is mirrored in the computation of  the |struct| field of |AlgD F| from that of |F .Desc|, primarily using the function
 \begin{code}
 algConB : Level → ConB → ConB
-algConB ℓ []              = []
-algConB ℓ (inl ℓ'  ∷ cb)  = inl ℓ' ∷ algConB ℓ cb
-algConB ℓ (inr rb  ∷ cb)  = inl (max-ℓ rb ⊔ ℓ) ∷ inr rb ∷ algConB ℓ cb
+algConB ℓ []               = []
+algConB ℓ (inl  ℓ'  ∷ cb)  = inl ℓ' ∷ algConB ℓ cb
+algConB ℓ (inr  rb  ∷ cb)  = inl (max-ℓ rb ⊔ ℓ) ∷ inr rb ∷ algConB ℓ cb
 \end{code}
 (where |max-ℓ rb| is the maximum level in |rb|).
 Subsequently we need to prove |level-ineq| for |AlgD F|, which requires non-trivial reasoning and involves properties about |algConB| such as |max-σ (algConB ℓ cb) ≡ max-π cb ⊔ max-σ cb ⊔ hasRec? ℓ cb|.
-The reasoning is not difficult, but is probably one of the first examples of non-trivial reasoning about levels.
+The reasoning is not difficult, but is probably one of the first examples of non-trivial reasoning about universe levels.
 
 \subsection{Predicates on Simple Containers}
 \label{sec:simple-containers}
@@ -1430,57 +1430,71 @@ SCᶜˢ  (D ∷ Ds)     (s ∷ ss)      X = SCᶜ D s E × SCᶜˢ Ds ss X
 
 SCᶜ   : {I : Set ℓⁱ} → ConD I cb → SCᵇ cb → Set ℓ → Setω
 SCᶜ   (ι i      )  _             X = ⊤
-SCᶜ   (σ  A  D  )  (false  ∷ s)  X = (a : A) → SCᶜ (D a) s X
-SCᶜ   (σ  A  D  )  (true   ∷ s)  X = ((_ , A) (EQ(Σ[ ℓ ∶ Level ] Set ℓ)) (_ , X)) × ((a : A) → SCᶜ (D a) s X)
-SCᶜ   (ρ  D  E  )  (_      ∷ s)  X =  SCᶜ E s X
+SCᶜ   (σ  A  D  )  (true   ∷ s)  X = ((_ , A) (EQ(Σ[ ℓ ∶ Level ] Set ℓ)) (_ , X)) × (  (a : A) →  SCᶜ (  D a)  s X)
+SCᶜ   (σ  A  D  )  (false  ∷ s)  X =                                                   (a : A) →  SCᶜ (  D a)  s X
+SCᶜ   (ρ  D  E  )  (_      ∷ s)  X =                                                              SCᶜ    E     s X
 \end{code}
 \end{minipage}
 \caption{Definition of simple containers}
 \label{fig:SC}
 \end{figure}
 
-\todo[inline]{There are not too many generic programs that work without assumptions on the range of datatypes they operate on}
+There are not too many generic programs that work without assumptions on the datatypes they operate on.
+As a simple example of such assumptions, below we characterise a datatype~|N| as a `simple container' type by marking some fields of its description as elements of some type~|X|, and then derive predicates |All P| and |Any P| on~|N| lifted from a predicate~|P| on~|X|, stating that |P|~holds for all or one of the elements in an inhabitant of~|N|.
+For example, the |ListAll| datatype shown at the beginning of \cref{sec:connections} is an instance of |All|.
 
-\todo[inline]{Side effect of level indexing: works as a first-order, albeit partial, representation of datatypes}
+The definition of simple containers (in several layers) is shown in \cref{fig:SC}.%
+\footnote{\Cref{fig:SC} is in fact simplified:
+As mentioned in \cref{sec:level-parameters}, the type |Σ[ ℓ ∶ Level ] Set ℓ| cannot be built using the usual |Σ|-type former, and has to be defined separately; moreover, it resides in |Setω|, so the outer `|≡|' and `|×|' also have to be re-defined for |Setω|, as well as the |⊤|~type.
+The need for more powerful universe polymorphism shows clearly here.}
+The top layer |SC| on |DataD| only quantifies over the level parameters, and the main definition is at the next layer |SCᵖ| on |PDataD|:
+First is the element type~|El|, which can refer to the ordinary parameters.
+Then in |pos| we assign a |Bool| to every |σ|-field indicating whether it is an element or not.
+More precisely, the assignments are performed on the |struct| field of the description, and might not make sense since any |σ|-field could be marked with |true|, not just those of type~|El|.
+However, the |coe| field of |SCᵖ| makes sure that the types of the fields marked with |true| are equal to~|El|; subsequently, when a generic program sees such a field, it can use the equality to coerce the type of the field to |El|.
 
+The |All| predicate is simpler since it is just the datatype created along with a promotion isomorphism (\cref{sec:algebraic-ornamentation}).
+For example, to derive |ListAll|, we mark the element field of |List| in an |SC ListD| structure, from which we can compute a more informative |ListWP| datatype that requires every element~|a| to be supplemented with a proof of |P a|:
 \begin{code}
-data PredList {A : Set ℓ} (P : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
-  []   :                             PredList P
-  _∷_  : ∀ {a} → P a → PredList P →  PredList P
+data ListWP {A : Set ℓ} (P : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
+  []       :                             ListWP P
+  ⟨_,_⟩∷_  : (a : A) → P a → ListWP P →  ListWP P
 \end{code}
+Then the ornament between |ListWP| and |List| gives rise to |ListAll| and an isomorphism between |ListWP P| and |Σ (List A) (ListAll P)|, allowing us to convert between a list of pairs of an element and a proof (|ListWP P|) and a pair of a list of elements (|List A|) and a list of proofs (|ListAll P|).
 
+The |Any| predicate is more interesting since its structure is rather different from that of the original datatype, although in the case of |List|, the |Any| structure happens to degenerate quite a bit:
 \begin{code}
 data ListAny {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') where
   here   : ∀ {a as} → P a           → ListAny P (a ∷ as)
   there  : ∀ {a as} → ListAny P as  → ListAny P (a ∷ as)
 \end{code}
-
-$|xs ∋ x| = |ListAny (λ y → x ≡ y) xs|$
-
+The list membership relation |xs ∋ x| used in the \textlambda-calculus example in \cref{sec:algebraic-ornamentation} is a special case, defined by |ListAny (λ y → x ≡ y) xs|.
+In general, a proof of |Any P| is a path pointing to an element satisfying~|P|, and we can write a generic lookup function that follows a path to retrieve the element it points to.
+A path can be regarded as an enriched natural number that instructs the lookup function to stop at the current constructor (|here|/|zero|) or go further (|there|/|suc|); consequently, there is an ornament between |Any| and~|ℕ|, allowing us to derive a forgetful function |toℕ| that computes the length of a path.
+Moreover, a path should specify which element it points to if stopping, or which sub-tree to go into if going further, so the numbers of |here| and |there| constructors are exactly the numbers of element positions and recursive occurrences respectively.
+For example, the |Any| predicate for the datatype of balanced 2-3 trees below (taken from \citet{McBride-pivotal}) ---viewed as containers of |Value|s--- would have three |here| constructors and five |there| constructors:%
+\footnote{Incidentally, this example shows that simple container types do not have to be parametric in their element types.}
 \begin{code}
-data AccAny {A : Set ℓ} {R : A → A → Set ℓ'} (P : A → Set ℓ'') :
-  (x : A) → Acc R x → Set (ℓ ⊔ ℓ' ⊔ ℓ'') where
-  here   : ∀ {x as}                → P x                  → AccAny P x (acc as)
-  there  : ∀ {x as y} (r : R y x)  → AccAny P y (as y r)  → AccAny P x (acc as)
-\end{code}
-
-\todo[inline]{|List| is perhaps too mundane; how about 2-3 trees?}
-
-$|Height| = |ℕ|$, $|Value| = |ℕ|$
-
-\begin{code}
-data B23T : Height → Value → Value → Set where
+data B23T : Height → Value → Value → Set where  -- both |Height| and |Value| are~|ℕ|
   node₀  : ⦃ l ≤ r ⦄                                              → B23T    zero    l r
   node₂  : (x    : Value) → B23T h l x → B23T h x r               → B23T (  suc h)  l r
   node₃  : (x y  : Value) → B23T h l x → B23T h x y → B23T h y r  → B23T (  suc h)  l r
 \end{code}
+It is nice not having to write |B23TAny| and its lookup function by hand.
 
-\section{Practical Issues}
+%\begin{code}
+%data AccAny {A : Set ℓ} {R : A → A → Set ℓ'} (P : A → Set ℓ'') :
+%  (x : A) → Acc R x → Set (ℓ ⊔ ℓ' ⊔ ℓ'') where
+%  here   : ∀ {x as}                → P x                  → AccAny P x (acc as)
+%  there  : ∀ {x as y} (r : R y x)  → AccAny P y (as y r)  → AccAny P x (acc as)
+%\end{code}
 
-\subsection{Portability}
-\LT{Address the statement that our development is not specific to Agda.
-So, what features do we need to implement?
-(Elaborator reflection)}
+%\section{Practical Issues}
+%
+%\subsection{Portability}
+%\LT{Address the statement that our development is not specific to Agda.
+%So, what features do we need to implement?
+%(Elaborator reflection)}
 %\LT{Axiom K is used for ornaments but this axiom is not generally desirable especially for homotopy type theory.
 %This seemingly conflicting requirement in fact originates in the false belief that only one identity type is allowed in a type theory.
 %Indeed, it is possible to have more than one identity type with different strength.
@@ -1488,79 +1502,79 @@ So, what features do we need to implement?
 %Agda has an experimental option \texttt{--two-level} in the cubical mode which introduces additional universes \texttt{SSet}.
 %This extra sort of universes will make our library portable to proof assistants based on homotopy type theory.
 %(A bit of experiments should be performed to testify.)
-
-\subsection{Naming, Visibility, and Order of Arguments}
-
-\begin{figure}
-\codefigure
-\begin{minipage}[t]{.45\textwidth}\setlength{\mathindent}{0em}
-\begin{code}
-mutual
-  data (HL (Sort : Set)) where
-    set      : (t : Term)  →  Sort
-    lit      : (n : ℕ)     →  Sort
-    prop     : (t : Term)  →  Sort
-    propLit  : (n : ℕ)     →  Sort
-    inf      : (n : ℕ)     →  Sort
-    unknown  :                Sort
-
-  data (HL (Abs (A : Set)  : Set)) where
-    abs : (s : String)   (x : A) → Abs A
-
-  data (HL (Arg (A : Set)  : Set)) where
-    arg : (i : ArgInfo)  (x : A) → Arg A
-
-  data (HL (ArgInfo     : Set)) where
-    arg-info : (v : Visibility) (m : Modality) → ArgInfo
-  ...
-\end{code}
-\end{minipage}%
-\begin{minipage}[t]{.55\textwidth}\setlength{\mathindent}{0em}
-\begin{code}
-{-" "-}
-data Term : Set where
-  (HL agda-sort)  : (s : Sort)                                      → Term
-  pi              : (a : (HL Arg) Type) (b : (HL Abs) Type  )       → Term
-  lit             : (l : Literal)                                   → Term
-  lam             : ((HL(v : Visibility)))   (t : (HL Abs) Term)    → Term
-  (HL pat-lam)    : (cls : Clauses)          (xs : Args Term)       → Term
-  var             : (i : ℕ)                  (xs : (HL Args) Term)  → Term
-  con             : (c : Name)               (xs : (HL Args) Term)  → Term
-  def             : (f : Name)               (xs : (HL Args) Term)  → Term
-  meta            : (x : Meta)               (xs : (HL Args) Term)  → Term
-  unknown         : Term
-\end{code}
-\end{minipage}
-
-\begin{minipage}[t]{.6\textwidth}\setlength{\mathindent}{0em}
-\begin{code}
-\end{code}
-\end{minipage}%
-  
-\caption{A snippet of reflected expressions (actual)}
-\label{fig:full reflected syntax}
-\end{figure}
-
-\begin{code}
-Args : Set ℓ → Set ℓ
-Args A = List (Arg A)
-\end{code}
-
-\begin{code}
-Telescope = List (String × Type)
-\end{code}
-
-\todo[inline]{Chosen by generic programs, dependency analysis, refactoring tools, heuristics, machine learning; interaction with generalised variables; the wrapper trick retains all these possibilities}
-
-\subsection{Normalisation and Printing}
-
-\todo[inline]{`type preservation', optimisation, name scope and qualification}
-
-\subsection{Interactive User Interface}
-
-\subsection{Automatic Resolution of Arguments to Generic Programs}
-
-\todo[inline]{Type classes, instance arguments}
+%
+%\subsection{Naming, Visibility, and Order of Arguments}
+%
+%\begin{figure}
+%\codefigure
+%\begin{minipage}[t]{.45\textwidth}\setlength{\mathindent}{0em}
+%\begin{code}
+%mutual
+%  data (HL (Sort : Set)) where
+%    set      : (t : Term)  →  Sort
+%    lit      : (n : ℕ)     →  Sort
+%    prop     : (t : Term)  →  Sort
+%    propLit  : (n : ℕ)     →  Sort
+%    inf      : (n : ℕ)     →  Sort
+%    unknown  :                Sort
+%
+%  data (HL (Abs (A : Set)  : Set)) where
+%    abs : (s : String)   (x : A) → Abs A
+%
+%  data (HL (Arg (A : Set)  : Set)) where
+%    arg : (i : ArgInfo)  (x : A) → Arg A
+%
+%  data (HL (ArgInfo     : Set)) where
+%    arg-info : (v : Visibility) (m : Modality) → ArgInfo
+%  ...
+%\end{code}
+%\end{minipage}%
+%\begin{minipage}[t]{.55\textwidth}\setlength{\mathindent}{0em}
+%\begin{code}
+%{-" "-}
+%data Term : Set where
+%  (HL agda-sort)  : (s : Sort)                                      → Term
+%  pi              : (a : (HL Arg) Type) (b : (HL Abs) Type  )       → Term
+%  lit             : (l : Literal)                                   → Term
+%  lam             : ((HL(v : Visibility)))   (t : (HL Abs) Term)    → Term
+%  (HL pat-lam)    : (cls : Clauses)          (xs : Args Term)       → Term
+%  var             : (i : ℕ)                  (xs : (HL Args) Term)  → Term
+%  con             : (c : Name)               (xs : (HL Args) Term)  → Term
+%  def             : (f : Name)               (xs : (HL Args) Term)  → Term
+%  meta            : (x : Meta)               (xs : (HL Args) Term)  → Term
+%  unknown         : Term
+%\end{code}
+%\end{minipage}
+%
+%\begin{minipage}[t]{.6\textwidth}\setlength{\mathindent}{0em}
+%\begin{code}
+%\end{code}
+%\end{minipage}%
+%  
+%\caption{A snippet of reflected expressions (actual)}
+%\label{fig:full reflected syntax}
+%\end{figure}
+%
+%\begin{code}
+%Args : Set ℓ → Set ℓ
+%Args A = List (Arg A)
+%\end{code}
+%
+%\begin{code}
+%Telescope = List (String × Type)
+%\end{code}
+%
+%\todo[inline]{Chosen by generic programs, dependency analysis, refactoring tools, heuristics, machine learning; interaction with generalised variables; the wrapper trick retains all these possibilities}
+%
+%\subsection{Normalisation and Printing}
+%
+%\todo[inline]{`type preservation', optimisation, name scope and qualification}
+%
+%\subsection{Interactive User Interface}
+%
+%\subsection{Automatic Resolution of Arguments to Generic Programs}
+%
+%\todo[inline]{Type classes, instance arguments}
 
 \section{Discussion}
 \label{sec:discussion}
