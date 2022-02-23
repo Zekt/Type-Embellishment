@@ -23,9 +23,9 @@ uncurryDataD D d = let open DataD D in do
   let `ℓsΓΔ⋯ , _  = ⇑ `A ⦂ Telescope × Type
   let `ℓs   , ΓΔ⋯ = splitAt #levels `ℓsΓΔ⋯
 
-  extendContextℓs #levels λ ℓs → let open PDataD (applyL ℓs) in do
+  exCxtℓs #levels λ ℓs → let open PDataD (applyL ℓs) in do
     Γ , Δ⋯ ← Param ⊆ᵗ? ΓΔ⋯
-    extendCxtTel Param λ ps → let Index = Index ps in do
+    exCxtTel Param λ ps → let Index = Index ps in do
       Δ , _ ← Index ⊆ᵗ? Δ⋯
 
       let |Γ| = length Γ ; |Δ| = length Δ 
@@ -43,10 +43,10 @@ uncurryFoldP P d = let open FoldP P in do
   `A ← getType d
   let `ℓsΓΔ⋯ , _   = ⇑ `A ⦂ Telescope × Type
   let `ℓs    , ΓΔ⋯ = splitAt #levels `ℓsΓΔ⋯
-  extendContextℓs #levels λ ℓs → do
+  exCxtℓs #levels λ ℓs → do
     let PsTel = Param ℓs
     Γ , Δ⋯ ← PsTel ⊆ᵗ? ΓΔ⋯
-    extendCxtTel PsTel λ ps → do
+    exCxtTel PsTel λ ps → do
       let Index = PDataD.Index (DataD.applyL Desc (level ℓs)) (param ps)
       Δ , _ ← Index ⊆ᵗ? Δ⋯ 
 
@@ -63,10 +63,10 @@ uncurryIndP P d = let open IndP P in do
   `A ← getType d
   let `ℓsΓΔ⋯ , _   = ⇑ `A ⦂ Telescope × Type
   let `ℓs    , ΓΔ⋯ = splitAt #levels `ℓsΓΔ⋯
-  extendContextℓs #levels λ ℓs → do
+  exCxtℓs #levels λ ℓs → do
     let PsTel = Param ℓs
     Γ , Δ⋯ ← PsTel ⊆ᵗ? ΓΔ⋯
-    extendCxtTel PsTel λ ps → do
+    exCxtTel PsTel λ ps → do
       let Index = PDataD.Index (DataD.applyL Desc (level ℓs)) (param ps)
       Δ , _ ← Index ⊆ᵗ? Δ⋯ 
 

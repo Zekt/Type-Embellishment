@@ -20,20 +20,20 @@ private
   `[] = quoteTerm Tel.[]
 
 -- extend the context in a TC computation 
-extendCxtTel : {A : Set ℓ′}
+exCxtTel : {A : Set ℓ′}
   → (T : Tel ℓ) → (⟦ T ⟧ᵗ → TC A) → TC A
-extendCxtTel [] f      = f tt
-extendCxtTel (A ∷ T) f = do
+exCxtTel [] f      = f tt
+exCxtTel (A ∷ T) f = do
   s ← getAbsNameω T
-  extendContextT s visible-relevant-ω A λ _ x → extendCxtTel (T x) (curry f x)
-extendCxtTel (T ++ U) f = extendCxtTel T λ ⟦T⟧ →
-  extendCxtTel (U ⟦T⟧) λ x → curry f ⟦T⟧ x
+  exCxtT s visible-relevant-ω A λ _ x → exCxtTel (T x) (curry f x)
+exCxtTel (T ++ U) f = exCxtTel T λ ⟦T⟧ →
+  exCxtTel (U ⟦T⟧) λ x → curry f ⟦T⟧ x
 
-extendContextℓs : {A : Set ℓ}
+exCxtℓs : {A : Set ℓ}
   → (#levels : ℕ) → (Level ^ #levels → TC A) → TC A
-extendContextℓs zero    c = c tt
-extendContextℓs (suc n) c = extendContextT "ℓ" hidden-relevant-ω Level λ _ ℓ →
-    extendContextℓs n (curry c ℓ)
+exCxtℓs zero    c = c tt
+exCxtℓs (suc n) c = exCxtT "ℓ" hidden-relevant-ω Level λ _ ℓ →
+    exCxtℓs n (curry c ℓ)
 
 -- ℕ is the length of (T : Tel ℓ)
 -- this may fail if `Tel` is not built by λ by pattern matching lambdas.
@@ -42,12 +42,12 @@ fromTel : {ℓ : Level}
 fromTel []      _ = return []
 fromTel (A ∷ T) (v ∷ U) = do
   s ← getAbsNameω T
-  extendContextT s (arg-info v (modality relevant quantity-ω)) A λ `A x → do
+  exCxtT s (arg-info v (modality relevant quantity-ω)) A λ `A x → do
     Γ ← fromTel (T x) (U x)
     return $ (s , arg (arg-info v (modality relevant quantity-ω)) `A) ∷ Γ
 fromTel (T ++ U) (V ++ W) = do
   `Γ ← fromTel T V
-  extendCxtTel T λ x → do
+  exCxtTel T λ x → do
     `Δ ← fromTel (U x) (W x)
     return (`Γ <> `Δ)
 
@@ -62,12 +62,12 @@ to`Tel = foldr `[] λ where
 fromTelInfo : ∀ {ℓ} → {tel : Tel ℓ} → TelInfo String tel → TC (List String)
 fromTelInfo [] = return []
 fromTelInfo {tel = A ∷ T} (s ∷ N) = do
-  extendContextT s (visible-relevant-ω) A λ `A x → do
+  exCxtT s (visible-relevant-ω) A λ `A x → do
     ss ← fromTelInfo (N x)
     return (s ∷ ss)
 fromTelInfo {tel = T ++ U} (S ++ S') = do
   ss ← fromTelInfo S
-  extendCxtTel T λ t → do
+  exCxtTel T λ t → do
     ts ← fromTelInfo (S' t)
     return (ss <> ts)
 
@@ -92,10 +92,10 @@ _⊆ᵗ?_ : Tel ℓ → Telescope → TC (Telescope × Telescope)
 (A ∷ T) ⊆ᵗ? ((s , arg i@(arg-info v m) `B) ∷ Γ) = do
   `A ← quoteTC! A
   unify `A `B <|> (typeError $ termErr `A ∷ strErr " ≠ " ∷ termErr `B ∷ [])
-  extendContextT s i A λ _ x → bimap ((s , arg i `B) ∷_) id <$> T x ⊆ᵗ? Γ
+  exCxtT s i A λ _ x → bimap ((s , arg i `B) ∷_) id <$> T x ⊆ᵗ? Γ
 (T ++ U) ⊆ᵗ? Γ = do
   (vs , Γ) ← T ⊆ᵗ? Γ
-  extendCxtTel T λ t → do
+  exCxtTel T λ t → do
     (vs′ , Γ) ← U t ⊆ᵗ? Γ
     return (vs <> vs′ , Γ)
 
@@ -131,13 +131,13 @@ telToVars from base T Γ = snd <$> go from base T Γ
       $ strErr "The length of Tel is different from the length of Telescope" ∷ []
     go from base (A ∷ T)  ((s , arg i B) ∷ Γ) = do
       `A ← quoteTC! A
-      extendContextT s i A λ _ x → do
+      exCxtT s i A λ _ x → do
         n , (t , p) , (targs , pargs) ← go from base (T x) Γ
         return $ suc n , ((var₀ n `, t) , (var n `, p)) , arg i (var₀ n) ∷ targs , arg i (var n) ∷ pargs
     go from base (T ++ U) Γ = do
       n ← length <$> fromTel T (constTelInfo visible)
       let (Γ , Δ) = splitAt n Γ
-      n , (Δt , Δp) , Δts , Δps ← extendCxtTel T λ t → go from base (U t) Δ
+      n , (Δt , Δp) , Δts , Δps ← exCxtTel T λ t → go from base (U t) Δ
       m , (Γt , Γp) , Γts , Γps ← go n base T Γ 
       return $ m , ((Γt `, Δt) , (Γp `, Δp)) , (Γts <> Δts , Γps <> Δps)
       

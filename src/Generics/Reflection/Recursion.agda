@@ -42,7 +42,7 @@ private
 
 defineFold : FoldP → Name → TC _
 defineFold P f = do
-  `type ← prependLevels #levels <$> extendContextℓs #levels λ ℓs → do
+  `type ← prependLevels #levels <$> exCxtℓs #levels λ ℓs → do
       ss ← fromTelInfo (ParamN {ℓs})
       T  ← quoteTC! (FoldNT P ℓs)
       return $ renameTypeBy T ss
@@ -54,7 +54,7 @@ defineFold P f = do
   dummyRec ← define! (vArg `type) [ [] ⊢ [] `= rec ]
   pars , cs ← getDataDefinition =<< FoldPToNativeName P
 
-  cls ← extendContextℓs #levels λ ℓs → do
+  cls ← exCxtℓs #levels λ ℓs → do
     Γps ← fromTel! (Param ℓs) ParamV
     ss  ← fromTelInfo (ParamN {ℓs})
     forM cs $ conClause dummyRec pars #levels (renameTelBy Γps ss)
@@ -66,7 +66,7 @@ defineFold P f = do
 
 defineInd : IndP → Name → TC _
 defineInd P f = do
-  `type ← prependLevels #levels <$> extendContextℓs #levels λ ℓs → do
+  `type ← prependLevels #levels <$> exCxtℓs #levels λ ℓs → do
     ss ← fromTelInfo (ParamN {ℓs})
     T  ← quoteTC! (IndNT P ℓs)
     return $ renameTypeBy T ss
@@ -79,7 +79,7 @@ defineInd P f = do
 
   pars , cs ← getDataDefinition =<< IndPToNativeName P
 
-  cls ← extendContextℓs #levels λ ℓs → do
+  cls ← exCxtℓs #levels λ ℓs → do
     Γps ← fromTel! (Param ℓs) ParamV
     ss  ← fromTelInfo (ParamN {ℓs})
     forM cs $ conClause dummyRec pars #levels (renameTelBy Γps ss)

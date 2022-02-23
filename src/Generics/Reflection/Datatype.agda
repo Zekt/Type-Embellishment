@@ -35,14 +35,14 @@ module _ {T : Tel ℓ} (`A : ⟦ T ⟧ᵗ → TC Type) where
   RecDToType (ι i) = `A i
   RecDToType (π A D) = do
     s ← getAbsNameω D
-    extendContextT s visible-relevant-ω A λ `A x →
+    exCxtT s visible-relevant-ω A λ `A x →
       vΠ[ s ∶ `A ]_ <$> RecDToType (D x)
       
   ConDToType : (D : ConD ⟦ T ⟧ᵗ cb) → TC Type
   ConDToType (ι i) = `A i
   ConDToType (σ A D) = do
     s ← getAbsNameω D
-    extendContextT s visible-relevant-ω A λ `A x →
+    exCxtT s visible-relevant-ω A λ `A x →
       vΠ[ s ∶ `A ]_ <$>  ConDToType (D x)
   ConDToType (ρ R D) = do
     `R ← RecDToType R
@@ -53,7 +53,7 @@ module _ {T : Tel ℓ} (`A : ⟦ T ⟧ᵗ → TC Type) where
   ConDsToTypes (D ∷ Ds) = ⦇ ConDToType D ∷ ConDsToTypes Ds ⦈
 
 getCons : Name → (`Param : Telescope) → PDataD → TC (List Type)
-getCons d `Param Dᵖ = extendCxtTel Param λ ps →
+getCons d `Param Dᵖ = exCxtTel Param λ ps →
   map (prependToType `Param) <$>
       ConDsToTypes (typeOfData d ps) (applyP ps)
   where open PDataD Dᵖ
@@ -71,7 +71,7 @@ getSignature Dᵖ = do
   where open PDataD Dᵖ
 
 defineByDataD : DataD → Name → List Name → TC _
-defineByDataD dataD dataN conNs = extendContextℓs #levels λ ℓs → do
+defineByDataD dataD dataN conNs = exCxtℓs #levels λ ℓs → do
   let `Levels = `Levels #levels
   let Dᵖ      = applyL ℓs
   `Param , dT ← withNormalisation true $ getSignature Dᵖ
@@ -198,7 +198,7 @@ macro
   defineAndPrintData : DataD → String → List String → Tactic
   defineAndPrintData D s cs hole = do
     dName ← freshName s
-    len ← extendContextℓs #levels λ ℓs → do
+    len ← exCxtℓs #levels λ ℓs → do
             return $ length $ PDataD.struct (applyL ℓs)
     conNames ← align len cs
     defineByDataD D dName conNames

@@ -92,9 +92,9 @@ macro
   evalT = evalTC
 
 -- Typed version of extendContext
-extendContextT : String → ArgInfo → (B : Set ℓ)
+exCxtT : String → ArgInfo → (B : Set ℓ)
   → (Type → B → TC A) → TC A
-extendContextT s i B f = do
+exCxtT s i B f = do
   `B ← quoteTC! B
   extendContext s (arg i `B) do
     x ← unquoteTC {A = B} (var₀ 0)
