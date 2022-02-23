@@ -13,11 +13,8 @@ private
   variable
     T U : Tel ℓ
   
-  _`∷_ : Term → Term → Term
-  t `∷ u = con (quote Tel._∷_) (vArg t ∷ vArg u ∷ [])
-
-  `[] : Term
-  `[] = quoteTerm Tel.[]
+  pattern _`∷_ t u = con₂ (quote Tel._∷_) t (vLam u)
+  pattern `[]      = con₀ (quote Tel.[])
 
 -- extend the context in a TC computation 
 exCxtTel : {A : Set ℓ′}
@@ -57,7 +54,7 @@ fromTel! T V = withNormalisation true $ fromTel T V
 
 to`Tel : Telescope → Term
 to`Tel = foldr `[] λ where
-  (s , arg _ `A) `T →  `A `∷ vLam (abs s `T)
+  (s , arg _ `A) `T →  `A `∷ abs s `T
 
 fromTelInfo : ∀ {ℓ} → {tel : Tel ℓ} → TelInfo String tel → TC (List String)
 fromTelInfo [] = return []
