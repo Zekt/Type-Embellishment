@@ -79,11 +79,13 @@ natD' : DataD
 natD' = genDataD ℕ
 
 NatT = genDataT NatD ℕ
-NatC = genDataC NatD NatT
 
+instance
+  NatC : Named (quote ℕ) _
+  NatC = named (genDataC NatD NatT)
 
 foldℕP : FoldP
-foldℕP = fold-operator NatC
+foldℕP = fold-operator (quote ℕ)
 
 unquoteDecl foldℕ = defineFold foldℕP foldℕ
 
@@ -130,7 +132,9 @@ _ = refl
 
 -- ListC : DataCᶜ ListD List
 ListT = genDataT ListD List
-ListC = genDataC ListD ListT
+instance 
+  ListC : Named (quote List) _
+  ListC = named (genDataC ListD ListT)
 
 unquoteDecl data List' constructor nil cons =
   defineByDataD ListD List' (nil ∷ cons ∷ [])
@@ -159,7 +163,9 @@ DataD.applyL  LenD (ℓ , _) = record
 
 -- LenC : DataCᶜ LenD Len
 LenT = genDataT LenD Len
-LenC =  genDataC LenD LenT
+instance 
+  LenC : Named (quote Len) _
+  LenC = named (genDataC LenD LenT)
 --   dataC
 --   (λ { (inl refl) → z {_} {_} ; (inr (inl (x , y , xs , ys , p , refl))) → s {_} {_} {x} {y} {xs} {ys} p })
 --   (λ { z → inl refl ; (s {x} {y} {xs} {ys} p) → inr (inl (x , y , xs , ys , p , refl)) })
@@ -291,19 +297,23 @@ WD = record
 
 
 lenP : FoldP
-lenP = fold-operator LenC
+lenP = fold-operator (quote Len)
 
+instance
+  _ : Named (quote Pointwise) (DataC PointwiseD PointwiseT)
+  _ = named PointwiseC
+  
 pointwiseP : FoldP
-pointwiseP = fold-operator PointwiseC
+pointwiseP = fold-operator (quote Pointwise)
 
 unquoteDecl foldPW = defineFold pointwiseP foldPW
 
 indℕP : IndP
-indℕP = ind-operator NatC
+indℕP = ind-operator (quote ℕ)
 
 unquoteDecl indℕ = defineInd indℕP indℕ
 
 listP : IndP
-listP = ind-operator ListC
+listP = ind-operator (quote List)
 
 unquoteDecl indList = defineInd listP indList

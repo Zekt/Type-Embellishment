@@ -48,11 +48,11 @@ module _ {T : Tel ℓ} (`A : ⟦ T ⟧ᵗ → TC Type) where
     `R ← RecDToType R
     extendContext "_" (vArg (quoteTerm ⊤)) do
       vΠ[ `R ]_ <$> ConDToType D
-  ConDsToTypes : (Ds : ConDs ⟦ T ⟧ᵗ cbs) → TC (List Type)
+  ConDsToTypes : (Ds : ConDs ⟦ T ⟧ᵗ cbs) → TC Types
   ConDsToTypes []       = return []
   ConDsToTypes (D ∷ Ds) = ⦇ ConDToType D ∷ ConDsToTypes Ds ⦈
 
-getCons : Name → (`Param : Telescope) → PDataD → TC (List Type)
+getCons : Name → (`Param : Telescope) → PDataD → TC Types
 getCons d `Param Dᵖ = exCxtTel Param λ ps →
   map (prependToType `Param) <$>
       ConDsToTypes (typeOfData d ps) (applyP ps)
