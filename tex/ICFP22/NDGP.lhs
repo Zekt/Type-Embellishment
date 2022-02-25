@@ -1221,13 +1221,13 @@ The first case for the empty telescope |[]| is straightforward but the other two
 \begin{code}
 fromTel : (tel : Tel ℓ) → TC Telescope
 fromTel []           = return []
-fromTel (A  ∷   T)   = ?
-fromTel (U  ++  V)   = ?
+fromTel (A  ∷   T)   = ... fromTel (T ?) ...
+fromTel (U  ++  V)   = ... fromTel (V ?) ...
 \end{code}
 How can we give an argument of |A| and |⟦ U ⟧ᵗ|?
 Recall that a macro is a |TC| computation in which the state of the current context is enclosed.
 We may extend the context (of the call site) with a new variable used locally in another |TC| computation by the primitive |extendContext|. 
-To introduce the new variable in the |TC| monad to the scope of |fromTel|, we then need another primitive |unquoteTC| which interprets a reflected expression |e : Term| to its corresponding inhabitant of type |A|, so within the extended context the |TC| computation |unquoteTC (var 0 []) >>= λ x → ...| binds the newly added variable to |x|.
+To introduce the new variable to the scope, we then need another primitive: |unquoteTC| which interprets a reflected expression |e : Term| to its corresponding inhabitant of type |A|, so in the extended context the |TC| computation |unquoteTC (var 0 []) >>= λ x → ...| binds the newly added variable to |x|.
 %That is, we introduce a local variable of a type |A| during macro invocation by |unquoteTC| and |extendContext| altogether.
 The creation of a local variable is similar to the $\nu$-operator for the \emph{local name creation} by \citet{Schurmann2005,Nanevski2005} and is achieved through elaborator reflection in Agda by \citet{Chen-Mtac-Agda}.
 This technique is used frequently, so we define them explicitly as in \Cref{fig:extendContextT,fig:extendCxtTel}.
@@ -1358,8 +1358,8 @@ so the obstacle just disappears at this stage.
 
 Finally, we have to traverse the quotation of its type retrieved by |getType : Name → TC Type| and telescopes |Param| and |Index| at the same time, since the native datatype to wrap or to connect can be provided by the user possibly with different choices of explicit and implicit arguments (but in the same order).
 This point results in a few instances of synchronisation between types of representations.
-For example, to check if a given datatype matches a given description |D : DataD|, we define a |TC| computation |_⊆ᵗ?_| as in \Cref{fig:compare-tel-telescope} that checks if |T : Tel ℓ| is a prefix of |Γ : Telescope| and returns a partition of |Γ|.
-Note that |unify| in \Cref{fig:compare-tel-telescope} is used to check the equivalence between two types (instead of just unifying an reflected expression with a metavariable), since the most general unifier is indeed an equivalence~\cite{Cockx2016,Cockx2018}.  
+For example, to check if a given datatype matches a given description |D : DataD|, we define a |TC| computation |_⊆ᵗ?_| as in \Cref{fig:compare-tel-telescope} that checks if |T : Tel ℓ| is a prefix of |Γ : Telescope| and returns a partition of |Γ|.\footnote{%
+Note that |unify| in \Cref{fig:compare-tel-telescope} is used to check the equivalence between two types (instead of just unifying an reflected expression with a metavariable), since the most general unifier is indeed an equivalence~\cite{Cockx2016,Cockx2018}.}
 We also have a |TC| computation |telToVars| to generate a tuple of variables based on a given |T : Tel ℓ| and a list of arguments based on the quotation of the type of a datatype, since the shape of a tuple such as |(A, R, _)| is specified by |Param| in |PDataD| but the visibility of arguments is by the type of datatype.
 
 \begin{figure}[t]
@@ -1391,18 +1391,18 @@ _⊆ᵗ?_  : Tel ℓ → Telescope → TC (Telescope × Telescope)
 \end{figure}
 
 In particular, we have defined a set of macros |genDataT|, |genDataC|, |getnFoldC|, etc.\ in our framework.
-Now the wrapper |AccT| and connections |AccC| and |foldAccC| in \Cref{sec:connections} can now be generated respectively by 
+Now, the wrapper |AccT| and connections |AccC| and |foldAccC| in \Cref{sec:connections} can be generated respectively by 
 %\begin{enumerate*}
 %  \item |genDataT AccD Acc|,
 %  \item |genDataC AccD AccT|, and
 %  \item |genFoldC foldAccP foldAcc|,
 %\end{enumerate*}
 \begin{code}
-AccT = genDataT  AccD  Acc    {-"\hspace{3em}"-}   foldAccC = genFoldC foldAccP foldAcc
-AccC = genDataC  AccD  AccT
+AccT  = genDataT  AccD  Acc    {-"\hspace{3em}"-}   foldAccC = genFoldC foldAccP foldAcc
+AccC  = genDataC  AccD  AccT
 \end{code}
 
-The code generation so far may appear still manageable without elaborator reflection but the use of |unify| to check the equivalence between types is indispensable, especially that the unification algorithm in a dependently typed language is hard to implement properly~\cite[Section~8]{Cockx2018}. 
+The code generation so far may appear manageable without elaborator reflection, but in fact the use of |unify| to check the equivalence between types in \Cref{fig:compare-tel-telescope} is indispensable, especially that a unification algorithm in a dependently typed setting is hard to implement correctly as discussed in~\cite[Section~8]{Cockx2018}. 
 We shall see another important use in the next section.
 
 \subsection{Instantiating Generic Functions without Bureaucracy}\label{sec:specialising}
