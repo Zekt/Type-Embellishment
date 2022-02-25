@@ -1021,3 +1021,50 @@ year = {2005}
   abstract="We give an introduction to normalization by evaluation and type-directed partial evaluation. We first present normalization by evaluation for a combinatory version of G{\"o}del System T. Then we show normalization by evaluation for typed lambda calculus with $\beta$ and $\eta$ conversion. Finally, we introduce the notion of binding time, and explain the method of type-directed partial evaluation for a small PCF-style functional programming language. We give algorithms for both call-by-name and call-by-value versions of this language.",
   isbn="978-3-540-45699-5"
 }
+
+@article{Cockx2020,
+abstract = {In a dependently typed language, we can guarantee correctness of our programmes by providing formal proofs. To check them, the typechecker elaborates these programs and proofs into a low-level core language. However, this core language is by nature hard to understand by mere humans, so how can we know we proved the right thing? This question occurs in particular for dependent copattern matching, a powerful language construct for writing programmes and proofs by dependent case analysis and mixed induction/coinduction. A definition by copattern matching consists of a list of clauses that are elaborated to a case tree , which can be further translated to primitive eliminators . In previous work this second step has received a lot of attention, but the first step has been mostly ignored so far. We present an algorithm elaborating definitions by dependent copattern matching to a core language with inductive data types, coinductive record types, an identity type, and constants defined by well-typed case trees. To ensure correctness, we prove that elaboration preserves the first-match semantics of the user clauses. Based on this theoretical work, we reimplement the algorithm used by Agda to check left-hand sides of definitions by pattern matching. The new implementation is at the same time more general and less complex, and fixes a number of bugs and usability issues with the old version. Thus, we take another step towards the formally verified implementation of a practical dependently typed language.},
+author = {Cockx, Jesper and Abel, Andreas M.},
+doi = {10.1017/S0956796819000182},
+issn = {0956-7968},
+journal = {Journal of Functional Programming},
+month = {jan},
+pages = {e2},
+title = {Elaborating dependent (co)pattern matching: No pattern left behind},
+url = {https://www.cambridge.org/core/product/identifier/S0956796819000182/type/journal{\_}article},
+volume = {30},
+year = {2020}
+}
+
+
+@article{Cockx2016,
+author = {Cockx, Jesper and Devriese, Dominique and Piessens, Frank},
+doi = {10.1145/3022670.2951917},
+isbn = {9781450342193},
+issn = {03621340},
+journal = {ACM SIGPLAN Notices},
+keywords = {dependent types,inductive,type theory,unification},
+month = {sep},
+number = {9},
+pages = {270--283},
+title = {Unifiers as equivalences: proof-relevant unification of dependently typed data},
+url = {http://dl.acm.org/citation.cfm?doid=3022670.2951917},
+volume = {51},
+year = {2016}
+}
+
+@article{Cockx2018,
+author = {Cockx, Jesper and Devriese, Dominique},
+doi = {10.1017/S095679681800014X},
+isbn = {0956796818},
+issn = {0956-7968},
+journal = {Journal of Functional Programming},
+month = {may},
+number = {May 2019},
+pages = {e12},
+title = {Proof-relevant unification: Dependent pattern matching with only the axioms of your type theory},
+url = {https://www.cambridge.org/core/product/identifier/S095679681800014X/type/journal{\_}article},
+volume = {28},
+year = {2018}
+}
+  

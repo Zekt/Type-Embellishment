@@ -138,6 +138,9 @@
 %format Curriedᵗ = Curried ᵗ
 %format curryᵗ = curry ᵗ
 %format uncurryᵗ = uncurry ᵗ
+%format ⊆ᵗ? = "\mathop{\subseteq^t}?"
+%format _⊆ᵗ?_ = _ ⊆ᵗ? _
+ 
 
 %format ᵇ = "_{\Conid B}"
 %format SCᵇ = SC ᵇ
@@ -222,6 +225,7 @@
 %format absurd-clause = "\cons{absurd\textsf{-}clause}"
 %format function = "\cons{function}"
 %format data-type = "\cons{data\textsf{-}type}"
+%format data-cons = "\cons{data\textsf{-}cons}"
 %format tt = "\cons{tt}"
 %format false = "\cons{false}"
 %format true = "\cons{true}"
@@ -1210,7 +1214,7 @@ where |`Set 0| reflects the type |Set|.
 Such a macro would need to pattern match against |t : Tm| and check which constructor is being analysed by reducing the reflected expression |def f xs| to one of |con (quote Tel.[]) xs|, |con (quote Tel._∷_) xs|, and |con (quote Tel._++_) xs|.
 In short, we lose the type information of |Tel ℓ| and would need to manipulate abstract syntax trees directly.
 
-Instead of quoting the entire telescope |T| at once, we choose to pattern match against |T : Tel ℓ| and compute the reflected type |e : Term| when necessary.
+Instead of quoting the entire telescope |T| at once, let us pattern match against |T : Tel ℓ| first.
 The first case for the empty telescope |[]| is straightforward but the other two cases |A :: T| and |U ++ V| seem impossible to call |fromTel| recursively: the first |T| is a function from |A| and |V| a function from |⟦ U ⟧ᵗ| for \emph{arbitrary} |A| and |U|:
 \savecolumns
 \begin{code}
@@ -1222,11 +1226,11 @@ fromTel (U  ++  V)   = ?
 How can we give an argument of |A| and |⟦ U ⟧ᵗ|?
 Recall that a macro is a |TC| computation in which the state of the current context is enclosed.
 We may extend the context (of the call site) with a new variable used locally in another |TC| computation by the primitive |extendContext|. 
-To introduce the new variable in the |TC| monad to the scope of |fromTel|, we then need another primitive |unquoteTC| which interprets an reflected expression |e : Term| to its corresponding inhabitant of type |A|, so the |TC| computation |unquoteTC (var 0 []) >>= λ x → ...| within the extended context binds the variable to |x|.
+To introduce the new variable in the |TC| monad to the scope of |fromTel|, we then need another primitive |unquoteTC| which interprets a reflected expression |e : Term| to its corresponding inhabitant of type |A|, so within the extended context the |TC| computation |unquoteTC (var 0 []) >>= λ x → ...| binds the newly added variable to |x|.
 %That is, we introduce a local variable of a type |A| during macro invocation by |unquoteTC| and |extendContext| altogether.
-The creation of a local variable is similar to the $\nu$-operator for the \emph{local name creation} by \citet{Schurmann2005,Nanevski2005} and is achieved through elaborator reflection by \citet{Chen-Mtac-Agda}.
+The creation of a local variable is similar to the $\nu$-operator for the \emph{local name creation} by \citet{Schurmann2005,Nanevski2005} and is achieved through elaborator reflection in Agda by \citet{Chen-Mtac-Agda}.
 This technique is used frequently in our translations, so we define them explicitly as in \Cref{fig:extendContextT,fig:extendCxtTel}.
-As long as the local variable |x| of the telescope |T x| is used for variable binding only, the computation can proceed and |T x| will be evaluated to one of the three cases eventually.
+As long as the local variable |x| of the telescope |T x| is used only for variable binding, the computation can proceed and |T x| will be evaluated to one of the three cases eventually.
 The last two cases are then defined rather succinctly:
 \begin{minipage}[t]{0.5\textwidth}
 \restorecolumns
@@ -1276,20 +1280,38 @@ exCxtTel (T ++ U)  f  = exCxtTel T λ t →
 \end{minipage}
 \end{figure}
 
-For the other direction of the translation, as only a list of reflected types are given, generating the reflected expression |e : Term| of the corresponding telescope |T : Tel ℓ| is just syntactical.
-Indeed, the code generation does not even involve the |TC| monad at all:
+For the other direction of the translation, as only a list of reflected types are given, our generation of the reflected expression |e : Term| of the corresponding telescope |T : Tel ℓ| is syntactical.
+The code generation does not even involve the |TC| monad at all:
 \begin{code}
 to`Tel : Telescope → Term
 to`Tel = foldr `[] (λ `A `T →  `A `∷ `T)
 \end{code}
 where |`[]| and |`A `:: `T| are synonyms for |con (quote Tel.[]) []| and |con (quote Tel._∷_) (`A :: lam `T :: [])|.
 
+For the translation from |DataD|, a |TC| computation |defineByDataD| is defined using the same technique of creating local variables, although the level parameters and the final datatype level, i.e.\ |alevel ⊔ ilevel| in |PDataD|, need some attention. 
+In detail, to define a datatype through reflection, one needs to provide a reflected $\Pi$-type for the datatype signature including the telescope of parameters and indices, the number |#ps| of parameters, and a reflected type for each constructor.
+The level of a datatype specified by |alevel ⊔ ilevel| and the telescopes of datatype parameters and indices are given separately in |PDataD| which may refer to level parameters introduced by |DataD|, so we need to compose the quotation of |Set (alevel ⊔ ilevel)| with the quotation of |Param| and |Index| to form a reflected $\Pi$-type within a context extended with |#levels| many level parameters.
+One tempting way to achieve this is to take the quotation of |Set (alevel ⊔ ilevel)| directly and weaken the de Bruijn indices by the number of datatype parameters and indices.
+Alternatively, we choose to extend the context by |Param ++ Index| using |exCxtTel| first and take the quotation that can be composed with |fromTel (Param ++ Index)| to form the desired $\Pi$-type.
+In the end, we do not need to manipulate de Bruijn indices at all to translate from |DataD|.
+Finally, to actually define a datatype by |D : DataD| in our framework, just declare the following
+\begin{code}
+  unquoteDecl data d constructor c₁ ... cₙ = defineByDataD D d (c₁ :: ... :: cₙ :: [])
+\end{code}
+to introduce a datatype |D| with constructors |c₁ ... cₙ| to the scope.
+
+To derive a datatype description |D : DataD|, we define a macro |genDataD|
+reifying a datatype using primitives |getDefinition : Name → TC Definition| and |getType : Name → TC Type|
+where |Definition| is defined as in \Cref{fig:definition}.
+The macro can be invoked as, for example, |genDataD Acc| to generate a description identical to |AccD| in \Cref{sec:DataD}.
+This part of translation is syntactical and involves index strengthening to decompose a datatype signature.
+
 \begin{figure}[t]
 \begin{minipage}[t]{.53\textwidth}
 \codefigure
 \begin{code}
 data Clause : Set where
-  clause  : (Δ : Telescope) (lhs : Patterns) (rhs : Tm)
+  clause  : (Δ : Telescope) (lhs : Patterns) (rhs : Term)
           → Clause
   ... 
 Clauses = List Clause
@@ -1301,7 +1323,7 @@ Clauses = List Clause
 \begin{code}
 data Definition : Set where
   data-type   : (#ps  : ℕ)  (cs   : Names)    → Definition
-  data-cons   :             (d : Name)        → Definition
+  data-cons   :             (d    : Name)     → Definition
   function    :             (cls  : Clauses)  → Definition
   ...
 \end{code}
@@ -1310,39 +1332,70 @@ data Definition : Set where
 \end{minipage}%
 \end{figure}
 
-For the translation from |DataD|, a TC computation |defineByDataD| is defined using the technique of creating local variables, but the level parameters and the final datatype level, i.e.\ |alevel ⊔ ilevel| in |PDataD| need some attention. 
-In detail, to define a datatype through reflection, one needs to provide a reflected $\Pi$-type for the whole datatype signature including the telescope of parameters and indices with a reflected type for each constructor. 
-The level of a datatype specified by |alevel ⊔ ilevel| and the telescopes of datatype parameters and indices are given separately in |PDataD| which may refer to level parameters introduced by |DataD|, so we need to compose the quotation of |Set (alevel ⊔ ilevel)| with the quotation of |Param| and |Index| to form a reflected $\Pi$-type within a context extended with |#levels| many level parameters.
-One tempting way to achieve this is to take the quotation of |Set (alevel ⊔ ilevel)| directly and weaken the de Bruijn indices by the number of datatype parameters and indices.
-Alternatively, we choose to extend the context by |Param ++ Index| using |exCxtTel| first and take the quotation, so we do not manipulate de Bruijn indices at all to translate from |DataD|.
-Finally, to actually define a datatype by |D : DataD|, just declare the following
+Similarly, the bulk of the translation from |FoldP| to a recursive function relies on the creation of a local variable by |fromTel| as well as the elimination of intermediate conversions during instantiating generic functions.
+We will be discussed the detail in \Cref{sec:specialising}. 
+
+\subsection{Generating the Connections and Wrappers}\label{sec:connection-generation}
+The generation of datatype wrappers |DataT D| and connections |DataC D T|, |FoldC F f| and so on follows mostly the same idea, so we only discuss few points that are interesting to us.
+
+First, generating a wrapper |T| requires us to generate a clause $\Delta \vdash \overline{p} \hookrightarrow e$ (\Cref{fig:clause}) that consists of a list $\overline{p}$ of patterns on the left hand side and an reflected expression $e$ on the right side in a context $\Delta$.
+For example, the only clause of |AccT| with all implicit arguments, i.e.\ 
 \begin{code}
-  unquoteDecl data d constructor c₁ ... cₙ = defineByDataD D d (c₁ :: ... :: cₙ :: [])
+AccT {ℓ, ℓ'} (A, R, tt) (as , tt) = Acc {ℓ} {ℓ'} {A} R as
 \end{code}
-to introduce a datatype |D| with constructors |c₁ ... cₙ| to the scope.
+consists of patterns |(ℓ, ℓ')|, |(A, R, tt)|, |(as , tt)| and an expression |Acc {ℓ} {ℓ'} {A} R as| with variables in the context |[ ℓ : Level ] [ ℓ' : Level ] [ A : Set ℓ ] [ R : A → A → Set ℓ' ] [ as : A ]|. 
+By the definition of a clause, it may appear that the context $\Delta$ needs to be fully elaborated beforehand but with elaborator at our disposal it does not.
+Indeed, the reflected language plays a double role in the sense that a reflected expression can either be unchecked or checked~\cite{Cockx2020}.
+It follows that a list of patterns $\overline{p}$ and $e$ with a list of |unknown|'s as their context are just sufficient along with its type |DataT AccD| to elaborate the whole clause.
 
-In order to derive a datatype description |D : DataD|, we define a macro |genDataD|
-reifying a datatype.
-The macro can be invoked as, for example, |genDataD Acc| to generate a datatype description identical to |AccD| in \Cref{sec:DataD}.
-This part of translation is also syntactical and involves index strengthening to decompose a datatype signature, so we ignore its definition.
+Another issue to deal with is the visibility of an argument.
+The two types |(x : A) → B x| and |{x : A} → B x| are different, so it is not possible for a single program to uncurry a function regardless of the visibility of its arguments.
+Their quotation |pi `A `B| are, however, essentially the same,\footnote{%
+  We have ignored the visibility in |Term|, but they are specified additionally by an inductive type |Visibility|.
+}
+so the obstacle just disappears at this stage.
 
-Similarly, the bulk of the translation from |FoldP| to a recursive function relies the creation of a local variable by |fromTel| except that we need to apply \emph{partial evaluation} to eliminate intermediate conversions which will be discussed in \Cref{sec:specialising}. 
+Third, we have to traverse the quotation of its type retrieved by |getType : Name → TC Type| and telescopes |Param| and |Index| at the same time, since the native datatype to wrap or to connect can be provided by the user possibly with different choices of explicit and implicit arguments (but in the same order).
+This point results in a few instances of synchronisation between types of representations.
+For example, to check if a given datatype matches a given description |D : DataD|, we define a |TC| computation |_⊆ᵗ?_| as in \Cref{fig:compare-tel-telescope} that checks if |T : Tel ℓ| is a prefix of |Γ : Telescope| and returns a partition of |Γ|.
+Note that |unify| in \Cref{fig:compare-tel-telescope} is used to check the equivalence between two types instead of just unifying an reflected expression with a metavariable, since the most general unifier is indeed an equivalence~\cite{Cockx2016,Cockx2018}.  
+We also have a |TC| computation |telToVars| to generate a tuple of variables based on a given |T : Tel ℓ| and a list of arguments based on the quotation of the type of a datatype, since the shape of a tuple such as |(A, R, _)| is specified by |Param| in |PDataD| but the visibility of arguments is by the type of datatype.
 
-\subsection{Generating the Connections and Wrappers with |Level|}\label{sec:connection-generation}
-\LT{Address the universe problem here: currying for |Level|}
+\begin{figure}[t]
+\codefigure
+\begin{code}
+_⊆ᵗ?_  : Tel ℓ → Telescope → TC (Telescope × Telescope)
+[]        ⊆ᵗ? Γ         = return ([] , Γ)
+(A ∷ T)   ⊆ᵗ? (`B ∷ Γ)  = do
+  `A ← quoteTC A
+  unify `A `B
+  exCxtT A λ _ x → do
+    (vs , Δ) ← T x ⊆ᵗ? Γ
+    return (`B ∷ vs , Δ)
+...
+\end{code}
+\caption{The prefix comparison of a higher-order telescope with a first-order telescope}
+\label{fig:compare-tel-telescope}
+\end{figure}
 
+In particular, we have defined a set of macros |genDataT|, |genDataC|, |getnFoldC|, etc.\ in our framework so that |AccT| and |AccC| in \Cref{sec:DataC} can be given automatically by
 
-
+\begin{minipage}[t]{.5\textwidth}
+\begin{code}
+  AccT = genDataT AccD Acc
+\end{code}
+\end{minipage}%
+\begin{minipage}[t]{.5\textwidth}
+\begin{code}
+AccC = genDataC AccD AccT
+\end{code}
+\end{minipage}
 \subsection{Instantiating Generic Functions without Bureaucracy}\label{sec:specialising}
 \Viktor{Use |FoldP| to generate function definitions}
 \LT{Introduce |normalise| and |checkType|; explain the difference between unchecked and checked clauses; no subject reduction for abstract syntax, so we have to normalise checked clauses with |fold-base| on the right hand side~\cite{Alimarine2004}}
 
 \Viktor{definition declaration via macro |unquoteDecl|}
 
-The reflected language plays a double role as the reflection of the surface language and the core language in the sense that reflected expressions can be elaborated by |TC| primitives.
-The double role is very helpful as the reflected expression |unknown| corresponding to the underscore `|_|' will be treated as a metavariable by the elaborator.
-For example, the primitive |checkType : Tm → Type → TC Tm| checks a reflected expression against a reflected type and returns a reflected expression with metavariables resolved if possible. 
-If |unknown| is checked against the unit type |⊤|, then |checkType| returns the only constructor |tt| of |⊤| in the reflected form; if |unknown| is checked against |unknown| then |checkType| returns |meta x []| for some metavariable |x| generated during elaboration.
 
 \section{Examples}
 \label{sec:examples}

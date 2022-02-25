@@ -35,7 +35,7 @@ uncurryDataD D d = let open DataD D in do
       (_ , p₃) , (as₃ , _) ← telToVars 0   (`tt , `tt) Index Δ
 
       return $ pat-lam₀ $
-        ((`ℓs <> Γ <> Δ) ⊢ vArg p₁ ∷ vArg p₂ ∷ [ vArg p₃ ] `= def d (as₁ <> as₂ <> as₃))
+        (forgetTypes (`ℓs <> Γ <> Δ) ⊢ vArg p₁ ∷ vArg p₂ ∷ [ vArg p₃ ] `= def d (as₁ <> as₂ <> as₃))
         ∷ []
 
 uncurryFoldP : (P : FoldP) → Name → TC Term
