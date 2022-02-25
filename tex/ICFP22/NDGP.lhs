@@ -1355,7 +1355,7 @@ Their quotation |pi `A `B| are, however, essentially the same,\footnote{%
 }
 so the obstacle just disappears at this stage.
 
-Third, we have to traverse the quotation of its type retrieved by |getType : Name → TC Type| and telescopes |Param| and |Index| at the same time, since the native datatype to wrap or to connect can be provided by the user possibly with different choices of explicit and implicit arguments (but in the same order).
+Finally, we have to traverse the quotation of its type retrieved by |getType : Name → TC Type| and telescopes |Param| and |Index| at the same time, since the native datatype to wrap or to connect can be provided by the user possibly with different choices of explicit and implicit arguments (but in the same order).
 This point results in a few instances of synchronisation between types of representations.
 For example, to check if a given datatype matches a given description |D : DataD|, we define a |TC| computation |_⊆ᵗ?_| as in \Cref{fig:compare-tel-telescope} that checks if |T : Tel ℓ| is a prefix of |Γ : Telescope| and returns a partition of |Γ|.
 Note that |unify| in \Cref{fig:compare-tel-telescope} is used to check the equivalence between two types instead of just unifying an reflected expression with a metavariable, since the most general unifier is indeed an equivalence~\cite{Cockx2016,Cockx2018}.  
@@ -1363,17 +1363,28 @@ We also have a |TC| computation |telToVars| to generate a tuple of variables bas
 
 \begin{figure}[t]
 \codefigure
+\begin{minipage}[t]{.6\textwidth}
 \begin{code}
 _⊆ᵗ?_  : Tel ℓ → Telescope → TC (Telescope × Telescope)
-[]        ⊆ᵗ? Γ         = return ([] , Γ)
 (A ∷ T)   ⊆ᵗ? (`B ∷ Γ)  = do
   `A ← quoteTC A
-  unify `A `B
+  (HL (unify `A `B))
   exCxtT A λ _ x → do
     (vs , Δ) ← T x ⊆ᵗ? Γ
     return (`B ∷ vs , Δ)
-...
 \end{code}
+\end{minipage}%
+\begin{minipage}[t]{.4\textwidth}
+\begin{code}
+[]        ⊆ᵗ? Γ         = return ([] , Γ)
+(T ++ U)  ⊆ᵗ? Γ         = do
+  (vs , Γ) ← T ⊆ᵗ? Γ
+  exCxtTel T λ t → do
+    (vs′ , Γ) ← U t ⊆ᵗ? Γ
+    return (vs <> vs′ , Γ)
+(A ∷ T)  ⊆ᵗ? []         = ...
+\end{code}
+\end{minipage}
 \caption{The prefix comparison of a higher-order telescope with a first-order telescope}
 \label{fig:compare-tel-telescope}
 \end{figure}
