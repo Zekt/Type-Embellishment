@@ -1,12 +1,216 @@
 %% This BibTeX bibliography file was created using BibDesk.
-%% http://bibdesk.sourceforge.net/
+%% https://bibdesk.sourceforge.io/
 
-%% Created for Josh Ko at 2022-02-20 22:31:46 +0800 
+%% Created for Josh Ko at 2022-02-25 15:01:10 +0800 
 
 
 %% Saved with string encoding Unicode (UTF-8) 
 
 
+
+@inproceedings{Nanevski-names-and-necessity,
+	abstract = {Meta-programming languages provide infrastructure to generate and execute object programs at run-time. In a typed setting, they contain a modal type constructor which classifies object code. These code types generally come in two flavors: closed and open. Closed code expressions can be invoked at run-time, but the computations over them are more rigid, and typically produce less efficient residual object programs. Open code provides better inlining and partial evaluation of object programs, but once constructed, expressions of this type cannot in general be evaluated.\par
+
+Recent work in this area has focused on combining the two notions into a sound system. We present a novel way to achieve this. It is based on adding the notion of \emph{names} from the work on Nominal Logic and FreshML to the $\lambda^\Box$-calculus of proof terms for the \emph{necessity} fragment of modal logic S4. The resulting language provides a more fine-grained control over free variables of object programs when compared to the existing languages for meta-programming. In addition, this approach lends itself well to addition of intensional code analysis, i.e. ability of meta programs to inspect and destruct object programs at run-time in a type-safe manner, which we also undertake.},
+	author = {Aleksandar Nanevski},
+	booktitle = {International Conference on Functional programming (ICFP)},
+	date-added = {2022-02-25 15:01:08 +0800},
+	date-modified = {2022-02-25 15:01:08 +0800},
+	doi = {10.1145/581478.581498},
+	pages = {206--217},
+	publisher = {ACM},
+	title = {Meta-programming with Names and Necessity},
+	year = 2002,
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxChLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L05hbmV2c2tpIDIwMDIgLSBNZXRhLXByb2dyYW1taW5nIHdpdGggTmFtZXMgYW5kIE5lY2Vzc2l0eS5wZGZPEQKUAAAAAAKUAAIAAAZTeXN0ZW0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQkQAAf////8fTmFuZXZza2kgMjAwMiAtIE1lI0ZGRkZGRkZGLnBkZgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wAAAAAAAAAAAAAAAAAFAAYAAAogY3UAAAAAAAAAAAAAAAAADUJpYlJlcG9zaXRvcnkAAAIAoS86VXNlcnM6am9zaGtvOkxpYnJhcnk6TW9iaWxlIERvY3VtZW50czpKRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlcjpEb2N1bWVudHM6QmliUmVwb3NpdG9yeTpOYW5ldnNraSAyMDAyIC0gTWV0YS1wcm9ncmFtbWluZyB3aXRoIE5hbWVzIGFuZCBOZWNlc3NpdHkucGRmAAAOAHwAPQBOAGEAbgBlAHYAcwBrAGkAIAAyADAAMAAyACAALQAgAE0AZQB0AGEALQBwAHIAbwBnAHIAYQBtAG0AaQBuAGcAIAB3AGkAdABoACAATgBhAG0AZQBzACAAYQBuAGQAIABOAGUAYwBlAHMAcwBpAHQAeQAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAn1VzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvTmFuZXZza2kgMjAwMiAtIE1ldGEtcHJvZ3JhbW1pbmcgd2l0aCBOYW1lcyBhbmQgTmVjZXNzaXR5LnBkZgAAEwABLwAAFQACAA3//wAAAAgADQAaACQAyAAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAANg}}
+
+@phdthesis{Magalhaes-thesis,
+	abstract = {Abstraction is ubiquitous in computer programming. The work of this thesis focuses on one specific form of abstraction. Computer programs manipulate data, which can either be primitive machine data (such as integer or fractional numbers) or programmer-defined data (such as lists, trees, matrices, images, etc.). There is only a small number of primitive datatypes, but a potentially infinite number of programmer-defined data. The structure of the latter data depends on the problem at hand, and while some structures appear very often (such as sequences of values), others are truly specific to a particular problem.\par
+
+Some kind of functionality is generally desired for all types of data. Reading and storing files to the disk, for instance, is as important for machine integers as it is for complex healthcare databases, or genealogy trees. And not just reading and writing files: testing for equality, sorting, traversing, computing the length, all are examples of functionality that is often desired for all kinds of data. Most programming languages allow defining complex datatypes as a form of abstraction, but few provide good support for defining behaviour that is generic over data. As such, programmers are forced to specify this behaviour over and over again, once for each new type of data, and also to adapt this code whenever the structure of their data changes. This is a tedious task, and can quickly become time-consuming, leading some programmers to write programs to generate this type of functionality automatically from the structure of data.\par
+
+We think that a programming language should allow programmers to define generic programs, which specify behaviour that is generic over the type of data. Moreover, it should automatically provide generic behaviour for new data, eliminating the need for repeated writing and rewriting of trivial code that just specialises general behaviour to a particular type of data. It should do so in a convenient way for the programmer, leading to more abstract and concise programs, while remaining clear and efficient. This leads us to the two research questions we set out to answer:
+\begin{enumerate}
+\item There are many different approaches to generic programming, varying in complexity and expressiveness. How can we better understand each of the approaches, and the way they relate to each other?
+\item Poor runtime efficiency, insufficient datatype support, and lack of proper language integration are often pointed out as deficiencies in generic programming implementations. How can we best address these concerns?
+\end{enumerate}
+We answer the first question in the first part of this thesis. We start by picking a number of generic programming approaches and define a concise model for each of them. We then use this model to formally express how to embed the structural representation of data of one approach into another, allowing us to better understand the relation between different approaches. The second part of this thesis deals with answering the second question, devoting one chapter to analysing and mitigating each of the practical concerns.},
+	author = {Magalh{\~a}es, Jos{\'e} Pedro},
+	date-added = {2022-02-25 09:54:05 +0800},
+	date-modified = {2022-02-25 09:54:05 +0800},
+	school = {Utrecht University},
+	title = {Less Is More: Generic Programming Theory and Practice},
+	url = {https://dreixel.net/research/pdf/thesis.pdf},
+	year = {2012},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhbxCuAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAEwAaQBiAHIAYQByAHkALwBNAG8AYgBpAGwAZQAgAEQAbwBjAHUAbQBlAG4AdABzAC8ASgBGAEoAVwBXAFAANgA0AFEARAB+AGMAbwBtAH4AZwBvAG8AZABpAHcAYQByAGUAfgBHAG8AbwBkAFIAZQBhAGQAZQByAC8ARABvAGMAdQBtAGUAbgB0AHMALwBCAGkAYgBSAGUAcABvAHMAaQB0AG8AcgB5AC8ATQBhAGcAYQBsAGgAYQMDAGUAcwAgADIAMAAxADIAIAAtACAATABlAHMAcwAgAEkAcwAgAE0AbwByAGUAIABHAGUAbgBlAHIAaQBjACAAUAByAG8AZwByAGEAbQBtAGkAbgBnACAAVABoAGUAbwByAHkAIABhAG4AZAAgAFAAcgBhAGMAdABpAGMAZQAuAHAAZABmTxECygAAAAACygACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////FE1hZ2FsaGEjRkZGRkZGRkYucGRmIElzIE1vcmUgRwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAK8vOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6TWFnYWxoYcyDZXMgMjAxMiAtIExlc3MgSXMgTW9yZSBHZW5lcmljIFByb2dyYW1taW5nIFRoZW9yeSBhbmQgUHJhY3RpY2UucGRmAAAOAJYASgBNAGEAZwBhAGwAaABhAwMAZQBzACAAMgAwADEAMgAgAC0AIABMAGUAcwBzACAASQBzACAATQBvAHIAZQAgAEcAZQBuAGUAcgBpAGMAIABQAHIAbwBnAHIAYQBtAG0AaQBuAGcAIABUAGgAZQBvAHIAeQAgAGEAbgBkACAAUAByAGEAYwB0AGkAYwBlAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgCtVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9NYWdhbGhhzINlcyAyMDEyIC0gTGVzcyBJcyBNb3JlIEdlbmVyaWMgUHJvZ3JhbW1pbmcgVGhlb3J5IGFuZCBQcmFjdGljZS5wZGYAABMAAS8AABUAAgAN//8AAAAIAA0AGgAkAYMAAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAAEUQ==}}
+
+@inproceedings{Magalhaes-inlining,
+	abstract = {It is known that datatype-generic programs often run slower than type-specific variants, and this factor can prevent adoption of generic programming altogether. There can be multiple reasons for the performance penalty, but often it is caused by conversions to and from representation types that do not get eliminated during compilation. However, it is also known that generic functions can be specialised to specific datatypes, removing any overhead from the use of generic programming. In this paper, we investigate compilation techniques to specialise generic functions and remove the performance overhead of generic programs in Haskell. We pick a representative generic programming library and look at the generated code for a number of example generic functions. After understanding the necessary compiler optimisations for producing efficient generic code, we benchmark the runtime of our generic functions against handwritten variants, and conclude that the overhead can indeed be removed automatically by the compiler.},
+	author = {Magalh{\~a}es, Jos{\'e} Pedro},
+	booktitle = {Symposium on Implementation and Application of Functional Languages (IFL)},
+	date-added = {2022-02-24 17:53:16 +0800},
+	date-modified = {2022-02-24 17:53:16 +0800},
+	doi = {10.1007/978-3-642-41582-1_7},
+	pages = {104--121},
+	publisher = {Springer},
+	series = {Lecture Notes in Computer Science},
+	title = {Optimisation of Generic Programs through Inlining},
+	volume = {8241},
+	year = 2013,
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhbxCrAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAEwAaQBiAHIAYQByAHkALwBNAG8AYgBpAGwAZQAgAEQAbwBjAHUAbQBlAG4AdABzAC8ASgBGAEoAVwBXAFAANgA0AFEARAB+AGMAbwBtAH4AZwBvAG8AZABpAHcAYQByAGUAfgBHAG8AbwBkAFIAZQBhAGQAZQByAC8ARABvAGMAdQBtAGUAbgB0AHMALwBCAGkAYgBSAGUAcABvAHMAaQB0AG8AcgB5AC8ATQBhAGcAYQBsAGgAYQMDAGUAcwAgADIAMAAxADMAIAAtACAATwBwAHQAaQBtAGkAcwBhAHQAaQBvAG4AIABvAGYAIABHAGUAbgBlAHIAaQBjACAAUAByAG8AZwByAGEAbQBzACAAdABoAHIAbwB1AGcAaAAgAEkAbgBsAGkAbgBpAG4AZwAuAHAAZABmTxECvAAAAAACvAACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////FE1hZ2FsaGEjRkZGRkZGRkYucGRmbWlzYXRpb24gbwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAKwvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6TWFnYWxoYcyDZXMgMjAxMyAtIE9wdGltaXNhdGlvbiBvZiBHZW5lcmljIFByb2dyYW1zIHRocm91Z2ggSW5saW5pbmcucGRmAA4AkABHAE0AYQBnAGEAbABoAGEDAwBlAHMAIAAyADAAMQAzACAALQAgAE8AcAB0AGkAbQBpAHMAYQB0AGkAbwBuACAAbwBmACAARwBlAG4AZQByAGkAYwAgAFAAcgBvAGcAcgBhAG0AcwAgAHQAaAByAG8AdQBnAGgAIABJAG4AbABpAG4AaQBuAGcALgBwAGQAZgAPAA4ABgBTAHkAcwB0AGUAbQASAKpVc2Vycy9qb3Noa28vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L01hZ2FsaGHMg2VzIDIwMTMgLSBPcHRpbWlzYXRpb24gb2YgR2VuZXJpYyBQcm9ncmFtcyB0aHJvdWdoIElubGluaW5nLnBkZgATAAEvAAAVAAIADf//AAAACAANABoAJAF9AAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAABD0=}}
+
+@inproceedings{Magalhaes-generic-libraries,
+	abstract = {Datatype-generic programming increases program abstraction and reuse by making functions operate uniformly across different types. Many approaches to generic programming have been proposed over the years, most of them for Haskell, but recently also for dependently typed languages such as Agda. Different approaches vary in expressiveness, ease of use, and implementation techniques.\par
+
+Some work has been done in comparing the different approaches informally. However, to our knowledge there have been no attempts to formally prove relations between different approaches. We thus present a formal comparison of generic programming libraries. We show how to formalise different approaches in Agda, including a coinductive representation, and then establish theorems that relate the approaches to each other. We provide constructive proofs of inclusion of one approach in another that can be used to convert between approaches, helping to reduce code duplication across different libraries. Our formalisation also helps in providing a clear picture of the potential of each approach, especially in relating different generic views and their expressiveness.},
+	author = {Magalh{\~a}es, Jos{\'e} Pedro and L{\"o}h, Andres},
+	booktitle = {Workshop on Mathematically Structured Functional Programming (MSFP)},
+	date-added = {2022-02-24 17:28:49 +0800},
+	date-modified = {2022-02-24 17:29:13 +0800},
+	doi = {10.4204/eptcs.76.6},
+	pages = {50--67},
+	publisher = {Open Publishing Association},
+	series = {Electronic Proceedings in Theoretical Computer Science},
+	title = {A Formal Comparison of Approaches to Datatype-Generic Programming},
+	volume = {76},
+	year = 2012,
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhbxDBAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAEwAaQBiAHIAYQByAHkALwBNAG8AYgBpAGwAZQAgAEQAbwBjAHUAbQBlAG4AdABzAC8ASgBGAEoAVwBXAFAANgA0AFEARAB+AGMAbwBtAH4AZwBvAG8AZABpAHcAYQByAGUAfgBHAG8AbwBkAFIAZQBhAGQAZQByAC8ARABvAGMAdQBtAGUAbgB0AHMALwBCAGkAYgBSAGUAcABvAHMAaQB0AG8AcgB5AC8ATQBhAGcAYQBsAGgAYQMDAGUAcwAgAGUAdAAgAGEAbAAgADIAMAAxADIAIAAtACAAQQAgAEYAbwByAG0AYQBsACAAQwBvAG0AcABhAHIAaQBzAG8AbgAgAG8AZgAgAEEAcABwAHIAbwBhAGMAaABlAHMAIAB0AG8AIABEAGEAdABhAHQAeQBwAGUALQBHAGUAbgBlAHIAaQBjACAAUAByAG8AZwByAGEAbQBtAGkAbgBnAC4AcABkAGZPEQMUAAAAAAMUAAIAAAZTeXN0ZW0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQkQAAf////8UTWFnYWxoYSNGRkZGRkZGRi5wZGYtIEEgRm9ybWFsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wAAAAAAAAAAAAAAAAAFAAYAAAogY3UAAAAAAAAAAAAAAAAADUJpYlJlcG9zaXRvcnkAAAIAwi86VXNlcnM6am9zaGtvOkxpYnJhcnk6TW9iaWxlIERvY3VtZW50czpKRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlcjpEb2N1bWVudHM6QmliUmVwb3NpdG9yeTpNYWdhbGhhzINlcyBldCBhbCAyMDEyIC0gQSBGb3JtYWwgQ29tcGFyaXNvbiBvZiBBcHByb2FjaGVzIHRvIERhdGF0eXBlLUdlbmVyaWMgUHJvZ3JhbW1pbmcucGRmAA4AvABdAE0AYQBnAGEAbABoAGEDAwBlAHMAIABlAHQAIABhAGwAIAAyADAAMQAyACAALQAgAEEAIABGAG8AcgBtAGEAbAAgAEMAbwBtAHAAYQByAGkAcwBvAG4AIABvAGYAIABBAHAAcAByAG8AYQBjAGgAZQBzACAAdABvACAARABhAHQAYQB0AHkAcABlAC0ARwBlAG4AZQByAGkAYwAgAFAAcgBvAGcAcgBhAG0AbQBpAG4AZwAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAwFVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvTWFnYWxoYcyDZXMgZXQgYWwgMjAxMiAtIEEgRm9ybWFsIENvbXBhcmlzb24gb2YgQXBwcm9hY2hlcyB0byBEYXRhdHlwZS1HZW5lcmljIFByb2dyYW1taW5nLnBkZgATAAEvAAAVAAIADf//AAAACAANABoAJAGpAAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAABME=}}
+
+@inproceedings{Rodriguez-generic-libraries,
+	abstract = {Datatype-generic programming is defining functions that depend on the structure, or ``shape'', of datatypes. It has been around for more than 10 years, and a lot of progress has been made, in particular in the lazy functional programming language Haskell. There are morethan 10 proposals for generic programming libraries orlanguage extensions for Haskell. To compare and characterise the many generic programming libraries in atyped functional language, we introduce a set of criteria and develop a generic programming benchmark: a set of characteristic examples testing various facets of datatype-generic programming. We have implemented the benchmark for nine existing Haskell generic programming libraries and present the evaluation of the libraries. The comparison is useful for reaching a common standard for generic programming, but also for a programmer who has to choose a particular approach for datatype-generic programming.},
+	author = {Rodriguez, Alexey and Jeuring, Johan and Jansson, Patrik and Gerdes, Alex and Kiselyov, Oleg and Oliveira, Bruno C. d. S.},
+	booktitle = {International Symposium on Haskell},
+	date-added = {2022-02-24 17:18:50 +0800},
+	date-modified = {2022-02-24 17:18:50 +0800},
+	doi = {10.1145/1411286.1411301},
+	pages = {111--122},
+	publisher = {ACM},
+	title = {Comparing Libraries for Generic Programming in {Haskell}},
+	year = 2008,
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxC1Li4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L1JvZHJpZ3VleiBldCBhbCAyMDA4IC0gQ29tcGFyaW5nIExpYnJhcmllcyBmb3IgR2VuZXJpYyBQcm9ncmFtbWluZyBpbiBIYXNrZWxsLnBkZk8RAuQAAAAAAuQAAgAABlN5c3RlbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCRAAB/////x9Sb2RyaWd1ZXogZXQgYWwgMjAjRkZGRkZGRkYucGRmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAUABgAACiBjdQAAAAAAAAAAAAAAAAANQmliUmVwb3NpdG9yeQAAAgC1LzpVc2Vyczpqb3Noa286TGlicmFyeTpNb2JpbGUgRG9jdW1lbnRzOkpGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyOkRvY3VtZW50czpCaWJSZXBvc2l0b3J5OlJvZHJpZ3VleiBldCBhbCAyMDA4IC0gQ29tcGFyaW5nIExpYnJhcmllcyBmb3IgR2VuZXJpYyBQcm9ncmFtbWluZyBpbiBIYXNrZWxsLnBkZgAADgCkAFEAUgBvAGQAcgBpAGcAdQBlAHoAIABlAHQAIABhAGwAIAAyADAAMAA4ACAALQAgAEMAbwBtAHAAYQByAGkAbgBnACAATABpAGIAcgBhAHIAaQBlAHMAIABmAG8AcgAgAEcAZQBuAGUAcgBpAGMAIABQAHIAbwBnAHIAYQBtAG0AaQBuAGcAIABpAG4AIABIAGEAcwBrAGUAbABsAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgCzVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9Sb2RyaWd1ZXogZXQgYWwgMjAwOCAtIENvbXBhcmluZyBMaWJyYXJpZXMgZm9yIEdlbmVyaWMgUHJvZ3JhbW1pbmcgaW4gSGFza2VsbC5wZGYAABMAAS8AABUAAgAN//8AAAAIAA0AGgAkANwAAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAADxA==}}
+
+@inproceedings{Magalhaes-generic-deriving,
+	abstract = {Haskell's \textbf{deriving} mechanism supports the automatic generation of instances for a number of functions. The Haskell 98 Report only specifies how to generate instances for the \textsf{Eq}, \textsf{Ord}, \textsf{Enum}, \textsf{Bounded}, \textsf{Show}, and \textsf{Read} classes. The description of how to generate instances is largely informal. The generation of instances imposes restrictions on the shape of datatypes, depending on the particular class to derive. As a consequence, the portability of instances across different compilers is not guaranteed.\par
+
+We propose a new approach to Haskell's \textbf{deriving} mechanism, which allows users to specify how to derive arbitrary class instances using standard datatype-generic programming techniques. Generic functions, including the methods from six standard Haskell 98 derivable classes, can be specified entirely within Haskell 98 plus multi-parameter type classes, making them lightweight and portable. We can also express \textsf{Functor}, \textsf{Typeable}, and many other derivable classes with our technique. We implemented our \textbf{deriving} mechanism together with many new derivable classes in the Utrecht Haskell Compiler.},
+	author = {Magalh{\~a}es, Jos{\'e} Pedro and Dijkstra, Atze and Jeuring, Johan and L{\"o}h, Andres},
+	booktitle = {International Symposium on Haskell},
+	date-added = {2022-02-24 17:03:54 +0800},
+	date-modified = {2022-02-24 17:04:17 +0800},
+	doi = {10.1145/1863523.1863529},
+	pages = {37--48},
+	publisher = {ACM},
+	title = {A Generic Deriving Mechanism for {Haskell}},
+	year = 2010,
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhbxCoAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAEwAaQBiAHIAYQByAHkALwBNAG8AYgBpAGwAZQAgAEQAbwBjAHUAbQBlAG4AdABzAC8ASgBGAEoAVwBXAFAANgA0AFEARAB+AGMAbwBtAH4AZwBvAG8AZABpAHcAYQByAGUAfgBHAG8AbwBkAFIAZQBhAGQAZQByAC8ARABvAGMAdQBtAGUAbgB0AHMALwBCAGkAYgBSAGUAcABvAHMAaQB0AG8AcgB5AC8ATQBhAGcAYQBsAGgAYQMDAGUAcwAgAGUAdAAgAGEAbAAgADIAMAAxADAAIAAtACAAQQAgAEcAZQBuAGUAcgBpAGMAIABEAGUAcgBpAHYAaQBuAGcAIABNAGUAYwBoAGEAbgBpAHMAbQAgAGYAbwByACAASABhAHMAawBlAGwAbAAuAHAAZABmTxECsgAAAAACsgACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////FE1hZ2FsaGEjRkZGRkZGRkYucGRmLSBBIEdlbmVyaQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAKkvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6TWFnYWxoYcyDZXMgZXQgYWwgMjAxMCAtIEEgR2VuZXJpYyBEZXJpdmluZyBNZWNoYW5pc20gZm9yIEhhc2tlbGwucGRmAAAOAIoARABNAGEAZwBhAGwAaABhAwMAZQBzACAAZQB0ACAAYQBsACAAMgAwADEAMAAgAC0AIABBACAARwBlAG4AZQByAGkAYwAgAEQAZQByAGkAdgBpAG4AZwAgAE0AZQBjAGgAYQBuAGkAcwBtACAAZgBvAHIAIABIAGEAcwBrAGUAbABsAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgCnVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9NYWdhbGhhzINlcyBldCBhbCAyMDEwIC0gQSBHZW5lcmljIERlcml2aW5nIE1lY2hhbmlzbSBmb3IgSGFza2VsbC5wZGYAABMAAS8AABUAAgAN//8AAAAIAA0AGgAkAXcAAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAAELQ==}}
+
+@phdthesis{Loh-thesis,
+	abstract = {$\emptyset$},
+	author = {L{\"o}h, Andres},
+	date-added = {2022-02-24 16:52:45 +0800},
+	date-modified = {2022-02-24 16:52:45 +0800},
+	school = {Utrecht University},
+	title = {Exploring {Generic Haskell}},
+	url = {https://www.andres-loeh.de/ExploringGH.pdf},
+	year = {2004},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhbxCNAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAEwAaQBiAHIAYQByAHkALwBNAG8AYgBpAGwAZQAgAEQAbwBjAHUAbQBlAG4AdABzAC8ASgBGAEoAVwBXAFAANgA0AFEARAB+AGMAbwBtAH4AZwBvAG8AZABpAHcAYQByAGUAfgBHAG8AbwBkAFIAZQBhAGQAZQByAC8ARABvAGMAdQBtAGUAbgB0AHMALwBCAGkAYgBSAGUAcABvAHMAaQB0AG8AcgB5AC8ATABvAwgAaAAgADIAMAAwADQAIAAtACAARQB4AHAAbABvAHIAaQBuAGcAIABHAGUAbgBlAHIAaQBjACAASABhAHMAawBlAGwAbAAuAHAAZABmTxECRAAAAAACRAACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////D0xvI0ZGRkZGRkZGLnBkZnJpbmcgR2VuZXJpYyBIYQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAI4vOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6TG/MiGggMjAwNCAtIEV4cGxvcmluZyBHZW5lcmljIEhhc2tlbGwucGRmAA4AVAApAEwAbwMIAGgAIAAyADAAMAA0ACAALQAgAEUAeABwAGwAbwByAGkAbgBnACAARwBlAG4AZQByAGkAYwAgAEgAYQBzAGsAZQBsAGwALgBwAGQAZgAPAA4ABgBTAHkAcwB0AGUAbQASAIxVc2Vycy9qb3Noa28vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0xvzIhoIDIwMDQgLSBFeHBsb3JpbmcgR2VuZXJpYyBIYXNrZWxsLnBkZgATAAEvAAAVAAIADf//AAAACAANABoAJAFBAAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAAA4k=}}
+
+@book{ML-TT84,
+	author = {Per Martin-L{\"o}f},
+	date-added = {2022-02-24 14:05:13 +0800},
+	date-modified = {2022-02-24 14:05:13 +0800},
+	publisher = {Bibliopolis, Napoli},
+	read = {1},
+	title = {Intuitionistic Type Theory},
+	year = {1984},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhbxCVAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAEwAaQBiAHIAYQByAHkALwBNAG8AYgBpAGwAZQAgAEQAbwBjAHUAbQBlAG4AdABzAC8ASgBGAEoAVwBXAFAANgA0AFEARAB+AGMAbwBtAH4AZwBvAG8AZABpAHcAYQByAGUAfgBHAG8AbwBkAFIAZQBhAGQAZQByAC8ARABvAGMAdQBtAGUAbgB0AHMALwBCAGkAYgBSAGUAcABvAHMAaQB0AG8AcgB5AC8ATQBhAHIAdABpAG4ALQBMAG8DCABmACAAMQA5ADgANAAgAC0AIABJAG4AdAB1AGkAdABpAG8AbgBpAHMAdABpAGMAIABUAHkAcABlACAAVABoAGUAbwByAHkALgBwAGQAZk8RAmQAAAAAAmQAAgAABlN5c3RlbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCRAAB/////xZNYXJ0aW4tTG8jRkZGRkZGRkYucGRmdGlvbmlzdGkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAUABgAACiBjdQAAAAAAAAAAAAAAAAANQmliUmVwb3NpdG9yeQAAAgCWLzpVc2Vyczpqb3Noa286TGlicmFyeTpNb2JpbGUgRG9jdW1lbnRzOkpGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyOkRvY3VtZW50czpCaWJSZXBvc2l0b3J5Ok1hcnRpbi1Mb8yIZiAxOTg0IC0gSW50dWl0aW9uaXN0aWMgVHlwZSBUaGVvcnkucGRmAA4AZAAxAE0AYQByAHQAaQBuAC0ATABvAwgAZgAgADEAOQA4ADQAIAAtACAASQBuAHQAdQBpAHQAaQBvAG4AaQBzAHQAaQBjACAAVAB5AHAAZQAgAFQAaABlAG8AcgB5AC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgCUVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9NYXJ0aW4tTG/MiGYgMTk4NCAtIEludHVpdGlvbmlzdGljIFR5cGUgVGhlb3J5LnBkZgATAAEvAAAVAAIADf//AAAACAANABoAJAFRAAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAAA7k=}}
+
+@inproceedings{ML-TT73,
+	abstract = {The theory of types is intended to be a full-scale system for formalizing intuitionistic mathematics as developed. The language of the theory is richer than the languages of traditional intuitionistic systems in permitting proofs to appear as parts of propositions so that the propositions of the theory can express properties of proofs. There are axioms for universes that link the generation of objects and types and play somewhat the same role for the present theory as does the replacement axiom for Zermelo--Fraenkel set theory. The present theory is based on a strongly impredicative axiom that there is a type of all types in symbols. This axiom has to be abandoned, however, after it has been shown to lead to a contraction. This chapter discusses Normalization theorem, which can be strengthened in two ways: it can be made to cover open terms and it can be proved that every reduction sequence starting from an arbitrary term leads to a unique normal term after a finite number of steps. The definition of the notion of convertibility and the proof that an arbitrary term is convertible can no longer be separated because the type symbols and the terms are generated simultaneously.},
+	author = {Martin-L{\"o}f, Per},
+	booktitle = {Logic Colloquium '73},
+	date-added = {2022-02-24 13:34:46 +0800},
+	date-modified = {2022-02-24 13:34:46 +0800},
+	doi = {10.1016/S0049-237X(08)71945-1},
+	pages = {73-118},
+	publisher = {Elsevier},
+	series = {Studies in Logic and the Foundations of Mathematics},
+	title = {An Intuitionistic Theory of Types: Predicative Part},
+	volume = {80},
+	year = {1975},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhbxCtAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAC4ALgAvAEwAaQBiAHIAYQByAHkALwBNAG8AYgBpAGwAZQAgAEQAbwBjAHUAbQBlAG4AdABzAC8ASgBGAEoAVwBXAFAANgA0AFEARAB+AGMAbwBtAH4AZwBvAG8AZABpAHcAYQByAGUAfgBHAG8AbwBkAFIAZQBhAGQAZQByAC8ARABvAGMAdQBtAGUAbgB0AHMALwBCAGkAYgBSAGUAcABvAHMAaQB0AG8AcgB5AC8ATQBhAHIAdABpAG4ALQBMAG8DCABmACAAMQA5ADcANQAgAC0AIABBAG4AIABJAG4AdAB1AGkAdABpAG8AbgBpAHMAdABpAGMAIABUAGgAZQBvAHIAeQAgAG8AZgAgAFQAeQBwAGUAcwAgAFAAcgBlAGQAaQBjAGEAdABpAHYAZQAgAFAAYQByAHQALgBwAGQAZk8RAsQAAAAAAsQAAgAABlN5c3RlbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCRAAB/////xZNYXJ0aW4tTG8jRkZGRkZGRkYucGRmdHVpdGlvbmkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAUABgAACiBjdQAAAAAAAAAAAAAAAAANQmliUmVwb3NpdG9yeQAAAgCuLzpVc2Vyczpqb3Noa286TGlicmFyeTpNb2JpbGUgRG9jdW1lbnRzOkpGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyOkRvY3VtZW50czpCaWJSZXBvc2l0b3J5Ok1hcnRpbi1Mb8yIZiAxOTc1IC0gQW4gSW50dWl0aW9uaXN0aWMgVGhlb3J5IG9mIFR5cGVzIFByZWRpY2F0aXZlIFBhcnQucGRmAA4AlABJAE0AYQByAHQAaQBuAC0ATABvAwgAZgAgADEAOQA3ADUAIAAtACAAQQBuACAASQBuAHQAdQBpAHQAaQBvAG4AaQBzAHQAaQBjACAAVABoAGUAbwByAHkAIABvAGYAIABUAHkAcABlAHMAIABQAHIAZQBkAGkAYwBhAHQAaQB2AGUAIABQAGEAcgB0AC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgCsVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9NYXJ0aW4tTG/MiGYgMTk3NSAtIEFuIEludHVpdGlvbmlzdGljIFRoZW9yeSBvZiBUeXBlcyBQcmVkaWNhdGl2ZSBQYXJ0LnBkZgATAAEvAAAVAAIADf//AAAACAANABoAJAGBAAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAABEk=}}
+
+@incollection{Altenkirch-SSDGP,
+	abstract = {$\emptyset$},
+	author = {Altenkirch, Thorsten and McBride, Conor and Morris, Peter},
+	booktitle = {Datatype-Generic Programming},
+	date-added = {2022-02-24 11:10:02 +0800},
+	date-modified = {2022-02-24 11:10:02 +0800},
+	doi = {10.1007/978-3-540-76786-2_4},
+	pages = {209--257},
+	publisher = {Springer},
+	title = {Generic Programming with Dependent Types},
+	volume = {4719},
+	year = 2007,
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCoLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0FsdGVua2lyY2ggZXQgYWwgMjAwNyAtIEdlbmVyaWMgUHJvZ3JhbW1pbmcgd2l0aCBEZXBlbmRlbnQgVHlwZXMucGRmTxECrgAAAAACrgACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H0FsdGVua2lyY2ggZXQgYWwgMiNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAKgvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6QWx0ZW5raXJjaCBldCBhbCAyMDA3IC0gR2VuZXJpYyBQcm9ncmFtbWluZyB3aXRoIERlcGVuZGVudCBUeXBlcy5wZGYADgCKAEQAQQBsAHQAZQBuAGsAaQByAGMAaAAgAGUAdAAgAGEAbAAgADIAMAAwADcAIAAtACAARwBlAG4AZQByAGkAYwAgAFAAcgBvAGcAcgBhAG0AbQBpAG4AZwAgAHcAaQB0AGgAIABEAGUAcABlAG4AZABlAG4AdAAgAFQAeQBwAGUAcwAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAplVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvQWx0ZW5raXJjaCBldCBhbCAyMDA3IC0gR2VuZXJpYyBQcm9ncmFtbWluZyB3aXRoIERlcGVuZGVudCBUeXBlcy5wZGYAEwABLwAAFQACAA3//wAAAAgADQAaACQAzwAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAOB}}
+
+@phdthesis{Norell-thesis,
+	abstract = {Dependent type theories [ML72] have a long history of being used for theorem proving. One aspect of type theory which makes it very powerful as a proof language is that it mixes deduction with computation. This also makes type theory a good candidate for programming---the strength of the type system allows properties of programs to be stated and established, and the computational properties provide semantics for the programs.\par
+
+This thesis is concerned with bridging the gap between the theoretical presentations of type theory and the requirements on a practical programming language. Although there are many challenging research problems left to solve before we have an industrial scale programming language based on type theory, this thesis takes us a good step along the way.\par
+
+In functional programming languages pattern matching provides a concise notation for defining functions. In dependent type theory, pattern matching becomes even more powerful, in that inspecting the value of a particular term can reveal information about the types and values of other terms. In this thesis we give a type checking algorithm for definitions by pattern matching in type theory, supporting overlapping patterns, and pattern matching on intermediate results using the \emph{with} rule [MM04a].\par
+
+Traditional presentations of type theory suffers from rather verbose notation, cluttering programs and proofs with, for instance, explicit type information. One solution to this problem is to allow terms that can be inferred automatically to be omitted. This is usually implemented by inserting metavariables in place of the omitted terms and using unification to solve these metavariables during type checking. We present a type checking algorithm for a theory with metavariables and prove its soundness independent of whether the metavariables are solved or not.\par
+
+In any programming language it is important to be able to structure large programs into separate units or modules and limit the interaction between these modules. In this thesis we present a simple, but powerful module system for a dependently typed language. The main focus of the module system is to manage the name space of a program, and an important characteristic is a clear separation between the module system and the type checker, making it largely independent of the underlying language.\par
+
+As a side track, not directly related to the use of type theory for programming, we present a connection between type theory and a first-order logic theorem prover. This connection saves the user the burden of proving simple, but tedious first-order theorems by leaving them for the prover. We use a transparent translation to first-order logic which makes the proofs constructed by the theorem prover human readable. The soundness of the connection is established by a general metatheorem.\par
+
+Finally we put our work into practise in the implementation of a programming language, Agda, based on type theory. As an illustrating example we show how to program a simple certified prover for equations in a commutative monoid, which can be used internally in Agda. Much more impressive examples have been done by others, showing that the ideas developed in this thesis are viable in practise.},
+	author = {Ulf Norell},
+	date-added = {2022-02-24 10:58:54 +0800},
+	date-modified = {2022-02-24 10:58:54 +0800},
+	school = {Chalmers University of Technology},
+	title = {Towards a Practical Programming Language based on Dependent Type Theory},
+	url = {http://www.cse.chalmers.se/~ulfn/papers/thesis.html},
+	year = {2007},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxC9Li4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L05vcmVsbCAyMDA3IC0gVG93YXJkcyBhIFByYWN0aWNhbCBQcm9ncmFtbWluZyBMYW5ndWFnZSBiYXNlZCBvbiBEZXBlbmRlbnQgVHlwZSBUaGVvcnkucGRmTxEDBAAAAAADBAACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H05vcmVsbCAyMDA3IC0gVG93YSNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAL0vOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6Tm9yZWxsIDIwMDcgLSBUb3dhcmRzIGEgUHJhY3RpY2FsIFByb2dyYW1taW5nIExhbmd1YWdlIGJhc2VkIG9uIERlcGVuZGVudCBUeXBlIFRoZW9yeS5wZGYAAA4AtABZAE4AbwByAGUAbABsACAAMgAwADAANwAgAC0AIABUAG8AdwBhAHIAZABzACAAYQAgAFAAcgBhAGMAdABpAGMAYQBsACAAUAByAG8AZwByAGEAbQBtAGkAbgBnACAATABhAG4AZwB1AGEAZwBlACAAYgBhAHMAZQBkACAAbwBuACAARABlAHAAZQBuAGQAZQBuAHQAIABUAHkAcABlACAAVABoAGUAbwByAHkALgBwAGQAZgAPAA4ABgBTAHkAcwB0AGUAbQASALtVc2Vycy9qb3Noa28vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L05vcmVsbCAyMDA3IC0gVG93YXJkcyBhIFByYWN0aWNhbCBQcm9ncmFtbWluZyBMYW5ndWFnZSBiYXNlZCBvbiBEZXBlbmRlbnQgVHlwZSBUaGVvcnkucGRmAAATAAEvAAAVAAIADf//AAAACAANABoAJADkAAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAAA+w=}}
+
+@inproceedings{Diehl-InfIR,
+	abstract = {The class of Infinitary inductive-recursive (InfIR) types is commonly used to model type theory within itself. While it is common and convenient to provide examples of values within an InfIR model, writing functions that manipulate InfIR types is an underexplored area due to their inherent complexity.\par
+
+Our goal in this work is to push the boundaries of programming with InfIR types by introducing two functions operating over them. The first is a lookup function to extract sub-components from an InfIR type, and the second is an update function to replace sub-components within an InfIR type. We start by considering how to write such functions for concrete examples of InfIR types, and then show how to write generic versions of the functions for any datatype definable in the universe of InfIR types. We actually write two versions of the generic functions, one where the universe is open and another where the universe is closed.},
+	author = {Diehl, Larry and Sheard, Tim},
+	booktitle = {Workshop on Type-Driven Development (TyDe)},
+	date-added = {2022-02-24 10:45:55 +0800},
+	date-modified = {2022-02-24 10:45:55 +0800},
+	doi = {10.1145/2976022.2976031},
+	pages = {1--12},
+	publisher = {ACM},
+	title = {Generic Lookup and Update for Infinitary Inductive-Recursive Types},
+	year = 2016,
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxC9Li4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0RpZWhsIGV0IGFsIDIwMTYgLSBHZW5lcmljIExvb2t1cCBhbmQgVXBkYXRlIGZvciBJbmZpbml0YXJ5IEluZHVjdGl2ZS1SZWN1cnNpdmUgVHlwZXMucGRmTxEDBAAAAAADBAACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H0RpZWhsIGV0IGFsIDIwMTYgLSNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAL0vOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6RGllaGwgZXQgYWwgMjAxNiAtIEdlbmVyaWMgTG9va3VwIGFuZCBVcGRhdGUgZm9yIEluZmluaXRhcnkgSW5kdWN0aXZlLVJlY3Vyc2l2ZSBUeXBlcy5wZGYAAA4AtABZAEQAaQBlAGgAbAAgAGUAdAAgAGEAbAAgADIAMAAxADYAIAAtACAARwBlAG4AZQByAGkAYwAgAEwAbwBvAGsAdQBwACAAYQBuAGQAIABVAHAAZABhAHQAZQAgAGYAbwByACAASQBuAGYAaQBuAGkAdABhAHIAeQAgAEkAbgBkAHUAYwB0AGkAdgBlAC0AUgBlAGMAdQByAHMAaQB2AGUAIABUAHkAcABlAHMALgBwAGQAZgAPAA4ABgBTAHkAcwB0AGUAbQASALtVc2Vycy9qb3Noa28vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0RpZWhsIGV0IGFsIDIwMTYgLSBHZW5lcmljIExvb2t1cCBhbmQgVXBkYXRlIGZvciBJbmZpbml0YXJ5IEluZHVjdGl2ZS1SZWN1cnNpdmUgVHlwZXMucGRmAAATAAEvAAAVAAIADf//AAAACAANABoAJADkAAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAAA+w=}}
+
+@book{Brady-Idris-book,
+	author = {Brady, Edwin},
+	date-added = {2022-02-23 14:56:50 +0800},
+	date-modified = {2022-02-23 14:56:50 +0800},
+	isbn = {9781617293023},
+	publisher = {Manning Publications},
+	title = {Type-Driven Development with Idris},
+	year = {2017},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCXLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0JyYWR5IDIwMTcgLSBUeXBlLURyaXZlbiBEZXZlbG9wbWVudCB3aXRoIElkcmlzLnBkZk8RAmwAAAAAAmwAAgAABlN5c3RlbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCRAAB/////x9CcmFkeSAyMDE3IC0gVHlwZS0jRkZGRkZGRkYucGRmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAUABgAACiBjdQAAAAAAAAAAAAAAAAANQmliUmVwb3NpdG9yeQAAAgCXLzpVc2Vyczpqb3Noa286TGlicmFyeTpNb2JpbGUgRG9jdW1lbnRzOkpGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyOkRvY3VtZW50czpCaWJSZXBvc2l0b3J5OkJyYWR5IDIwMTcgLSBUeXBlLURyaXZlbiBEZXZlbG9wbWVudCB3aXRoIElkcmlzLnBkZgAADgBoADMAQgByAGEAZAB5ACAAMgAwADEANwAgAC0AIABUAHkAcABlAC0ARAByAGkAdgBlAG4AIABEAGUAdgBlAGwAbwBwAG0AZQBuAHQAIAB3AGkAdABoACAASQBkAHIAaQBzAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgCVVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9CcmFkeSAyMDE3IC0gVHlwZS1Ecml2ZW4gRGV2ZWxvcG1lbnQgd2l0aCBJZHJpcy5wZGYAABMAAS8AABUAAgAN//8AAAAIAA0AGgAkAL4AAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAADLg==}}
+
+@book{Stump-Agda-book,
+	author = {Stump, Aaron},
+	date-added = {2022-02-23 14:54:59 +0800},
+	date-modified = {2022-02-23 14:54:59 +0800},
+	doi = {10.1145/2841316},
+	isbn = {9781970001242},
+	publisher = {ACM Books},
+	title = {Verified Functional Programming in Agda},
+	year = {2016},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCcLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L1N0dW1wIDIwMTYgLSBWZXJpZmllZCBGdW5jdGlvbmFsIFByb2dyYW1taW5nIGluIEFnZGEucGRmTxECfgAAAAACfgACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H1N0dW1wIDIwMTYgLSBWZXJpZiNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJwvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6U3R1bXAgMjAxNiAtIFZlcmlmaWVkIEZ1bmN0aW9uYWwgUHJvZ3JhbW1pbmcgaW4gQWdkYS5wZGYADgByADgAUwB0AHUAbQBwACAAMgAwADEANgAgAC0AIABWAGUAcgBpAGYAaQBlAGQAIABGAHUAbgBjAHQAaQBvAG4AYQBsACAAUAByAG8AZwByAGEAbQBtAGkAbgBnACAAaQBuACAAQQBnAGQAYQAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAmlVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvU3R1bXAgMjAxNiAtIFZlcmlmaWVkIEZ1bmN0aW9uYWwgUHJvZ3JhbW1pbmcgaW4gQWdkYS5wZGYAEwABLwAAFQACAA3//wAAAAgADQAaACQAwwAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAANF}}
 
 @inproceedings{Devriese-instance-arguments,
 	abstract = {We present instance arguments: an alternative to type classes and related features in the dependently typed, purely functional programming language/proof assistant Agda. They are a new, general type of function arguments, resolved from call-site scope in a type-directed way. The mechanism is inspired by both Scala's implicits and Agda's existing implicit arguments, but differs from both in important ways. Our mechanism is designed and implemented for Agda, but our design choices can be applied to other programming languages as well.\par
@@ -176,7 +380,7 @@ The story begins with a class of simple types which are given a purely syntactic
 	read = {1},
 	title = {Algebra of Programming},
 	year = {1997},
-	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCQLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0JpcmQgZXQgYWwgMTk5NyAtIEFsZ2VicmEgb2YgUHJvZ3JhbW1pbmcucGRmTxECTgAAAAACTgACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H0JpcmQgZXQgYWwgMTk5NyAtICNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAUERGIENBUk8ABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJAvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6QmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYADgBaACwAQgBpAHIAZAAgAGUAdAAgAGEAbAAgADEAOQA5ADcAIAAtACAAQQBsAGcAZQBiAHIAYQAgAG8AZgAgAFAAcgBvAGcAcgBhAG0AbQBpAG4AZwAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAjlVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvQmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYAEwABLwAAFQACAA3//wAAAAgADQAaACQAtwAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAMJ}}
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCQLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0JpcmQgZXQgYWwgMTk5NyAtIEFsZ2VicmEgb2YgUHJvZ3JhbW1pbmcucGRmTxECTgAAAAACTgACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H0JpcmQgZXQgYWwgMTk5NyAtICNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJAvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6QmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYADgBaACwAQgBpAHIAZAAgAGUAdAAgAGEAbAAgADEAOQA5ADcAIAAtACAAQQBsAGcAZQBiAHIAYQAgAG8AZgAgAFAAcgBvAGcAcgBhAG0AbQBpAG4AZwAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAjlVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvQmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYAEwABLwAAFQACAA3//wAAAAgADQAaACQAtwAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAMJ}}
 
 @incollection{Abou-Saleh-BX-intro,
 	abstract = {Bidirectional transformations (BX) serve to maintain consistency between different representations of related and often overlapping information, translating changes in one representation to the others. We present a brief introduction to the field, in order to provide some common background to the remainder of this volume, which constitutes the lecture notes from the \emph{Summer School on Bidirectional Transformations}, held in Oxford in July 2016 as one of the closing activities of the UK EPSRC-funded project \emph{A Theory of Least Change for Bidirectional Transformations}.},
