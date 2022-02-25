@@ -1107,33 +1107,6 @@ data Pattern where
 \end{minipage}
 \end{figure}
 
-\begin{figure}[t]
-\codefigure
-\begin{minipage}[t]{.5\textwidth}
-\begin{code}
-postulate
-  Name  : Set
-  Meta  : Set
-
-data Literal where
-  nat    : (n : ℕ) → Literal
-  ...
-
-\end{code}
-\caption{Other built-in types for reflection}\label{fig:other-type}
-\end{minipage}%
-\begin{minipage}[t]{.5\textwidth}
-\begin{code}
-Type       =  Term
-Telescope  =  List Type
-Terms      =  List Term
-Names      =  List Name
-Patterns   =  List Pattern
-\end{code}
-\caption{Type abbreviations}
-\label{fig:type abbrs}
-\end{minipage}
-\end{figure}
 
 In this section, we will use elaborator reflection to streamline generic programming in previous sections:
 First, we use macros to translate representations (\Cref{sec:parameters}) used by generic programs such as |Tel : Level → Set|, which are \emph{higher-order} and \emph{typed}, and those by the reflection framework which are \emph{first-order} and \emph{unityped} in \Cref{sec:translation}.
@@ -1150,7 +1123,7 @@ The quotation of an expression |e| can be obtained by |quoteTerm e| and the reso
 For example, the quotation |quoteTerm acc| of the constructor |acc| is equal to |con (quote acc) []| where the empty list |[]| indicates that |acc| alone has no arguments.
 For illustrative purposes, a subset of reflected expressions is presented instead of the actual inductive definition |Term| \citep{Agda} which carries not only arguments' visibility and modality but also various sorts that are of no use for our understanding
 
-The elaborator monad |TC| encloses states needed for elaboration, including the current context, the scope of names |f : Name| with its associated type and definition, the set of metavariables |x : Meta| and so forth.
+The elaborator monad |TC| (called the \emph{type checking monad} in Agda's documentation) encloses states needed for elaboration, including the current context, the scope of names |f : Name| with its associated type and definition, the set of metavariables |x : Meta| and so forth.
 %Some primitives are used to access the elaboration states such as |getContext : TC Telescope|, |getType : Name → TC Type|, and |getDefinition|
 %some are used to modify the state such as |freshName : String → TC Name| for adding a name without definition, |declarePostulate : Name → Type → TC ⊤| for postulating a type;
 %some are used to elaborator-specific operations such as |reduce, normalise : Term → TC Term|. 
@@ -1180,12 +1153,40 @@ Invoking the macro as |give e| would splice the given reflected expression~|e| i
 In fact, for convenience Agda quotes arguments of type |Term| and |Name| before macro invocation, so |give e| evaluates to |unify (quoteTerm e)| during elaboration. 
 After finishing the invocation, the call site of |give e| becomes |e| which will then be elaborated again.
 
+\begin{figure}[t]
+\codefigure
+\begin{minipage}[t]{.5\textwidth}
+\begin{code}
+postulate
+  Name  : Set
+  Meta  : Set
+
+data Literal where
+  nat    : (n : ℕ) → Literal
+  ...
+
+\end{code}
+\caption{Other built-in types for reflection}\label{fig:other-type}
+\end{minipage}%
+\begin{minipage}[t]{.5\textwidth}
+\begin{code}
+Type       =  Term
+Telescope  =  List Type
+Terms      =  List Term
+Names      =  List Name
+Patterns   =  List Pattern
+\end{code}
+\caption{Type abbreviations}
+\label{fig:type abbrs}
+\end{minipage}
+\end{figure}
+
 The reflected language in Agda is based on the de Bruijn representation and thus \emph{not} hygiene.
 Manipulating indices is notoriously error-prone, but in many cases there is no need to do so.
-Instead, we unquote a variable |var i []| and bind it to an (object-level) variable |x| to avoid manipulating indices explicitly. 
+We will see concrete examples in \Cref{sec:translation}. 
+%Instead, we unquote a variable |var i []| and bind it to an (object-level) variable |x| to avoid manipulating indices explicitly. 
 %For example, the primitive |extendContext : ∀ {A} (`B : Type) → TC A → TC A| takes a reflected expression of some type |B| and extends the context of the second argument with a variable of type |B|, so it is tempting to use |var 0 []| to refer the added variable in the extended context directly.
 %Following this idea, we define a typed version (\Cref{fig:extendContextT}) of |extendContext| that takes a |TC| computation with an argument of type |B|.
-We will see concrete examples in \Cref{sec:translation}. 
 
 \subsection{Translation between Typed Higher-Order and Unityped First-Order Representations}\label{sec:translation}
 
@@ -1229,8 +1230,8 @@ We may extend the context (of the call site) with a new variable used locally in
 To introduce the new variable in the |TC| monad to the scope of |fromTel|, we then need another primitive |unquoteTC| which interprets a reflected expression |e : Term| to its corresponding inhabitant of type |A|, so within the extended context the |TC| computation |unquoteTC (var 0 []) >>= λ x → ...| binds the newly added variable to |x|.
 %That is, we introduce a local variable of a type |A| during macro invocation by |unquoteTC| and |extendContext| altogether.
 The creation of a local variable is similar to the $\nu$-operator for the \emph{local name creation} by \citet{Schurmann2005,Nanevski2005} and is achieved through elaborator reflection in Agda by \citet{Chen-Mtac-Agda}.
-This technique is used frequently in our translations, so we define them explicitly as in \Cref{fig:extendContextT,fig:extendCxtTel}.
-As long as the local variable |x| of the telescope |T x| is used only for variable binding, the computation can proceed and |T x| will be evaluated to one of the three cases eventually.
+This technique is used frequently, so we define them explicitly as in \Cref{fig:extendContextT,fig:extendCxtTel}.
+As long as the local variable |x| is used only for variable binding, the computation of |T x| can proceed and will reach to one of the three cases eventually.
 The last two cases are then defined rather succinctly:
 \begin{minipage}[t]{0.5\textwidth}
 \restorecolumns
@@ -1358,7 +1359,7 @@ so the obstacle just disappears at this stage.
 Finally, we have to traverse the quotation of its type retrieved by |getType : Name → TC Type| and telescopes |Param| and |Index| at the same time, since the native datatype to wrap or to connect can be provided by the user possibly with different choices of explicit and implicit arguments (but in the same order).
 This point results in a few instances of synchronisation between types of representations.
 For example, to check if a given datatype matches a given description |D : DataD|, we define a |TC| computation |_⊆ᵗ?_| as in \Cref{fig:compare-tel-telescope} that checks if |T : Tel ℓ| is a prefix of |Γ : Telescope| and returns a partition of |Γ|.
-Note that |unify| in \Cref{fig:compare-tel-telescope} is used to check the equivalence between two types instead of just unifying an reflected expression with a metavariable, since the most general unifier is indeed an equivalence~\cite{Cockx2016,Cockx2018}.  
+Note that |unify| in \Cref{fig:compare-tel-telescope} is used to check the equivalence between two types (instead of just unifying an reflected expression with a metavariable), since the most general unifier is indeed an equivalence~\cite{Cockx2016,Cockx2018}.  
 We also have a |TC| computation |telToVars| to generate a tuple of variables based on a given |T : Tel ℓ| and a list of arguments based on the quotation of the type of a datatype, since the shape of a tuple such as |(A, R, _)| is specified by |Param| in |PDataD| but the visibility of arguments is by the type of datatype.
 
 \begin{figure}[t]
@@ -1389,18 +1390,21 @@ _⊆ᵗ?_  : Tel ℓ → Telescope → TC (Telescope × Telescope)
 \label{fig:compare-tel-telescope}
 \end{figure}
 
-In particular, we have defined a set of macros |genDataT|, |genDataC|, |getnFoldC|, etc.\ in our framework so that |AccT| and |AccC| in \Cref{sec:DataC} can be given automatically by
+In particular, we have defined a set of macros |genDataT|, |genDataC|, |getnFoldC|, etc.\ in our framework.
+Now the wrapper |AccT| and connections |AccC| and |foldAccC| in \Cref{sec:connections} can now be generated respectively by 
+%\begin{enumerate*}
+%  \item |genDataT AccD Acc|,
+%  \item |genDataC AccD AccT|, and
+%  \item |genFoldC foldAccP foldAcc|,
+%\end{enumerate*}
+\begin{code}
+AccT = genDataT  AccD  Acc    {-"\hspace{3em}"-}   foldAccC = genFoldC foldAccP foldAcc
+AccC = genDataC  AccD  AccT
+\end{code}
 
-\begin{minipage}[t]{.5\textwidth}
-\begin{code}
-  AccT = genDataT AccD Acc
-\end{code}
-\end{minipage}%
-\begin{minipage}[t]{.5\textwidth}
-\begin{code}
-AccC = genDataC AccD AccT
-\end{code}
-\end{minipage}
+The code generation so far may appear still manageable without elaborator reflection but the use of |unify| to check the equivalence between types is indispensable, especially that the unification algorithm in a dependently typed language is hard to implement properly~\cite[Section~8]{Cockx2018}. 
+We shall see another important use in the next section.
+
 \subsection{Instantiating Generic Functions without Bureaucracy}\label{sec:specialising}
 \Viktor{Use |FoldP| to generate function definitions}
 \LT{Introduce |normalise| and |checkType|; explain the difference between unchecked and checked clauses; no subject reduction for abstract syntax, so we have to normalise checked clauses with |fold-base| on the right hand side~\cite{Alimarine2004}}
