@@ -355,7 +355,7 @@
 %% The abstract is a short summary of the work to be presented in the
 %% article.
 \begin{abstract}
-\todo[inline]{Datatype-generic programming is typed metaprogramming over datatypes.}
+\todo[inline]{abstract}
 \end{abstract}
 
 %\begin{CCSXML}
@@ -396,22 +396,22 @@ The existing dependently typed datatype-generic libraries~\citep{McBride-ornamen
 What is going wrong?
 
 The major problem, we argue, is the lack of interoperability.
-The prevalent approach to datatype-generic programming in Agda (recapped in \cref{sec:recap}) is to construct a universe of datatype descriptions and then decode the descriptions to actual datatypes via some least fixed-point operator~|μ|.
+The prevalent approach to datatype-generic programming in Agda (recapped in \cref{sec:recap}) is to construct a family of datatype descriptions and then decode the descriptions to actual datatypes via some least fixed-point operator~|μ|.
 Generic programs take descriptions as parameters and work only on datatypes decoded from descriptions.
-Although this approach is rooted in the idea of universes (à~la Tarski) in Type Theory~\citep{ML-TT73,ML-TT84} and serves as a simulation of a more recent theory of datatypes~\citep{Chapman-levitation} (discussed in \cref{sec:discussion}), it is not what we want:
-Generic libraries usually use their own datatype descriptions and are incompatible with each other, so only one library can be chosen at a time, which is unreasonable.
-Moreover, decoded datatypes are essentially segregated from native datatypes, and there is no point abandoning most of the language support and libraries developed for native datatypes in exchange for one generic library.
+Although this approach is theoretically rooted in the idea of universe (à~la Tarski)~\citep{ML-TT73,ML-TT84} and serves as a simulation of a more recent theory of datatypes~\citep{Chapman-levitation} (discussed in \cref{sec:discussion}), it is not what we want:
+Generic libraries usually use their own version of datatype descriptions and are incompatible with each other, so only one library can be chosen at a time, which is unreasonable.
+Moreover, decoded datatypes are essentially segregated from native datatypes, and there is no point for the Agda programmer to abandon most of the language support and libraries developed for native datatypes in exchange for one generic library.
 
 So what do we want from datatype-generic libraries?
 We want to write our own native datatypes and then instantiate generic programs for them.
-And since we are in a dependently typed setting, we should also be able to instantiate properties of the instantiated programs too.
+And since we are in a dependently typed setting, we should be able to instantiate properties of the instantiated programs too.
 For a standard example, from the |List| datatype, we want to derive not only its fold operator
 \begin{code}
 foldr : {A : Set ℓ} {B : Set ℓ'} → (A → B → B) → B → List A → B
 foldr f e []        = e
 foldr f e (a ∷ as)  = f a (foldr f e as)
 \end{code}
-but also theorems (and, in general, constructions) about |foldr|, such as the following `fold fusion' theorem, which allows us to optimise the composition of a |foldr| and a function~|h| as a single |foldr| (provided that |h|~satisfies the homomorphism conditions |he|~and~|hf|):
+but also theorems (and, in general, constructions) about |foldr|, such as the following `fold fusion' theorem (which allows us to optimise the composition of a |foldr| and a function~|h| as a single |foldr|):
 \begin{code}
 foldr-fusion :  {A : Set ℓ} {B : Set ℓ'} {C : Set ℓ''} (h : B → C)
                 {e : B} {f : A → B → B} {e' : C} {f' : A → C → C} →
@@ -436,7 +436,7 @@ length (a ∷ as)  = suc (length as)
 \end{code}
 \end{minipage}\\
 and subsequently we want to derive constructions about vectors too.
-What we want is conceptually conservative but immediately useful: automated generation of native entities that we had to write manually (including all the entities shown above) from datatype-generic programs.
+What we want is conceptually simple but immediately useful in practice: automated generation of native entities that had to written manually ---including all the entities shown above--- from datatype-generic programs.
 
 %\todo[inline]{What we really want from generic libraries, using lists and vectors as familiar examples: we want to generate functions for native datatypes as if they are hand-written so that they are efficient to compute (no back-and-forth representation conversions), easy to reason about (again without the conversions and no excessive abstraction), and can fully benefit from whatever language facilities there are (e.g., Agda's interactive features and compiler optimisations); moreover, we want to generate not only, for example, fold operators but also their theorems such as fold fusion; particularly important in a dependently typed setting is the ability to generate new \emph{datatypes}, and then their functions and properties (e.g., algebraic ornamentation and the associated isomorphism); some actual demo}
 
@@ -445,15 +445,15 @@ Generic programs in Haskell have always been instantiated for native datatypes, 
 However, generic program instantiation in Haskell traditionally proceeds by inserting conversions back and forth between native and generic representations, causing a serious efficiency problem.
 The conversions are even more problematic in Agda because their presence would make it unnecessarily complicated to reason about instantiated functions.
 The Haskell community addressed the conversion problem using compiler optimisation~\citep{Magalhaes-inlining} and, more recently, staging~\citep{Pickering-staged-SoP}.
-Unfortunately, compiler optimisation does not work for us because instantiated functions are reasoned about even before they are compiled, and they need to be as clean as hand-written code right after instantiation; this requirement could be met by staging, which is not available in Agda though.
+Unfortunately, compiler optimisation does not work for us because instantiated functions are reasoned about even before they are compiled, and they need to be as clean as hand-written code right after instantiation; this requirement could be met by staging, which is not available in dependently typed languages though.
 
 %\Josh{Old attempts at optimising DGP and why they don't work: There have been many attempts at removing overheads by compiler optimisation, but this is not enough for dependently typed programming, where programs may appear in later types and be reasoned about (and haven’t been processed by the compiler at all).
 %And compiler optimisations need to be fine-tuned to produce what we want; why not just generate what we want in the first place?}
 
-Luckily again, in Agda we have something that can take the place of staging: elaborator reflection (inspired by Idris~\citep{Christiansen-elaborator-reflection}), through which the Agda metaprogrammer has access to operations for elaborating the surface language to the core.
+Luckily again, in Agda there is something that can take the place of staging for generic program instantiation: elaborator reflection (inspired by Idris~\citep{Christiansen-elaborator-reflection}), through which the Agda metaprogrammer has access to operations for elaborating the surface language to the core.
 It turns out that datatype-generic programming and elaborator reflection are a perfect match in Agda.
-For example, to express dependency in types, datatype descriptions are usually higher-order and can be somewhat difficult to manipulate, but our transformation from descriptions to native datatypes is surprisingly natural thanks to the `local name creation' technique~\citep{Nanevski-names-and-necessity}, which is easily implemented using a few primitives of elaborator reflection.
-Moreover, there is no need to drastically alter the form of generic programs (such as adding staging annotations) because they can be straightforwardly instantiated by (open-term) normalisation, also a primitive of elaborator reflection.
+For example, to express dependency in types, datatype descriptions are usually higher-order and can be somewhat difficult to manipulate, but our transformation from descriptions to native datatypes is surprisingly natural thanks to the `local name creation' technique~\citep{Nanevski-names-and-necessity}, which is easily implemented using a few reflection primitives.
+Moreover, there is no need to drastically alter the form of generic programs (such as adding staging annotations) because they can be straightforwardly instantiated with (open-term) normalisation, also a reflection primitive.
 
 %\LT{Staged computation has been proposed to solve the notorious efficiency problem~\cite{Yallop-staged-generic-programming,Pickering-staged-SoP} due to the conversions between generic representations.
 %This approach, however, makes generic programs entangled with the staging information, making generic programs even harder to write.
@@ -462,12 +462,12 @@ Moreover, there is no need to drastically alter the form of generic programs (su
 %\LT{The use of elaborator reflection is essential to us: type-checking and normalisation, for example, are not available in other metaprogramming paradigms and they are hard to implement in full as this would require essentially rebuilding an elaborator.
 %Unlike other approaches using staging~\cite{Yallop-staged-generic-programming,Pickering-staged-SoP} where generic programs are entangled with staging to eliminate the generic representation, the elaborator reflection allows us to normalise a given open term directly.}
 
-This paper presents a framework in Agda where datatype-generic programs can be instantiated as, and for, native datatypes and functions through elaborator reflection.
+We have developed a framework in Agda where datatype-generic programs can be instantiated as, and for, native datatypes and functions through elaborator reflection.
 We do not need radically new datatype-generic programming techniques, but do need to adapt our datatype descriptions ---restricted to inductive families~\citep{Dybjer1994} in this paper--- to support commonly used Agda features, in particular universe polymorphism~(\cref{sec:parameters}).
-Our datatype-generic programs instantiate to native entities that are close to hand-written forms, and work on existing native entities through connections to their generic counterparts~(\cref{sec:connections}).
-The instantiation macros are a new use case of (Agda's) elaborator reflection~(\cref{sec:reflection}), which works naturally with datatype-generic programming; more generally, we provide a tutorial on Agda's elaborator reflection (which is less documented), and in particular promote the local name creation technique for handling higher-order syntax.
-As a demo, we adapt some existing generic constructions for our framework~(\cref{sec:examples}).
-We expect that this work will facilitate the development of practical datatype-generic libraries in Agda and provide motivation for theoretical investigations~(\cref{sec:discussion}).
+Our generic programs instantiate to native entities that are close to hand-written forms, and work on existing native entities through `connections' to their generic counterparts~(\cref{sec:connections}).
+The instantiation macros are a new use case of (Agda's) elaborator reflection~(\cref{sec:reflection}); more generally, we give a Cook's tour of Agda's elaborator reflection (which is less documented), and promote the local name creation technique for handling higher-order syntax.
+As a demo, we adapt some existing generic constructions to our framework~(\cref{sec:examples}).
+We expect that this work will facilitate the development of practical datatype-generic libraries in Agda, and provide motivations for theoretical investigations~(\cref{sec:discussion}).
 
 %\Josh{No radically new datatype-generic programming techniques, just adaptations for practical Agda programming (parameters, universe polymorphism, and visibility and curried forms; compare with \citet{Dybjer1994}); pointing out an ignored direction worth following}
 
@@ -533,7 +533,7 @@ data RecD (I : Set) : Set₁ where
 \label{fig:basic-descriptions}
 \end{figure}
 
-There have been quite a few variants of datatype encoding~\citep{Altenkirch-SSDGP,Chapman-levitation,McBride-ornaments,Dagand-functional-ornaments,Ko-OrnJFP}; here we use a three-layered version that more closely follows the structure of an Agda datatype definition (comparable to \varcitet{de-Vries-true-SoP}{'s} work).
+There have been quite a few variants of datatype encoding~\citep{Altenkirch-SSDGP,Chapman-levitation,McBride-ornaments,Dagand-functional-ornaments,Ko-OrnJFP}; here we use a three-layered version that closely follows the structure of an Agda datatype definition (comparable to \varcitet{de-Vries-true-SoP}{'s} encoding).
 %\footnote{This choice of layered structure has also been adopted elsewhere, for example by \citet{de-Vries-true-SoP}.}
 %which has (i)~a list of constructors made up of (ii)~a series of fields, some of which can be (iii)~potentially higher-order recursive occurrences of the datatype being defined.
 As a small running example, consider this accessibility datatype:%
