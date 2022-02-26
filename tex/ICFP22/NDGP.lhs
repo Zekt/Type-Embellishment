@@ -1409,15 +1409,41 @@ AccT  = genDataT  AccD  Acc    {-"\hspace{3em}"-}   foldAccC = genFoldC foldAccP
 AccC  = genDataC  AccD  AccT
 \end{code}
 
-The code generation so far may appear manageable without elaborator reflection, but in fact the use of |unify| to check the equivalence between types in \Cref{fig:compare-tel-telescope} is indispensable, especially that a unification algorithm in a dependently typed setting is hard to implement correctly as discussed in~\cite[Section~8]{Cockx2018}. 
-We shall see another important use in the next section.
+%The code generation so far may appear manageable without elaborator reflection, but in fact the use of |unify| to check the equivalence between types in \Cref{fig:compare-tel-telescope} is indispensable to ensure that macros are applied correctly.
+%A unification algorithm in a dependently typed setting is hard to implement correctly as discussed in~\cite[Section~8]{Cockx2018}
+%We shall see another important use in the next section.
 
 \subsection{Instantiating Generic Functions without Bureaucracy}\label{sec:specialising}
-\Viktor{Use |FoldP| to generate function definitions}
-\LT{Introduce |normalise| and |checkType|; explain the difference between unchecked and checked clauses; no subject reduction for abstract syntax, so we have to normalise checked clauses with |fold-base| on the right hand side~\cite{Alimarine2004}}
+The instantiation of a fold program |F : FoldP| and an inductive program is almost the same, so we focus on fold programs in this section. 
+The instantiation of |F| consists of following steps
+\begin{enumerate*}
+  \item generating the instantiated function type using |FoldNT|, 
+  \item generating a clause $\Delta_i \vdash \overline{p}_i \hookrightarrow e_i$
+    for each constructor~$c_i$ specified by |Native| in |F|, and
+  \item eliminating the intermediate conversion in $e_i$ by normalisation.
+\end{enumerate*}
 
-\Viktor{definition declaration via macro |unquoteDecl|}
+First, ...
+\LT{introduce |normalise| and |withNormalisation|}
+Second, ...
+\[
+  \Delta \vdash \overline{\Varid{ℓ}}\; \overline{p}\;x\;(c_i\;\overline{a}) \hookrightarrow e_i
+\]
 
+Finally,...
+\LT{we normalise clauses with |fold-base| on the right hand side~\cite{Alimarine2004}
+explain the bidirectional type checking;
+|inferType| is performed before |normalise|;
+|fold-base| is a definition so it can be inferred;
+}
+
+We have defined |defineFold| and |defineInd| respectively for instantiating fold programs |F : FoldP| and inductive programs |I : IndP|.
+To define a function $f$ by reflection by a fold program |F|, for example, the following declaration 
+\restorecolumns
+\begin{code}
+unquoteDecl foldAcc  = defineFold  foldAccP  foldAcc
+\end{code}
+defines the very same function |foldAcc| in \Cref{sec:FoldC} modulo variable renaming. 
 
 \section{Examples}
 \label{sec:examples}
