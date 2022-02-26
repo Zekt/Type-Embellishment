@@ -1826,25 +1826,36 @@ Other work on typed metaprogramming~\citep{Xie-Typed-Template-Haskell, Jang-Moeb
 Staging may be better for controlling what appears in the final code, but there's no implementation for dependently typed languages.
 Efficiency problem due to conversion between generic and native representations (see below) since the Haskell era~\citep{Magalhaes-optimising-generics}.}
 
-A conventional way to instantiate generic programs is by run-time translation between generic and ordinary datatype definitions (\citep{de-Vries-true-SoP} cite more old papers?).
-Various works have been done to optimise this instantiation process to overcome its apparent overheads (\citep{Alimarine2004}, \citep{de-Vries-masters-thesis}, \citep{Yallop-staged-generic-programming}, and \citep{Pickering-staged-SoP}).
-Some radical approaches, notably staging (\citep{Yallop-staged-generic-programming} and \citep{Pickering-staged-SoP}), eliminate all overheads in question and generate function definitions that are identical to ordinary ones.
-We argue that our presented instantiation process (cref?) achieves the same level of optimisation while making it easier to write generic programs than staging, with the help of elaborator reflection.
+A traditional way to instantiate generic programs is to compose the generic program with conversions between generic and native datatype definitions.
+Various works have been done to optimise this instantiation process to overcome its apparent overheads.
+Compiler optimisations \citep{de-Vries-masters-thesis, Magalhaes-optimising-generics} do not introduce native function definitions, therefore are harder for programmers to reason about and less relevant to our work.
+Staging generic programs \citep{Yallop-staged-generic-programming, Pickering-staged-SoP}, on the other hand, eliminate all overheads in question by generating native function definitions.
+This is comparable to our approach since our metaprograms also produce native definitions.
+We can compare staging with our proposed approach from the viewpoint of partial evaluation \citep{Jones-partial-evaluation}.
 
-More precisely, manually staging generic programs is comparable to partial evaluation (\citep{Jones-partial-evaluation}).
-% A partial evaluator takes a general program and parts of its inputs, then generates a program that is extensionally equivalent to the general program partially applied to the given parts of inputs.
-By staging, programmers are manually doing the first part of a partial evaluator's job.
-They transform generic programs into metaprograms that generate specialised functions after taking to-be-instantiated datatypes.
-The output, staged generic programs, are extensionally equivalent to partially-applied partial evaluators.
-Our presented metaprograms on the other hand are actual partial evaluators, this is achieved through normalisation (\citep{Dybjer2000}) via elaborator reflection.
-Staging puts tedious burdens such as binding-time analysis on programmers and requires manipulations on generic programs to avoid stage errors.
-We express these analysis and manipulations in terms of metaprograms, instead of unwritten instructions for programmers.
-Staging may provides easier reasoning for staging annotations hinting the relations between generic and instantiated functions. 
-It also provides more flexibility i.e. programmers can decide what to stage and unstage.
+% We argue that our presented instantiation process in \cref{sec:reflection} achieves the same level of optimisation while making it easier to write generic programs than staging, with the help of elaborator reflection.
 
-\Viktor{We exploit elaborator reflection to define metaprograms that generate optimised datatype-generic programs.
-I.e. ordinary function definitions without mentioning generic representations.
-While it is possible to instantiate generic functions by translation between generic and ordinary datatype definitions, we never considered this approach in our work due to its apparent overheads.}
+A partial evaluator
+\begin{enumerate*}
+  \item takes a general program and
+  \item known parts of its inputs, then
+  \item generates a program that takes the rest unknown inputs, which is extensionally equal to the general program applied to the given static inputs.
+\end{enumerate*}
+Staging is essentially doing the first part of a partial evaluator's job manually:
+The programmers take generic programs and write down metaprograms, which take to-be-instantiated datatypes then generate specialised functions.
+The written metaprograms---staged generic programs---are extensionally equal to partial evaluators that are applied to general programs.
+Our presented metaprograms in \cref{sec:reflection}, on the other hand, are actual partial evaluators.
+This is made possible by the observation that we can acquire partial evaluation in functional languages by normalisation \citep{Filinski1999}, which we exploit via elaborator reflection.
+
+Staging puts tedious burdens such as binding-time separation, i.e. manually inserting staging annotations, on programmers.
+It also requires manipulations on generic programs to avoid stage errors.
+Our approach separate what we do with the generic programs from how we define them.
+Therefore generic programmers do not have to worry about the instantiation process.
+Staging may provide easier reasoning for staging annotations hinting at the relations between generic and instantiated functions. 
+There is no implementation of staging in existing dependently typed languages, so we cannot compare them properly on the same ground.
+But they share the same purpose of optimising generic function instantiation, making them comparable regardless of the specific languages they work in.
+
+% Currently, it is hard to reason internally to the language about the optimisations we have applied.
 
 \paragraph{Conclusion}
 

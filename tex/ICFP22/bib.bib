@@ -970,7 +970,6 @@ Keywords: homotopy type theory, coherences, strict equality, homotopy type syste
   year = {2022},
 }
 
-<<<<<<< HEAD
 @incollection{Schurmann2005,
 author = {Sch{\"{u}}rmann, Carsten and Poswolsky, Adam and Sarnat, Jeffrey},
 booktitle = {Typed Lambda Calculi and Applications. {TLCA} 2005},
@@ -1009,19 +1008,6 @@ volume = {15},
 year = {2005}
 }
   
-@InProceedings{Dybjer2000,
-  author="Dybjer, Peter and Filinski, Andrzej",
-  editor="Barthe, Gilles and Dybjer, Peter and Pinto, Lu{\'i}s and Saraiva, Jo{\~a}o",
-  title="Normalization and Partial Evaluation",
-  booktitle="Applied Semantics",
-  year="2002",
-  publisher="Springer Berlin Heidelberg",
-  address="Berlin, Heidelberg",
-  pages="137--192",
-  abstract="We give an introduction to normalization by evaluation and type-directed partial evaluation. We first present normalization by evaluation for a combinatory version of G{\"o}del System T. Then we show normalization by evaluation for typed lambda calculus with $\beta$ and $\eta$ conversion. Finally, we introduce the notion of binding time, and explain the method of type-directed partial evaluation for a small PCF-style functional programming language. We give algorithms for both call-by-name and call-by-value versions of this language.",
-  isbn="978-3-540-45699-5"
-}
-
 @article{Cockx2020,
 abstract = {In a dependently typed language, we can guarantee correctness of our programmes by providing formal proofs. To check them, the typechecker elaborates these programs and proofs into a low-level core language. However, this core language is by nature hard to understand by mere humans, so how can we know we proved the right thing? This question occurs in particular for dependent copattern matching, a powerful language construct for writing programmes and proofs by dependent case analysis and mixed induction/coinduction. A definition by copattern matching consists of a list of clauses that are elaborated to a case tree , which can be further translated to primitive eliminators . In previous work this second step has received a lot of attention, but the first step has been mostly ignored so far. We present an algorithm elaborating definitions by dependent copattern matching to a core language with inductive data types, coinductive record types, an identity type, and constants defined by well-typed case trees. To ensure correctness, we prove that elaboration preserves the first-match semantics of the user clauses. Based on this theoretical work, we reimplement the algorithm used by Agda to check left-hand sides of definitions by pattern matching. The new implementation is at the same time more general and less complex, and fixes a number of bugs and usability issues with the old version. Thus, we take another step towards the formally verified implementation of a practical dependently typed language.},
 author = {Cockx, Jesper and Abel, Andreas M.},
@@ -1068,3 +1054,16 @@ volume = {28},
 year = {2018}
 }
   
+@InProceedings{Filinski1999,
+author="Filinski, Andrzej",
+doi="10.1007/10704567_23",
+editor="Nadathur, Gopalan",
+title="A Semantic Account of Type-Directed Partial Evaluation",
+booktitle="Principles and Practice of Declarative Programming",
+year="1999",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="378--395",
+abstract="We formally characterize partial evaluation of functional programs as a normalization problem in an equational theory, and derive a type-based normalization-by-evaluation algorithm for computing normal forms in this setting. We then establish the correctness of this algorithm using a semantic argument based on Kripke logical relations. For simplicity, the results are stated for a non-strict, purely functional language; but the methods are directly applicable to stating and proving correctness of type-directed partial evaluation in ML-like languages as well.",
+isbn="978-3-540-48164-5"
+}
