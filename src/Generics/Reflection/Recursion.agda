@@ -32,9 +32,6 @@ private
     let (_ , psArgs , psPats) = cxtToVars |Γc|           (`tt , `tt) Γps
     let (_ , ℓArgs , ℓPats)   = cxtToVars (|Γc| + |Γps|) (`tt , `tt) Γℓs
 
-    --let cl = show $ (Γℓs <> Γps <> Γc)
-    --           ⊢ ℓPats <> psPats <> vArg (con c cPats) ∷ [] `=
-    --             (def rec $ ℓArgs <> psArgs <> [ vArg (con c $ hUnknowns pars <> cArgs) ])
     
     return $ (Γℓs <> Γps <> Γc)
       ⊢ ℓPats <> psPats <> vArg (con c cPats) ∷ [] `=
@@ -58,7 +55,7 @@ defineFold P f = do
     Γps ← fromTel! (Param ℓs) ParamV
     ss  ← fromTelInfo (ParamN {ℓs})
     forM cs $ conClause dummyRec pars #levels (renameTelBy Γps ss)
-  cls ← noConstraints $ (reduce onClauses_) =<< checkClauses cls `type
+  cls ← noConstraints $ normalise onClauses cls
 
   defineFun f cls
   printFunction false f
@@ -84,7 +81,7 @@ defineInd P f = do
     ss  ← fromTelInfo (ParamN {ℓs})
     forM cs $ conClause dummyRec pars #levels (renameTelBy Γps ss)
 
-  cls ← noConstraints $ (reduce onClauses_) =<< checkClauses cls `type
+  cls ← noConstraints $ normalise onClauses cls
   defineFun f cls
 
   printFunction false f
