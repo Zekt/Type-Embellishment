@@ -50,6 +50,7 @@
 \usepackage[capitalise,noabbrev]{cleveref}
 \usepackage{xifthen}
 \newcommand{\varcitet}[3][]{\citeauthor{#2}#3~[\ifthenelse{\isempty{#1}}{\citeyear{#2}}{\citeyear[#1]{#2}}]}
+\newcommand{\NoPeriod}[1]{\,}
 
 \usepackage[color=yellow,textsize=scriptsize]{todonotes}
 \setlength{\marginparwidth}{1.25cm}
@@ -57,6 +58,8 @@
 \newcommand{\LT}[1]{\todo[author=LT,inline,color=green!40,caption={}]{{#1}}}
 \newcommand{\Josh}[1]{\todo[author=Josh,inline,caption={}]{{#1}}}
 \newcommand{\Viktor}[1]{\todo[author=Viktor,inline,color=orange,caption={}]{{#1}}}
+
+\usepackage[inline]{enumitem} % for environment enumerate*
 
 \usepackage{caption}
 \captionsetup{aboveskip=1.5ex minus .5ex,belowskip=-1.5ex minus .5ex}
@@ -75,8 +78,6 @@
 \usepackage{xcolor}
 \definecolor{addition}{RGB}{204,255,216}
 \newcommand{\highlight}[2]{\smash{\text{\colorbox{#1}{\kern-.1em\vphantom{\vrule height 1.2ex depth 0.1ex}\smash{\ensuremath{#2}}\kern-.1em}}}}
-
-\usepackage[inline]{enumitem} % for environment enumerate*
 
 %format (HL(t)) = "\highlight{addition}{" t "}"
 
@@ -359,7 +360,11 @@
 %% The abstract is a short summary of the work to be presented in the
 %% article.
 \begin{abstract}
-\todo[inline]{abstract}
+Datatype-generic programming is natural and useful in a dependently typed language such as Agda.
+However, datatype-generic libraries in Agda are not reused as much as they should be, because traditionally they work only on datatypes decoded from a library's own version of datatype descriptions; this means that different generic libraries cannot be used together, and they do not work on native datatypes, which are preferred by the practical Agda programmer for better language support and access to other libraries.
+This paper presents a framework in Agda where datatype-generic programs can be instantiated for a useful range of native datatypes and functions in customisable forms ---including universe-polymorphic definitions--- through Agda's elaborator reflection.
+Thanks to the power of elaborator reflection, generic programs do not need to be drastically rewritten compared to their traditional forms, making it easy to adapt existing generic libraries and develop new ones.
+We expect that datatype-generic libraries built with our framework ---being interoperable with native entities--- will finally be suitable for the toolbox of the practical Agda programmer.
 \end{abstract}
 
 %\begin{CCSXML}
@@ -396,7 +401,7 @@
 Parametrised by datatype structure, datatype-generic programs~\citep{Gibbons-DGP} are ideal library components since they can be instantiated for a usually wide range of datatypes, including user-defined ones as long as their structures are recognisable by the datatype-generic programs.
 Particularly in dependently typed programming~\citep{Stump-Agda-book,Brady-Idris-book, Kokke-PLFA}, datatype-genericity has long been known to be naturally achievable~\citep{Benke-generic-universes,Altenkirch-GP-within-DTP}, and is even more useful for organising indexed datatypes with intrinsic constraints and their operations.
 However, there is hardly any datatype-genericity in, for example, the Agda standard library, which instead contains duplicated code for similar datatypes and functions.
-The existing dependently typed datatype-generic libraries~\citep{McBride-ornaments,McBride-pivotal,Dagand-functional-ornaments,Diehl-InfIR,Ko-OrnJFP,Allais-binding-syntax-universe-JFP} ---mostly in Agda, which will be our default language--- do not get reused as much as they should be either.
+The existing dependently typed datatype-generic libraries~\citep{McBride-ornaments,McBride-pivotal,Dagand-functional-ornaments,Diehl-InfIR,Ko-OrnJFP,Allais-binding-syntax-universe-JFP} ---mostly in Agda, which will be our default language--- are not reused as much as they should be either.
 What is going wrong?
 
 The major problem, we argue, is the lack of interoperability.
@@ -408,14 +413,14 @@ Moreover, decoded datatypes are essentially segregated from native datatypes, an
 
 So what do we want from datatype-generic libraries?
 We want to write our own native datatypes and then instantiate generic programs for them.
-And since we are in a dependently typed setting, we should be able to instantiate properties of the instantiated programs too.
+And in a dependently typed setting, we should be able to instantiate theorems (and, in general, constructions) about native datatypes and functions too.
 For a standard example, from the |List| datatype, we want to derive not only its fold operator
 \begin{code}
 foldr : {A : Set ℓ} {B : Set ℓ'} → (A → B → B) → B → List A → B
 foldr f e []        = e
 foldr f e (a ∷ as)  = f a (foldr f e as)
 \end{code}
-but also theorems (and, in general, constructions) about |foldr|, such as the following `fold fusion' theorem (which allows us to optimise the composition of a |foldr| and a function~|h| as a single |foldr|):
+but also theorems about |foldr|, such as the following `fold fusion' theorem (which allows us to optimise the composition of a |foldr| and a function~|h| as a single |foldr|):
 \begin{code}
 foldr-fusion :  {A : Set ℓ} {B : Set ℓ'} {C : Set ℓ''} (h : B → C)
                 {e : B} {f : A → B → B} {e' : C} {f' : A → C → C} →
@@ -424,21 +429,12 @@ foldr-fusion :  {A : Set ℓ} {B : Set ℓ'} {C : Set ℓ''} (h : B → C)
 foldr-fusion h he hf []        = he
 foldr-fusion h he hf (a ∷ as)  = hf a _ _ (foldr-fusion h he hf as)
 \end{code}
-Also important (especially in a dependently typed setting) is the ability to derive new datatypes, with the standard example being the derivation of the vector datatype from list |length|,\\[-.5\baselineskip]
-\begin{minipage}[t]{.59\textwidth}
+Also important (especially in a dependently typed setting) is the ability to derive new datatypes --- the standard example is the derivation of the vector datatype from list |length|,
 \begin{code}
-data Vec (A : Set ℓ) : ℕ → Set ℓ where
-  []   :                        Vec A    zero
-  _∷_  : A → ∀ {n} → Vec A n →  Vec A (  suc n)
+data Vec (A : Set ℓ) : ℕ → Set ℓ where                              length : {A : Set ℓ} → List A → ℕ
+  []   :                        Vec A    zero                       length []        = zero
+  _∷_  : A → ∀ {n} → Vec A n →  Vec A (  suc n) {-"\hspace{2em}"-}  length (a ∷ as)  = suc (length as)
 \end{code}
-\end{minipage}%
-\begin{minipage}[t]{.41\textwidth}
-\begin{code}
-length : {A : Set ℓ} → List A → ℕ
-length []        = zero
-length (a ∷ as)  = suc (length as)
-\end{code}
-\end{minipage}\\
 and subsequently we want to derive constructions about vectors too.
 What we want is conceptually simple but immediately useful in practice: automated generation of native entities that had to written manually ---including all the entities shown above--- from datatype-generic programs.
 
@@ -449,7 +445,7 @@ Generic programs in Haskell have always been instantiated for native datatypes, 
 However, generic program instantiation in Haskell traditionally proceeds by inserting conversions back and forth between native and generic representations, causing a serious efficiency problem.
 The conversions are even more problematic in Agda because their presence would make it unnecessarily complicated to reason about instantiated functions.
 The Haskell community addressed the conversion problem using compiler optimisation~\citep{Magalhaes-inlining} and, more recently, staging~\citep{Pickering-staged-SoP}.
-Unfortunately, compiler optimisation does not work for us because instantiated functions are reasoned about even before they are compiled, and they need to be as clean as hand-written code right after instantiation; this requirement could be met by staging, which is not available in dependently typed languages though.
+Unfortunately, compiler optimisation does not work for us because instantiated functions are reasoned about even before they are compiled, and they need to be as clean as hand-written code right after instantiation; this need could be met by staging, which is not available in dependently typed languages though.
 
 %\Josh{Old attempts at optimising DGP and why they don't work: There have been many attempts at removing overheads by compiler optimisation, but this is not enough for dependently typed programming, where programs may appear in later types and be reasoned about (and haven’t been processed by the compiler at all).
 %And compiler optimisations need to be fine-tuned to produce what we want; why not just generate what we want in the first place?}
@@ -466,10 +462,10 @@ Moreover, there is no need to drastically alter the form of generic programs (su
 %\LT{The use of elaborator reflection is essential to us: type-checking and normalisation, for example, are not available in other metaprogramming paradigms and they are hard to implement in full as this would require essentially rebuilding an elaborator.
 %Unlike other approaches using staging~\cite{Yallop-staged-generic-programming,Pickering-staged-SoP} where generic programs are entangled with staging to eliminate the generic representation, the elaborator reflection allows us to normalise a given open term directly.}
 
-We have developed a framework in Agda where datatype-generic programs can be instantiated as, and for, native datatypes and functions through elaborator reflection.
+We have developed a framework in Agda where datatype-generic programs can be instantiated for a useful range of native datatypes and functions through elaborator reflection.
 We do not need radically new datatype-generic programming techniques, but do need to adapt our datatype descriptions ---restricted to inductive families~\citep{Dybjer1994} in this paper--- to support commonly used Agda features, in particular universe polymorphism~(\cref{sec:parameters}).
-Our generic programs instantiate to native entities that are close to hand-written forms, and work on existing native entities through `connections' to their generic counterparts~(\cref{sec:connections}).
-The instantiation macros are a new use case of (Agda's) elaborator reflection~(\cref{sec:reflection}); more generally, we give a Cook's tour of Agda's elaborator reflection (which is less documented), and promote the local name creation technique for handling higher-order syntax.
+Our generic programs instantiate to native entities that are close to hand-written forms, and work on existing native entities ---whose forms can be flexibly customised--- through `connections' to their generic counterparts~(\cref{sec:connections}).
+The instantiation macros are a new and natural use case of elaborator reflection~(\cref{sec:reflection}); more generally, we give a Cook's tour of Agda's elaborator reflection (which is less documented), and promote the local name creation technique for handling higher-order syntax.
 As a demo, we adapt some existing generic constructions to our framework~(\cref{sec:examples}).
 We expect that this work will facilitate the development of practical datatype-generic libraries in Agda, and provide motivations for theoretical investigations~(\cref{sec:discussion}).
 
@@ -626,7 +622,7 @@ Alg D X = ∀ {i} → ⟦ D ⟧ᶜˢ X i → X i
 \end{code}
 Algebras are useful because they are the interesting part of a fold function:
 By a `fold function' we mean a function defined recursively on an argument of some datatype by (i)~pattern-matching the argument with all possible constructors, (ii)~applying the function recursively to all the recursive fields, and (iii)~somehow computing the final result from the recursively computed sub-results and the non-recursive fields.
-For example, |foldAcc<| is a fold function, and so are a lot of common functions such as list |length|.\todo{a few more examples from \cref{sec:introduction}}
+For example, |foldAcc<| is a fold function, and so are a lot of common functions such as list |length|.
 The first two steps are the same for all fold functions on the same datatype, whereas the third step is customisable and represented by an algebra, whose argument of type |⟦ D ⟧ᶜˢ X i| represents exactly the input of step~(iii).
 We can define a generic |fold| operator that expresses the computation pattern of fold functions and can be specialised with an algebra,
 \begin{code}
@@ -939,8 +935,7 @@ AccC = record  {  toN        = λ { (inl (x , as , refl))  → acc x as         
 \end{code}
 Note that the order and visibility of constructor arguments can be customised as well.
 
-
-The introduction of |DataC| supports a symmetric architecture where generic and native entities may grow separately but can be kept in sync: we may compute a new description from an old one and then manufacture a native datatype from the new description, or write a native datatype and then derive its description; in either case, a connection is established between the generic and native entities at the end.
+The introduction of |DataC| supports a symmetric architecture where generic and native entities may grow separately but can be kept in sync (reminiscent of `delta-based bidirectional transformations'~\citep[Section~3.3]{Abou-Saleh-BX-intro}): we may compute a new description from an old one and then manufacture a native datatype from the new description, or write a native datatype and then derive its description; in either case, a connection is established between the generic and native entities at the end.
 This architecture generalises the standard one involving~|μ|, where |D|~has a connection only with |μ D|, whereas in our architecture, connections can be established between any pair of description and datatype as long as they correspond.
 In particular, the forms of native datatypes and constructors (curried versus uncurried forms, order and visibility of arguments, etc) are not tightly coupled with descriptions (especially datatype-generically computed ones, which usually have prescribed forms) and can be customised by the programmer, which is vital in practice.
 
@@ -1560,7 +1555,7 @@ The theorem is represented as
 fold-fusion : (C : DataC D N) (fC : FoldC (fold-operator C) f) → IndP
 \end{code}
 where the fold connection~|fC| is used to quantify over functions~|f| that are fold operators of~|N|.
-Although the version of |foldr| in \cref{sec:introduction} is not manufactured by |defineFold| from the fold program $|foldListP| = |fold-operator ListC|$ (where |ListC| is the datatype connection for |List|) and the arguments of |foldr| are in a different order from that specified by |foldListP|, there is no problem instantiating |fold-fusion| for |foldr|: in this case we can still manually write a wrapper $|foldrT| = |λ _ ((A , _) , B , e , f , _) → foldr f e| : |FoldT foldListP|$ and manufacture a fold connection |foldrC| by |genFoldC' foldListP foldrT|, and then |fold-fusion ListC foldrC| specialises to |foldr-fusion|.
+Although the version of |foldr| in \cref{sec:introduction} is not manufactured by |defineFold| from the fold program $|foldListP| = |fold-operator ListC|$ (where |ListC| is the datatype connection for |List|) and the arguments of |foldr| are in a different order from that specified by |foldListP|, there is no problem instantiating |fold-fusion| for |foldr|: in this case we can still manually write a wrapper $|foldrT| = |λ _ ((A , _) , B , e , f , _) → foldr f e| : |FoldT foldListP|$ and manufacture a fold connection |foldrC| by |genFoldC' foldListP foldrT|, and then |fold-fusion ListC foldrC| instantiates to |foldr-fusion|.
 
 In general, if the library user is not satisfied with the form of a manufactured function (argument order, visibility, etc), they can print the function definition, change it to a form they want, and connect the customised version back to the library in the same way as we treated |foldr|.
 This customisation can be tiresome if it has to be done frequently, however, and there should be ways to get the manufactured forms right most of the time.
@@ -1582,7 +1577,7 @@ Do not worry about the details --- the point here is that it is not difficult to
 
 The first thing we can derive from an ornament is a forgetful function; in the case of |ListO|, the derived forgetful function is |length|, which discards the additional element field.
 More can be derived from special kinds of ornaments, a notable example being `algebraic ornaments'.
-In our formulation, given a fold program |F : FoldP| we can compute a more informative version of |F .Desc| and an ornament between them:
+In our formulation, given a fold program |F : FoldP| we can compute a more informative version of the description~|F .Desc| and an ornament between them:
 \begin{code}
 AlgD : FoldP → DataD{-"\,"-};{-"\quad"-} AlgO : (F : FoldP) → DataO (AlgD F) (F .Desc)
 \end{code}
@@ -1611,39 +1606,25 @@ In general, every ornament gives rise to such a `promotion isomorphism'~\citep{K
 %  suc   : ∀ {a n as} → Len n as →  Len (  suc n)  (a ∷ as)
 %\end{code}
 %and the isomorphism is between |Vec A n| and |Σ (List A) (Len n)|, allowing us to promote a list to a vector of type |Vec A n| if the list has length~|n|.
-A more interesting and notable example is the conversion between extrinsically and intrinsically typed \textlambda-terms~\citep{Kokke-PLFA}:\\[-.5\baselineskip]
-\begin{minipage}[t]{.35\textwidth}
+A more interesting and notable example is the conversion between extrinsically and intrinsically typed \textlambda-terms~\citep{Kokke-PLFA}:
 \begin{code}
-data Λ : Set where
-  var  : ℕ → Λ
-  app  : Λ → Λ → Λ
-  lam  : Λ → Λ
+data Λ : Set where {-"\hspace{4em}"-}  data _⊢_ : List Ty → Ty → Set where
+  var  : ℕ → Λ                         {-"\quad"-}  var  : vΓ ∋ τ → vΓ ⊢ τ
+  app  : Λ → Λ → Λ                                  app  : vΓ ⊢ vσ ⇒ τ → vΓ ⊢ vσ → vΓ ⊢ τ
+  lam  : Λ → Λ                                      lam  : vσ ∷ vΓ ⊢ τ → vΓ ⊢ vσ ⇒ τ
 
-data Ty : Set where
-  base  : Ty
-  _⇒_   : Ty → Ty → Ty
+data Ty : Set where                    data _⊢_∶_ : List Ty → Λ → Ty → Set where
+  base  : Ty                                        var  : (i : vΓ ∋ τ) → vΓ ⊢ var (toℕ i) ∶ τ
+  _⇒_   : Ty → Ty → Ty                              app  : vΓ ⊢ t ∶ vσ ⇒ τ → vΓ ⊢ u ∶ vσ → vΓ ⊢ app t u ∶ τ
+                                                    lam  : vσ ∷ vΓ ⊢ t ∶ τ → vΓ ⊢ lam t ∶ vσ ⇒ τ
 \end{code}
-\end{minipage}%
-\begin{minipage}[t]{.65\textwidth}
-\begin{code}
-data _⊢_ : List Ty → Ty → Set where
-  var  : vΓ ∋ τ → vΓ ⊢ τ
-  app  : vΓ ⊢ vσ ⇒ τ → vΓ ⊢ vσ → vΓ ⊢ τ
-  lam  : vσ ∷ vΓ ⊢ τ → vΓ ⊢ vσ ⇒ τ
-
-data _⊢_∶_ : List Ty → Λ → Ty → Set where
-  var  : (i : vΓ ∋ τ) → vΓ ⊢ var (toℕ i) ∶ τ
-  app  : vΓ ⊢ t ∶ vσ ⇒ τ → vΓ ⊢ u ∶ vσ → vΓ ⊢ app t u ∶ τ
-  lam  : vσ ∷ vΓ ⊢ t ∶ τ → vΓ ⊢ lam t ∶ vσ ⇒ τ
-\end{code}
-\end{minipage}\\
 (The list membership relation~`|_∋_|' will be defined in \cref{sec:simple-containers}.)
 Write an ornament between the datatypes |Λ|~and~`|_⊢_|' of untyped and intrinsically typed \textlambda-terms, and we get the typing relation `|_⊢_∶_|' and an isomorphism between |vΓ ⊢ τ| and |Σ[ t ∶ Λ ] vΓ ⊢ t ∶ τ| for free, allowing us to promote an untyped term~|t| to an intrinsically typed one if a typing derivation for~|t| can be supplied.
 
-We have deliberately omitted the types of the generic programs because they are somewhat verbose --- for example, the generic programs proving the inverse properties need connections for the original and the new datatypes, the fold used to compute the algebraic ornament, and the `from' and `to' functions.
-It will be much easier if we can invoke the generic programs with only a minimal amount of information, and then the generic programs automatically look for the connections and other information they need.
-Luckily, in Agda this kind of automatic lookup can be achieved with instance arguments~\citep{Devriese-instance-arguments}, which work well for all our generic programs ---
-for example, |to-fromV| can be derived by supplying just the names |Vec| and |List| (and a proof that |Vec| is `finitary', which we omit from the presentation).
+We have deliberately omitted the types of the generic programs because they are somewhat verbose, making generic program invocation less cost-effective --- for example, the generic programs proving the inverse properties need connections for the original and the new datatypes, the fold used to compute the algebraic ornament, and the `from' and `to' functions.
+In general we should seek to reduce the cost of invoking generic programs.
+We have implemented a smaller-scale solution where generic programs use Agda's instance arguments~\citep{Devriese-instance-arguments} to automatically look for the connections and other information they need, and the solution works well --- for example, |to-fromV| can be derived by supplying just the names |Vec| and |List| (and a proof that |Vec| is `finitary', which we omit from the presentation).
+Larger-scale solutions such as instantiating the definitions in a parametrised module all at once may be required in practice.
 
 Finally, we should briefly mention how |AlgD| handles universe polymorphism.
 Given |F : FoldP|, the most important change from |F .Desc| to |AlgD F| is adding a suitably typed |σ|-field (for example, the field~|b| in |AlgList|) in front of every |ρ|-field; this is mirrored in the computation of  the |struct| field of |AlgD F| from that of |F .Desc|, primarily using the function
@@ -1655,7 +1636,7 @@ algConB ℓ (inr  rb  ∷ cb)  = inl (max-ℓ rb ⊔ ℓ) ∷ inr rb ∷ algConB
 \end{code}
 (where |max-ℓ rb| is the maximum level in |rb|).
 Subsequently we need to prove |level-ineq| for |AlgD F|, which requires non-trivial reasoning and involves properties about |algConB| such as |max-σ (algConB ℓ cb) ≡ max-π cb ⊔ max-σ cb ⊔ hasRec? ℓ cb|.
-The reasoning is not difficult, but is probably one of the first examples of non-trivial reasoning about universe levels.
+The reasoning is not difficult, but is probably one of the first examples that require non-trivial reasoning about universe levels.
 
 \subsection{Predicates on Simple Containers}
 \label{sec:simple-containers}
@@ -1694,13 +1675,13 @@ SCᶜ   (σ  A  D  )  (false  ∷ s)  X =                                       
 SCᶜ   (ρ  D  E  )  (_      ∷ s)  X =                                                              SCᶜ    E     s X
 \end{code}
 \end{minipage}
-\caption{Definition of simple containers}
+\caption{The simple-container predicate on datatype descriptions}
 \label{fig:SC}
 \end{figure}
 
-There are not too many generic programs that work without assumptions on the datatypes they operate on.
-As a simple example of such assumptions, below we characterise a datatype~|N| as a `simple container' type by marking some fields of its description as elements of some type~|X|, and then derive predicates |All P| and |Any P| on~|N| lifted from a predicate~|P| on~|X|, stating that |P|~holds for all or one of the elements in an inhabitant of~|N|.
-For example, the |ListAll| datatype shown at the beginning of \cref{sec:connections} is an instance of |All|.
+There are not too many generic programs that work without assumptions on the datatypes they operate on; with dependent types, such assumptions can be formulated as predicates on datatype descriptions.
+As a simple example, below we characterise a datatype~|N| as a `simple container' type by marking some fields of its description as elements of some type~|X|, and then derive predicates |All P| and |Any P| on~|N| lifted from a predicate~|P| on~|X|, stating that |P|~holds for all or one of the elements in an inhabitant of~|N|.
+For example, the |ListAll| datatype (\cref{sec:connections}) is an instance of |All|.
 
 The definition of simple containers (in several layers) is shown in \cref{fig:SC}.%
 \footnote{\Cref{fig:SC} is in fact simplified:
@@ -1843,15 +1824,32 @@ It is nice not having to write |B23TAny| and |lookupB23TAny| by hand.
 \section{Discussion}
 \label{sec:discussion}
 
-\paragraph{Interoperability}
+\paragraph{Interoperability between generic and native entities}
 
-\Josh{Instead of a most generic representation~\citep{Magalhaes-GGP}, just use the native datatypes, and instantiate all generic constructions to native entities.}
+Our framework makes generic constructions parametrised by our version of datatype descriptions interoperable with native datatypes and functions.
+Generic libraries using their own descriptions could achieve the same by duplicating our framework, but there are alternatives:
+In Haskell, \citet{Magalhaes-GGP} provide automatic conversions between the datatype representations of several libraries ---targeting different families of datatypes--- and a representative representation, through which native datatypes are connected to all the libraries at once; our descriptions (possibly with extensions to support mutual recursion, induction-recursion, etc) can serve as a representative representation.
+Moreover, in a dependently typed setting it is possible to attain better uniformity and reusability by defining families of datatypes as predicates on a single representation like in \cref{sec:simple-containers}, in contrast to a simply typed setting where different families of datatypes need to be modelled by separate representations.
 
-\todo[inline]{The native world as the common playground of multiple generic libraries; delta-based bidirectional transformations~\citep[Section~3.3]{Abou-Saleh-BX-intro} and bx network~\citep{Stevens-multiary-BX}; the need for syncing may be unavoidable since representation matters in practice}
+%\todo[inline]{Missing the feature that converts fold functions to algebras, although there seems to be some overlap between this feature and the functionalities of the termination checker; update the reflection API?}
 
-\todo[inline]{Missing the feature that converts fold functions to algebras, although there seems to be some overlap between this feature and the functionalities of the termination checker; update the reflection API?}
+\paragraph{Dependently typed datatype-generic libraries}
+Our framework makes it possible and worthwhile to develop datatype-generic libraries for wider and practical use in Agda.
+The change to traditional Agda generic programs required by our framework is a mild generalisation from the operators |μ|~and |fold| to datatype and fold connections mirroring the behaviour of the operators, so it should be easy to adapt existing libraries to our framework as well as develop new ones.
+There are still many opportunities to explore for dependently typed datatype-generic libraries:
+Even for recursion schemes, a standard datatype-generic example, we can start supplying theorems about them like in \cref{sec:fold-operators}.
+Datatypes derived from others, such as the lifted predicates |All| and |Any| in \cref{sec:simple-containers}, are also common and should be treated generically (as opposed to duplicating an instance for each datatype as in the standard library~\citep{Agda-stdlib}).
+Organisation of datatypes with domain-specific intrinsic invariants is another important goal, for which ornaments still have much potential (although the community has focussed mostly on lifting ornaments to functions for program and proof reuse~\citep{Dagand-functional-ornaments,McDonell-Ghostbuster,Williams-principle-ornamentation,Ringer-ornaments-Coq}).
+For example, \cref{sec:algebraic-ornamentation} mentions that the relationship between intrinsically and extrinsically typed \textlambda-terms can be captured as an ornament, whose properties and derived constructions should be formulated generically for reuse in developments of typed embedded languages --- a direction already proved fruitful by \citet{Allais-binding-syntax-universe-JFP}.
 
-\paragraph{Code generation vs first-class datatypes}
+%\todo[inline]{Success of the App Store: dependent types need richer type structures and allow assumptions about datatype descriptions to derive more functionalities (boring if we can only automate Eq, Show, Read etc), so DGP has much more potential in dependently typed settings; also, keep generic programs natural so that libraries can be developed more easily — no staging (which is not in the current dependently typed languages anyway)!}
+
+%\Josh{Our work enables the practical development and applications of datatype-generic libraries.
+%Duplicated code in Standard Library.
+%Ornaments have been used to lift functions, but its original purpose ---organisation of datatypes--- should not be forgotten (\citet{McBride-ornaments}; porting some constructions from \citet{Ko-OAOAOO}; more experimental developments~\citep{Ko-OrnJFP, Dagand-functional-ornaments}; theory and developments about function transportation in simply typed settings~\cite{Williams-principle-ornamentation, Williams-ornaments-in-practice}; realistic dependently typed application and automated synthesis of ornaments~\citep{McDonell-Ghostbuster,Ringer-ornaments-Coq}).
+%Make \citet{McBride-pivotal, Allais-binding-syntax-universe-JFP} native.}
+
+\paragraph{Code generation versus first-class datatypes}
 
 \Josh{\citet{Benke-generic-universes,Altenkirch-GP-within-DTP}.
 The Haskell programmer produces recursive function definitions~\citep{de-Vries-true-SoP}.
@@ -1862,15 +1860,6 @@ Our work provides a foundation for the development of generic libraries \emph{no
 Feel free to port the libraries to a new foundation when it's ready.}
 
 \todo[inline]{\citet{Chapman-levitation} propose a more radical redesign of type theory where datatype definitions are first-class, but the theory is still at an early stage of development and lacks an implementation; our proposal is more practical and serves as a platform for the development of mature datatype-generic libraries, which can be ported to new platforms when ready}
-
-\paragraph{Datatype-generic libraries for dependently typed programming}
-
-\Josh{Our work enables the practical development and applications of datatype-generic libraries.
-Duplicated code in Standard Library.
-Ornaments have been used to lift functions, but its original purpose ---organisation of datatypes--- should not be forgotten (\citet{McBride-ornaments}; porting some constructions from \citet{Ko-OAOAOO}; more experimental developments~\citep{Ko-OrnJFP, Dagand-functional-ornaments}; theory and developments about function transportation in simply typed settings~\cite{Williams-principle-ornamentation, Williams-ornaments-in-practice}; realistic dependently typed application and automated synthesis of ornaments~\citep{McDonell-Ghostbuster,Ringer-ornaments-Coq}).
-Make \citet{McBride-pivotal, Allais-binding-syntax-universe-JFP} native.}
-
-\todo[inline]{Success of the App Store: dependent types need richer type structures and allow assumptions about datatype descriptions to derive more functionalities (boring if we can only automate Eq, Show, Read etc), so DGP has much more potential in dependently typed settings; also, keep generic programs natural so that libraries can be developed more easily — no staging (which is not in the current dependently typed languages anyway)!}
 
 \paragraph{Universe polymorphism}
 
