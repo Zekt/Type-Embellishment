@@ -1919,15 +1919,16 @@ A partial evaluator
 \end{enumerate*}
 Staging is essentially doing the first part of a partial evaluator's job manually:
 The programmers take generic programs and write down metaprograms, which take to-be-instantiated datatypes then generate specialised functions.
-The written metaprograms---staged generic programs---are extensionally equal to partial evaluators that are applied to general programs.
+The written metaprograms ---staged generic programs--- are extensionally equal to partial evaluators that have been applied to general programs.
 Our presented metaprograms in \cref{sec:reflection}, on the other hand, are actual partial evaluators.
 This is made possible by the observation that we can acquire partial evaluation in functional languages by normalisation \citep{Filinski1999}, which we exploit via elaborator reflection.
 
 Staging puts tedious burdens such as binding-time separation, i.e. manually inserting staging annotations, on programmers.
 It also requires manipulations on generic programs to avoid stage errors.
-Our approach separate what we do with the generic programs from how we define them.
-Therefore generic programmers do not have to worry about the instantiation process.
-Staging may provide easier reasoning for staging annotations hinting at the relations between generic and instantiated functions. 
+Our approach separate what we do with the generic programs (instantiation metaprograms) from how we define them (algebras).
+As a result, our generic programs are spared from annotations or modifications, making them easier to reason about than staged versions.
+The separation of instantiation process as metaprograms also provides a basis for future works on the reasoning of its correctness. 
+Staging may provide easier reasoning for annotations hinting at the relations between generic and instantiated functions. 
 There is no implementation of staging in existing dependently typed languages, so we cannot compare them properly on the same ground.
 But they share the same purpose of optimising generic function instantiation, making them comparable regardless of the specific languages they work in.
 
