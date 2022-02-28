@@ -61,7 +61,6 @@
 
 \usepackage[inline]{enumitem} % for environment enumerate*
 
-\usepackage{caption}
 \captionsetup{aboveskip=1.5ex minus .5ex,belowskip=-1.5ex minus .5ex}
 \newcommand{\codefigure}{\footnotesize\setlength{\mathindent}{0em}\setlength{\abovedisplayskip}{0ex}\setlength{\belowdisplayskip}{0ex}\noindent}
 
@@ -452,7 +451,7 @@ Unfortunately, compiler optimisation does not work for us because instantiated f
 
 Luckily again, in Agda there is something that can take the place of staging for generic program instantiation: elaborator reflection (inspired by Idris~\citep{Christiansen-elaborator-reflection}), through which the Agda metaprogrammer has access to operations for elaborating the surface language to the core.
 It turns out that datatype-generic programming and elaborator reflection are a perfect match in Agda.
-For example, to express dependency in types, datatype descriptions are usually higher-order and can be somewhat difficult to manipulate, but our transformation from descriptions to native datatypes is surprisingly natural thanks to the `local name creation' technique~\citep{Nanevski-names-and-necessity}, which is easily implemented using a few reflection primitives.
+For example, to express dependency in types, datatype descriptions are usually higher-order and can be somewhat difficult to manipulate, but our transformation from descriptions to native datatypes is surprisingly natural thanks to the `local name creation' technique~\citep{Nanevski-names-and-necessity}\todo{which citation(s)?}, which is easily implemented using a few reflection primitives.
 Moreover, there is no need to drastically alter the form of generic programs (such as adding staging annotations) because they can be straightforwardly instantiated with (open-term) normalisation, also a reflection primitive.
 
 %\LT{Staged computation has been proposed to solve the notorious efficiency problem~\cite{Yallop-staged-generic-programming,Pickering-staged-SoP} due to the conversions between generic representations.
@@ -498,7 +497,7 @@ The representations in this section are close to but not the final version, whic
 
 \begin{figure}
 \codefigure
-\begin{minipage}[t]{.525\textwidth}
+\begin{minipage}[t]{.5\textwidth}
 \begin{code}
 data ConDs (I : Set) : Set₁ where
   []   :                     ConDs I
@@ -514,7 +513,7 @@ data RecD (I : Set) : Set₁ where
   π  : (A : Set)  → (A →  RecD I)  → RecD I
 \end{code}
 \end{minipage}%
-\begin{minipage}[t]{.475\textwidth}
+\begin{minipage}[t]{.4\textwidth}
 \begin{code}
 ⟦_⟧ᶜˢ : ConDs I → (I → Set) → (I → Set)
 ⟦ []       ⟧ᶜˢ  X i  = ⊥
@@ -699,7 +698,7 @@ Note that the datatype level~|ℓᵈ| depends only on the level parameters~|ℓs
 
 \begin{figure}
 \codefigure
-\begin{minipage}[b]{.65\textwidth}
+\begin{minipage}[b]{.6\textwidth}
 \begin{code}
 mutual
 
@@ -713,8 +712,8 @@ mutual
 \begin{code}
   ⟦_⟧ᵗ : Tel ℓ → Set ℓ
   ⟦ []       ⟧ᵗ = ⊤
-  ⟦ A ∷   T  ⟧ᵗ = Σ[ a ∶ A       ] ⟦ T a ⟧ᵗ
-  ⟦ T ++  U  ⟧ᵗ = Σ[ t ∶ ⟦ T ⟧ᵗ  ] ⟦ U t ⟧ᵗ
+  ⟦ A ∷   T  ⟧ᵗ = Σ[ a  ∶ A       ] ⟦ T a ⟧ᵗ
+  ⟦ T ++  U  ⟧ᵗ = Σ[ t  ∶ ⟦ T ⟧ᵗ  ] ⟦ U t ⟧ᵗ
 \end{code}
 \end{minipage}
 \caption{(Tree-shaped) telescopes and their semantics as nested |Σ|-types}
@@ -762,24 +761,22 @@ To deal with level parameters, we will resort to metaprogramming techniques in \
 \codefigure
 \begin{minipage}[t]{.41\textwidth}
 \begin{code}
-record DataD : Setω where
-  field
-    #levels  : ℕ
-    applyL   : Level ^ #levels → PDataD
+record DataD : Setω where field
+  #levels  : ℕ
+  applyL   : Level ^ #levels → PDataD
 
-record PDataD : Setω where
-  field
-    alevel {plevel} {ilevel} : Level
-    {struct} : ConBs
-    level-ineq :  maxMap max-π struct
-               ⊔  maxMap max-σ struct
-               ⊑  alevel ⊔ ilevel
-    Param   :  Tel plevel
-    Index   :  ⟦ Param ⟧ᵗ → Tel ilevel
-    applyP  :  (ps : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index ps ⟧ᵗ struct
+record PDataD : Setω where field
+  alevel {plevel} {ilevel} : Level
+  {struct}    : ConBs
+  level-ineq  :  maxMap max-π  struct ⊔
+                 maxMap max-σ  struct
+                   ⊑ alevel ⊔ ilevel
+  Param   :  Tel plevel
+  Index   :  ⟦ Param ⟧ᵗ → Tel ilevel
+  applyP  :  (ps : ⟦ Param ⟧ᵗ) → ConDs ⟦ Index ps ⟧ᵗ struct
 \end{code}
 \end{minipage}%
-\begin{minipage}[t]{.6\textwidth}
+\begin{minipage}[t]{.59\textwidth}
 \begin{code}
 data ConDs (I : Set (HL ℓⁱ)) : (HL ConBs) → Set{-"_{\highlight{addition}{\text\textomega}}"-} where
   []   :                                      ConDs I (HL [])
@@ -893,16 +890,24 @@ Such structure will be defined in \cref{sec:DataC}, and analogously for fold fun
 
 \begin{figure}
 \codefigure
+\begin{minipage}[t]{.35\textwidth}
 \begin{code}
 DataT : DataD → Setω
-DataT D = ∀ ℓs ps → let Dᵖ == D .applyL ℓs in (is : Dᵖ .Index ps) → Set (Dᵖ .alevel ⊔ Dᵖ .ilevel)
-
+DataT D = ∀ ℓs ps →
+  let  Dᵖ == D .applyL ℓs
+  in   (is : Dᵖ .Index ps) →
+       Set (Dᵖ .alevel ⊔ Dᵖ .ilevel)
+\end{code}
+\end{minipage}%
+\begin{minipage}[t]{.55\textwidth}
+\begin{code}
 record DataC (D : DataD) (N : DataT D) : Setω where field
   toN        : ⟦ D ⟧ᵈ (N ℓs ps) is  → N ℓs ps is
   fromN      : N ℓs ps is           → ⟦ D ⟧ᵈ (N ℓs ps) is
   fromN-toN  : (ns  : ⟦ D ⟧ᵈ (N ℓs ps) is)   → fromN (toN ns)  ≡ ns
   toN-fromN  : (n   : N ℓs ps is)            → toN (fromN n)   ≡ n
 \end{code}
+\end{minipage}
 \caption{Datatype connections}
 \label{fig:DataC}
 \end{figure}
@@ -939,29 +944,25 @@ In particular, the forms of native datatypes and constructors (curried versus un
 
 \begin{figure}
 \codefigure
-\begin{minipage}[t]{.49\textwidth}
+\begin{minipage}[t]{.48\textwidth}
 \begin{code}
 record FoldP : Setω where field
   {Desc}    : DataD
   {Native}  : DataT Desc
   Con       : DataC Desc Native
-  #levels   : ℕ
-  level     :
-    Level ^ #levels → Level ^ (Desc .#levels)
-  applyL    :
-    ∀ ℓs → PFoldP (Desc .applyL (level ℓs))
+  #levels  : ℕ
+  level    : Level ^ #levels → Level ^ (Desc .#levels)
+  applyL   : ∀ ℓs → PFoldP (Desc .applyL (level ℓs))
 \end{code}
 \end{minipage}%
-\begin{minipage}[t]{.51\textwidth}
+\begin{minipage}[t]{.52\textwidth}
 \begin{code}
 record PFoldP (D : PDataD) : Setω where field
   {plevel} {clevel} : Level
-  Param    :  Tel plevel
-  param    :  ⟦ Param ⟧ᵗ → ⟦ D .Param ⟧ᵗ
-  Carrier  :
-    ∀ ps → ⟦ D .Index (param ps) ⟧ᵗ → Set clevel
-  applyP   :
-    ∀ ps → Alg (D .applyP (param ps)) (Carrier ps)
+  Param    : Tel plevel
+  param    : ⟦ Param ⟧ᵗ → ⟦ D .Param ⟧ᵗ
+  Carrier  : ∀ ps → ⟦ D .Index (param ps) ⟧ᵗ → Set clevel
+  applyP   : ∀ ps → Alg (D .applyP (param ps)) (Carrier ps)
 
 Alg : ConDs I cbs → (I → Set ℓ) → Set _
 Alg D X = ∀ {i} → ⟦ D ⟧ᶜˢ X i → X i
@@ -988,16 +989,24 @@ When we get to examples that require induction in \cref{sec:examples}, it should
 
 \begin{figure}
 \codefigure
+\begin{minipage}[t]{.41\textwidth}
 \begin{code}
 FoldT : FoldP → Setω
-FoldT F =  ∀ ℓs ps {is} → let open FoldP F; open PFoldP (F .applyL ℓs) in
-           Native (level ℓs) (param ps) is → Carrier ps is
-
-record FoldC (F : FoldP) (f : FoldT F) : Setω where field
-  equation :  ∀ {ℓs ps is} → let open FoldP F; open PFoldP (F .applyL ℓs) in
-              (ns : ⟦ Desc ⟧ᵈ (Native (level ℓs) (param ps)) is) →
-              f ℓs ps (Con .toN ns) ≡ applyP ps (fmapᵈ Desc (f ℓs ps) ns)
+FoldT F = ∀ ℓs ps {is} →
+  let  open FoldP F; open PFoldP (F .applyL ℓs)
+  in   Native (level ℓs) (param ps) is →
+       Carrier ps is
 \end{code}
+\end{minipage}%
+\begin{minipage}[t]{.59\textwidth}
+\begin{code}
+record FoldC (F : FoldP) (f : FoldT F) : Setω where field
+  equation :
+    ∀ {ℓs ps is} → let open FoldP F; open PFoldP (F .applyL ℓs) in
+    (ns : ⟦ Desc ⟧ᵈ (Native (level ℓs) (param ps)) is) →
+    f ℓs ps (Con .toN ns) ≡ applyP ps (fmapᵈ Desc (f ℓs ps) ns)
+\end{code}
+\end{minipage}
 \caption{Fold connections}
 \label{fig:FoldC}
 \end{figure}
@@ -1481,8 +1490,8 @@ Similarly, we also have defined |defineInd| in our framework for inductive progr
 \section{Examples}
 \label{sec:examples}
 
-As a demo of our framework, here we provide some samples of generic constructions that should have been made available to the dependently typed programmer.
-To be more precise, these constructions are not new (or not too novel compared to those in the literature), but they have not been in the main toolbox of the dependently typed programmer, who prefers to work with native datatypes and functions;
+As a demo of our framework, here we provide some samples of generic constructions that should have been made available to the Agda programmer.
+To be more precise, these constructions are not new (or not too novel compared to those in the literature), but they have not been in the main toolbox of the Agda programmer, who prefers to work with native datatypes and functions;
 our framework makes it possible to instantiate these constructions for native entities.
 We will omit the details except those related to the design of our framework, and briefly discuss mechanisms that could make these constructions more convenient to use.
 
@@ -1513,7 +1522,7 @@ The type of~|X| is in a curried form, which is then uncurried for |FoldOpTel| an
 fold-operator C .applyL (ℓ , ℓs) .Carrier = λ (ps , X , calgs) → uncurryᵗ X
 \end{code}
 This is a recurring pattern (which we first saw in \cref{sec:DataC}): curried forms are exposed to the library user, whereas uncurried forms are processed by generic programs.
-The pattern is also facilitated by the telescope-appending constructor, which first appears in |Param| above (disguised with the syntax~|[[ ... ]]|): the parameters are instantiated in a curried form for the library user, but for generic programs they are separated into three groups |ps|, |X|, and |calgs|, making it convenient to refer to each group like in |Carrier| above.
+The pattern is also facilitated by the telescope-appending constructor, which appears in |Param| above (disguised with the syntax~|[[ ... ]]|): the parameters are instantiated in a curried form for the library user, but for generic programs they are separated into three groups |ps|, |X|, and |calgs|, making it convenient to refer to each group like in |Carrier| above.
 
 %Part~(i) is computed by
 %\begin{code}
@@ -1647,7 +1656,7 @@ The reasoning is not difficult, but is probably one of the first examples that r
 
 \begin{figure}
 \codefigure
-\begin{minipage}[t]{.39\textwidth}
+\begin{minipage}[t]{.4\textwidth}
 \begin{code}
 SC : DataD → Setω
 SC D = ∀ {ℓs} → SCᵖ (D .applyL ℓs)
@@ -1657,7 +1666,7 @@ SCᵇ = ListAll (λ  {  (inl  _) → Bool
                   ;  (inr  _) → ⊤})
 \end{code}
 \end{minipage}%
-\begin{minipage}[t]{.61\textwidth}
+\begin{minipage}[t]{.55\textwidth}
 \begin{code}
 record SCᵖ (D : PDataD) : Setω where field
   {elevel} : Level
@@ -1666,7 +1675,7 @@ record SCᵖ (D : PDataD) : Setω where field
   coe  :  (ps : ⟦ D .Param ⟧ᵗ) → SCᶜˢ (D .applyP ps) pos (El ps)
 \end{code}
 \end{minipage}\\[.5\baselineskip]
-\begin{minipage}[t]{\textwidth}
+\begin{minipage}[t]{.95\textwidth}
 \begin{code}
 SCᶜˢ  : {I : Set ℓⁱ} → ConDs I cbs → ListAll SCᵇ cbs → Set ℓ → Setω
 SCᶜˢ  []           _             X = ⊤
