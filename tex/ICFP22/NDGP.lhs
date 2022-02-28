@@ -1080,8 +1080,6 @@ data Term : Set where
   meta  : (x  : Meta)  (xs   : Terms)  →  Term
   unknown :                               Term
 \end{code}
-\caption{Reflected expressions (simplified)}
-\label{fig:reflected-term}
 \end{minipage}%
 \begin{minipage}[t]{.5\textwidth}%
 \begin{code}
@@ -1093,9 +1091,14 @@ data Pattern where
   lit     : (l : Literal)               → Pattern
   dot     : (t : Term)                  → Pattern
 \end{code}
-\caption{Reflected patterns}
-\label{fig:reflected pattern}
-\end{minipage}
+\end{minipage}%
+\par
+\begin{minipage}[t]{.5\textwidth}
+\caption{Reflected expressions (simplified)}\label{fig:reflected-term}
+\end{minipage}%
+\begin{minipage}[t]{.5\textwidth}
+\caption{Reflected patterns}\label{fig:reflected pattern}
+\end{minipage}%
 \end{figure}
 
 
@@ -1146,7 +1149,7 @@ After finishing the invocation, the call site of |give e| becomes |e| which will
 
 \begin{figure}[t]
 \codefigure
-\begin{minipage}[b]{.5\textwidth}
+\begin{minipage}[t]{.5\textwidth}
 \begin{code}
 postulate
   Name  : Set
@@ -1155,11 +1158,9 @@ postulate
 data Literal where
   nat    : (n : ℕ) → Literal
   ...
-
 \end{code}
-\caption{Other built-in types for reflection}\label{fig:other-type}
 \end{minipage}%
-\begin{minipage}[b]{.5\textwidth}
+\begin{minipage}[t]{.5\textwidth}
 \begin{code}
 Type       =  Term
 Telescope  =  List Type
@@ -1167,9 +1168,14 @@ Terms      =  List Term
 Names      =  List Name
 Patterns   =  List Pattern
 \end{code}
-\caption{Type abbreviations}
-\label{fig:type abbrs}
 \end{minipage}
+\par
+\begin{minipage}[t]{.5\textwidth}
+\caption{Other built-in types for reflection}\label{fig:other-type}
+\end{minipage}%
+\begin{minipage}[t]{.5\textwidth}
+\caption{Type abbreviations}\label{fig:type abbrs}
+\end{minipage}%
 \end{figure}
 
 The reflected language in Agda is based on the de Bruijn representation and thus \emph{not} hygiene.
@@ -1211,9 +1217,9 @@ The first case for the empty telescope |[]| is straightforward but the other two
 \savecolumns
 \begin{code}
 fromTel : (tel : Tel ℓ) → TC Telescope
-fromTel []           = return []
-fromTel (A  ∷   T)   = ... fromTel (T ?) ...
-fromTel (U  ++  V)   = ... fromTel (V ?) ...
+fromTel  []         = return []
+fromTel  (A ∷   T)  = ... fromTel (T ?) ...
+fromTel  (U ++  V)  = ... fromTel (V ?) ...
 \end{code}
 How can we give an argument of |A| and |⟦ U ⟧ᵗ|?
 Recall that a macro is a |TC| computation in which the state of the current context is enclosed.
@@ -1246,32 +1252,32 @@ fromTel (U ++ V)  = do
 
 \begin{figure}[t]
 \codefigure
-\begin{minipage}[b]{.5\textwidth}
-\begin{code}
-exCxtT : (B : Set ℓ)
-  → (Type → B → TC A)
-  → TC A
-exCxtT B f = do
-  `B ← quoteTC B
-  (HL (extendContext)) `B do
-   x ←  (HL (unquoteTC (var 0 [])))
-   f `B x
-\end{code}
-\caption{Context extension by |A : Set ℓ|} 
-\label{fig:extendContextT}
-\end{minipage}%
-\begin{minipage}[b]{.5\textwidth}
+\begin{minipage}[t]{.5\textwidth}
 \begin{code} 
-exCxtTel : (T : Tel ℓ)
-  → (⟦ T ⟧ᵗ → TC A) → TC A
+exCxtTel : (T : Tel ℓ) (f : ⟦ T ⟧ᵗ → TC A) → TC A
 exCxtTel []        f  = f tt
-exCxtTel (A ∷ T)   f  = (HL (exCxtT) A)
-  λ _ x → exCxtTel (T x) λ t → f (x , t)
-exCxtTel (T ++ U)  f  = exCxtTel T
-  λ t → exCxtTel (U t) λ u → f (t , u)
+exCxtTel (A ∷ T)   f  = exCxtT A λ _ x →
+  exCxtTel (T x) λ t → f (x , t)
+exCxtTel (T ++ U)  f  = exCxtTel T λ t →
+  exCxtTel (U t) λ u → f (t , u)
 \end{code}
+\end{minipage}%
+\begin{minipage}[t]{.5\textwidth}
+\begin{code} 
+exCxtℓs : (n : ℕ) (f : Level ^ n → TC A) → TC A
+exCxtℓs  zero      f  = f tt
+exCxtℓs  (suc n)   f  = exCxtT Level λ _ ℓ →
+  exCxtℓs n λ ℓs → f (ℓ , ℓs)
+\end{code}
+\end{minipage}
+\par
+\begin{minipage}[t]{.5\textwidth}
 \caption{Context extension by |T : Tel ℓ|} 
-\label{fig:extendCxtTel}
+\label{fig:exCxtTel}
+\end{minipage}%
+\begin{minipage}[t]{.5\textwidth}
+\caption{Context extension by |Level|'s} 
+\label{fig:exCxtls}
 \end{minipage}%
 \end{figure}
 
