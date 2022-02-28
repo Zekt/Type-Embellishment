@@ -1045,11 +1045,12 @@ fold-base F {ℓs} rec =
 This definition of |foldAcc|, albeit one deemed non-terminating by Agda, implies the |FoldC.equation| because of the inverse property |DataC.fromN-toN|.
 To turn this into a valid definition, we pattern-match the variable~|a| with all the possible constructors, although there is only one in this case:%
 \begin{equation}\label{eq:fold-base-before}
-|foldAcc A R P p x (acc as) = fold-base foldAccP foldAcc A R P p x (acc as)|
+|foldAcc A R P p .x (acc x as) = fold-base foldAccP foldAcc A R P p x (acc x as)|
 \end{equation}
+Note that the variable |.x| above is forced by the constructor |acc x as| since the indices of |Native| and |Carrier| are the same.
 Now normalise the right-hand side,
 \begin{equation}\label{eq:fold-base-after}
-|foldAcc A R P p x (acc as) = p x (λ y lt → foldAcc A R P p y (as y lt))|
+|foldAcc A R P p .x (acc x as) = p x (λ y lt → foldAcc A R P p y (as y lt))|
 \end{equation}
 and this final definition can be directly shown to satisfy the connecting equation
 \begin{code}
