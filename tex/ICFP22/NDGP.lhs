@@ -1416,49 +1416,51 @@ The instantiation of a fold program |F : FoldP| consists of
 \begin{enumerate*}
   \item generating the instantiated function type using |FoldNT|, 
   \item generating a clause $\Delta_i \vdash \overline{p}_i \hookrightarrow e_i$
-    for each constructor~$c_i$ specified by |Native| in |F|, and
+    for each constructor~$c_i$ of the datatype specified in |F|, and
   \item eliminating the intermediate conversion in $e_i$ by normalisation.
 \end{enumerate*}
 We define a |TC| computation |defineFold : FoldP → Name → TC ⊤| to carry out the above steps.
 
-First, as we discussed in \cref{sec:telescopes} it is impossible to define the curried forms of level parameters, not to mention to compute the curried form of the type specified by |FoldP|.
-Indeed, this issue also needs to be addressed when defining a datatype by |D : DataD|, but this is even more apparent with
+First, as discussed in \cref{sec:telescopes} it is impossible to define the curried form of level parameters, not to mention the curried form of the type specified by |FoldP|.
+Indeed, this issue is apparent with
 \begin{code}
 FoldNT : (F : FoldP) (ℓs : Level ^ (F .#levels)) → Set _
-FoldNT F ℓs = let open FoldP F; open PFoldP (F .applyL ℓs) in ...
 \end{code}
 If we simply normalise, say, |∀ {ℓs} → FoldNT foldAccP ℓs|, then we will have
 \begin{code}
 ∀ {ℓs : Level ^ 3} (A : Set (fst (snd ℓs))) (R : A → A → Set (fst (snd (snd ℓs)))) → ...
 \end{code}
 instead of the preferred curried form.
-To handle this, we define |exCxtℓs|
-\begin{code}
-exCxtℓs : (n : ℕ) → (Level ^ n → TC A) → TC A
-exCxtℓs  zero      c  = c tt
-exCxtℓs  (suc n)   c  = exCxtT Level (λ _ ℓ → exCxtℓs n (λ ℓs → c (ℓ , ℓs)))
-\end{code}
-which takes the number of |Level| variables to extend with in the context and a local |TC| computation.
-Now |FoldNT P ℓs| can be called locally to derive the preferred form as shown in \cref{sec:FoldC}, but |FoldNT P ℓs| needs to be normalised to eliminate the local variable~|ℓs| before returning its quotation.
-To normalise a reflected expression, we use another primitive |normalise|.\footnote{%
-For efficiency purposes, Agda provides another primitive |withNormalisation| in which the |TC| primitives in a |TC| computation will normalise their results. 
-For example, |quoteTC! = withNormalisation true quoteTC| is a |TC| computation which normalises a given term before returning the quotation.
+To handle this, we reuse |exCxtℓ| as defined in \cref{fig:exCxtls} so that |FoldNT P ℓs| can be called with a local variable |ℓs| in the context extended with |#levels| many variables to derive the type as shown in \cref{sec:FoldC}. 
+Before returning its quotation, however, |FoldNT P ℓs| needs to be normalised to eliminate~|ℓs| using another primitive |normalise|.\footnote{%
+For efficiency, Agda provides a primitive |withNormalisation| where primitives in a |TC| computation normalise their results.
+For example, |quoteTC! x = withNormalisation true (quoteTC x)| normalises a term~|x| before returning its quotation.
 }
-It remains to prepend the same number of the quotation of |Level| we extend with, since the aforementioned |TC| computation is carried in the context extended with |Level| variables to which those de Bruijn indices point.
-The first part of |defineFold| is then given as follows:
+It remains to prepend the same number of the quotation of |Level| we extend with, since the |TC| computation is carried locally.
+The first step of |defineFold| is then given as follows:
 \begin{code}
 defineFold F f = do
   `type ← prependLevels #levels <$> exCxtℓs #levels λ ℓs → do
       normalise =<< quoteTC (FoldNT F ℓs)
-  ...
 \end{code}
 where |`type| is the reflected type for the instantiated function |f|.
 
-Second, ...
+The second step is to generate a function clause for each constructor $c_i$ of the datatype |Native ℓs ps| as \eqref{eq:fold-base-before} to normalise in the next step.
+In general, each clause has the form
 \[
-  \Delta \vdash \overline{\Varid{ℓ}}\; \overline{p}\;x\;(c_i\;\overline{a}) \hookrightarrow e_i
+  \overline{\Varid{ℓ}}\; \overline{p}\;\overline{x}\;(c_i\;\overline{a}) \hookrightarrow 
+  \Varid{fold-base}\;F\;f\;\overline{p}\;\overline{x}\;(c_i\;\overline{a})
 \]
+where
+%%%% HELP 
+\begin{enumerate*}
+  \item $f$ is the final instantiated function,
+  \item $\overline{\Varid{ℓ}}$ a list of level variables specified by |F .#levels|,
+  \item $\overline{p}$ a list of parameter variables specified by |(F .applyL ℓs) .PFoldP.Param|,
+  \item ...
+\end{enumerate*}
 
+%%%% HELP 
 
 Finally,...
 \LT{we normalise clauses with |fold-base| on the right hand side~\cite{Alimarine2004}
