@@ -1112,7 +1112,7 @@ Regarding elaborator reflection itself, we sketch its basic design in \cref{sec:
 \subsection{Elaborator Reflection in Agda}
 \label{sec:elab}
 Agda's reflection API includes a set of primitives based on the elaborator monad |TC| which operates on the reflected language formed by |Term| (\cref{fig:reflected-term}), |Pattern| (\cref{fig:reflected pattern}), |Literal| (\cref{fig:other-type}), |Clause| (\cref{fig:clause}), and |Definition| (\cref{fig:definition}) corresponding to each syntactic category.
-Every reflected expression is in weak head normal form and all application are in spine-normal form.
+Every reflected expression is in weak head normal form and all application are in spine-normal form $f\;\overline{x}$.
 The quotation of an expression |e| can be obtained by |quoteTerm e| and the resolved unique name for a definition |f| or a constructor by |quote f|.  
 For example, the quotation |quoteTerm acc| of the constructor |acc| is equal to |con (quote acc) []| where the empty list |[]| indicates that |acc| alone has no arguments.
 For illustrative purposes, a subset of reflected expressions is presented instead of the actual inductive definition |Term| \citep{Agda} which carries not only arguments' visibility and modality but also various sorts that are of no use for our understanding
@@ -1188,32 +1188,18 @@ We will see concrete examples later.
 \subsection{Translation between Typed Higher-Order and Unityped First-Order Representations}\label{sec:translation}
 
 Our generic programs are given in typed and higher-order representations, so in order to use macros to generate native datatypes and definitions we have to first translate them to its corresponding first-order and unityped representation used by reflection.
-Take telescopes for example. 
-A reflected telescopes is just a list of reflected types and thus first-order and unityped.
-On the other and, |Tel ℓ| (\cref{fig:telescopes}) consists of inhabitants that may consist of functions.
+For example, contrary to |Tel ℓ|, a reflected telescopes is just a list of reflected types and thus first-order and unityped.
+That is, the quotation of |[[ (A , _) ∶ [ A ∶ Set ] [] ]] [ _ ∶ (A → A) ] []| needs to be translated to the reflected telescope
+\begin{equation}\label{eq:telescope}
+|`Set 0 ∷ pi (var 0 []) (var 1 []) ∷ []|
+\end{equation}
+where the arguments |var 0 []| and |var 1 []| of |pi| refer to the quotation |`Set 0| of |Set|. 
 
-One obvious approach is to analyse the quotations of inhabitants of |Tel ℓ|.
-For instance, we would need to translate the quotation of |[ A ∶ Set ] [ R ∶ (A → A → Set) ] []|
-%as shown in \cref{fig:quoted-telescope}
-%\begin{figure}
-%\begin{code}
-%def (quote ∷-syntax) (`Set 0 ∷ lam
-%  (def (quote ∷-syntax) (pi (var 0 []) (pi (var 1 []) (`Set 0)) ∷ lam
-%    (con (quote Tel.[]) []) ∷ [])) ∷ [])
-%\end{code}
-%\caption{The quoted expression of |[ A ∶ Set ] [ R ∶ (A → A → Set) ] []|}
-%\label{fig:quoted-telescope}
-%\end{figure}
-to the reflected telescope
-\begin{code}
-`Set 0 ∷ pi (var 0 []) (pi (var 1 []) (`Set 0)) ∷ [] 
-\end{code}
-where |`Set 0| reflects the type |Set|.
-Such a macro would need to pattern match against |t : Tm| and check which constructor is being analysed by reducing the reflected expression |def f xs| to one of |con (quote Tel.[]) xs|, |con (quote Tel._∷_) xs|, and |con (quote Tel._++_) xs|.
-In short, we lose the type information of |Tel ℓ| and would need to manipulate abstract syntax trees directly.
+One obvious approach is to analyse the quotation of |T : Tel ℓ|.
+Such a macro needs to analyse abstract syntax trees \emph{modulo judgemental equality}---it has to check which case is being analysed by reducing, say, a reflected expression |def (quote f) xs| for a definition $f$ with arguments to one of |con (quote Tel.[]) []|, |con (quote Tel._∷_) xs|, and |con (quote Tel._++_) xs|.
 
-Instead of quoting the entire telescope |T| at once, let us pattern match against |T : Tel ℓ| first.
-The first case for the empty telescope |[]| is straightforward but the other two cases |A :: T| and |U ++ V| seem impossible to call |fromTel| recursively: the first |T| is a function from |A| and |V| a function from |⟦ U ⟧ᵗ| for \emph{arbitrary} |A| and |U|:
+Instead of quoting the entire telescope |T|, let us pattern match against |T : Tel ℓ| first.
+The case for the empty telescope |[]| is simple but the other cases |A :: T| and |U ++ V| seem impossible to define:
 \savecolumns
 \begin{code}
 fromTel : (tel : Tel ℓ) → TC Telescope
@@ -1221,19 +1207,34 @@ fromTel  []         = return []
 fromTel  (A ∷   T)  = ... fromTel (T ?) ...
 fromTel  (U ++  V)  = ... fromTel (V ?) ...
 \end{code}
+where |T| is a function from |A| and |V| a function from |⟦ U ⟧ᵗ| for \emph{arbitrary} |A| and |U|.
 How can we give an argument of |A| and |⟦ U ⟧ᵗ|?
-Recall that a macro is a |TC| computation in which the state of the current context is enclosed.
-We may extend the context (of the call site) with a new variable used locally in another |TC| computation by the primitive |extendContext|. 
-To introduce the new variable to the scope, we then need another primitive: |unquoteTC| which interprets a reflected expression |e : Term| to its corresponding inhabitant of type |A|, so in the extended context the |TC| computation |unquoteTC (var 0 []) >>= λ x → ...| binds the newly added variable to |x|.
-%That is, we introduce a local variable of a type |A| during macro invocation by |unquoteTC| and |extendContext| altogether.
-The creation of a local variable is similar to the $\nu$-operator for the \emph{local name creation} by \citet{Schurmann2005,Nanevski2005} and is achieved through elaborator reflection in Agda by \citet{Chen-Mtac-Agda}.
-This technique is used frequently, so we define them explicitly as in \cref{fig:extendContextT,fig:extendCxtTel}.
-As long as the local variable |x| is used only for variable binding, the computation of |T x| can proceed and will reach to one of the three cases eventually.
-The last two cases are then defined rather succinctly:
+Recall that a macro is a |TC| computation in which the state of the current context $\Gamma$ is enclosed, so we can extend the context (of the call site) with a new variable used locally in another |TC| computation by the primitive |extendContext|. 
+However, the new variable does not yet exist in the scope. 
+To introduce it to the scope, we then need another primitive: |unquoteTC| which interprets a reflected expression |e : Term| as an inhabitant of type |A|.
+The computation |unquoteTC (var 0 []) >>= λ x → ...| binds the newly added variable to |x| in the extended context.
+This technique is used frequently, so we define them explicitly:
+\begin{code}
+exCxtT : (B : Set ℓ) → (Type → B → TC A) → TC A
+exCxtT B f = do
+  `B ← quoteTC B
+  (HL (extendContext)) `B ((HL (unquoteTC (var 0 []))) >>= λ x → f `B x)
+\end{code}
+The creation of a local variable is similar to the $\nu$-operator for the \emph{local name creation} by \citet{Schurmann2005,Nanevski2005} and is achieved via elaborator reflection by \citet{Chen-Mtac-Agda}.
+
+As for the type |⟦ U ⟧ᵗ| we need to be careful, since a tuple can be accessed by \emph{projections}. 
+If we merely create a local variable |u : ⟦ U ⟧ᵗ|, then each reference to a component of |u| is formed by projections |fst| and |snd|. 
+For example, instead of \eqref{eq:telescope} we would have
+\begin{code}
+`Set 0 :: pi (def (quote fst) (var 0 [] :: [])) (def (quote fst) (var 1 [] :: [])) :: [] 
+\end{code}
+In order to eliminate projections, we need to actually create a list of local variables $\overline{x}$ for each type in |U : Tel ℓ| recursively but pass them to a |TC| computation as a tuple as in \Cref{fig:exCxtTel}.
+The last two cases of |fromTel| are then defined rather succinctly:
+
 \begin{minipage}[t]{0.5\textwidth}
 \restorecolumns
 \begin{code}
-fromTel (A ∷ T)   = do
+fromTel  (A ∷ T)    = do
   (HL (exCxtT A)) λ `A x → do
     Γ ← fromTel (T x)
     return (`A ∷ Γ)
@@ -1242,13 +1243,15 @@ fromTel (A ∷ T)   = do
 \begin{minipage}[t]{0.5\textwidth}
 \restorecolumns
 \begin{code}
-fromTel (U ++ V)  = do
+fromTel  (U ++ V)   = do
   Γ ← fromTel U
   (HL (exCxtTel U)) λ u → do
     Δ ← fromTel (V u)
     return (Γ ++ Δ)
 \end{code}
 \end{minipage}
+Provided that local variables are not pattern matched, the computation of |T x| and |V u| will reach to one of three cases.
+Indeed, we are exploiting the fact that our representations are higher-order!
 
 \begin{figure}[t]
 \codefigure
@@ -1281,25 +1284,22 @@ exCxtℓs  (suc n)   f  = exCxtT Level λ _ ℓ →
 \end{minipage}%
 \end{figure}
 
-For the other direction of the translation, as only a list of reflected types are given, our generation of the reflected expression |e : Term| of the corresponding telescope |T : Tel ℓ| is syntactical.
-The code generation does not even involve the |TC| monad at all:
+For the other direction of the translation, our generation is syntactical.
 \begin{code}
 to`Tel : Telescope → Term
 to`Tel = foldr `[] (λ `A `T →  `A `∷ `T)
 \end{code}
 where |`[]| and |`A `:: `T| are synonyms for |con (quote Tel.[]) []| and |con (quote Tel._∷_) (`A :: lam `T :: [])|.
 
-For the translation from |DataD|, a |TC| computation |defineByDataD| is defined also using the local variable creation technique, although the datatype signature needs some attention. 
-In detail, to define a datatype via reflection, we need
-\begin{enumerate*}
-  \item a reflected $\Pi$-type for the datatype signature including the telescopes of parameters and indices,  
-  \item the number |#ps| of parameters, and
-  \item a reflected type for each constructor.
-\end{enumerate*}
-However, the level of a datatype specified by |alevel ⊔ ilevel| and the telescopes of parameters and indices are given separately in |PDataD| which may refer to level parameters introduced by |applyL : Level ^ #levels → PDataD|, so we need to compose the quotation of |Set (alevel ⊔ ilevel)| with the quotation of |Param| and |Index| to form a reflected $\Pi$-type within a context extended by |#levels| many |Level|.
+For the translation from |D : DataD|, a |TC| computation |defineByDataD| is defined using the local variable creation technique. 
+To apply |D .applyL : Level ^ #levels → PDataD|, we need a variant |exCxtℓs| (\cref{fig:exCxtTel}) which extends the context by a list of |Level| variables.
+Moreover, the level of a datatype specified by |alevel ⊔ ilevel| and the telescopes |Param| and |Index| for parameters and indices are given separately in |PDataD| which may refer to level parameters introduced by |applyL|, but
+to define a datatype via reflection a reflected $\Pi$-type is used for the datatype signature consisting of the telescopes of parameters.
+Hence we need to compose the quotation of |Set (alevel ⊔ ilevel)| with the quotation of |Param| and |Index| to form a reflected $\Pi$-type.
 One possible way to achieve this is to take the quotation of |Set (alevel ⊔ ilevel)| first and weaken its de Bruijn indices by the number of datatype parameters and indices.
-Alternatively, we can extend the context by |Param ++ Index| using |exCxtTel| first and take the quotation that can be composed with |fromTel (Param ++ Index)| to form the desired $\Pi$-type directly.
-In the end, we do not manipulate de Bruijn indices at all to translate from |DataD|.
+Alternatively, we extend the context by |Param ++ Index| using |exCxtTel| first and take the quotation that can be composed with |fromTel (Param ++ Index)| to form the desired $\Pi$-type directly.
+Other parts of the translation become rather straightforward.
+In fact, we do not manipulate de Bruijn indices at all to translate from |DataD|.
 Finally, to define a datatype by |D : DataD| in our framework, just declare
 \begin{code}
   unquoteDecl data d constructor c₁ ... cₙ = defineByDataD D d (c₁ :: ... :: cₙ :: [])
