@@ -37,7 +37,7 @@ f onClause (tel ⊢ ps `= t) = do
 f onClause cl = return cl
 
 _onClauses_ : (Term → TC Term) → Clauses → TC Clauses
-_onClauses_ f = mapM (normalise onClause_)
+_onClauses_ f = mapM (f onClause_)
 
 checkClauses : Clauses → Type → TC Clauses
 checkClauses cls `A = do

@@ -1056,7 +1056,7 @@ To turn this into a valid definition, we pattern-match the variable~|a| with all
 \begin{equation}\label{eq:fold-base-before}
 |foldAcc A R P p .x (acc x as) = fold-base foldAccP foldAcc A R P p x (acc x as)|
 \end{equation}
-Note that the variable |.x| above is forced by the constructor |acc x as| since the indices of |Native| and |Carrier| are the same.
+Note that the dot pattern |.x| above is forced by the constructor |acc x as|.
 Now normalise the right-hand side,
 \begin{equation}\label{eq:fold-base-after}
 |foldAcc A R P p .x (acc x as) = p x (λ y lt → foldAcc A R P p y (as y lt))|
@@ -1353,15 +1353,16 @@ The elimination of intermediate conversions during instantiating generic functio
 \subsection{Generating the Connections and Wrappers}\label{sec:connection-generation}
 The generation of datatype wrappers |DataT D| and connections |DataC D T|, |FoldC F f| and so on follows mostly the same idea, so we only discuss few points in common that are interesting to us.
 
-First, generating a wrapper |T| requires us to generate a clause $\Delta \vdash \overline{p} \hookrightarrow e$ (\cref{fig:clause}) that consists of a list $\overline{p}$ of patterns on the left hand side and an reflected expression $e$ on the right side in a context $\Delta$.
+First, generating a wrapper |T| requires us to generate a function clause $\Delta \vdash \overline{p} \hookrightarrow e$ (\cref{fig:clause}) that consists of a list $\overline{p}$ of patterns on the left hand side and an reflected expression $e$ on the right side in a context $\Delta$.
 For example, the only clause of |AccT| with all implicit arguments, i.e.\ 
 \begin{code}
 AccT {ℓ, ℓ'} (A, R, tt) (as , tt) = Acc {ℓ} {ℓ'} {A} R as
 \end{code}
 consists of patterns |(ℓ, ℓ')|, |(A, R, tt)|, |(as , tt)| and an expression |Acc {ℓ} {ℓ'} {A} R as| with variables in the context |[ ℓ : Level ] [ ℓ' : Level ] [ A : Set ℓ ] [ R : A → A → Set ℓ' ] [ as : A ]|. 
-By the definition of a clause, it may appear that the context $\Delta$ needs to be fully specified beforehand but with elaborator at our disposal it does not.
-Indeed, the reflected language as the reflection of the core language plays a double role in the sense that an expression can be unchecked as input or checked as output with respect to the elaborator~\cite{Cockx2020}.
-It follows that an unchecked clause $\overline{p} \hookrightarrow e$, i.e.\ a list of patterns $\overline{p}$ and $e$ (with a list of |unknown|'s as their context), is just sufficient along with its type |DataT AccD| to elaborate the whole clause.
+By the definition of a clause, it may appear that the context $\Delta$ needs to be fully specified beforehand but it does not.
+Indeed, the reflected language as the reflection of the core language has a double role in the sense that it can be unchecked as input or checked as output with respect to the elaborator~\cite{Cockx2020}.
+An unchecked clause $\overline{p} \hookrightarrow e$, i.e.\ a list of patterns $\overline{p}$ and $e$ (with a list of |unknown|'s as their context) is sufficient to check the whole clause against its type |DataT AccD|.
+Therefore, we only need to know the number of variables used in a clause without knowing their types.
 
 Another issue to deal with is the visibility of an argument.
 The two types |(x : A) → B x| and |{x : A} → B x| are different, so a single program is not possible to uncurry a function regardless of the visibility of its arguments.
@@ -1439,44 +1440,74 @@ If we simply normalise, say, |∀ {ℓs} → FoldNT foldAccP ℓs|, then we will
 \begin{code}
 ∀ {ℓs : Level ^ 3} (A : Set (fst (snd ℓs))) (R : A → A → Set (fst (snd (snd ℓs)))) → ...
 \end{code}
-instead of the preferred curried form.
-To handle this, we reuse |exCxtℓ| as defined in \cref{fig:exCxtls} so that |FoldNT P ℓs| can be called with a local variable |ℓs| in the context extended with |#levels| many variables to derive the type as shown in \cref{sec:FoldC}. 
+instead of the preferred curried form as shown in \cref{sec:FoldC}.
+To have type type in the curried form, we reuse |exCxtℓ| as defined in \cref{fig:exCxtls} so that |FoldNT P ℓs| can be called with a local variable |ℓs| in a context extended with |#levels| many variables. 
 Before returning its quotation, however, |FoldNT P ℓs| needs to be normalised to eliminate~|ℓs| using another primitive |normalise|.\footnote{%
 For efficiency, Agda provides a primitive |withNormalisation| where primitives in a |TC| computation normalise their results.
 For example, |quoteTC! x = withNormalisation true (quoteTC x)| normalises a term~|x| before returning its quotation.
 }
 It remains to prepend the same number of the quotation of |Level| we extend with, since the |TC| computation is carried locally.
-The first step of |defineFold| is then given as follows:
+Then, we declare the function |f| with the type we just generated using the primitive |declareDef|.
+The first step of |defineFold| is given as follows:
+\savecolumns
 \begin{code}
 defineFold F f = do
   `type ← prependLevels #levels <$> exCxtℓs #levels λ ℓs → do
       normalise =<< quoteTC (FoldNT F ℓs)
+  declareDef f `type
 \end{code}
 where |`type| is the reflected type for the instantiated function |f|.
 
-The second step is to generate a function clause for each constructor $c_i$ of the datatype |Native ℓs ps| as \eqref{eq:fold-base-before} to normalise in the next step.
-In general, each clause has the form
+The second step is to generate a clause such as \eqref{eq:fold-base-before} to normalise for each constructor $c_i$ of the datatype |Native ℓs ps|.
+By the definition of |FoldNT F ℓs|, the clause has the form
 \[
-  \overline{\Varid{ℓ}}\; \overline{p}\;\overline{x}\;(c_i\;\overline{a}) \hookrightarrow 
-  \Varid{fold-base}\;F\;f\;\overline{p}\;\overline{x}\;(c_i\;\overline{a})
+  \Delta \vdash \overline{\Varid{ℓ}_j}\; \overline{p}\;\overline{x}\;(c_i\;\overline{a}) \hookrightarrow 
+  e_i
+  \quad\text{with}\quad
+  e_i = \Varid{fold-base}\;F\;(\Varid{ℓ}_1, \dots , \Varid{ℓ}_n)\;f\;\overline{p}\;\overline{x}\;(c_i\;\overline{a})
+\]%
+%%%% HELP 
+% where
+%\begin{enumerate*}
+%  \item $f$ is the final instantiated function,
+%  \item $\overline{\Varid{ℓ}}$ a list of level variables specified by |F .#levels|,
+%  \item $\overline{p}$ a list of parameter variables specified by |(F .applyL ℓs) .PFoldP.Param|,
+%  \item ...
+%\end{enumerate*}
+%%%% HELP 
+%As discussed in \cref{sec:connection-generation} we may just generate an unchecked clause to normalise.
+%We need to be aware that Agda's elaborator is bidirectional---an expression can be checked against a type or inferred.
+To normalise a reflected expression |e : Term|, Agda's (bidirectional) elaborator first \emph{synthesises} its type to ensure that |e| is well-formed.
+We see that the type of $e_i$ can be synthesised by looking at the type of |fold-base| so that each of its arguments is \emph{checked} accordingly.
+It follows that only the length of $\Delta$ needs to be specified, since its types will be solved when checked.
+Moreover, the patterns $\overline{x}$ are forced by the constructor pattern $c_i\;\overline{a})$ since |is| is determined by the constructor of |Native (level ℓs) (param ps) is|.
+It follows that $\overline{x}$ can all be given as |unknown| on both sides.
+Therefore, we only generate the clause 
+\[
+  \overline{\Varid{ℓ}_j}\;\overline{p}\;\overline{\Conid{.unknown}}\;(c_i\;\overline{a}) \hookrightarrow 
+  e_i'
+  \quad\text{with}\quad
+  e_i' = \Varid{fold-base}\;F\;(\Varid{ℓ}_1,\dots,\Varid{ℓ}_n)\;f\;\overline{p}\;\overline{\Conid{unknown}}\;(c_i\;\overline{a})
 \]
-where
-%%%% HELP 
-\begin{enumerate*}
-  \item $f$ is the final instantiated function,
-  \item $\overline{\Varid{ℓ}}$ a list of level variables specified by |F .#levels|,
-  \item $\overline{p}$ a list of parameter variables specified by |(F .applyL ℓs) .PFoldP.Param|,
-  \item ...
-\end{enumerate*}
+Hence, the definition of |defineFold| continues as
+\restorecolumns
+\begin{code}
+  `F ← quoteωTC F
+  pars , cs ← getDataDefinition =<< FoldPToNativeName F
 
-%%%% HELP 
+  cls ← exCxtℓs #levels λ ℓs → do
+    Γps ← fromTel (Param ℓs)
+    forM cs $ conClause `fold-base `P f #levels pars Γps
+\end{code}
+where |quoteωTC| quotes an expression whose type lies in |Setω|, |FoldPToNativeName| revolves the name |N| of the datatype |F .Native|, |getDataDefinition| retrives the definition of |N| (\Cref{fig:definition}), and |conClause| generates the above clause.
 
-Finally,...
-\LT{we normalise clauses with |fold-base| on the right hand side~\cite{Alimarine2004}
-explain the bidirectional type checking;
-|inferType| is performed before |normalise|;
-|fold-base| is a definition so it can be inferred;
-}
+Then, $e_i'$ is normalised in a context extended with $\lvert\Delta\rvert$ many |unknown|'s for each constructor $c_i$ and define the function |f| using the normalised $e_i'$ as the new right-hand side:
+\restorecolumns
+\begin{code}
+  cls ← normalise onClauses cls
+  defineFun f cls
+\end{code}
+where |(f onClauses cls)| applies the |TC| computation |f| to the right-hand side of each clause $\Delta \vdash \overline{p} \hookrightarrow e$ of the list |cls| in a context extended by $\Delta$ and returns new clauses.
 
 We have defined |defineFold| for instantiating fold programs |F : FoldP|.
 To define a function $f$ by reflection by a fold program |F|, for example, the following declaration 
