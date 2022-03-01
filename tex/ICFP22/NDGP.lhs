@@ -311,6 +311,7 @@
 %format u = "\iden u"
 %format v = "\iden v"
 %format x = "\iden x"
+%format .x = "." x
 %format xs = "\iden{xs}"
 %format xs' = "\iden{xs^\prime}"
 %format y = "\iden y"
@@ -1056,7 +1057,7 @@ To turn this into a valid definition, we pattern-match the variable~|a| with all
 \begin{equation}\label{eq:fold-base-before}
 |foldAcc A R P p .x (acc x as) = fold-base foldAccP foldAcc A R P p x (acc x as)|
 \end{equation}
-Note that the dot pattern |.x| above is forced by the constructor |acc x as|.
+Note that the index argument is now a dot pattern~`|.x|' because its value is determined by the pattern-matching with |acc x as|.
 Now normalise the right-hand side,
 \begin{equation}\label{eq:fold-base-after}
 |foldAcc A R P p .x (acc x as) = p x (λ y lt → foldAcc A R P p y (as y lt))|
@@ -1120,13 +1121,13 @@ Regarding elaborator reflection itself, we sketch its basic design in \cref{sec:
 
 \subsection{Elaborator Reflection in Agda}
 \label{sec:elab}
-Agda's reflection API includes a set of primitives based on the elaborator monad |TC| which operates on the reflected language formed by |Term| (\cref{fig:reflected-term}), |Pattern| (\cref{fig:reflected pattern}), |Literal| (\cref{fig:other-type}), |Clause| (\cref{fig:clause}), and |Definition| (\cref{fig:definition}) corresponding to each syntactic category.
+Agda's reflection API includes a set of primitives based on the elaborator monad |TC|, which operates on the reflected language formed by |Term| (\cref{fig:reflected-term}), |Pattern| (\cref{fig:reflected pattern}), |Literal| (\cref{fig:other-type}), |Clause| (\cref{fig:clause}), and |Definition| (\cref{fig:definition}) corresponding to each syntactic category.
 Every reflected expression is in weak head normal form and all application are in spine-normal form $f\;\overline{x}$.
 The quotation of an expression |e| can be obtained by |quoteTerm e| and the resolved unique name for a definition |f| or a constructor by |quote f|.  
 For example, the quotation |quoteTerm acc| of the constructor |acc| is equal to |con (quote acc) []| where the empty list |[]| indicates that |acc| alone has no arguments.
-For illustrative purposes, a subset of reflected expressions is presented instead of the actual inductive definition |Term| \citep{Agda} which carries not only arguments' visibility and modality but also various sorts that are of no use for our understanding
+For illustrative purposes, a subset of reflected expressions is presented instead of the actual inductive definition |Term| \citep{Agda}, which additionally carries not only argument visibility and modality but also various sorts, which are not essential to our presentation.
 
-The \emph{elaborator monad} |TC| (called the \emph{type checking monad} in Agda's documentation \emph{op. cit.}) encloses states needed for elaboration, including the current context, the scope of names |f : Name| with its associated type and definition, the set of metavariables |x : Meta| and so forth.
+The \emph{elaborator monad} |TC| (called the \emph{type-checking monad} in Agda's documentation \emph{op.~cit.}) encloses states needed for elaboration, including the current context, the scope of names |f : Name| with its associated type and definition, the set of metavariables |x : Meta| and so forth.
 %Some primitives are used to access the elaboration states such as |getContext : TC Telescope|, |getType : Name → TC Type|, and |getDefinition|
 %some are used to modify the state such as |freshName : String → TC Name| for adding a name without definition, |declarePostulate : Name → Type → TC ⊤| for postulating a type;
 %some are used to elaborator-specific operations such as |reduce, normalise : Term → TC Term|. 
@@ -1143,13 +1144,12 @@ The \emph{elaborator monad} |TC| (called the \emph{type checking monad} in Agda'
 %\label{fig:extendContextT}
 %\end{minipage}%
 %\end{figure}
-A \emph{macro} is just a TC computation of type |Term → TC ⊤| and a definition of type |A₁ → ... → Term → TC ⊤| declared as |macro| will be expanded during elaboration. 
+A \emph{macro} is just a TC computation of type |Term → TC ⊤|, and a definition of type |A₁ → ... → Term → TC ⊤| declared as |macro| will be expanded during elaboration. 
 Then, the call site of a macro is treated as a metavariable $x$ and the macro is applied to the reflected expression |meta x []| upon expansion. 
 Let us consider a minimalistic example:
 \begin{code}
-macro
-  give : Term → Term → TC ⊤
-  give = unify
+macro  give : Term → Term → TC ⊤
+       give = unify
 \end{code}
 where the primitive |unify| which unifies two given reflected expressions is declared as a macro.
 Invoking the macro as |give e| would splice the given reflected expression~|e| in place of the call, if Agda did nothing to its argument |e|.
@@ -1197,7 +1197,7 @@ We will see concrete examples later.
 \subsection{Translation between Typed Higher-Order and Unityped First-Order Representations}\label{sec:translation}
 
 Our generic programs are given in typed and higher-order representations, so in order to use macros to generate native datatypes and definitions we have to first translate them to its corresponding first-order and unityped representation used by reflection.
-For example, contrary to |Tel ℓ|, a reflected telescopes is just a list of reflected types and thus first-order and unityped.
+For example, contrary to |Tel ℓ|, a reflected telescope is just a list of reflected types and thus first-order and unityped.
 That is, the quotation of |[[ (A , _) ∶ [ A ∶ Set ] [] ]] [ _ ∶ (A → A) ] []| needs to be translated to the reflected telescope
 \begin{equation}\label{eq:telescope}
 |`Set 0 ∷ pi (var 0 []) (var 1 []) ∷ []|
@@ -1484,10 +1484,10 @@ Moreover, the patterns $\overline{x}$ are forced by the constructor pattern $c_i
 It follows that $\overline{x}$ can all be given as |unknown| on both sides.
 Therefore, we only generate the clause 
 \[
-  \overline{\Varid{ℓ}_j}\;\overline{p}\;\overline{\Conid{.unknown}}\;(c_i\;\overline{a}) \hookrightarrow 
+  \overline{\Varid{ℓ}_j}\;\overline{p}\;\overline{\cons{.unknown}}\;(c_i\;\overline{a}) \hookrightarrow 
   e_i'
   \quad\text{with}\quad
-  e_i' = \Varid{fold-base}\;F\;(\Varid{ℓ}_1,\dots,\Varid{ℓ}_n)\;f\;\overline{p}\;\overline{\Conid{unknown}}\;(c_i\;\overline{a})
+  e_i' = \Varid{fold-base}\;F\;\{\Varid{ℓ}_1,\dots,\Varid{ℓ}_n,\Conid{tt}\}\;f\;\overline{p}\;\overline{\cons{unknown}}\;(c_i\;\overline{a})
 \]
 Hence, the definition of |defineFold| continues as
 \restorecolumns
@@ -1533,13 +1533,13 @@ The generic program that instantiates to fold operators on native datatypes is g
 \begin{code}
 fold-operator : (C : DataC D N) → FoldP
 \end{code}
-As an example of instantiating the generic program, suppose that we have written the datatype |Acc| manually, and want to derive its fold operator.
-First we generate the description |AccD| by the macro |genDataD Acc|, and then the datatype connection |AccC| by |genDataC AccD (genDataT AccD Acc)|.
-Now |fold-operator AccC| is exactly the fold program |foldAccP|, and the fold operator/function |foldAcc| can be manufactured from and connected with |foldAccP| by |defineFold foldAccP foldAcc| and |genFoldC foldAccP foldAcc|.
-(The macros are manually invoked for now, but the process could be streamlined as, say, pressing a few buttons of an interactive editor.)
-
-Let us look at |fold-operator| in a bit more detail.
-The ordinary parameters of |fold-operator C| are mainly a |⟦ D ⟧ᵈ|-algebra in a curried form, so what |fold-operator| does is just cosmetic work:
+For example, the fold program |foldAccP| can be obtained as |fold-operator AccC|.
+%As an example of instantiating the generic program, suppose that we have written the datatype |Acc| manually, and want to derive its fold operator.
+%First we generate the description |AccD| by the macro |genDataD Acc|, and then the datatype connection |AccC| by |genDataC AccD (genDataT AccD Acc)|.
+%Now |fold-operator AccC| is exactly the fold program |foldAccP|, and the fold operator/function |foldAcc| can be manufactured from and connected with |foldAccP| by |defineFold foldAccP foldAcc| and |genFoldC foldAccP foldAcc|.
+%(The macros are manually invoked for now, but the process could be streamlined as, say, pressing a few buttons of an interactive editor.)
+%Let us look at |fold-operator| in a bit more detail.
+The ordinary parameters of |fold-operator C| are mainly a |⟦ D ⟧ᵈ|-algebra in a curried form, so the work of |fold-operator| is purely cosmetic:
 at type level, compute the types of a curried algebra, which are the curried types of the constructors of~|D| where all the recursive fields are replaced with a given carrier, and at program level, uncurry a curried algebra.
 The level parameters of |fold-operator C| include those of~|D| and one more for the carrier~|X| appearing in the |Param| telescope shown below, which also contains the ordinary parameters of~|D| and a curried algebra represented as a telescope computed (by |FoldOpTel|) from the list of constructor descriptions in~|D|:
 \begin{code}
@@ -1879,11 +1879,11 @@ Moreover, in a dependently typed setting it is possible to attain better uniform
 
 \paragraph{Dependently typed datatype-generic libraries}
 Our framework makes it possible and worthwhile to develop datatype-generic libraries for wider and practical use in Agda.
-The change to traditional Agda generic programs required by our framework is a mild generalisation from the operators |μ|~and |fold| to datatype and fold connections mirroring the behaviour of the operators, so it should be easy to adapt existing libraries to our framework as well as develop new ones.
+The change to traditional Agda generic programs required by our framework is a mild generalisation from the operators |μ|~and |fold| to datatype and fold connections capturing the behaviour of the operators, so it is easy to adapt existing libraries to our framework as well as develop new ones.
 There are still many opportunities to explore for dependently typed datatype-generic libraries:
 Even for recursion schemes~\citep{Yang-recursion-schemes}, a standard datatype-generic example, we can start supplying theorems about them like in \cref{sec:fold-operators}.
-Datatypes derived from others, such as the lifted predicates |All| and |Any| in \cref{sec:simple-containers}, are also common and should be treated generically (as opposed to duplicating an instance for each datatype as in the standard library~\citep{Agda-stdlib}).
-Organisation of datatypes with domain-specific intrinsic invariants is another important goal, for which ornaments~\citep{McBride-ornaments} still have much potential (although the community has focussed mostly on lifting ornaments to programs and proofs~\citep{Dagand-functional-ornaments,McDonell-Ghostbuster,Williams-principle-ornamentation,Ringer-ornaments-Coq}).
+Datatypes derived from others, such as the lifted predicates |All| and |Any| in \cref{sec:simple-containers}, are also common and should be treated generically (as opposed to manually duplicating an instance for each datatype as in the standard library~\citep{Agda-stdlib}).
+Domain-specific organisation of datatypes with intrinsic invariants is another important goal, for which ornaments~\citep{McBride-ornaments} still have much potential (although the community has focussed mostly on lifting ornaments to programs and proofs~\citep{Dagand-functional-ornaments,McDonell-Ghostbuster,Williams-principle-ornamentation,Ringer-ornaments-Coq}).
 For example, \cref{sec:algebraic-ornamentation} mentions that the relationship between intrinsically and extrinsically typed \textlambda-terms can be captured as an ornament, whose properties and derived constructions should be formulated generically for reuse in developments of typed embedded languages --- a direction already proved fruitful by \citet{Allais-binding-syntax-universe-JFP}.
 
 %\todo[inline]{Success of the App Store: dependent types need richer type structures and allow assumptions about datatype descriptions to derive more functionalities (boring if we can only automate Eq, Show, Read etc), so DGP has much more potential in dependently typed settings; also, keep generic programs natural so that libraries can be developed more easily — no staging (which is not in the current dependently typed languages anyway)!}
@@ -1897,7 +1897,7 @@ For example, \cref{sec:algebraic-ornamentation} mentions that the relationship b
 
 Similar to staged approaches~\citep{Yallop-staged-generic-programming,Pickering-staged-SoP}, our framework instantiates generic programs by generating code separately for each native instance.
 A potential problem is code duplication, on which we take a conservative position: while we cannot solve the problem, which is inherent in languages with datatype declarations, we do alleviate it a little by removing the overhead of manual instantiation and maintaining explicit connections between generic and instantiated entities, which generic libraries can exploit.
-A possible solution to the problem was proposed by \citet{Chapman-levitation} in the form of a more radically redesigned type theory where datatype declarations are replaced with first-class descriptions, and the |μ|~operator becomes the built-in and exclusive mechanism for manufacturing datatypes.
+A possible solution to the problem was proposed by \citet{Chapman-levitation} in the form of a more radically redesigned type theory where datatype declarations are replaced with first-class descriptions, and the |μ|~operator becomes the exclusive built-in mechanism for manufacturing datatypes.
 Generic programs in this theory are directly computable and do not require instantiation.
 However, there have been no subsequent developments of the theory, in particular a practical implementation.
 While waiting for better languages to emerge, it is also important to enable the development and practical use of datatype-generic libraries as soon as possible, which our framework does.
