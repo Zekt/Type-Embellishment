@@ -22,20 +22,20 @@ private
   pattern `ind-base  = quote ind-base
 
   -- Generate the corresponding clause of a given constructor name
-  conClause : (rec : Name) → (pars #levels : ℕ) → Telescope → Name → TC Clause
-  conClause rec pars #levels Γps c = do
+  conClause : {A : Setω} (rec f : Name) (F : A) → (pars #levels : ℕ) → Telescope → Name → TC Clause
+  conClause rec f F pars #levels Γps c = do
+    `F ← quoteωTC F
     Γc ← forgetTypes <$> getConTelescope c pars
 
     let Γℓs = `Levels #levels
     let |Γc|  = length Γc ; |Γps| = length Γps
-    let (_ , cArgs , cPats)   = cxtToVars 0              (`tt , `tt) Γc 
-    let (_ , psArgs , psPats) = cxtToVars |Γc|           (`tt , `tt) Γps
-    let (_ , ℓArgs , ℓPats)   = cxtToVars (|Γc| + |Γps|) (`tt , `tt) Γℓs
-
+    let (_ , cArgs , cPats)    = cxtToVars 0              (`tt , `tt) Γc 
+    let (_ , psArgs , psPats)  = cxtToVars |Γc|           (`tt , `tt) Γps
+    let ((ℓt , _) , _ , ℓPats) = cxtToVars (|Γc| + |Γps|) (`tt , `tt) Γℓs
     
     return $ (Γℓs <> Γps <> Γc)
       ⊢ ℓPats <> psPats <> vArg (con c cPats) ∷ [] `=
-        (def rec $ ℓArgs <> psArgs <> [ vArg (con c $ hUnknowns pars <> cArgs) ])
+        (def rec $ (vArg `F ∷ hArg ℓt ∷ vArg (def f []) ∷ []) <> psArgs <> [ vArg (con c $ hUnknowns pars <> cArgs) ])
 
 defineFold : FoldP → Name → TC _
 defineFold P f = do
@@ -46,15 +46,12 @@ defineFold P f = do
 
   declareDef (vArg f) (unConflictType `type)
 
-  `P ← quoteωTC P
-  let rec = def₂ `fold-base `P (def₀ f)
-  dummyRec ← define! (vArg `type) [ [] ⊢ [] `= rec ]
   pars , cs ← getDataDefinition =<< FoldPToNativeName P
 
   cls ← exCxtℓs #levels λ ℓs → do
-    Γps ← fromTel! (Param ℓs) ParamV
+    Γps ← fromTel (Param ℓs) ParamV
     ss  ← fromTelInfo (ParamN {ℓs})
-    forM cs $ conClause dummyRec pars #levels (renameTelBy Γps ss)
+    forM cs $ conClause `fold-base f P pars #levels (renameTelBy Γps ss)
   cls ← noConstraints $ normalise onClauses cls
 
   defineFun f cls
@@ -70,16 +67,12 @@ defineInd P f = do
 
   declareDef (vArg f) $ unConflictType `type
 
-  `P    ← quoteωTC P
-  let ind = def₂ `ind-base `P (def₀ f)
-  dummyRec ← define! (vArg `type) [ [] ⊢ [] `= ind ]
-
   pars , cs ← getDataDefinition =<< IndPToNativeName P
 
   cls ← exCxtℓs #levels λ ℓs → do
-    Γps ← fromTel! (Param ℓs) ParamV
+    Γps ← fromTel (Param ℓs) ParamV
     ss  ← fromTelInfo (ParamN {ℓs})
-    forM cs $ conClause dummyRec pars #levels (renameTelBy Γps ss)
+    forM cs $ conClause `ind-base f P pars #levels (renameTelBy Γps ss)
 
   cls ← noConstraints $ normalise onClauses cls
   defineFun f cls
