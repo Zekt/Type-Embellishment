@@ -221,6 +221,11 @@
 %format hidden = "\cons{hidden}"
 %format instance′ = "\cons{instance′}"
 %format nat = "\cons{nat}"
+%format char = "\cons{char}"
+%format float = "\cons{float}"
+%format word64 = "\cons{word64}"
+%format name = "\cons{name}"
+%format string = "\cons{string}"
 %format clause = "\cons{clause}"
 %format absurd-clause = "\cons{absurd\textsf{-}clause}"
 %format function = "\cons{function}"
@@ -452,7 +457,7 @@ Unfortunately, compiler optimisation does not work for us because instantiated f
 
 Luckily again, in Agda there is something that can take the place of staging for generic program instantiation: elaborator reflection (inspired by Idris~\citep{Christiansen-elaborator-reflection}), through which the Agda metaprogrammer has access to operations for elaborating the surface language to the core.
 It turns out that datatype-generic programming and elaborator reflection are a perfect match in Agda.
-For example, to express dependency in types, datatype descriptions are usually higher-order and can be somewhat difficult to manipulate, but our transformation from descriptions to native datatypes is surprisingly natural thanks to the `local name creation' technique~\citep{Nanevski-names-and-necessity}\todo{which citation(s)?}, which is easily implemented using a few reflection primitives.
+For example, to express dependency in types, datatype descriptions are usually higher-order and can be somewhat difficult to manipulate, but our transformation from descriptions to native datatypes is surprisingly natural thanks to the `local name creation' technique~\citep{Schurmann2005}, which is easily implemented using a few reflection primitives.
 Moreover, there is no need to drastically alter the form of generic programs (such as adding staging annotations) because they can be straightforwardly instantiated with (open-term) normalisation, also a reflection primitive.
 
 %\LT{Staged computation has been proposed to solve the notorious efficiency problem~\cite{Yallop-staged-generic-programming,Pickering-staged-SoP} due to the conversions between generic representations.
@@ -1057,7 +1062,6 @@ To turn this into a valid definition, we pattern-match the variable~|a| with all
 \begin{equation}\label{eq:fold-base-before}
 |foldAcc A R P p .x (acc x as) = fold-base foldAccP foldAcc A R P p x (acc x as)|
 \end{equation}
-Note that the index argument is now a dot pattern~`|.x|' because its value is determined by the pattern-matching with |acc x as|.
 Now normalise the right-hand side,
 \begin{equation}\label{eq:fold-base-after}
 |foldAcc A R P p .x (acc x as) = p x (λ y lt → foldAcc A R P p y (as y lt))|
@@ -1075,173 +1079,190 @@ where |foldAccT _ (A , R , P , p , _) {x , _} == foldAcc A R P p x| is a wrapper
 \section{Establishing Connections Using Elaborator Reflection}
 \label{sec:reflection}
 
-\begin{figure}
-\codefigure
-\begin{minipage}[t]{.5\textwidth}%
-\begin{code}
-data Term : Set where
-  set   : (t  : Term)                  →  Term
-  pi    : (t u : Type)                 →  Term
-  lit   : (l  : Literal)               →  Term
-  lam   : (t  : Tm)                    →  Term
-  var   : (i  : ℕ)     (xs   : Terms)  →  Term
-  con   : (c  : Name)  (xs   : Terms)  →  Term
-  def   : (f  : Name)  (xs   : Terms)  →  Term
-  meta  : (x  : Meta)  (xs   : Terms)  →  Term
-  unknown :                               Term
-\end{code}
-\end{minipage}%
-\begin{minipage}[t]{.5\textwidth}%
-\begin{code}
-data Pattern where
-  con     : (c : Name) (ps : Patterns)  → Pattern
-  proj    : (f : Name)                  → Pattern
-  var     : (i : ℕ)                     → Pattern
-  absurd  : (i : ℕ)                     → Pattern
-  lit     : (l : Literal)               → Pattern
-  dot     : (t : Term)                  → Pattern
-\end{code}
-\end{minipage}%
-\par
-\begin{minipage}[t]{.5\textwidth}
-\caption{Reflected expressions (simplified)}\label{fig:reflected-term}
-\end{minipage}%
-\begin{minipage}[t]{.5\textwidth}
-\caption{Reflected patterns}\label{fig:reflected pattern}
-\end{minipage}%
-\end{figure}
+In this section, we use elaborator reflection to streamline generic programming in previous sections.
+Specifically, we define a set of macros in our framework
+\begin{enumerate*}
+  \item to translate between typed higher-order representations used by generic programs and uni-typed first-order representations used by the reflection framework in \cref{sec:translation};
+  \item to generate connections (\cref{sec:DataC,sec:FoldC}) by synchronising two different types of representations in \cref{sec:connection-generation};
+  \item to partially evaluate generic programs (\cref{sec:FoldC}) and derive definitions that are comparable, if not identical, to hand-written definitions in \cref{sec:specialising}.
+\end{enumerate*}
+Regarding elaborator reflection itself, we sketch its basic design in \cref{sec:elab} but leave the uses of |TC| primitives for elaboration to later sections when needed.
 
-
-In this section, we will use elaborator reflection to streamline generic programming in previous sections:
-First, we use macros to translate representations (\cref{sec:parameters}) used by generic programs such as |Tel : Level → Set|, which are \emph{higher-order} and \emph{typed}, and those by the reflection framework which are \emph{first-order} and \emph{unityped} in \cref{sec:translation}.
-Then, connections (\cref{sec:DataC,sec:FoldC}) are generated by walking through two different types of representations at the same time in \cref{sec:connection-generation}. 
-Finally, generic programs (\cref{sec:FoldC}) such as~\eqref{eq:fold-base-before} are normalised during elaboration to derive definitions that are comparable, if not identical, to hand-written definitions like~\eqref{eq:fold-base-after} in \cref{sec:specialising}.
-
-Regarding elaborator reflection itself, we sketch its basic design in \cref{sec:elab} but leave the explanation of primitives accessing the elaborator and their uses to later sections when needed.
-
-\subsection{Elaborator Reflection in Agda}
-\label{sec:elab}
-Agda's reflection API includes a set of primitives based on the elaborator monad |TC|, which operates on the reflected language formed by |Term| (\cref{fig:reflected-term}), |Pattern| (\cref{fig:reflected pattern}), |Literal| (\cref{fig:other-type}), |Clause| (\cref{fig:clause}), and |Definition| (\cref{fig:definition}) corresponding to each syntactic category.
-Every reflected expression is in weak head normal form and all application are in spine-normal form $f\;\overline{x}$.
-The quotation of an expression |e| can be obtained by |quoteTerm e| and the resolved unique name for a definition |f| or a constructor by |quote f|.  
-For example, the quotation |quoteTerm acc| of the constructor |acc| is equal to |con (quote acc) []| where the empty list |[]| indicates that |acc| alone has no arguments.
-For illustrative purposes, a subset of reflected expressions is presented instead of the actual inductive definition |Term| \citep{Agda}, which additionally carries not only argument visibility and modality but also various sorts, which are not essential to our presentation.
-
-The \emph{elaborator monad} |TC| (called the \emph{type-checking monad} in Agda's documentation \emph{op.~cit.}) encloses states needed for elaboration, including the current context, the scope of names |f : Name| with its associated type and definition, the set of metavariables |x : Meta| and so forth.
-%Some primitives are used to access the elaboration states such as |getContext : TC Telescope|, |getType : Name → TC Type|, and |getDefinition|
-%some are used to modify the state such as |freshName : String → TC Name| for adding a name without definition, |declarePostulate : Name → Type → TC ⊤| for postulating a type;
-%some are used to elaborator-specific operations such as |reduce, normalise : Term → TC Term|. 
-%\begin{figure}
-%\codefigure
-%\begin{minipage}[t]{0.65\textwidth}
-%\begin{code}
-%extendContextT : (B : Set ℓ) → (Type → B → TC A) → TC A
-%extendContextT B f = do
-%  `B ← quoteTC B
-%  extendContext `B (unquoteTC (var 0 []) >>= f `B)
-%\end{code}
-%\caption{A typed version of |extendContext|}
-%\label{fig:extendContextT}
-%\end{minipage}%
-%\end{figure}
-A \emph{macro} is just a TC computation of type |Term → TC ⊤|, and a definition of type |A₁ → ... → Term → TC ⊤| declared as |macro| will be expanded during elaboration. 
-Then, the call site of a macro is treated as a metavariable $x$ and the macro is applied to the reflected expression |meta x []| upon expansion. 
-Let us consider a minimalistic example:
-\begin{code}
-macro  give : Term → Term → TC ⊤
-       give = unify
-\end{code}
-where the primitive |unify| which unifies two given reflected expressions is declared as a macro.
-Invoking the macro as |give e| would splice the given reflected expression~|e| in place of the call, if Agda did nothing to its argument |e|.
-In fact, for convenience Agda quotes arguments of type |Term| and |Name| before macro invocation, so |give e| evaluates to |unify (quoteTerm e)| during elaboration. 
-After finishing the invocation, the call site of |give e| becomes |e| which will then be elaborated again.
+\subsection{Elaborator Reflection in Agda} \label{sec:elab}
+The reflection API includes the elaborator monad |TC|, a set of |TC| computations, and datatypes ---|Term|, |Pattern|, |Literal|, |Clause|, and |Definition| (\cref{fig:reflected-term,fig:reflected pattern,fig:other-type,fig:clause,fig:definition})--- reflecting the core language where every expression is in weak head normal form and every application is in spine-normal form.
+The type |Arg| decorates a type with the information |i : ArgInfo| about visibility (being implicit or not) and modality; the type |Abs| with a name |s : String| for display. 
+For brevity, we often suppress |i : ArgInfo| and binder's name |s|, so for example we write |pi a b | for |pi (arg i a) (abs s b)|.
 
 \begin{figure}[t]
 \codefigure
-\begin{minipage}[t]{.5\textwidth}
+\begin{minipage}[t]{.55\textwidth}%
+\begin{code}
+data Term : Set where
+  unknown   : Term
+  lit       : (l  : Literal)                      → Term
+  agda-sort : (s  : Sort)                         → Term
+  pi        : (a  : Arg Type)   (b  : Abs Type)   → Term
+  lam       : (v  : Visibility) (t  : Abs Term)   → Term
+  var       : (i  : Nat)        (xs : Args Term)  → Term
+  con       : (c  : Name)       (xs : Args Term)  → Term
+  def       : (f  : Name)       (xs : Args Term)  → Term
+  pat-lam   : (cs : Clauses)    (xs : Args Term)  → Term
+  meta      : (x  : Meta)       (xs : Args Term)  → Term
+\end{code}
+\end{minipage}%
+\begin{minipage}[t]{.45\textwidth}%
+\begin{code}
+data Sort    : Set where
+  set      : (t  : Term)   → Sort
+  lit      : (n  : Nat)    → Sort
+  prop     : (t  : Term)   → Sort
+  propLit  : (n  : Nat)    → Sort
+  inf      : (n  : Nat)    → Sort
+  unknown  : Sort
+
+data Arg (A : Set)  : Set where
+  arg  : (i : ArgInfo)  (x : A) → Arg A
+
+data Abs (A : Set)  : Set where
+  abs  : (s : String)   (x : A) → Abs A
+\end{code}
+\end{minipage}%
+\caption{Reflected expressions}\label{fig:reflected-term}
+\end{figure}
+
+\begin{figure}[t]
+\codefigure
+\begin{minipage}[t]{.34\textwidth}%
+\begin{code}
+data Pattern where
+  con     : (c : Name) (ps : Patterns)
+          → Pattern
+  proj    : (f : Name)     → Pattern
+  var     : (i : ℕ)        → Pattern
+  absurd  : (i : ℕ)        → Pattern
+  lit     : (l : Literal)  → Pattern
+  dot     : (t : Term)     → Pattern
+\end{code}
+\end{minipage}%
+\begin{minipage}[t]{.33\textwidth}
+\begin{code}
+data Literal : Set where
+  nat    : (n : Nat)      → Literal
+  word64 : (n : Word64)   → Literal
+  float  : (x : Float)    → Literal
+  char   : (c : Char)     → Literal
+  string : (s : String)   → Literal
+  name   : (x : Name)     → Literal
+  meta   : (x : Meta)     → Literal
+\end{code}
+\end{minipage}%
+\begin{minipage}[t]{.33\textwidth}
 \begin{code}
 postulate
   Name  : Set
   Meta  : Set
-
-data Literal where
-  nat    : (n : ℕ) → Literal
-  ...
-\end{code}
-\end{minipage}%
-\begin{minipage}[t]{.5\textwidth}
-\begin{code}
+Args    A  =  List (Arg A)
 Type       =  Term
-Telescope  =  List Type
-Terms      =  List Term
+Telescope  =  List (String × Arg Type)
 Names      =  List Name
 Patterns   =  List Pattern
 \end{code}
 \end{minipage}
 \par
-\begin{minipage}[t]{.5\textwidth}
-\caption{Other built-in types for reflection}\label{fig:other-type}
+\begin{minipage}[t]{.34\textwidth}
+\caption{Reflected patterns}\label{fig:reflected pattern}
 \end{minipage}%
-\begin{minipage}[t]{.5\textwidth}
-\caption{Type abbreviations}\label{fig:type abbrs}
+\begin{minipage}[t]{.66\textwidth}
+\caption{Other types and abbreviations for reflection}\label{fig:other-type}\label{fig:type abbrs}
 \end{minipage}%
 \end{figure}
 
-The reflected language in Agda is based on the de Bruijn representation and thus \emph{not} hygiene.
-Manipulating indices is notoriously error-prone, but in many cases there is no need to do so.
-We will see concrete examples later. 
-%Instead, we unquote a variable |var i []| and bind it to an (object-level) variable |x| to avoid manipulating indices explicitly. 
-%For example, the primitive |extendContext : ∀ {A} (`B : Type) → TC A → TC A| takes a reflected expression of some type |B| and extends the context of the second argument with a variable of type |B|, so it is tempting to use |var 0 []| to refer the added variable in the extended context directly.
-%Following this idea, we define a typed version (\cref{fig:extendContextT}) of |extendContext| that takes a |TC| computation with an argument of type |B|.
+The quotation of an expression |e| can be obtained by |quoteTerm e| and the resolved unique name for a definition |f| or a constructor by |quote f|.  
+For example, the quotation |quoteTerm acc| of the constructor |acc| is |con (quote acc) []|.
+The empty list |[]| indicates that |acc| alone has no arguments.
 
-\subsection{Translation between Typed Higher-Order and Unityped First-Order Representations}\label{sec:translation}
+The elaborator monad |TC| (called the type-checking monad in documentation) stores states needed for elaboration such as the context of the call site, the scope of names |f : Name| with its definition, the set of metavariables |x : Meta| and so forth.
+A macro |f| is a definition of type |A₁ → ... → Term → TC ⊤| declared by |macro| and is executed during elaboration where the call site of |f| becomes a metavariable |x| for |f| to apply as the last argument |meta x []|.
+For example, 
+\begin{code}
+macro  give = unify
+\end{code}
+where we declare the primitive |unify : Term → Term → TC ⊤| unifying two expressions as a macro.
+Elaborating |give e| would splice the given expression |e : Term| in place of the call, if Agda did nothing to its argument |e|.
+In fact, Agda quotes arguments of |Term| and |Name| upon invocation, so elaborating |give e| amounts to running |unify (quoteTerm e) (meta x [])|. 
+Afterwards, the call site becomes |e| that will be elaborated again.
 
-Our generic programs are given in typed and higher-order representations, so in order to use macros to generate native datatypes and definitions we have to first translate them to its corresponding first-order and unityped representation used by reflection.
-For example, contrary to |Tel ℓ|, a reflected telescope is just a list of reflected types and thus first-order and unityped.
-That is, the quotation of |[[ (A , _) ∶ [ A ∶ Set ] [] ]] [ _ ∶ (A → A) ] []| needs to be translated to the reflected telescope
+The reflected language uses the de Bruijn representation and is thus \emph{not} hygiene.
+Manipulating indices is notoriously error-prone, but in many cases it is avoidable.
+We will see examples later. 
+
+\begin{figure}[t]
+\begin{minipage}[t]{.53\textwidth}
+\codefigure
+\begin{code}
+data Clause : Set where
+  clause  : (Δ : Telescope) (lhs : Patterns) (rhs : Term)
+          → Clause
+  absurd-clause : (Δ : Telescope) (lhs : Patterns) → Clause
+Clauses = List Clause
+\end{code}
+\caption{Clauses}\label{fig:clause}
+\end{minipage}%
+\begin{minipage}[t]{.47\textwidth}
+\codefigure
+\begin{code}
+data Definition : Set where
+  data-type   : (#ps  : ℕ)  (cs   : Names)    → Definition
+  data-cons   :             (d    : Name)     → Definition
+  function    :             (cls  : Clauses)  → Definition
+  ...
+\end{code}
+\caption{A snippet of reflected declarations}
+\label{fig:definition}
+\end{minipage}%
+\end{figure}
+\subsection{Translating Higher-Order Representations}\label{sec:translation}
+We start with the problem of translating the higher-order representation of a telescope to its uni-typed first-order representation, using the local variable creation technique.
+Consider the tree-shaped telescope |[[ (A , _) ∶ [ _ ∶ Set ] [] ]] [ _ ∶ (A → A) ] []| of |Tel ℓ| and its uni-typed first-order representation as a list of reflected types 
 \begin{equation}\label{eq:telescope}
-|`Set 0 ∷ pi (var 0 []) (var 1 []) ∷ []|
+|`Set ∷ pi (var 0 []) (var 1 []) ∷ []|
 \end{equation}
-where the arguments |var 0 []| and |var 1 []| of |pi| refer to the quotation |`Set 0| of |Set|. 
+where variables |var 0 []| and |var 1 []| in |pi| refer to the quotation |`Set| of |Set|. 
 
 One obvious approach is to analyse the quotation of |T : Tel ℓ|.
-Such a macro needs to analyse abstract syntax trees \emph{modulo judgemental equality}---it has to check which case is being analysed by reducing, say, a reflected expression |def (quote f) xs| for a definition $f$ with arguments to one of |con (quote Tel.[]) []|, |con (quote Tel._∷_) xs|, and |con (quote Tel._++_) xs|.
+Such a macro needs to analyse abstract syntax trees \emph{modulo judgemental equality}---it has to check which case is being analysed by reducing, say, a reflected expression |def (quote f) xs| for a definition $f$ to one of three cases |con (quote Tel.[]) []|, |con (quote Tel._∷_) xs|, and |con (quote Tel._++_) xs|.
+This approach is error-prone and Agda also fails to check if the macro terminates or not.
 
-Instead of quoting the entire telescope |T|, let us pattern match against |T : Tel ℓ| first.
-The case for the empty telescope |[]| is simple but the other cases |A :: T| and |U ++ V| seem impossible to define:
-\savecolumns
+Instead, let us pattern match against |T : Tel ℓ|.
+The case for the empty telescope |[]| is simple to define but the other two cases |A :: T| and |U ++ V| seem impossible:
 \begin{code}
 fromTel : (tel : Tel ℓ) → TC Telescope
 fromTel  []         = return []
 fromTel  (A ∷   T)  = ... fromTel (T ?) ...
 fromTel  (U ++  V)  = ... fromTel (V ?) ...
 \end{code}
-where |T| is a function from |A| and |V| a function from |⟦ U ⟧ᵗ| for \emph{arbitrary} |A| and |U|.
-How can we give an argument of |A| and |⟦ U ⟧ᵗ|?
-Recall that a macro is a |TC| computation in which the state of the current context $\Gamma$ is enclosed, so we can extend the context (of the call site) with a new variable used locally in another |TC| computation by the primitive |extendContext|. 
-However, the new variable does not yet exist in the scope. 
-To introduce it to the scope, we then need another primitive: |unquoteTC| which interprets a reflected expression |e : Term| as an inhabitant of type |A|.
-The computation |unquoteTC (var 0 []) >>= λ x → ...| binds the newly added variable to |x| in the extended context.
-This technique is used frequently, so we define them explicitly:
+Since |T| is a function from |A| and |V| a function from |⟦ U ⟧ᵗ| for \emph{arbitrary} |A| and |U|, 
+how can we give an argument of |A| and |⟦ U ⟧ᵗ|?
+We solve this problem by creating a \emph{local variable}.
+The |TC| monad stores the context during elaboration which can be extended by a variable of a given type to run a |TC| computation locally using the primitive |extendContext|. 
+Then, the local variable can be actually brought into scope by another primitive |unquoteTC| which unquotes a given reflected expression within the |TC| monad. 
+The above argument amounts to a |TC| computation 
 \begin{code}
 exCxtT : (B : Set ℓ) → (Type → B → TC A) → TC A
-exCxtT B f = do
-  `B ← quoteTC B
-  (HL (extendContext)) `B ((HL (unquoteTC (var 0 []))) >>= λ x → f `B x)
+exCxtT B f = do  `B ← quoteTC B
+                 (HL (extendContext)) `B ((HL (unquoteTC (var 0 []) >>= λ x)) → f `B x)
 \end{code}
-The creation of a local variable is similar to the $\nu$-operator for the \emph{local name creation} by \citet{Schurmann2005,Nanevski2005} and is achieved via elaborator reflection by \citet{Chen-Mtac-Agda}.
+that takes a type |B| for the local variable |x| to use in a |TC| computation |f|.
 
-As for the type |⟦ U ⟧ᵗ| we need to be careful, since a tuple can be accessed by \emph{projections}. 
-If we merely create a local variable |u : ⟦ U ⟧ᵗ|, then each reference to a component of |u| is formed by projections |fst| and |snd|. 
+As for the type |⟦ U ⟧ᵗ|, if we merely create a local variable |u : ⟦ U ⟧ᵗ|, then each reference to a component of |u| is formed by projections |fst| and |snd|. 
 For example, instead of \eqref{eq:telescope} we would have
 \begin{code}
-`Set 0 :: pi (def (quote fst) (var 0 [] :: [])) (def (quote fst) (var 1 [] :: [])) :: [] 
+  `Set :: pi (def (quote fst) ((var 0 []) :: [])) (def (quote fst) ((var 1 []) :: [])) :: [] 
 \end{code}
-In order to eliminate projections, we need to actually create a list of local variables $\overline{x}$ for each type in |U : Tel ℓ| recursively but pass them to a |TC| computation as a tuple as in \Cref{fig:exCxtTel}.
-The last two cases of |fromTel| are then defined rather succinctly:
+To eliminate projections, we create a list of local variables for each type in |U : Tel ℓ| as a tuple and give it to a |TC| computation (\Cref{fig:exCxtTel}).
+The last two cases of |fromTel| are then defined succinctly:
 
 \begin{minipage}[t]{0.5\textwidth}
-\restorecolumns
 \begin{code}
 fromTel  (A ∷ T)    = do
   (HL (exCxtT A)) λ `A x → do
@@ -1250,7 +1271,6 @@ fromTel  (A ∷ T)    = do
 \end{code}
 \end{minipage}%
 \begin{minipage}[t]{0.5\textwidth}
-\restorecolumns
 \begin{code}
 fromTel  (U ++ V)   = do
   Γ ← fromTel U
@@ -1259,8 +1279,8 @@ fromTel  (U ++ V)   = do
     return (Γ ++ Δ)
 \end{code}
 \end{minipage}
-Provided that local variables are not pattern matched, the computation of |T x| and |V u| will reach to one of three cases.
-Indeed, we are exploiting the fact that our representations are higher-order!
+As long as local variables are not pattern matched, the computation can proceed.
+Indeed, we are exploiting the fact that our representations are used as if they are higher-order abstract syntax!
 
 \begin{figure}[t]
 \codefigure
@@ -1293,89 +1313,61 @@ exCxtℓs  (suc n)   f  = exCxtT Level λ _ ℓ →
 \end{minipage}%
 \end{figure}
 
-For the other direction of the translation, our generation is syntactical.
+For the other direction of the translation, our generation is syntactical:
 \begin{code}
 to`Tel : Telescope → Term
 to`Tel = foldr `[] (λ `A `T →  `A `∷ `T)
 \end{code}
 where |`[]| and |`A `:: `T| are synonyms for |con (quote Tel.[]) []| and |con (quote Tel._∷_) (`A :: lam `T :: [])|.
 
-For the translation from |D : DataD|, a |TC| computation |defineByDataD| is defined using the local variable creation technique. 
-To apply |D .applyL : Level ^ #levels → PDataD|, we need a variant |exCxtℓs| (\cref{fig:exCxtTel}) which extends the context by a list of |Level| variables.
-Moreover, the level of a datatype specified by |alevel ⊔ ilevel| and the telescopes |Param| and |Index| for parameters and indices are given separately in |PDataD| which may refer to level parameters introduced by |applyL|, but
-to define a datatype via reflection a reflected $\Pi$-type is used for the datatype signature consisting of the telescopes of parameters.
-Hence we need to compose the quotation of |Set (alevel ⊔ ilevel)| with the quotation of |Param| and |Index| to form a reflected $\Pi$-type.
-One possible way to achieve this is to take the quotation of |Set (alevel ⊔ ilevel)| first and weaken its de Bruijn indices by the number of datatype parameters and indices.
-Alternatively, we extend the context by |Param ++ Index| using |exCxtTel| first and take the quotation that can be composed with |fromTel (Param ++ Index)| to form the desired $\Pi$-type directly.
-Other parts of the translation become rather straightforward.
-In fact, we do not manipulate de Bruijn indices at all to translate from |DataD|.
-Finally, to define a datatype by |D : DataD| in our framework, just declare
+For the translation from a datatype description |D|, a |TC| computation |defineByDataD| is defined using the same local variable creation technique, but to apply |(D .applyL) : Level ^ #levels → PDataD| we need a variant |exCxtℓs| (\cref{fig:exCxtTel}) which extends the context by a list of |Level| variables.
+The implementation of |defineByDataD| is similar to |fromTel|, so we refrain ourself from the nitty-gritty details. 
+%Moreover, the level of a datatype specified by |alevel ⊔ ilevel| and the telescopes |Param| and |Index| for parameters and indices are given separately in |PDataD| which may refer to level parameters introduced by |applyL|, but
+%to define a datatype via reflection a reflected $\Pi$-type is used for the datatype signature consisting of the telescopes of parameters.
+%Hence we need to compose the quotation of |Set (alevel ⊔ ilevel)| with the quotation of |Param| and |Index| to form a reflected $\Pi$-type.
+%One possible way to achieve this is to take the quotation of |Set (alevel ⊔ ilevel)| first and weaken its de Bruijn indices by the number of datatype parameters and indices.
+%Alternatively, we extend the context by |Param ++ Index| using |exCxtTel| first and take the quotation that can be composed with |fromTel (Param ++ Index)| to form the desired $\Pi$-type directly.
+%Other parts of the translation become rather straightforward.
+%In fact, we do not manipulate de Bruijn indices at all to translate from |DataD|.
+To actually define a datatype by |D : DataD| in our framework, just declare
 \begin{code}
   unquoteDecl data d constructor c₁ ... cₙ = defineByDataD D d (c₁ :: ... :: cₙ :: [])
 \end{code}
 to introduce a datatype |D| with constructors |c₁ ... cₙ| to the scope.
 
-To derive a datatype description |D : DataD|, we define a macro |genDataD|
-reifying a datatype using primitives |getDefinition : Name → TC Definition| and |getType : Name → TC Type|
-where |Definition| is defined as in \cref{fig:definition}.
-The macro can be invoked as, for example, |genDataD Acc| to generate a description identical to |AccD| in \cref{sec:DataD}.
-This part of translation is syntactical and involves index strengthening to decompose a datatype signature.
+To derive a description of a datatype |N|, we define a macro |genDataD| reifying a datatype using primitives |getDefinition| and |getType|.
+The macro can be invoked as |genDataD Acc| to generate a description identical to |AccD| in \cref{sec:DataD}.
+This direction of translation involves strengthening indices to decompose the quotation of a datatype signature, sadly.
 
-\begin{figure}[t]
-\begin{minipage}[t]{.53\textwidth}
-\codefigure
-\begin{code}
-data Clause : Set where
-  clause  : (Δ : Telescope) (lhs : Patterns) (rhs : Term)
-          → Clause
-  absurd-clause : (Δ : Telescope) (lhs : Patterns) → Clause
-Clauses = List Clause
-\end{code}
-\caption{Clauses}\label{fig:clause}
-\end{minipage}%
-\begin{minipage}[t]{.47\textwidth}
-\codefigure
-\begin{code}
-data Definition : Set where
-  data-type   : (#ps  : ℕ)  (cs   : Names)    → Definition
-  data-cons   :             (d    : Name)     → Definition
-  function    :             (cls  : Clauses)  → Definition
-  ...
-\end{code}
-\caption{A snippet of reflected declarations}
-\label{fig:definition}
-\end{minipage}%
-\end{figure}
+%Similarly, the bulk of the translation from |FoldP| to a recursive function relies on the creation of a local variable by |fromTel|.
+%The elimination of intermediate conversions during instantiating generic functions will be discussed the detail in \cref{sec:specialising}. 
+\subsection{Generating Wrappers and Connections}\label{sec:connection-generation}
+Generating a wrapper |T : DataT D| or connections of |DataC D T| and |FoldC F f| requires us to generate (function) clauses and a list or a tuple of variables with the argument information accordingly while traversing a telescope, a $\Pi$-type, or a tree-shaped higher-order telescope |T : Tel ℓ|.
 
-Similarly, the bulk of the translation from |FoldP| to a recursive function relies on the creation of a local variable by |fromTel|.
-The elimination of intermediate conversions during instantiating generic functions will be discussed the detail in \cref{sec:specialising}. 
-
-\subsection{Generating the Connections and Wrappers}\label{sec:connection-generation}
-The generation of datatype wrappers |DataT D| and connections |DataC D T|, |FoldC F f| and so on follows mostly the same idea, so we only discuss few points in common that are interesting to us.
-
-First, generating a wrapper |T| requires us to generate a function clause $\Delta \vdash \overline{p} \hookrightarrow e$ (\cref{fig:clause}) that consists of a list $\overline{p}$ of patterns on the left hand side and an reflected expression $e$ on the right side in a context $\Delta$.
-For example, the only clause of |AccT| with all implicit arguments, i.e.\ 
-\begin{code}
-AccT {ℓ, ℓ'} (A, R, tt) (as , tt) = Acc {ℓ} {ℓ'} {A} R as
-\end{code}
+A clause $\Delta \vdash \overline{p} \hookrightarrow e$ (\cref{fig:clause}) consists of a list $\overline{p}$ of patterns and a reflected expression $e$ with variables in a context $\Delta$.
+For example, the only clause of |AccT| with all implicit arguments
+\begin{equation}\label{eq:AccT}
+|AccT {ℓ, ℓ'} (A, R, tt) (as , tt) = Acc {y} {ℓ'} {A} R as|
+\end{equation}
 consists of patterns |(ℓ, ℓ')|, |(A, R, tt)|, |(as , tt)| and an expression |Acc {ℓ} {ℓ'} {A} R as| with variables in the context |[ ℓ : Level ] [ ℓ' : Level ] [ A : Set ℓ ] [ R : A → A → Set ℓ' ] [ as : A ]|. 
-By the definition of a clause, it may appear that the context $\Delta$ needs to be fully specified beforehand but it does not.
-Indeed, the reflected language as the reflection of the core language has a double role in the sense that it can be unchecked as input or checked as output with respect to the elaborator~\cite{Cockx2020}.
-An unchecked clause $\overline{p} \hookrightarrow e$, i.e.\ a list of patterns $\overline{p}$ and $e$ (with a list of |unknown|'s as their context) is sufficient to check the whole clause against its type |DataT AccD|.
-Therefore, we only need to know the number of variables used in a clause without knowing their types.
+It may appear that the context $\Delta$ needs to be fully specified beforehand but it does not.
+Indeed, the reflected language as the reflection of the core language can be unchecked as input to or checked as output from the elaborator~\cite{Cockx2020}.
+An unchecked clause $\overline{p} \hookrightarrow e$ is given with a list of |unknown|'s whose length is the number of variables used in the clause.
+For a wrapper, it suffices to generate the unchecked clause of a wrapper and
+\begin{enumerate*}
+  \item either check against its type |DataT D| as a pattern matching lambda by the primitive |checkType|, 
+  \item or define as a function with the type by the primitives |defineFun| and |declareDef|.
+\end{enumerate*}
+Generating clauses of a connection is the same.
 
-Another issue to deal with is the visibility of an argument.
-The two types |(x : A) → B x| and |{x : A} → B x| are different, so a single program is not possible to uncurry a function regardless of the visibility of its arguments.
-Their quotation |pi `A `B| are, however, essentially the same,\footnote{%
-  We have ignored the visibility in |Term|, but they are specified additionally by an inductive type |Visibility|.
-}
-so the obstacle just disappears for metaprogramming.
+%Another issue to deal with is the visibility of an argument.
+%The two types |(x : A) → B x| and |{x : A} → B x| are different, so a single program is not possible to uncurry a function regardless of the visibility of its arguments.
+%Their quotation |pi `A `B| are, however, essentially the same, so the obstacle just disappears for metaprogramming.
 
-Finally, the native datatype to wrap or to connect can be provided by the user possibly with different choices of explicit and implicit arguments (but in the same order) that are not specified by datatype descriptions or generic programs, so
-here are also some instances of the synchronisation problem between different types of representations.
-For example, to check if a given datatype matches a given description |D : DataD|, we define a |TC| computation |_⊆ᵗ?_| as in \cref{fig:compare-tel-telescope} that checks if |T : Tel ℓ| is a prefix of |Γ : Telescope| and returns a partition of |Γ|.\footnote{%
+The native datatype to wrap or to connect can be provided by the user possibly with different choices of visibility (but in the same order) that are not and should not be specified by datatype descriptions or generic programs, so we have to visit and compare two different types of representations from both sides.
+For example, to check if a datatype |N| matches a description |D : DataD|, we have a |TC| computation |_⊆ᵗ?_| (\cref{fig:compare-tel-telescope}) that checks if |T : Tel ℓ| is a prefix of |Γ : Telescope| and returns a partition of |Γ|.\footnote{%
 Note that |unify| in \cref{fig:compare-tel-telescope} is used to check the equivalence between types (instead of just unifying some |e : Term| with a metavariable), since a unifier is indeed an equivalence~\cite{Cockx2016,Cockx2018}.}
-We also have a |TC| computation |telToVars| to generate a tuple of variables based on a given |T : Tel ℓ| and a list of arguments based on the quotation of the type of a datatype, since the shape of a tuple such as |(A, R, _)| is specified by |Param| in |PDataD| but the visibility of arguments is by the type of datatype.
+We also have a |TC| computation |telToVars| to generate a tuple and a list of variables based on a given |T : Tel ℓ| with a tuple and a list of arguments |Arg Term| based on the quotation of the type of a datatype, since the shape of a tuple such as |(A, R, _)| is specified by |Param| in |PDataD| but the visibility of arguments is by the type of datatype.
 
 \begin{figure}[t]
 \codefigure
@@ -1405,33 +1397,43 @@ _⊆ᵗ?_  : Tel ℓ → Telescope → TC (Telescope × Telescope)
 \label{fig:compare-tel-telescope}
 \end{figure}
 
-In particular, we have defined a set of macros |genDataT|, |genDataC|, |getnFoldC|, etc.\ in our framework.
-Now, the wrapper |AccT| and connections |AccC| and |foldAccC| in \cref{sec:connections} can be generated respectively by 
-%\begin{enumerate*}
-%  \item |genDataT AccD Acc|,
-%  \item |genDataC AccD AccT|, and
-%  \item |genFoldC foldAccP foldAcc|,
-%\end{enumerate*}
+We have macros |genDataT|, |genDataC|, |getnFoldC|, etc.\ in our framework.
+In particular the wrapper |AccT| and connections |AccC| and |foldAccC| in \cref{sec:connections} are generated respectively by 
 \begin{code}
 AccT  = genDataT  AccD  Acc    {-"\hspace{3em}"-}   foldAccC = genFoldC foldAccP foldAcc
 AccC  = genDataC  AccD  AccT
 \end{code}
 
-%The code generation so far may appear manageable without elaborator reflection, but in fact the use of |unify| to check the equivalence between types in \cref{fig:compare-tel-telescope} is indispensable to ensure that macros are applied correctly.
-%A unification algorithm in a dependently typed setting is hard to implement correctly as discussed in~\cite[Section~8]{Cockx2018}
-%We shall see another important use in the next section.
-
 \subsection{Instantiating Generic Functions without Bureaucracy}\label{sec:specialising}
-The instantiation of a fold program |F : FoldP| consists of 
+We define a |TC| computation |defineFold : FoldP → Name → TC ⊤| to instantiate a fold program |F : FoldP| by
 \begin{enumerate*}
   \item generating the instantiated function type using |FoldNT|, 
   \item generating a clause $\Delta_i \vdash \overline{p}_i \hookrightarrow e_i$
     for each constructor~$c_i$ of the datatype specified in |F|, and
   \item eliminating the intermediate conversion in $e_i$ by normalisation.
 \end{enumerate*}
-We define a |TC| computation |defineFold : FoldP → Name → TC ⊤| to carry out the above steps.
 
-First, as discussed in \cref{sec:telescopes} it is impossible to define the curried form of level parameters, not to mention the curried form of the type specified by |FoldP|.
+Let us first consider the clause generation defined as |conClause|. 
+To generate a clause as \eqref{eq:fold-base-before} for each constructor $c_i$ of the datatype |F .Native|, it has the form by the definition of |FoldNT F ℓs| 
+\begin{equation} \label{eq:clause}
+  \Delta \vdash \overline{\Varid{ℓ}_j}\; \overline{p}\;\overline{x}\;(c_i\;\overline{a}) \hookrightarrow 
+  \Varid{fold-base}\;F\;(\Varid{ℓ}_1, \dots , \Varid{ℓ}_n)\;f\;\overline{p}\;\overline{x}\;(c_i\;\overline{a})
+\end{equation}
+To normalise the right-hand side of \eqref{eq:clause}, Agda's (bidirectional) elaborator first \emph{synthesises} its type to ensure that |e| is well-formed.
+The type of $e_i$ can be synthesised by looking at the type of |fold-base| and checking each of its arguments accordingly.
+We see that only the length of $\Delta$ needs to be specified, since all types will be solved upon checked.
+Moreover, the patterns $\overline{x}$ are forced since the value |is| of indices is determined by pattern-matching with $c_i\;\overline{a}$. 
+It follows that $\overline{x}$ can be given as $\overline{\cons{unknown}}$ on both sides.
+Therefore, we only need to generate a simpler clause
+\begin{equation}\label{eq:clause'}
+  \overline{\Varid{ℓ}_j}\;\overline{p}\;\overline{\cons{.unknown}}\;(c_i\;\overline{a}) \hookrightarrow 
+  e_i'
+  \quad\text{with}\quad
+  e_i' = \Varid{fold-base}\;F\;\{\Varid{ℓ}_1,\dots,\Varid{ℓ}_n,\Conid{tt}\}\;f\;\overline{p}\;\overline{\cons{unknown}}\;(c_i\;\overline{a})
+\end{equation}
+for each constructor $c_i$. 
+
+For the first step, as discussed in \cref{sec:telescopes}, it is impossible to define the curried form of the type specified by |FoldP| without reflection.
 Indeed, this issue is apparent with
 \begin{code}
 FoldNT : (F : FoldP) (ℓs : Level ^ (F .#levels)) → Set _
@@ -1441,65 +1443,27 @@ If we simply normalise, say, |∀ {ℓs} → FoldNT foldAccP ℓs|, then we will
 ∀ {ℓs : Level ^ 3} (A : Set (fst (snd ℓs))) (R : A → A → Set (fst (snd (snd ℓs)))) → ...
 \end{code}
 instead of the preferred curried form as shown in \cref{sec:FoldC}.
-To have type type in the curried form, we reuse |exCxtℓ| as defined in \cref{fig:exCxtls} so that |FoldNT P ℓs| can be called with a local variable |ℓs| in a context extended with |#levels| many variables. 
+To have it in the curried form, we reuse |exCxtℓ| (\cref{fig:exCxtls}) so that |FoldNT P ℓs| can be called with a local variable |ℓs| in a context extended with |#levels| many variables. 
 Before returning its quotation, however, |FoldNT P ℓs| needs to be normalised to eliminate~|ℓs| using another primitive |normalise|.\footnote{%
 For efficiency, Agda provides a primitive |withNormalisation| where primitives in a |TC| computation normalise their results.
 For example, |quoteTC! x = withNormalisation true (quoteTC x)| normalises a term~|x| before returning its quotation.
 }
 It remains to prepend the same number of the quotation of |Level| we extend with, since the |TC| computation is carried locally.
-Then, we declare the function |f| with the type we just generated using the primitive |declareDef|.
-The first step of |defineFold| is given as follows:
+We declare the function |f| with the type we just generated using the primitive |declareDef|.
+In short, the first two steps of |defineFold| are given as 
 \savecolumns
 \begin{code}
 defineFold F f = do
   `type ← prependLevels #levels <$> exCxtℓs #levels λ ℓs → do
       normalise =<< quoteTC (FoldNT F ℓs)
   declareDef f `type
-\end{code}
-where |`type| is the reflected type for the instantiated function |f|.
 
-The second step is to generate a clause such as \eqref{eq:fold-base-before} to normalise for each constructor $c_i$ of the datatype |Native ℓs ps|.
-By the definition of |FoldNT F ℓs|, the clause has the form
-\[
-  \Delta \vdash \overline{\Varid{ℓ}_j}\; \overline{p}\;\overline{x}\;(c_i\;\overline{a}) \hookrightarrow 
-  e_i
-  \quad\text{with}\quad
-  e_i = \Varid{fold-base}\;F\;(\Varid{ℓ}_1, \dots , \Varid{ℓ}_n)\;f\;\overline{p}\;\overline{x}\;(c_i\;\overline{a})
-\]%
-%%%% HELP 
-% where
-%\begin{enumerate*}
-%  \item $f$ is the final instantiated function,
-%  \item $\overline{\Varid{ℓ}}$ a list of level variables specified by |F .#levels|,
-%  \item $\overline{p}$ a list of parameter variables specified by |(F .applyL ℓs) .PFoldP.Param|,
-%  \item ...
-%\end{enumerate*}
-%%%% HELP 
-%As discussed in \cref{sec:connection-generation} we may just generate an unchecked clause to normalise.
-%We need to be aware that Agda's elaborator is bidirectional---an expression can be checked against a type or inferred.
-To normalise a reflected expression |e : Term|, Agda's (bidirectional) elaborator first \emph{synthesises} its type to ensure that |e| is well-formed.
-We see that the type of $e_i$ can be synthesised by looking at the type of |fold-base| so that each of its arguments is \emph{checked} accordingly.
-It follows that only the length of $\Delta$ needs to be specified, since its types will be solved when checked.
-Moreover, the patterns $\overline{x}$ are forced by the constructor pattern $c_i\;\overline{a})$ since |is| is determined by the constructor of |Native (level ℓs) (param ps) is|.
-It follows that $\overline{x}$ can all be given as |unknown| on both sides.
-Therefore, we only generate the clause 
-\[
-  \overline{\Varid{ℓ}_j}\;\overline{p}\;\overline{\cons{.unknown}}\;(c_i\;\overline{a}) \hookrightarrow 
-  e_i'
-  \quad\text{with}\quad
-  e_i' = \Varid{fold-base}\;F\;\{\Varid{ℓ}_1,\dots,\Varid{ℓ}_n,\Conid{tt}\}\;f\;\overline{p}\;\overline{\cons{unknown}}\;(c_i\;\overline{a})
-\]
-Hence, the definition of |defineFold| continues as
-\restorecolumns
-\begin{code}
-  `F ← quoteωTC F
   pars , cs ← getDataDefinition =<< FoldPToNativeName F
-
   cls ← exCxtℓs #levels λ ℓs → do
     Γps ← fromTel (Param ℓs)
-    forM cs $ conClause `fold-base `P f #levels pars Γps
+    forM cs $ conClause (quote fold-base) F f #levels pars Γps
 \end{code}
-where |quoteωTC| quotes an expression whose type lies in |Setω|, |FoldPToNativeName| revolves the name |N| of the datatype |F .Native|, |getDataDefinition| retrives the definition of |N| (\Cref{fig:definition}), and |conClause| generates the above clause.
+where |`type| is the reflected type for the instantiated function |f|, |FoldPToNativeName| revolves the name |N| of the datatype |F .Native|, |getDataDefinition| retrives the datatype definition (\Cref{fig:definition}).
 
 Then, $e_i'$ is normalised in a context extended with $\lvert\Delta\rvert$ many |unknown|'s for each constructor $c_i$ and define the function |f| using the normalised $e_i'$ as the new right-hand side:
 \restorecolumns
@@ -1507,7 +1471,7 @@ Then, $e_i'$ is normalised in a context extended with $\lvert\Delta\rvert$ many 
   cls ← normalise onClauses cls
   defineFun f cls
 \end{code}
-where |(f onClauses cls)| applies the |TC| computation |f| to the right-hand side of each clause $\Delta \vdash \overline{p} \hookrightarrow e$ of the list |cls| in a context extended by $\Delta$ and returns new clauses.
+where |(f onClauses cls)| applies the |TC| computation |f| to the right-hand side of each clause $\Delta \vdash \overline{p} \hookrightarrow e$ of the list |cls| in a context extended by $\Delta$ and returns new clauses, completing the definition of |defineFold|.
 
 We have defined |defineFold| for instantiating fold programs |F : FoldP|.
 To define a function $f$ by reflection by a fold program |F|, for example, the following declaration 
