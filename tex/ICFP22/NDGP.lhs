@@ -1935,33 +1935,29 @@ Efficiency problem due to conversion between generic and native representations 
 
 A traditional way to instantiate generic programs is to compose the generic program with conversions between generic and native datatype definitions.
 Various works have been done to optimise this instantiation process to overcome its apparent overheads.
-Compiler optimisations \citep{de-Vries-masters-thesis, Magalhaes-optimising-generics} do not introduce native function definitions, therefore are harder for programmers to reason about and less relevant to our work.
 Staging generic programs \citep{Yallop-staged-generic-programming, Pickering-staged-SoP}, on the other hand, eliminate all overheads in question by generating native function definitions.
 This is comparable to our approach since our metaprograms also produce native definitions.
 We can compare staging with our proposed approach from the viewpoint of partial evaluation \citep{Jones-partial-evaluation}.
 
 % We argue that our presented instantiation process in \cref{sec:reflection} achieves the same level of optimisation while making it easier to write generic programs than staging, with the help of elaborator reflection.
 
-A partial evaluator
-\begin{enumerate*}
-  \item takes a general program and
-  \item known parts of its inputs, then
-  \item generates a program that takes the rest unknown inputs, which is extensionally equal to the general program applied to the given static inputs.
-\end{enumerate*}
-Staging is essentially doing the first part of a partial evaluator's job manually:
-The programmers take generic programs and write down metaprograms, which take to-be-instantiated datatypes then generate specialised functions.
-The written metaprograms ---staged generic programs--- are extensionally equal to partial evaluators that have been applied to general programs.
-Our presented metaprograms in \cref{sec:reflection}, on the other hand, are actual partial evaluators.
-This is made possible by the observation that we can acquire partial evaluation in functional languages by normalisation \citep{Filinski1999}, which we exploit via elaborator reflection.
+A partial evaluator takes a general program and known parts of its input, and then generates a program that takes the rest unknown inputs, which is extensionally equal to the general program applied to the given known input.
+Our metaprograms in \cref{sec:reflection} are partial evaluators that specialise a generic program to a known datatype description.
+Indeed, it has been observed that we can acquire partial evaluation in functional languages by normalisation~\citep{Filinski1999}, which we exploit via elaborator reflection.
 
 Staging puts tedious burdens such as binding-time separation, i.e. manually inserting staging annotations, on programmers.
 It also requires manipulations on generic programs to avoid stage errors.
+Staging is essentially doing the first part of a partial evaluator's job manually:
+The programmers take generic programs and write down metaprograms, which take to-be-instantiated datatypes and then generate specialised functions.
+The written metaprograms ---staged generic programs--- are extensionally equal to partial evaluators that have been applied to general programs.
 Our approach separate what we do with the generic programs (instantiation metaprograms) from how we define them (algebras).
 As a result, our generic programs are spared from annotations or modifications, making them easier to reason about than staged versions.
 The separation of instantiation process as metaprograms also provides a basis for future works on the reasoning of its correctness. 
 Staging may provide easier reasoning for annotations hinting at the relations between generic and instantiated functions. 
 There is no implementation of staging in existing dependently typed languages, so we cannot compare them properly on the same ground.
 But they share the same purpose of optimising generic function instantiation, making them comparable regardless of the specific languages they work in.
+
+Compiler optimisations \citep{de-Vries-masters-thesis, Magalhaes-optimising-generics} do not introduce native function definitions, therefore are harder for programmers to reason about and less relevant to our work.
 
 % Currently, it is hard to reason internally to the language about the optimisations we have applied.
 
