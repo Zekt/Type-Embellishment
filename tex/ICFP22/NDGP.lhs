@@ -1873,20 +1873,6 @@ While waiting for better languages to emerge, it is also important to enable the
 
 %\todo[inline]{\citet{Chapman-levitation} propose a more radical redesign of type theory where datatype definitions are first-class, but the theory is still at an early stage of development and lacks an implementation; our proposal is more practical and serves as a platform for the development of mature datatype-generic libraries, which can be ported to new platforms when ready}
 
-\paragraph{Universe polymorphism}
-
-\LT{A practical application and motivation~\citep{Kovacs-universe-hierarchies} (not just theoretically interesting); generic level quantification; no subject reduction; universe-polymorphic definitions not polymorphic enough (e.g., |Σ|-types); more expressive universes}
-
-\paragraph{Typed metaprogramming}
-
-\LT{Emphasise object-level binder-manipulating techniques~\citep{Chen-Mtac-Agda}.}
-
-\paragraph{Foundation of typed metaprogramming}
-
-\LT{One more step towards practical `type theory in type theory'~\citep{Chapman-type-theory-should-eat-itself} (not just theoretically interesting), although our encoding is `shallow'.
-Our experience with untyped metaprogramming was painful, especially in contrast to the experience with datatype-generic programming --- a form of typed metaprogramming.
-Respond to \varcitet{Christiansen-elaborator-reflection}{'s} comments about datatype-generic programming (untyped vs typed metaprogramming): in contrast to an untyped approach, |fold-operator| also serves as a proof that the arguments of a fold operator do constitute an algebra.
-Other work on typed metaprogramming~\citep{Xie-Typed-Template-Haskell, Jang-Moebius, Kiselyov-MetaOCaml, Davies-modal-staged-computation} may benefit from considering practical applications.}
 
 \paragraph{Optimisation of datatype-generic programs}
 
@@ -1922,6 +1908,21 @@ There is no implementation of staging in existing dependently typed languages, s
 But they share the same purpose of optimising generic function instantiation, making them comparable regardless of the specific languages they work in.
 
 Compiler optimisations \citep{de-Vries-masters-thesis, Magalhaes-optimising-generics} do not introduce native function definitions, therefore are harder for programmers to reason about and less relevant to our work.
+
+\paragraph{Local name/variable creation}
+\LT{A local variable created during invoking a macro may escape; cite the issue ticket}
+The $\nu$-operator for the \emph{local name creation} by \citet{Schurmann2005,Nanevski2005} is similar to our local variable creation technique, but a local name is guaranteed to stay local by typing disciplines.
+The $\nu$-operator in the typed tactic language Mtac \citep{Ziliani2015} is closer to our |exCxtT| and is achieved via elaborator reflection by \citet{Chen-Mtac-Agda}.
+
+\paragraph{Foundations}
+
+\LT{A practical application and motivation~\citep{Kovacs-universe-hierarchies} (not just theoretically interesting); generic level quantification; no subject reduction; universe-polymorphic definitions not polymorphic enough (e.g., |Σ|-types); more expressive universes}
+
+\LT{One more step towards practical `type theory in type theory'~\citep{Chapman-type-theory-should-eat-itself} (not just theoretically interesting), although our encoding is `shallow'.
+Our experience with untyped metaprogramming was painful, especially in contrast to the experience with datatype-generic programming --- a form of typed metaprogramming.
+Respond to \varcitet{Christiansen-elaborator-reflection}{'s} comments about datatype-generic programming (untyped vs typed metaprogramming): in contrast to an untyped approach, |fold-operator| also serves as a proof that the arguments of a fold operator do constitute an algebra.
+Other work on typed metaprogramming~\citep{Xie-Typed-Template-Haskell, Jang-Moebius, Kiselyov-MetaOCaml, Davies-modal-staged-computation} may benefit from considering practical applications.}
+
 
 % Currently, it is hard to reason internally to the language about the optimisations we have applied.
 
