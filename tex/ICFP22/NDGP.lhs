@@ -1901,7 +1901,7 @@ And various works have been done to optimise instantiation of generic programs i
 
 Notably, staging~\citep{Yallop-staged-generic-programming, Pickering-staged-SoP} eliminates performance overheads by generating native function definitions that are almost identical to hand-written ones.
 There is no implementation of staging in existing dependently typed languages, so we cannot compare them properly on the same ground.
-But it shares similar purpose with our metaprogramming techniques of generating function definitions containing neither generic representations nor conversions, making them comparable regardless of the specific languages they work in.
+But it shares a similar purpose with our metaprograms of generating function definitions containing neither generic representations nor conversions, making them comparable regardless of the specific languages they work in.
 
 We compare staging with our proposed approach from the viewpoint of partial evaluation~\citep{Jones-partial-evaluation}.
 A partial evaluator takes a general program and known parts of its input, and then generates a program that takes the rest unknown inputs, which is extensionally equal to the general program applied to the given known input.
@@ -1909,17 +1909,17 @@ Our metaprograms in \cref{sec:reflection} are partial evaluators that specialise
 Indeed, it has been observed that we can optimise partial evaluation in functional languages by normalisation~\citep{Filinski1999}, which we exploit via elaborator reflection.
 
 % seperation of concerns + reasoning of metaprogram (generic struture not apearing in residual program), ref principles in staged-sop
-A staged generic program is a `specialised program' generator, it awaits a datatype and generates the corresponding specialised program.
+A staged generic program is a `specialised program' generator; it awaits a datatype and generates the corresponding specialised program.
 It essentially acts as an intermediate between a partial evaluator and a specialised program. 
-So not only we share the same purpose, we share similar means to achieve it as well.
+So not only do we share the same purpose, we share similar means to achieve it as well.
 However, staging puts burdens such as manually inserting staging annotations on programmers.
 It also requires manipulations on generic programs to avoid stage errors. \todo{say something good about staging?}
 Such manipulations, as given by \citet[p.\ 6]{Pickering-staged-SoP}, are undesireable since they alter the definitions of generic programs.
-Our approach separate what we do with the generic programs (metaprograms for instantiation) from how we define them (algebras).
-As a result, our generic programs are spared from annotations or modifications, making them easier to read and reason about.
-The separation of instantiation process as metaprograms also provides a basis for future works on the reasoning of its correctness. 
+Our approach separates what we do with the generic programs (metaprograms for instantiation) from how we define them (algebras).
+As a result, our generic programs are spared from annotations and modifications, making them easier to read and reason about.
+The separation of the instantiation process as metaprograms also provides a basis for future works on the reasoning of its correctness. 
 For example, there are principles on staging to avoid generic representations from appearing in residual programs~\citep[p.4]{Pickering-staged-SoP}.
-Similar guidances may now be stated for metaprograms, and their correctness can be stated or proved if we have better tools for reasoning about them (cref last paragraph).
+Similar guidances may now be stated for metaprograms, and their correctness can be stated or proved if we have better tools for reasoning about them. \todo{cref next paragraph?}
 
 Compared with staging, compiler optimisations~\citep{de-Vries-masters-thesis, Magalhaes-optimising-generics} do not introduce instantiated function definitions, making them harder to reason about and are less relevant to our work.
 However, their techniques can still be of use to us if elaborator reflection is better designed.
