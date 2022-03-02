@@ -1909,10 +1909,13 @@ But they share the same purpose of optimising generic function instantiation, ma
 
 Compiler optimisations \citep{de-Vries-masters-thesis, Magalhaes-optimising-generics} do not introduce native function definitions, therefore are harder for programmers to reason about and less relevant to our work.
 
-\paragraph{Local name/variable creation}
-\LT{A local variable created during invoking a macro may escape; cite the issue ticket}
-The $\nu$-operator for the \emph{local name creation} by \citet{Schurmann2005,Nanevski2005} is similar to our local variable creation technique, but a local name is guaranteed to stay local by typing disciplines.
-The $\nu$-operator in the typed tactic language Mtac \citep{Ziliani2015} is closer to our |exCxtT| and is achieved via elaborator reflection by \citet{Chen-Mtac-Agda}.
+\paragraph{Analysis of higher-order encodings}
+The local variable creation technique has been used extensively to analyse higher-order encodings, but it has to be used with caution.  
+Agda's elaborator checks if a local variable escapes its context in the result of |extendContext| during the runtime of elaboration.\footnote{%
+In previous versions of Agda, the existing de Bruijn indices in an extended context were not weakened~\citep{AgdaIssue3831} and the check was not implemented in full until the recent version 2.6.2 of Agda~\citep{AgdaIssue4898}.}
+This is similar to the |nu| constructor of the typed tactic language Mtac~\citep{Ziliani2015} which checks the escape of local variables during tactic execution.
+Indeed, \citet{Chen-Mtac-Agda} implemented Mtac's |nu| constructor by elaborator reflection in the same way.
+On the contrary, the $\nu$-operator for \emph{local name creation} in a modal calculus \citep{Nanevski2005} and a two-level functional language \citep{Schurmann2005} statically ensures that local names cannot escape their scope. 
 
 \paragraph{Foundations}
 
