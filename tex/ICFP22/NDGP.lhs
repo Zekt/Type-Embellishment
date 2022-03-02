@@ -1419,7 +1419,7 @@ To generate a clause as \eqref{eq:fold-base-before} for each constructor $c_i$ o
   \Delta \vdash \overline{\Varid{ℓ}_j}\; \overline{p}\;\overline{x}\;(c_i\;\overline{a}) \hookrightarrow 
   \Varid{fold-base}\;F\;(\Varid{ℓ}_1, \dots , \Varid{ℓ}_n)\;f\;\overline{p}\;\overline{x}\;(c_i\;\overline{a})
 \end{equation}
-To normalise the right-hand side of \eqref{eq:clause}, Agda's (bidirectional) elaborator first \emph{synthesises} its type to ensure that |e| is well-formed.
+To normalise the right-hand side of \eqref{eq:clause}, Agda's (bidirectional) elaborator first \emph{synthesises} its type to ensure that |e| is well-typed.
 The type of $e_i$ can be synthesised by looking at the type of |fold-base| and checking each of its arguments accordingly.
 We see that only the length of $\Delta$ needs to be specified, since all types will be solved upon checked.
 Moreover, the patterns $\overline{x}$ are forced since the value |is| of indices is determined by pattern-matching with $c_i\;\overline{a}$. 
@@ -1917,18 +1917,27 @@ This is similar to the |nu| constructor of the typed tactic language Mtac~\citep
 Indeed, \citet{Chen-Mtac-Agda} implemented Mtac's |nu| constructor by elaborator reflection in the same way.
 On the contrary, the $\nu$-operator for \emph{local name creation} in a modal calculus \citep{Nanevski2005} and a two-level functional language \citep{Schurmann2005} statically ensures that local names cannot escape their scope. 
 
+Our higher-order encodings are not actually higher-order abstract syntax~\citep{Harper1993}, since exotic terms such as |Bool ∷ λ { false → [ A ∶ Set ] [] ; true → [ P ∶ (ℕ → Set) ] [] }| are not excluded by the typing discipline.
+As argued by \citet{McBride-ornaments} exotic terms, which we do not use, could be exploited for richer expressiveness but then it is not clear how to analyse.
+
 \paragraph{Foundations}
+While the use of universe polymorphic datatype is convenient in practice, its theory is, surprisingly, an unexplored territory and the notion of universe polymorphism is less studied than it should be.
+To the best of our efforts, we did not find any type theory backing Agda's current design of first-class universe levels and universe polymorphism.
+Even worse, subject reduction is problematic for expressions in |Setω|~\citep{AgdaIssue5810}.
+\citet{Kovacs-universe-hierarchies} initiated a syntax and its semantics for first-class universe levels which is able to model features like bounded universe polymorphism, but its metatheory is minimal and it still lacks, say, an elaboration algorithm needed for implementation.  
+The development of first-class descriptions \citep{Chapman-levitation} also requires us to take account of universes to reflect datatypes faithfully, but existing formulations~\cite{Dybjer-indexed-induction-recursion} in theory do not consider universes at all.
+\todo{more citations here}
 
-\LT{A practical application and motivation~\citep{Kovacs-universe-hierarchies} (not just theoretically interesting); generic level quantification; no subject reduction; universe-polymorphic definitions not polymorphic enough (e.g., |Σ|-types); more expressive universes}
+Due to the nature of uni-typed encodings, our experience with Agda's elaborator reflection was painful, especially in contrast to datatype-generic programming.
+Elaborator reflection is a useful paradigm but that has not been specified in theory, and to use it the understanding of the inner workings of elaborator is much needed.
+More importantly, the correctness of a macro can only be verified externally at best, but it is internally guaranteed by typed metaprogramming like staging.
+\citet[Section~6]{Christiansen-elaborator-reflection} argued that programs in the reflected elaborator are shorter and simpler than typed metaprograms, but they also admitted the additional cost is for the mandatory correctness.
+Hopefully, the best of two worlds could be combined. 
+For example, normalisation only works on well-typed expressions, so the type of |normalise| should be |TTerm A → TC (TTerm A)|;
+type checking transforms a possibly ill-formed expression to a typed expression if successful, so the type of |checkType| should be |Term → (A : Set ℓ) → TC (TTerm A)|.
+Efficiency could also benefit from typed reflected expressions, since they do not need to be elaborated again.
 
-\LT{One more step towards practical `type theory in type theory'~\citep{Chapman-type-theory-should-eat-itself} (not just theoretically interesting), although our encoding is `shallow'.
-Our experience with untyped metaprogramming was painful, especially in contrast to the experience with datatype-generic programming --- a form of typed metaprogramming.
-Respond to \varcitet{Christiansen-elaborator-reflection}{'s} comments about datatype-generic programming (untyped vs typed metaprogramming): in contrast to an untyped approach, |fold-operator| also serves as a proof that the arguments of a fold operator do constitute an algebra.
-Other work on typed metaprogramming~\citep{Xie-Typed-Template-Haskell, Jang-Moebius, Kiselyov-MetaOCaml, Davies-modal-staged-computation} may benefit from considering practical applications.}
-
-
-% Currently, it is hard to reason internally to the language about the optimisations we have applied.
-
+We hope that our experimental framework can serve as inspiration and a call for a foundation for universes and metaprogramming not only for theoretical interests but also for practical needs.
 \paragraph{Conclusion}
 
 \todo[inline]{From the angle of datatype-generic programming, the generic constructions should work on native datatypes and functions for maximum interoperability with language facilities and other libraries, and the gap between generic and native entities can be filled straightforwardly with (powerful enough) metaprogramming.
