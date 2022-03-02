@@ -1883,31 +1883,37 @@ We adopt the approach where generic function representations are non-recursive a
 Staging may be better for controlling what appears in the final code, but there's no implementation for dependently typed languages.
 Efficiency problem due to conversion between generic and native representations (see below) since the Haskell era~\citep{Magalhaes-optimising-generics}.}
 
-A traditional way to instantiate generic programs is to compose the generic program with conversions between generic and native datatype definitions.
-Various works have been done to optimise this instantiation process to overcome its apparent overheads.
-Staging generic programs \citep{Yallop-staged-generic-programming, Pickering-staged-SoP}, on the other hand, eliminate all overheads in question by generating native function definitions.
-This is comparable to our approach since our metaprograms also produce native definitions.
-We can compare staging with our proposed approach from the viewpoint of partial evaluation \citep{Jones-partial-evaluation}.
+A traditional way to instantiate generic programs is to compose the generic program with conversions between a native datatype and its generic description.
+If the generic program is defined on datatypes decoded by the |μ|-operator, the performance overhead would be significant due to the recursive conversion between the native and |μ|-decoded datatypes.
+We have not found much work on optimising such programs.
+The shallow encoding we employ, on the other hand, allows for faster conversion and easier optimisation.
+And various works have been done to optimise instantiation of generic programs in this manner.
 
-% We argue that our presented instantiation process in \cref{sec:reflection} achieves the same level of optimisation while making it easier to write generic programs than staging, with the help of elaborator reflection.
-
-A partial evaluator takes a general program and known parts of its input, and then generates a program that takes the rest unknown inputs, which is extensionally equal to the general program applied to the given known input.
-Our metaprograms in \cref{sec:reflection} are partial evaluators that specialise a generic program to a known datatype description.
-Indeed, it has been observed that we can acquire partial evaluation in functional languages by normalisation~\citep{Filinski1999}, which we exploit via elaborator reflection.
-
-Staging puts tedious burdens such as binding-time separation, i.e. manually inserting staging annotations, on programmers.
-It also requires manipulations on generic programs to avoid stage errors.
-Staging is essentially doing the first part of a partial evaluator's job manually:
-The programmers take generic programs and write down metaprograms, which take to-be-instantiated datatypes and then generate specialised functions.
-The written metaprograms ---staged generic programs--- are extensionally equal to partial evaluators that have been applied to general programs.
-Our approach separate what we do with the generic programs (instantiation metaprograms) from how we define them (algebras).
-As a result, our generic programs are spared from annotations or modifications, making them easier to reason about than staged versions.
-The separation of instantiation process as metaprograms also provides a basis for future works on the reasoning of its correctness. 
-Staging may provide easier reasoning for annotations hinting at the relations between generic and instantiated functions. 
+Notably, staging~\citep{Yallop-staged-generic-programming, Pickering-staged-SoP} eliminates performance overheads by generating native function definitions that are almost identical to hand-written ones.
 There is no implementation of staging in existing dependently typed languages, so we cannot compare them properly on the same ground.
-But they share the same purpose of optimising generic function instantiation, making them comparable regardless of the specific languages they work in.
+But it shares similar purpose with our metaprogramming techniques of generating function definitions containing neither generic representations nor conversions, making them comparable regardless of the specific languages they work in.
 
-Compiler optimisations \citep{de-Vries-masters-thesis, Magalhaes-optimising-generics} do not introduce native function definitions, therefore are harder for programmers to reason about and less relevant to our work.
+We compare staging with our proposed approach from the viewpoint of partial evaluation~\citep{Jones-partial-evaluation}.
+A partial evaluator takes a general program and known parts of its input, and then generates a program that takes the rest unknown inputs, which is extensionally equal to the general program applied to the given known input.
+Our metaprograms in \cref{sec:reflection} are partial evaluators that specialise a generic program (general program) to a known datatype description (given input).
+Indeed, it has been observed that we can optimise partial evaluation in functional languages by normalisation~\citep{Filinski1999}, which we exploit via elaborator reflection.
+
+% seperation of concerns + reasoning of metaprogram (generic struture not apearing in residual program), ref principles in staged-sop
+A staged generic program is a `specialised program' generator, it awaits a datatype and generates the corresponding specialised program.
+It essentially acts as an intermediate between a partial evaluator and a specialised program. 
+So not only we share the same purpose, we share similar means to achieve it as well.
+However, staging puts burdens such as manually inserting staging annotations on programmers.
+It also requires manipulations on generic programs to avoid stage errors.
+Such manipulations, as given by \citet[p.\ 6]{Pickering-staged-SoP}, are undesireable since they alter the definitions of generic programs.
+Our approach separate what we do with the generic programs (metaprograms for instantiation) from how we define them (algebras).
+As a result, our generic programs are spared from annotations or modifications, making them easier to read and reason about.
+The separation of instantiation process as metaprograms also provides a basis for future works on the reasoning of its correctness. 
+For example, there are principles on staging to avoid generic representations from appearing in residual programs~\citep[p.4]{Pickering-staged-SoP}.
+Similar guidances may now be stated for metaprograms, and their correctness can be stated or proved if we have better tools for reasoning about them (cref last paragraph).
+
+Compared with staging, compiler optimisations~\citep{de-Vries-masters-thesis, Magalhaes-optimising-generics} do not introduce instantiated function definitions, making them harder to reason about and are less relevant to our work.
+However, their techniques can still be of use to us if elaborator reflection is better designed.
+For example, elaborator reflection may provide an interface for adding normalisation rules in certain contexts, such that programmers can optimise instantiation of generic programs by symbolic evaluation~\citep[p.\ 25]{de-Vries-masters-thesis} without modifiying the global language behaviour.
 
 \paragraph{Analysis of higher-order encodings}
 The local variable creation technique has been used extensively to analyse higher-order encodings, but it has to be used with caution.  
@@ -1938,6 +1944,7 @@ type checking transforms a possibly ill-formed expression to a typed expression 
 Efficiency could also benefit from typed reflected expressions, since they do not need to be elaborated again.
 
 We hope that our experimental framework can serve as inspiration and a call for a foundation for universes and metaprogramming not only for theoretical interests but also for practical needs.
+
 \paragraph{Conclusion}
 
 \todo[inline]{From the angle of datatype-generic programming, the generic constructions should work on native datatypes and functions for maximum interoperability with language facilities and other libraries, and the gap between generic and native entities can be filled straightforwardly with (powerful enough) metaprogramming.
