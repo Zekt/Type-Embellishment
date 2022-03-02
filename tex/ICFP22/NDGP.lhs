@@ -400,6 +400,7 @@ We expect that datatype-generic libraries built with our framework ---being inte
 
 \maketitle
 
+\todo{Replace \emph{representations} by \emph{encodings}}
 \section{Introduction}
 \label{sec:introduction}
 
@@ -1930,9 +1931,8 @@ As argued by \citet{McBride-ornaments} exotic terms, which we do not use, could 
 While the use of universe polymorphic datatype is convenient in practice, its theory is, surprisingly, an unexplored territory and the notion of universe polymorphism is less studied than it should be.
 To the best of our efforts, we did not find any type theory backing Agda's current design of first-class universe levels and universe polymorphism.
 Even worse, subject reduction is problematic for expressions in |Setω|~\citep{AgdaIssue5810}.
-\citet{Kovacs-universe-hierarchies} initiated a syntax and its semantics for first-class universe levels which is able to model features like bounded universe polymorphism, but its metatheory is minimal and it still lacks, say, an elaboration algorithm needed for implementation.  
-The development of first-class descriptions \citep{Chapman-levitation} also requires us to take account of universes to reflect datatypes faithfully, but existing formulations~\cite{Dybjer-indexed-induction-recursion} in theory do not consider universes at all.
-\todo{more citations here}
+\citet{Kovacs-universe-hierarchies} initiated a syntax and its semantics for first-class universe levels which is able to model features like bounded universe polymorphism, but its metatheory is bare-bones and lacks, say, an elaboration algorithm needed for implementation.  
+A type theory of first-class datatypes \citep{Chapman-levitation} requires internal universe polymorphic encodings, but most of internal encodings \citep{Dybjer-indexed-induction-recursion,nordvallforsberg2013thesis,Kaposi2020a} do not consider universe polymorphism explicitly.
 
 Due to the nature of uni-typed encodings, our experience with Agda's elaborator reflection was painful, especially in contrast to datatype-generic programming.
 Elaborator reflection is a useful paradigm but that has not been specified in theory, and to use it the understanding of the inner workings of elaborator is much needed.
@@ -1941,7 +1941,7 @@ More importantly, the correctness of a macro can only be verified externally at 
 Hopefully, the best of two worlds could be combined. 
 For example, normalisation only works on well-typed expressions, so the type of |normalise| should be |TTerm A → TC (TTerm A)|;
 type checking transforms a possibly ill-formed expression to a typed expression if successful, so the type of |checkType| should be |Term → (A : Set ℓ) → TC (TTerm A)|.
-Efficiency could also benefit from typed reflected expressions, since they do not need to be elaborated again.
+Typed reflected expressions also benefit efficiency, since they need not be elaborated again.
 
 We hope that our experimental framework can serve as inspiration and a call for a foundation for universes and metaprogramming not only for theoretical interests but also for practical needs.
 
