@@ -1876,12 +1876,12 @@ While waiting for better languages to emerge, it is also important to enable the
 
 \paragraph{Optimisation of datatype-generic programs}
 
-\Josh{The Haskell programmer produces recursive function definitions~\citep{de-Vries-true-SoP}.
-We adopt the approach where generic function representations are non-recursive and then weaved into recursive definitions.}
+%\Josh{The Haskell programmer produces recursive function definitions~\citep{de-Vries-true-SoP}.
+%We adopt the approach where generic function representations are non-recursive and then weaved into recursive definitions.}
 
-\Viktor{\citet{Pickering-staged-SoP, Yallop-staged-generic-programming, Jones-partial-evaluation, de-Vries-masters-thesis, Alimarine2004}; partial evaluation is more programmer-friendly than staging, and elaborator reflection provides, to some extent, the ability to do partial evaluation.
-Staging may be better for controlling what appears in the final code, but there's no implementation for dependently typed languages.
-Efficiency problem due to conversion between generic and native representations (see below) since the Haskell era~\citep{Magalhaes-optimising-generics}.}
+%\Viktor{\citet{Pickering-staged-SoP, Yallop-staged-generic-programming, Jones-partial-evaluation, de-Vries-masters-thesis, Alimarine2004}; partial evaluation is more programmer-friendly than staging, and elaborator reflection provides, to some extent, the ability to do partial evaluation.
+%Staging may be better for controlling what appears in the final code, but there's no implementation for dependently typed languages.
+%Efficiency problem due to conversion between generic and native representations (see below) since the Haskell era~\citep{Magalhaes-optimising-generics}.}
 
 A traditional way to instantiate generic programs is to compose the generic program with conversions between a native datatype and its generic description.
 If the generic program is defined on datatypes decoded by the |μ|-operator, the performance overhead would be significant due to the recursive conversion between the native and |μ|-decoded datatypes.
@@ -1903,7 +1903,7 @@ A staged generic program is a `specialised program' generator, it awaits a datat
 It essentially acts as an intermediate between a partial evaluator and a specialised program. 
 So not only we share the same purpose, we share similar means to achieve it as well.
 However, staging puts burdens such as manually inserting staging annotations on programmers.
-It also requires manipulations on generic programs to avoid stage errors.
+It also requires manipulations on generic programs to avoid stage errors. \todo{say something good about staging?}
 Such manipulations, as given by \citet[p.\ 6]{Pickering-staged-SoP}, are undesireable since they alter the definitions of generic programs.
 Our approach separate what we do with the generic programs (metaprograms for instantiation) from how we define them (algebras).
 As a result, our generic programs are spared from annotations or modifications, making them easier to read and reason about.
