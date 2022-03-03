@@ -11,18 +11,20 @@ This repo contains
 ## Requirement
 
 1. 14 Gigabytes of memory or above.
-
 2. The development version of Agda 2.6.3 ([commit 8f8b1](https://github.com/agda/agda/commit/8f8b1f981a9d22bbb80316334964501c3958813f))
   patched by
   * Agda-Normalise-Level.diff
   * Agda-unquoteDecl-data.diff 
 
-## Installation
+## Patch & compile Agda
 1. `git clone https://github.com/agda/agda.git`
 2. `cd agda && git checkout 8f8b1`
 3. `git apply ../*.diff`
 4. `make install-bin`
-5. Check the Agda binary version by `agda -V`, which should output `Agda version 2.6.3-8f8b1f9-dirty`
+5. Check the Agda binary version by `agda-2.6.3 -V`, which should output `Agda version 2.6.3-8f8b1f9-dirty`
+
+## Check all modules
+Type `make AGDA_BIN=agda-2.6.3` to check all modules in the repo with the patched Agda binary.
 
 ## Details
 
