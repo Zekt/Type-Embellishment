@@ -1,0 +1,44 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Prelude.Eq</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Symbol">{-#</a> <a id="5" class="Keyword">OPTIONS</a> <a id="13" class="Pragma">--without-K</a> <a id="25" class="Pragma">--safe</a> <a id="32" class="Symbol">#-}</a>
+
+<a id="37" class="Keyword">module</a> <a id="44" href="Prelude.Eq.html" class="Module">Prelude.Eq</a> <a id="55" class="Keyword">where</a>
+
+<a id="62" class="Keyword">open</a> <a id="67" class="Keyword">import</a> <a id="74" href="Agda.Builtin.Bool.html" class="Module">Agda.Builtin.Bool</a>
+<a id="92" class="Keyword">open</a> <a id="97" class="Keyword">import</a> <a id="104" href="Agda.Builtin.Nat.html" class="Module">Agda.Builtin.Nat</a> <a id="121" class="Symbol">as</a> <a id="124" class="Module">Nat</a>
+  <a id="130" class="Keyword">renaming</a> <a id="139" class="Symbol">(</a><a id="140" href="Agda.Builtin.Nat.html#605" class="Primitive Operator">_==_</a> <a id="145" class="Symbol">to</a> <a id="148" class="Primitive Operator">primNatEquality</a><a id="163" class="Symbol">)</a>
+<a id="165" class="Keyword">open</a> <a id="170" class="Keyword">import</a> <a id="177" href="Agda.Builtin.Float.html" class="Module">Agda.Builtin.Float</a>  
+<a id="198" class="Keyword">open</a> <a id="203" class="Keyword">import</a> <a id="210" href="Agda.Builtin.Word.html" class="Module">Agda.Builtin.Word</a>   
+<a id="231" class="Keyword">open</a> <a id="236" class="Keyword">import</a> <a id="243" href="Agda.Builtin.Char.html" class="Module">Agda.Builtin.Char</a>   
+<a id="264" class="Keyword">open</a> <a id="269" class="Keyword">import</a> <a id="276" href="Agda.Builtin.String.html" class="Module">Agda.Builtin.String</a> 
+<a id="297" class="Keyword">open</a> <a id="302" class="Keyword">import</a> <a id="309" href="Agda.Builtin.List.html" class="Module">Agda.Builtin.List</a>
+
+<a id="328" class="Keyword">record</a> <a id="Eq"></a><a id="335" href="Prelude.Eq.html#335" class="Record">Eq</a> <a id="338" class="Symbol">{</a><a id="339" href="Prelude.Eq.html#339" class="Bound">a</a><a id="340" class="Symbol">}</a> <a id="342" class="Symbol">(</a><a id="343" href="Prelude.Eq.html#343" class="Bound">A</a> <a id="345" class="Symbol">:</a> <a id="347" href="Agda.Primitive.html#311" class="Primitive">Set</a> <a id="351" href="Prelude.Eq.html#339" class="Bound">a</a><a id="352" class="Symbol">)</a> <a id="354" class="Symbol">:</a> <a id="356" href="Agda.Primitive.html#311" class="Primitive">Set</a> <a id="360" href="Prelude.Eq.html#339" class="Bound">a</a> <a id="362" class="Keyword">where</a>
+  <a id="370" class="Keyword">infix</a> <a id="376" class="Number">4</a> <a id="378" href="Prelude.Eq.html#400" class="Field Operator">_==_</a> <a id="383" href="Prelude.Eq.html#427" class="Function Operator">_/=_</a>
+  <a id="390" class="Keyword">field</a>
+    <a id="Eq._==_"></a><a id="400" href="Prelude.Eq.html#400" class="Field Operator">_==_</a> <a id="405" class="Symbol">:</a> <a id="407" class="Symbol">(</a><a id="408" href="Prelude.Eq.html#408" class="Bound">x</a> <a id="410" href="Prelude.Eq.html#410" class="Bound">y</a> <a id="412" class="Symbol">:</a> <a id="414" href="Prelude.Eq.html#343" class="Bound">A</a><a id="415" class="Symbol">)</a> <a id="417" class="Symbol">→</a> <a id="419" href="Agda.Builtin.Bool.html#147" class="Datatype">Bool</a>
+
+  <a id="Eq._/=_"></a><a id="427" href="Prelude.Eq.html#427" class="Function Operator">_/=_</a> <a id="432" class="Symbol">:</a> <a id="434" href="Prelude.Eq.html#343" class="Bound">A</a> <a id="436" class="Symbol">→</a> <a id="438" href="Prelude.Eq.html#343" class="Bound">A</a> <a id="440" class="Symbol">→</a> <a id="442" href="Agda.Builtin.Bool.html#147" class="Datatype">Bool</a>
+  <a id="449" href="Prelude.Eq.html#449" class="Bound">x</a> <a id="451" href="Prelude.Eq.html#427" class="Function Operator">/=</a> <a id="454" href="Prelude.Eq.html#454" class="Bound">y</a> <a id="456" class="Keyword">with</a> <a id="461" href="Prelude.Eq.html#449" class="Bound">x</a> <a id="463" href="Prelude.Eq.html#400" class="Field Operator">==</a> <a id="466" href="Prelude.Eq.html#454" class="Bound">y</a>
+  <a id="470" class="Symbol">...</a> <a id="474" class="Symbol">|</a> <a id="476" href="Agda.Builtin.Bool.html#166" class="InductiveConstructor">false</a> <a id="482" class="Symbol">=</a> <a id="484" href="Agda.Builtin.Bool.html#172" class="InductiveConstructor">true</a>
+  <a id="491" class="Symbol">...</a> <a id="495" class="Symbol">|</a> <a id="497" href="Agda.Builtin.Bool.html#172" class="InductiveConstructor">true</a>  <a id="503" class="Symbol">=</a> <a id="505" href="Agda.Builtin.Bool.html#166" class="InductiveConstructor">false</a>
+<a id="511" class="Keyword">open</a> <a id="516" href="Prelude.Eq.html#335" class="Module">Eq</a> <a id="519" class="Symbol">⦃...⦄</a> <a id="525" class="Keyword">public</a>
+
+<a id="533" class="Symbol">{-#</a> <a id="537" class="Keyword">DISPLAY</a> <a id="545" href="Prelude.Eq.html#400" class="Field Operator">Eq._==_</a> <a id="553" class="Pragma">_</a> <a id="555" class="Pragma">=</a> <a id="557" href="Prelude.Eq.html#400" class="Field Operator">_==_</a> <a id="562" class="Symbol">#-}</a>
+
+<a id="567" class="Keyword">instance</a>
+  <a id="EqNat"></a><a id="578" href="Prelude.Eq.html#578" class="Function">EqNat</a> <a id="584" class="Symbol">:</a> <a id="586" href="Prelude.Eq.html#335" class="Record">Eq</a> <a id="589" href="Agda.Builtin.Nat.html#177" class="Datatype">Nat</a>
+  <a id="595" href="Prelude.Eq.html#400" class="Field Operator">_==_</a> <a id="600" class="Symbol">⦃</a> <a id="602" href="Prelude.Eq.html#578" class="Function">EqNat</a> <a id="608" class="Symbol">⦄</a> <a id="610" class="Symbol">=</a> <a id="612" href="Prelude.Eq.html#148" class="Primitive">primNatEquality</a>
+
+  <a id="EqFloat"></a><a id="631" href="Prelude.Eq.html#631" class="Function">EqFloat</a> <a id="639" class="Symbol">:</a> <a id="641" href="Prelude.Eq.html#335" class="Record">Eq</a> <a id="644" href="Agda.Builtin.Float.html#327" class="Postulate">Float</a>
+  <a id="652" href="Prelude.Eq.html#400" class="Field Operator">_==_</a> <a id="657" class="Symbol">⦃</a> <a id="659" href="Prelude.Eq.html#631" class="Function">EqFloat</a> <a id="667" class="Symbol">⦄</a> <a id="669" class="Symbol">=</a> <a id="671" href="Agda.Builtin.Float.html#447" class="Primitive">primFloatEquality</a> 
+
+  <a id="EqWord64"></a><a id="693" href="Prelude.Eq.html#693" class="Function">EqWord64</a> <a id="702" class="Symbol">:</a> <a id="704" href="Prelude.Eq.html#335" class="Record">Eq</a> <a id="707" href="Agda.Builtin.Word.html#182" class="Postulate">Word64</a>
+  <a id="716" href="Prelude.Eq.html#400" class="Field Operator">_==_</a> <a id="721" class="Symbol">⦃</a> <a id="723" href="Prelude.Eq.html#693" class="Function">EqWord64</a> <a id="732" class="Symbol">⦄</a> <a id="734" href="Prelude.Eq.html#734" class="Bound">x</a> <a id="736" href="Prelude.Eq.html#736" class="Bound">y</a> <a id="738" class="Symbol">=</a> <a id="740" href="Agda.Builtin.Word.html#238" class="Primitive">primWord64ToNat</a> <a id="756" href="Prelude.Eq.html#734" class="Bound">x</a> <a id="758" href="Prelude.Eq.html#400" class="Field Operator">==</a> <a id="761" href="Agda.Builtin.Word.html#238" class="Primitive">primWord64ToNat</a> <a id="777" href="Prelude.Eq.html#736" class="Bound">y</a>
+
+  <a id="EqChar"></a><a id="782" href="Prelude.Eq.html#782" class="Function">EqChar</a> <a id="789" class="Symbol">:</a> <a id="791" href="Prelude.Eq.html#335" class="Record">Eq</a> <a id="794" href="Agda.Builtin.Char.html#212" class="Postulate">Char</a>
+  <a id="801" href="Prelude.Eq.html#400" class="Field Operator">_==_</a> <a id="806" class="Symbol">⦃</a> <a id="808" href="Prelude.Eq.html#782" class="Function">EqChar</a> <a id="815" class="Symbol">⦄</a> <a id="817" class="Symbol">=</a> <a id="819" href="Agda.Builtin.Char.html#480" class="Primitive">primCharEquality</a> 
+
+  <a id="EqString"></a><a id="840" href="Prelude.Eq.html#840" class="Function">EqString</a> <a id="849" class="Symbol">:</a> <a id="851" href="Prelude.Eq.html#335" class="Record">Eq</a> <a id="854" href="Agda.Builtin.String.html#309" class="Postulate">String</a>
+  <a id="863" href="Prelude.Eq.html#400" class="Field Operator">_==_</a> <a id="868" class="Symbol">⦃</a> <a id="870" href="Prelude.Eq.html#840" class="Function">EqString</a> <a id="879" class="Symbol">⦄</a> <a id="881" class="Symbol">=</a> <a id="883" href="Agda.Builtin.String.html#559" class="Primitive">primStringEquality</a>
+
+</pre></body></html>

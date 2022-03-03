@@ -1,0 +1,14 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Utils.String</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Symbol">{-#</a> <a id="5" class="Keyword">OPTIONS</a> <a id="13" class="Pragma">--safe</a> <a id="20" class="Pragma">--without-K</a> <a id="32" class="Symbol">#-}</a>
+
+<a id="37" class="Keyword">open</a> <a id="42" class="Keyword">import</a> <a id="49" href="Prelude.html" class="Module">Prelude</a> <a id="57" class="Symbol">as</a> <a id="60" class="Module">P</a>
+  <a id="64" class="Keyword">hiding</a> <a id="71" class="Symbol">(</a><a id="72" href="Prelude.List.html#2416" class="Function">concat</a><a id="78" class="Symbol">;</a> <a id="80" href="Prelude.List.html#3915" class="Function">intersperse</a><a id="91" class="Symbol">)</a>
+
+<a id="94" class="Keyword">module</a> <a id="101" href="Utils.String.html" class="Module">Utils.String</a> <a id="114" class="Keyword">where</a>
+
+<a id="concat"></a><a id="121" href="Utils.String.html#121" class="Function">concat</a> <a id="128" class="Symbol">:</a> <a id="130" href="Agda.Builtin.List.html#121" class="Datatype">List</a> <a id="135" href="Agda.Builtin.String.html#309" class="Postulate">String</a> <a id="142" class="Symbol">→</a> <a id="144" href="Agda.Builtin.String.html#309" class="Postulate">String</a>
+<a id="151" href="Utils.String.html#121" class="Function">concat</a> <a id="158" class="Symbol">=</a> <a id="160" href="Prelude.List.html#2214" class="Function">foldr</a> <a id="166" class="String">&quot;&quot;</a> <a id="169" href="Prelude.Monoid.html#175" class="Field Operator">_&lt;&gt;_</a>
+
+<a id="intersperse"></a><a id="175" href="Utils.String.html#175" class="Function">intersperse</a> <a id="187" class="Symbol">:</a> <a id="189" href="Agda.Builtin.String.html#309" class="Postulate">String</a> <a id="196" class="Symbol">→</a> <a id="198" href="Agda.Builtin.List.html#121" class="Datatype">List</a> <a id="203" href="Agda.Builtin.String.html#309" class="Postulate">String</a> <a id="210" class="Symbol">→</a> <a id="212" href="Agda.Builtin.String.html#309" class="Postulate">String</a>
+<a id="219" href="Utils.String.html#175" class="Function">intersperse</a> <a id="231" href="Utils.String.html#231" class="Bound">sep</a> <a id="235" class="Symbol">=</a> <a id="237" href="Utils.String.html#121" class="Function">concat</a> <a id="244" href="Prelude.Function.html#737" class="Function Operator">∘</a> <a id="246" href="Prelude.List.html#3915" class="Function">P.intersperse</a> <a id="260" href="Utils.String.html#231" class="Bound">sep</a>
+</pre></body></html>
