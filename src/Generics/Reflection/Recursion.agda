@@ -15,8 +15,8 @@ open import Generics.Reflection.Telescope
 open import Generics.Reflection.Name
 
 private
-  prependLevels : ℕ → Type → Type
-  prependLevels n = prependToType (`Levels n)
+  addLevels : ℕ → Type → Type
+  addLevels n = prependToType (`Levels n)
 
   pattern `fold-base = quote fold-base
   pattern `ind-base  = quote ind-base
@@ -39,7 +39,7 @@ private
 
 defineFold : FoldP → Name → TC _
 defineFold P f = do
-  `type ← prependLevels #levels <$> exCxtℓs #levels λ ℓs → do
+  `type ← addLevels #levels <$> exCxtℓs #levels λ ℓs → do
       ss ← fromTelInfo (ParamN {ℓs})
       T  ← quoteTC! (FoldNT P ℓs)
       return $ renameTypeBy T ss
@@ -52,15 +52,14 @@ defineFold P f = do
     Γps ← fromTel (Param ℓs) ParamV
     ss  ← fromTelInfo (ParamN {ℓs})
     forM cs $ conClause `fold-base f P pars #levels (renameTelBy Γps ss)
-  cls ← noConstraints $ normalise onClauses cls
+  defineFun f =<< normalise onClauses cls
 
-  defineFun f cls
   printFunction false f
   where open FoldP P
 
 defineInd : IndP → Name → TC _
 defineInd P f = do
-  `type ← prependLevels #levels <$> exCxtℓs #levels λ ℓs → do
+  `type ← addLevels #levels <$> exCxtℓs #levels λ ℓs → do
     ss ← fromTelInfo (ParamN {ℓs})
     T  ← quoteTC! (IndNT P ℓs)
     return $ renameTypeBy T ss
@@ -74,8 +73,7 @@ defineInd P f = do
     ss  ← fromTelInfo (ParamN {ℓs})
     forM cs $ conClause `ind-base f P pars #levels (renameTelBy Γps ss)
 
-  cls ← noConstraints $ normalise onClauses cls
-  defineFun f cls
+  defineFun f =<< normalise onClauses cls
 
   printFunction false f
   where open IndP P
