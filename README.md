@@ -1,4 +1,4 @@
-# Type Embellishment
+# Datatype-Generic Programming Meets Elaborator Reflection
 
 ## Introduction
 
@@ -7,6 +7,8 @@ This repo contains
 * metaprograms and macros for traslation between generic and native datatypes/functions,
 * connections between generic and native definitions, and
 * examples.
+
+There are also highlighted and clickable HTML documents for traversing the modules.
 
 ## Requirement
 
