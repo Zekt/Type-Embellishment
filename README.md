@@ -26,7 +26,7 @@ There are also highlighted and clickable HTML documents for traversing the modul
 5. Check the Agda binary version by `agda-2.6.3 -V`, which should output `Agda version 2.6.3-8f8b1f9-dirty`
 
 ## Check all modules
-Type `make AGDA_BIN=agda-2.6.3` to check all modules in the repo with the patched Agda binary.
+Type `make AGDA_BIN=agda-2.6.3` to check all modules in the `src` directory with the patched Agda binary.
 
 ## Details
 
