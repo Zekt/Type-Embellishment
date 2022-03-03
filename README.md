@@ -10,18 +10,51 @@ This repo contains
 
 ## Requirement
 
-* The development version of Agda 2.6.3 [8f8b1](https://github.com/agda/agda/commit/8f8b1f981a9d22bbb80316334964501c3958813f)
+The development version of Agda 2.6.3 ([commit 8f8b1](https://github.com/agda/agda/commit/8f8b1f981a9d22bbb80316334964501c3958813f))
   patched by
   * Agda-Normalise-Level.diff
   * Agda-unquoteDecl-data.diff 
 
-## Details
-What has been established on generic definitions (e.g. ornamentation) can be reified.
-Users benefit from generic libraries while work in the familiar and comfortable environment of conventional definitions,
-without (object-level) conversions between generic datatypes and generic programs.
+## Installation
+1. `git clone https://github.com/agda/agda.git`
+2. `cd agda && git checkout 8f8b1`
+3. `git apply ../*.diff`
+4. `make install-bin`
+5. Check the Agda binary version by `agda -V`, which should output `Agda version 2.6.3-8f8b1f9-dirty`
 
-For most generic programs and their native counterparts there are translation relations to be written,
-metaprograms automates the process, making native programmers and generic programmers live in harmony.
+## Details
+
+	src
+	├── Examples
+	│   ├── Acc.agda --------------- Running examples in section 2, 3 and 4.
+	│   └── ...
+	├── Generics
+	│   ├── Algebra.agda ----------- Section 4.2 (Figure 6).
+	│   ├── Description
+	│   │   └── FixedPoint.agda ---- Section 2.1.
+	│   ├── Description.agda ------- Section 3 (Figure 1, 2, 3 and 4).
+	│   ├── Ornament --------------- Section 6.2.
+	│   │   └── ...
+	│   ├── Recursion.agda --------- Section 4.1 and 4.2 (Figure 5, 6 and 7).
+	│   ├── RecursionScheme.agda --- Section 6.1.
+	│   ├── Reflection ------------- Section 5.
+	│   │   ├── Connection.agda ---- Section 5.3.
+	│   │   ├── Datatype.agda ------ Section 5.2.
+	│   │   ├── Recursion.agda ----- Section 5.4.
+	│   │   ├── Telescope.agda ----- Section 5.2.
+	│   │   └── Uncurry.agda ------- Section 5.3.
+	│   ├── SimpleContainer -------- Section 6.3.
+	│   │   └── ...
+	│   └── Telescope.agda --------- Section 3.2.
+	└── Utils
+	    ├── Reflection
+	    │   ├── Print.agda --------- (*)
+	    │   ├── Tactic.agda -------- Section 5.2.
+	    │   └── ...
+	    └── ...
+
+(\*) To inspect the definition of a datatype `D` or a function `F`, import this module and normalise `print D` or `print F` (Ctrl+C Ctrl+N in agda mode), the definitions will be printed to the debug buffer(\*\*).  
+(\*\*) To open the debug buffer, select the `*Agda Debug*` buffer in Emacs, or execute `Agda: Open Debug Buffer` in the Command Palette of Visual Studio Code (see [agda-mode](https://marketplace.visualstudio.com/items?itemName=banacorn.agda-mode)).
 
 Here's a list of definitions and their intended ways of generation: 
 
