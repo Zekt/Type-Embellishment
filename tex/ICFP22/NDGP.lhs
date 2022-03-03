@@ -1977,8 +1977,8 @@ Elaborator reflection is a useful paradigm but it has not been specified in theo
 More importantly, the correctness of a macro can only be verified externally at best, but it is internally guaranteed by typed metaprogramming like staging.
 \citet{Christiansen-elaborator-reflection} argued that programs in the reflected elaborator are shorter and simpler than typed metaprograms, but they also admitted the additional cost is for the mandatory correctness.
 Hopefully, the best of two worlds could be combined. 
-Say, suppose that we have a type |TTerm A| of |A|-typed reflected expression.
-Since |normalise| always works on well-typed expressions, so the type of |normalise| could be |TTerm A → TTerm A|;
+Say, suppose that we have a type |TTerm A| of |A|-typed reflected expressions.
+Normalisation (by evaluation) always works on well-typed expressions, so the type of |normalise| could be |TTerm A → TTerm A|;
 type checking transforms a possibly ill-formed expression to a typed expression if successful, so the type of |checkType| could be |Term → (A : Set ℓ) → TC (TTerm A)|.
 Typed reflected expressions also benefit efficiency, since they need not be elaborated again.
 
