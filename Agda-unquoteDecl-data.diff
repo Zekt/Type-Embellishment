@@ -1,0 +1,1762 @@
+Subject: [PATCH] [ fix ] Use normalisation for the universe check
+
+---
+ src/full/Agda/TypeChecking/Conversion.hs | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/full/Agda/TypeChecking/Conversion.hs b/src/full/Agda/TypeChecking/Conversion.hs
+index b14745379..98d4c6430 100644
+--- a/src/full/Agda/TypeChecking/Conversion.hs
++++ b/src/full/Agda/TypeChecking/Conversion.hs
+@@ -1303,7 +1303,7 @@ leqLevel a b = catchConstraint (LevelCmp CmpLeq a b) $ do
+           sep [ prettyTCM a <+> "=<"
+               , prettyTCM b ]
+ 
+-      (a, b) <- reduce (a, b)
++      (a, b) <- normalise (a, b)
+       SynEq.checkSyntacticEquality a b
+         (\_ _ ->
+           reportSDoc "tc.conv.level" 60
+@@ -1453,7 +1453,7 @@ equalLevel a b = do
+                ]
+         ]
+ 
+-  (a, b) <- reduce (a, b)
++  (a, b) <- normalise (a, b)
+   SynEq.checkSyntacticEquality a b
+     (\_ _ ->
+       reportSDoc "tc.conv.level" 60
+-- 
+2.31.0
+
+Subject: [PATCH] [ new ] Add a new concrete syntax `UnquoteDecl` for unquoting
+ data type declaration
+
+---
+ .../Interaction/Highlighting/FromAbstract.hs  |   1 +
+ src/full/Agda/Syntax/Abstract.hs              |   3 +
+ src/full/Agda/Syntax/Abstract/Views.hs        |   2 +
+ src/full/Agda/Syntax/Concrete.hs              |   4 +
+ src/full/Agda/Syntax/Concrete/Definitions.hs  | 469 +++++++++---------
+ .../Agda/Syntax/Concrete/Definitions/Types.hs |   6 +-
+ src/full/Agda/Syntax/Concrete/Fixity.hs       |  62 +--
+ src/full/Agda/Syntax/Concrete/Generic.hs      |   1 +
+ src/full/Agda/Syntax/Concrete/Pretty.hs       | 239 +++++----
+ src/full/Agda/Syntax/Parser/Parser.y          |   3 +
+ .../Syntax/Translation/AbstractToConcrete.hs  |   2 +
+ .../Syntax/Translation/ConcreteToAbstract.hs  |  21 +
+ src/full/Agda/Termination/TermCheck.hs        |   1 +
+ src/full/Agda/TypeChecking/Rules/Decl.hs      |   5 +
+ 14 files changed, 438 insertions(+), 381 deletions(-)
+
+diff --git a/src/full/Agda/Interaction/Highlighting/FromAbstract.hs b/src/full/Agda/Interaction/Highlighting/FromAbstract.hs
+index 2b69932a1..31035e4cf 100644
+--- a/src/full/Agda/Interaction/Highlighting/FromAbstract.hs
++++ b/src/full/Agda/Interaction/Highlighting/FromAbstract.hs
+@@ -214,6 +214,7 @@ instance Hilite A.Declaration where
+       A.PatternSynDef x xs p                 -> hl x <> hl xs <> hl p
+       A.UnquoteDecl _mi _di xs e             -> hl xs <> hl e
+       A.UnquoteDef _di xs e                  -> hl xs <> hl e
++      A.UnquoteData _i xs _uc _j cs e        -> hl xs <> hl cs <> hl e
+       A.ScopedDecl s ds                      -> hl ds
+       A.Pragma _r pragma                     -> hl pragma
+     where
+diff --git a/src/full/Agda/Syntax/Abstract.hs b/src/full/Agda/Syntax/Abstract.hs
+index fed5bcd9f..27a247baa 100644
+--- a/src/full/Agda/Syntax/Abstract.hs
++++ b/src/full/Agda/Syntax/Abstract.hs
+@@ -185,6 +185,7 @@ data Declaration
+       -- ^ Only for highlighting purposes
+   | UnquoteDecl MutualInfo [DefInfo] [QName] Expr
+   | UnquoteDef  [DefInfo] [QName] Expr
++  | UnquoteData [DefInfo] [QName] UniverseCheck [DefInfo] [QName] Expr
+   | ScopedDecl ScopeInfo [Declaration]  -- ^ scope annotation
+   deriving (Data, Show, Generic)
+ 
+@@ -661,6 +662,7 @@ instance HasRange Declaration where
+     getRange (PatternSynDef x _ _   ) = getRange x
+     getRange (UnquoteDecl _ i _ _)    = getRange i
+     getRange (UnquoteDef i _ _)       = getRange i
++    getRange (UnquoteData i _ _ j _ _) = getRange (i, j)
+ 
+ instance HasRange (Pattern' e) where
+     getRange (VarP x)           = getRange x
+@@ -794,6 +796,7 @@ instance KillRange Declaration where
+   killRange (PatternSynDef x xs p     ) = killRange3 PatternSynDef x xs p
+   killRange (UnquoteDecl mi i x e     ) = killRange4 UnquoteDecl mi i x e
+   killRange (UnquoteDef i x e         ) = killRange3 UnquoteDef i x e
++  killRange (UnquoteData i xs uc j cs e) = killRange6 UnquoteData i xs uc j cs e
+ 
+ instance KillRange ModuleApplication where
+   killRange (SectionApp a b c  ) = killRange3 SectionApp a b c
+diff --git a/src/full/Agda/Syntax/Abstract/Views.hs b/src/full/Agda/Syntax/Abstract/Views.hs
+index eebec8f8e..b7eab489a 100644
+--- a/src/full/Agda/Syntax/Abstract/Views.hs
++++ b/src/full/Agda/Syntax/Abstract/Views.hs
+@@ -428,6 +428,7 @@ instance ExprLike Declaration where
+       PatternSynDef f xs p      -> PatternSynDef f xs <$> rec p
+       UnquoteDecl i is xs e     -> UnquoteDecl i is xs <$> rec e
+       UnquoteDef i xs e         -> UnquoteDef i xs <$> rec e
++      UnquoteData i xs uc j cs e -> UnquoteData i xs uc j cs <$> rec e
+       ScopedDecl s ds           -> ScopedDecl s <$> rec ds
+     where
+       rec :: RecurseExprRecFn m
+@@ -490,6 +491,7 @@ instance DeclaredNames Declaration where
+       PatternSynDef q _ _          -> singleton (WithKind PatternSynName q)
+       UnquoteDecl _ _ qs _         -> fromList $ map (WithKind OtherDefName) qs  -- could be Fun or Axiom
+       UnquoteDef _ qs _            -> fromList $ map (WithKind FunName) qs       -- cannot be Axiom
++      UnquoteData _ xs _ _ cs _    -> fromList $ map (WithKind DataName) xs ++ map (WithKind ConName) cs
+       FunDef _ q _ cls             -> singleton (WithKind FunName q) <> declaredNames cls
+       ScopedDecl _ decls           -> declaredNames decls
+       Section _ _ _ decls          -> declaredNames decls
+diff --git a/src/full/Agda/Syntax/Concrete.hs b/src/full/Agda/Syntax/Concrete.hs
+index b23cdecf0..77625ffdc 100644
+--- a/src/full/Agda/Syntax/Concrete.hs
++++ b/src/full/Agda/Syntax/Concrete.hs
+@@ -480,6 +480,7 @@ data Declaration
+   | Module      Range QName Telescope [Declaration]
+   | UnquoteDecl Range [Name] Expr
+   | UnquoteDef  Range [Name] Expr
++  | UnquoteData Range [Name] [Name] Expr
+   | Pragma      Pragma
+   deriving (Data, Eq)
+ 
+@@ -903,6 +904,7 @@ instance HasRange Declaration where
+   getRange (PatternSyn r _ _ _)    = r
+   getRange (UnquoteDecl r _ _)     = r
+   getRange (UnquoteDef r _ _)      = r
++  getRange (UnquoteData r _ _ _)   = r
+   getRange (Pragma p)              = getRange p
+ 
+ instance HasRange LHS where
+@@ -1050,6 +1052,7 @@ instance KillRange Declaration where
+   killRange (Module _ q t d)        = killRange3 (Module noRange) q t d
+   killRange (UnquoteDecl _ x t)     = killRange2 (UnquoteDecl noRange) x t
+   killRange (UnquoteDef _ x t)      = killRange2 (UnquoteDef noRange) x t
++  killRange (UnquoteData _ xs cs t) = killRange3 (UnquoteData noRange) xs cs t
+   killRange (Pragma p)              = killRange1 Pragma p
+ 
+ instance KillRange Expr where
+@@ -1265,6 +1268,7 @@ instance NFData Declaration where
+   rnf (Module _ a b c)        = rnf a `seq` rnf b `seq` rnf c
+   rnf (UnquoteDecl _ a b)     = rnf a `seq` rnf b
+   rnf (UnquoteDef _ a b)      = rnf a `seq` rnf b
++  rnf (UnquoteData _ a b c)   = rnf a `seq` rnf b `seq` rnf c
+   rnf (Pragma a)              = rnf a
+ 
+ instance NFData OpenShortHand
+diff --git a/src/full/Agda/Syntax/Concrete/Definitions.hs b/src/full/Agda/Syntax/Concrete/Definitions.hs
+index 49d40d2d4..9d8748c8b 100644
+--- a/src/full/Agda/Syntax/Concrete/Definitions.hs
++++ b/src/full/Agda/Syntax/Concrete/Definitions.hs
+@@ -150,27 +150,28 @@ data DeclKind
+   deriving (Eq, Show)
+ 
+ declKind :: NiceDeclaration -> DeclKind
+-declKind (FunSig r _ _ _ _ _ tc cc x _)     = LoneSigDecl r (FunName tc cc) x
+-declKind (NiceRecSig r _ _ pc uc x pars _)  = LoneSigDecl r (RecName pc uc) x
+-declKind (NiceDataSig r _ _ pc uc x pars _) = LoneSigDecl r (DataName pc uc) x
+-declKind (FunDef r _ abs ins tc cc x _)     = LoneDefs (FunName tc cc) [x]
+-declKind (NiceDataDef _ _ _ pc uc x pars _) = LoneDefs (DataName pc uc) [x]
++declKind (FunSig r _ _ _ _ _ tc cc x _)      = LoneSigDecl r (FunName tc cc) x
++declKind (NiceRecSig r _ _ pc uc x pars _)   = LoneSigDecl r (RecName pc uc) x
++declKind (NiceDataSig r _ _ pc uc x pars _)  = LoneSigDecl r (DataName pc uc) x
++declKind (FunDef r _ abs ins tc cc x _)      = LoneDefs (FunName tc cc) [x]
++declKind (NiceDataDef _ _ _ pc uc x pars _)  = LoneDefs (DataName pc uc) [x]
++declKind (NiceUnquoteData _ _ _ pc uc xs _ _) = LoneDefs (DataName pc uc) xs
+ declKind (NiceRecDef _ _ _ pc uc x _ pars _) = LoneDefs (RecName pc uc) [x]
+-declKind (NiceUnquoteDef _ _ _ tc cc xs _)  = LoneDefs (FunName tc cc) xs
+-declKind Axiom{}                            = OtherDecl
+-declKind NiceField{}                        = OtherDecl
+-declKind PrimitiveFunction{}                = OtherDecl
+-declKind NiceMutual{}                       = OtherDecl
+-declKind NiceModule{}                       = OtherDecl
+-declKind NiceModuleMacro{}                  = OtherDecl
+-declKind NiceOpen{}                         = OtherDecl
+-declKind NiceImport{}                       = OtherDecl
+-declKind NicePragma{}                       = OtherDecl
+-declKind NiceFunClause{}                    = OtherDecl
+-declKind NicePatternSyn{}                   = OtherDecl
+-declKind NiceGeneralize{}                   = OtherDecl
+-declKind NiceUnquoteDecl{}                  = OtherDecl
+-declKind NiceLoneConstructor{}              = OtherDecl
++declKind (NiceUnquoteDef _ _ _ tc cc xs _)   = LoneDefs (FunName tc cc) xs
++declKind Axiom{}                             = OtherDecl
++declKind NiceField{}                         = OtherDecl
++declKind PrimitiveFunction{}                 = OtherDecl
++declKind NiceMutual{}                        = OtherDecl
++declKind NiceModule{}                        = OtherDecl
++declKind NiceModuleMacro{}                   = OtherDecl
++declKind NiceOpen{}                          = OtherDecl
++declKind NiceImport{}                        = OtherDecl
++declKind NicePragma{}                        = OtherDecl
++declKind NiceFunClause{}                     = OtherDecl
++declKind NicePatternSyn{}                    = OtherDecl
++declKind NiceGeneralize{}                    = OtherDecl
++declKind NiceUnquoteDecl{}                   = OtherDecl
++declKind NiceLoneConstructor{}               = OtherDecl
+ 
+ -- | Replace (Data/Rec/Fun)Sigs with Axioms for postulated names
+ --   The first argument is a list of axioms only.
+@@ -280,215 +281,217 @@ niceDeclarations fixs ds = do
+ 
+     nice1 :: [Declaration] -> Nice ([NiceDeclaration], [Declaration])
+     nice1 []     = return ([], []) -- Andreas, 2017-09-16, issue #2759: no longer __IMPOSSIBLE__
+-    nice1 (d:ds) = do
+-      let justWarning :: HasCallStack => DeclarationWarning' -> Nice ([NiceDeclaration], [Declaration])
+-          justWarning w = do
+-            -- NOTE: This is the location of the invoker of justWarning, not here.
+-            withCallerCallStack $ declarationWarning' w
+-            nice1 ds
+-
+-      case d of
+-
+-        TypeSig info _tac x t -> do
+-          termCheck <- use terminationCheckPragma
+-          covCheck  <- use coverageCheckPragma
+-          -- Andreas, 2020-09-28, issue #4950: take only range of identifier,
+-          -- since parser expands type signatures with several identifiers
+-          -- (like @x y z : A@) into several type signatures (with imprecise ranges).
+-          let r = getRange x
+-          -- register x as lone type signature, to recognize clauses later
+-          x' <- addLoneSig r x $ FunName termCheck covCheck
+-          return ([FunSig r PublicAccess ConcreteDef NotInstanceDef NotMacroDef info termCheck covCheck x' t] , ds)
+-
+-        -- Should not show up: all FieldSig are part of a Field block
+-        FieldSig{} -> __IMPOSSIBLE__
+-
+-        Generalize r [] -> justWarning $ EmptyGeneralize r
+-        Generalize r sigs -> do
+-          gs <- forM sigs $ \case
+-            sig@(TypeSig info tac x t) -> do
+-              return $ NiceGeneralize (getRange sig) PublicAccess info tac x t
+-            _ -> __IMPOSSIBLE__
+-          return (gs, ds)
+-
+-        (FunClause lhs _ _ _)         -> do
+-          termCheck <- use terminationCheckPragma
+-          covCheck  <- use coverageCheckPragma
+-          catchall  <- popCatchallPragma
+-          xs <- loneFuns <$> use loneSigs
+-          -- for each type signature 'x' waiting for clauses, we try
+-          -- if we have some clauses for 'x'
+-          case [ (x, (x', fits, rest))
+-               | (x, x') <- xs
+-               , let (fits, rest) =
+-                      -- Anonymous declarations only have 1 clause each!
+-                      if isNoName x then ([d], ds)
+-                      else span (couldBeFunClauseOf (Map.lookup x fixs) x) (d : ds)
+-               , not (null fits)
+-               ] of
+-
+-            -- case: clauses match none of the sigs
+-            [] -> case lhs of
+-              -- Subcase: The lhs is single identifier (potentially anonymous).
+-              -- Treat it as a function clause without a type signature.
+-              LHS p [] [] | Just x <- isSingleIdentifierP p -> do
+-                d  <- mkFunDef (setOrigin Inserted defaultArgInfo) termCheck covCheck x Nothing [d] -- fun def without type signature is relevant
+-                return (d , ds)
+-              -- Subcase: The lhs is a proper pattern.
+-              -- This could be a let-pattern binding. Pass it on.
+-              -- A missing type signature error might be raise in ConcreteToAbstract
+-              _ -> do
+-                return ([NiceFunClause (getRange d) PublicAccess ConcreteDef termCheck covCheck catchall d] , ds)
+-
+-            -- case: clauses match exactly one of the sigs
+-            [(x,(x',fits,rest))] -> do
+-               -- The x'@NoName{} is the unique version of x@NoName{}.
+-               removeLoneSig x
+-               ds  <- expandEllipsis fits
+-               cs  <- mkClauses x' ds False
+-               return ([FunDef (getRange fits) fits ConcreteDef NotInstanceDef termCheck covCheck x' cs] , rest)
+-
+-            -- case: clauses match more than one sigs (ambiguity)
+-            xf:xfs -> declarationException $ AmbiguousFunClauses lhs $ List1.reverse $ fmap fst $ xf :| xfs
+-                 -- "ambiguous function clause; cannot assign it uniquely to one type signature"
+-
+-        Field r [] -> justWarning $ EmptyField r
+-        Field _ fs -> (,ds) <$> niceAxioms FieldBlock fs
+-
+-        DataSig r x tel t -> do
+-          pc <- use positivityCheckPragma
+-          uc <- use universeCheckPragma
+-          _ <- addLoneSig r x $ DataName pc uc
+-          (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x (Just (tel, t)) Nothing
+-
+-        Data r x tel t cs -> do
+-          pc <- use positivityCheckPragma
+-          -- Andreas, 2018-10-27, issue #3327
+-          -- Propagate {-# NO_UNIVERSE_CHECK #-} pragma from signature to definition.
+-          -- Universe check is performed if both the current value of
+-          -- 'universeCheckPragma' AND the one from the signature say so.
+-          uc <- use universeCheckPragma
+-          uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
+-          mt <- defaultTypeSig (DataName pc uc) x (Just t)
+-          (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x ((tel,) <$> mt) (Just (tel, cs))
+-
+-        DataDef r x tel cs -> do
+-          pc <- use positivityCheckPragma
+-          -- Andreas, 2018-10-27, issue #3327
+-          -- Propagate {-# NO_UNIVERSE_CHECK #-} pragma from signature to definition.
+-          -- Universe check is performed if both the current value of
+-          -- 'universeCheckPragma' AND the one from the signature say so.
+-          uc <- use universeCheckPragma
+-          uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
+-          mt <- defaultTypeSig (DataName pc uc) x Nothing
+-          (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x ((tel,) <$> mt) (Just (tel, cs))
+-
+-        RecordSig r x tel t         -> do
+-          pc <- use positivityCheckPragma
+-          uc <- use universeCheckPragma
+-          _ <- addLoneSig r x $ RecName pc uc
+-          return ([NiceRecSig r PublicAccess ConcreteDef pc uc x tel t] , ds)
+-
+-        Record r x dir tel t cs   -> do
+-          pc <- use positivityCheckPragma
+-          -- Andreas, 2018-10-27, issue #3327
+-          -- Propagate {-# NO_UNIVERSE_CHECK #-} pragma from signature to definition.
+-          -- Universe check is performed if both the current value of
+-          -- 'universeCheckPragma' AND the one from the signature say so.
+-          uc <- use universeCheckPragma
+-          uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
+-          mt <- defaultTypeSig (RecName pc uc) x (Just t)
+-          (,ds) <$> dataOrRec pc uc (\ r o a pc uc x tel cs -> NiceRecDef r o a pc uc x dir tel cs) NiceRecSig
+-                      return r x ((tel,) <$> mt) (Just (tel, cs))
+-
+-        RecordDef r x dir tel cs   -> do
+-          pc <- use positivityCheckPragma
+-          -- Andreas, 2018-10-27, issue #3327
+-          -- Propagate {-# NO_UNIVERSE_CHECK #-} pragma from signature to definition.
+-          -- Universe check is performed if both the current value of
+-          -- 'universeCheckPragma' AND the one from the signature say so.
+-          uc <- use universeCheckPragma
+-          uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
+-          mt <- defaultTypeSig (RecName pc uc) x Nothing
+-          (,ds) <$> dataOrRec pc uc (\ r o a pc uc x tel cs -> NiceRecDef r o a pc uc x dir tel cs) NiceRecSig
+-                      return r x ((tel,) <$> mt) (Just (tel, cs))
+-
+-        RecordDirective r -> justWarning $ InvalidRecordDirective (getRange r)
+-
+-        Mutual r ds' -> do
+-          -- The lone signatures encountered so far are not in scope
+-          -- for the mutual definition
+-          forgetLoneSigs
+-          case ds' of
+-            [] -> justWarning $ EmptyMutual r
+-            _  -> (,ds) <$> (singleton <$> (mkOldMutual r =<< nice ds'))
+-
+-        InterleavedMutual r ds' -> do
+-          -- The lone signatures encountered so far are not in scope
+-          -- for the mutual definition
+-          forgetLoneSigs
+-          case ds' of
+-            [] -> justWarning $ EmptyMutual r
+-            _  -> (,ds) <$> (singleton <$> (mkInterleavedMutual r =<< nice ds'))
+-
+-        LoneConstructor r [] -> justWarning $ EmptyConstructor r
+-        LoneConstructor r ds' ->
+-          ((,ds) . singleton . NiceLoneConstructor r) <$> niceAxioms ConstructorBlock ds'
+-
+-
+-        Abstract r []  -> justWarning $ EmptyAbstract r
+-        Abstract r ds' ->
+-          (,ds) <$> (abstractBlock r =<< nice ds')
+-
+-        Private r UserWritten []  -> justWarning $ EmptyPrivate r
+-        Private r o ds' ->
+-          (,ds) <$> (privateBlock r o =<< nice ds')
+-
+-        InstanceB r []  -> justWarning $ EmptyInstance r
+-        InstanceB r ds' ->
+-          (,ds) <$> (instanceBlock r =<< nice ds')
+-
+-        Macro r []  -> justWarning $ EmptyMacro r
+-        Macro r ds' ->
+-          (,ds) <$> (macroBlock r =<< nice ds')
+-
+-        Postulate r []  -> justWarning $ EmptyPostulate r
+-        Postulate _ ds' ->
+-          (,ds) <$> niceAxioms PostulateBlock ds'
+-
+-        Primitive r []  -> justWarning $ EmptyPrimitive r
+-        Primitive _ ds' -> (,ds) <$> (map toPrim <$> niceAxioms PrimitiveBlock ds')
+-
+-        Module r x tel ds' -> return $
+-          ([NiceModule r PublicAccess ConcreteDef x tel ds'] , ds)
+-
+-        ModuleMacro r x modapp op is -> return $
+-          ([NiceModuleMacro r PublicAccess x modapp op is] , ds)
+-
+-        -- Fixity and syntax declarations and polarity pragmas have
+-        -- already been processed.
+-        Infix _ _  -> return ([], ds)
+-        Syntax _ _ -> return ([], ds)
+-
+-        PatternSyn r n as p -> do
+-          return ([NicePatternSyn r PublicAccess n as p] , ds)
+-        Open r x is         -> return ([NiceOpen r x is] , ds)
+-        Import r x as op is -> return ([NiceImport r x as op is] , ds)
+-
+-        UnquoteDecl r xs e -> do
+-          tc <- use terminationCheckPragma
+-          cc <- use coverageCheckPragma
+-          return ([NiceUnquoteDecl r PublicAccess ConcreteDef NotInstanceDef tc cc xs e] , ds)
+-
+-        UnquoteDef r xs e -> do
+-          sigs <- map fst . loneFuns <$> use loneSigs
+-          List1.ifNotNull (filter (`notElem` sigs) xs)
+-            {-then-} (declarationException . UnquoteDefRequiresSignature)
+-            {-else-} $ do
+-              mapM_ removeLoneSig xs
+-              return ([NiceUnquoteDef r PublicAccess ConcreteDef TerminationCheck YesCoverageCheck xs e] , ds)
+-
+-        Pragma p -> nicePragma p ds
++    nice1 (d:ds) = helper d
++      where
++        justWarning :: HasCallStack => DeclarationWarning' -> Nice ([NiceDeclaration], [Declaration])
++        justWarning w = do
++          -- NOTE: This is the location of the invoker of justWarning, not here.
++          withCallerCallStack $ declarationWarning' w
++          nice1 ds
++        helper :: Declaration -> Nice ([NiceDeclaration], [Declaration])
++        helper = \case
++          TypeSig info _tac x t -> do
++            termCheck <- use terminationCheckPragma
++            covCheck  <- use coverageCheckPragma
++            -- Andreas, 2020-09-28, issue #4950: take only range of identifier,
++            -- since parser expands type signatures with several identifiers
++            -- (like @x y z : A@) into several type signatures (with imprecise ranges).
++            let r = getRange x
++            -- register x as lone type signature, to recognize clauses later
++            x' <- addLoneSig r x $ FunName termCheck covCheck
++            return ([FunSig r PublicAccess ConcreteDef NotInstanceDef NotMacroDef info termCheck covCheck x' t] , ds)
++  
++          -- Should not show up: all FieldSig are part of a Field block
++          FieldSig{} -> __IMPOSSIBLE__
++  
++          Generalize r [] -> justWarning $ EmptyGeneralize r
++          Generalize r sigs -> do
++            gs <- forM sigs $ \case
++              sig@(TypeSig info tac x t) -> do
++                return $ NiceGeneralize (getRange sig) PublicAccess info tac x t
++              _ -> __IMPOSSIBLE__
++            return (gs, ds)
++  
++          FunClause lhs _ _ _         -> do
++            termCheck <- use terminationCheckPragma
++            covCheck  <- use coverageCheckPragma
++            catchall  <- popCatchallPragma
++            xs <- loneFuns <$> use loneSigs
++            -- for each type signature 'x' waiting for clauses, we try
++            -- if we have some clauses for 'x'
++            case [ (x, (x', fits, rest))
++                 | (x, x') <- xs
++                 , let (fits, rest) =
++                        -- Anonymous declarations only have 1 clause each!
++                        if isNoName x then ([d], ds)
++                        else span (couldBeFunClauseOf (Map.lookup x fixs) x) (d : ds)
++                 , not (null fits)
++                 ] of
++  
++              -- case: clauses match none of the sigs
++              [] -> case lhs of
++                -- Subcase: The lhs is single identifier (potentially anonymous).
++                -- Treat it as a function clause without a type signature.
++                LHS p [] [] | Just x <- isSingleIdentifierP p -> do
++                  d  <- mkFunDef (setOrigin Inserted defaultArgInfo) termCheck covCheck x Nothing [d] -- fun def without type signature is relevant
++                  return (d , ds)
++                -- Subcase: The lhs is a proper pattern.
++                -- This could be a let-pattern binding. Pass it on.
++                -- A missing type signature error might be raise in ConcreteToAbstract
++                _ -> do
++                  return ([NiceFunClause (getRange d) PublicAccess ConcreteDef termCheck covCheck catchall d] , ds)
++  
++              -- case: clauses match exactly one of the sigs
++              [(x,(x',fits,rest))] -> do
++                 -- The x'@NoName{} is the unique version of x@NoName{}.
++                 removeLoneSig x
++                 ds  <- expandEllipsis fits
++                 cs  <- mkClauses x' ds False
++                 return ([FunDef (getRange fits) fits ConcreteDef NotInstanceDef termCheck covCheck x' cs] , rest)
++  
++              -- case: clauses match more than one sigs (ambiguity)
++              xf:xfs -> declarationException $ AmbiguousFunClauses lhs $ List1.reverse $ fmap fst $ xf :| xfs
++                   -- "ambiguous function clause; cannot assign it uniquely to one type signature"
++  
++          Field r [] -> justWarning $ EmptyField r
++          Field _ fs -> (,ds) <$> niceAxioms FieldBlock fs
++  
++          DataSig r x tel e -> do
++            pc <- use positivityCheckPragma
++            uc <- use universeCheckPragma
++            _ <- addLoneSig r x $ DataName pc uc
++            (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x (Just (tel, e)) Nothing
++  
++          Data r x tel e cs -> do
++            pc <- use positivityCheckPragma
++            -- Andreas, 2018-10-27, issue #3327
++            -- Propagate {-# NO_UNIVERSE_CHECK #-} pragma from signature to definition.
++            -- Universe check is performed if both the current value of
++            -- 'universeCheckPragma' AND the one from the signature say so.
++            uc <- use universeCheckPragma
++            uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
++            mt <- defaultTypeSig (DataName pc uc) x (Just e)
++            (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x ((tel,) <$> mt) (Just (tel, cs))
++  
++          DataDef r x tel cs -> do
++            pc <- use positivityCheckPragma
++            -- Andreas, 2018-10-27, issue #3327
++            -- Propagate {-# NO_UNIVERSE_CHECK #-} pragma from signature to definition.
++            -- Universe check is performed if both the current value of
++            -- 'universeCheckPragma' AND the one from the signature say so.
++            uc <- use universeCheckPragma
++            uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
++            mt <- defaultTypeSig (DataName pc uc) x Nothing
++            (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x ((tel,) <$> mt) (Just (tel, cs))
++  
++          RecordSig r x tel e         -> do
++            pc <- use positivityCheckPragma
++            uc <- use universeCheckPragma
++            _ <- addLoneSig r x $ RecName pc uc
++            return ([NiceRecSig r PublicAccess ConcreteDef pc uc x tel e] , ds)
++  
++          Record r x dir tel e cs   -> do
++            pc <- use positivityCheckPragma
++            -- Andreas, 2018-10-27, issue #3327
++            -- Propagate {-# NO_UNIVERSE_CHECK #-} pragma from signature to definition.
++            -- Universe check is performed if both the current value of
++            -- 'universeCheckPragma' AND the one from the signature say so.
++            uc <- use universeCheckPragma
++            uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
++            mt <- defaultTypeSig (RecName pc uc) x (Just e)
++            (,ds) <$> dataOrRec pc uc (\ r o a pc uc x tel cs -> NiceRecDef r o a pc uc x dir tel cs) NiceRecSig
++                        return r x ((tel,) <$> mt) (Just (tel, cs))
++  
++          RecordDef r x dir tel cs   -> do
++            pc <- use positivityCheckPragma
++            -- Andreas, 2018-10-27, issue #3327
++            -- Propagate {-# NO_UNIVERSE_CHECK #-} pragma from signature to definition.
++            -- Universe check is performed if both the current value of
++            -- 'universeCheckPragma' AND the one from the signature say so.
++            uc <- use universeCheckPragma
++            uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
++            mt <- defaultTypeSig (RecName pc uc) x Nothing
++            (,ds) <$> dataOrRec pc uc (\ r o a pc uc x tel cs -> NiceRecDef r o a pc uc x dir tel cs) NiceRecSig
++                        return r x ((tel,) <$> mt) (Just (tel, cs))
++  
++          RecordDirective r -> justWarning $ InvalidRecordDirective (getRange r)
++  
++          Mutual r ds' -> do
++            -- The lone signatures encountered so far are not in scope
++            -- for the mutual definition
++            forgetLoneSigs
++            case ds' of
++              [] -> justWarning $ EmptyMutual r
++              _  -> (,ds) <$> (singleton <$> (mkOldMutual r =<< nice ds'))
++  
++          InterleavedMutual r ds' -> do
++            -- The lone signatures encountered so far are not in scope
++            -- for the mutual definition
++            forgetLoneSigs
++            case ds' of
++              [] -> justWarning $ EmptyMutual r
++              _  -> (,ds) <$> (singleton <$> (mkInterleavedMutual r =<< nice ds'))
++  
++          LoneConstructor r [] -> justWarning $ EmptyConstructor r
++          LoneConstructor r ds' ->
++            ((,ds) . singleton . NiceLoneConstructor r) <$> niceAxioms ConstructorBlock ds'
++  
++          Abstract r []  -> justWarning $ EmptyAbstract r
++          Abstract r ds' ->
++            (,ds) <$> (abstractBlock r =<< nice ds')
++  
++          Private r UserWritten []  -> justWarning $ EmptyPrivate r
++          Private r o ds' ->
++            (,ds) <$> (privateBlock r o =<< nice ds')
++  
++          InstanceB r []  -> justWarning $ EmptyInstance r
++          InstanceB r ds' ->
++            (,ds) <$> (instanceBlock r =<< nice ds')
++  
++          Macro r []  -> justWarning $ EmptyMacro r
++          Macro r ds' ->
++            (,ds) <$> (macroBlock r =<< nice ds')
++  
++          Postulate r []  -> justWarning $ EmptyPostulate r
++          Postulate _ ds' ->
++            (,ds) <$> niceAxioms PostulateBlock ds'
++  
++          Primitive r []  -> justWarning $ EmptyPrimitive r
++          Primitive _ ds' -> (,ds) <$> (map toPrim <$> niceAxioms PrimitiveBlock ds')
++  
++          Module r x tel ds' -> return $
++            ([NiceModule r PublicAccess ConcreteDef x tel ds'] , ds)
++  
++          ModuleMacro r x modapp op is -> return $
++            ([NiceModuleMacro r PublicAccess x modapp op is] , ds)
++  
++          -- Fixity and syntax declarations and polarity pragmas have
++          -- already been processed.
++          Infix _ _  -> return ([], ds)
++          Syntax _ _ -> return ([], ds)
++  
++          PatternSyn r n as p -> do
++            return ([NicePatternSyn r PublicAccess n as p] , ds)
++          Open r x is         -> return ([NiceOpen r x is] , ds)
++          Import r x as op is -> return ([NiceImport r x as op is] , ds)
++  
++          UnquoteDecl r xs e -> do
++            tc <- use terminationCheckPragma
++            cc <- use coverageCheckPragma
++            return ([NiceUnquoteDecl r PublicAccess ConcreteDef NotInstanceDef tc cc xs e] , ds)
++  
++          UnquoteDef r xs e -> do
++            sigs <- map fst . loneFuns <$> use loneSigs
++            List1.ifNotNull (filter (`notElem` sigs) xs)
++              {-then-} (declarationException . UnquoteDefRequiresSignature)
++              {-else-} $ do
++                mapM_ removeLoneSig xs
++                return ([NiceUnquoteDef r PublicAccess ConcreteDef TerminationCheck YesCoverageCheck xs e] , ds)
++          UnquoteData r xs cs e -> do
++            pc <- use positivityCheckPragma
++            uc <- use universeCheckPragma
++            return ([NiceUnquoteData r PublicAccess ConcreteDef pc uc xs cs e], ds)
++          Pragma p -> nicePragma p ds
+ 
+     nicePragma :: Pragma -> [Declaration] -> Nice ([NiceDeclaration], [Declaration])
+ 
+@@ -1032,6 +1035,7 @@ niceDeclarations fixs ds = do
+             NiceGeneralize{}    -> top
+             NiceUnquoteDecl{}   -> top
+             NiceUnquoteDef{}    -> bottom
++            NiceUnquoteData{}   -> top
+             NicePragma r pragma -> case pragma of
+ 
+               OptionsPragma{}           -> top     -- error thrown in the type checker
+@@ -1135,6 +1139,7 @@ niceDeclarations fixs ds = do
+         termCheck NicePatternSyn{}    = TerminationCheck
+         termCheck NiceGeneralize{}    = TerminationCheck
+         termCheck NiceLoneConstructor{} = TerminationCheck
++        termCheck NiceUnquoteData{}   = TerminationCheck
+ 
+         covCheck :: NiceDeclaration -> CoverageCheck
+         covCheck (FunSig _ _ _ _ _ _ _ cc _ _)      = cc
+@@ -1159,6 +1164,7 @@ niceDeclarations fixs ds = do
+         covCheck NicePatternSyn{}    = YesCoverageCheck
+         covCheck NiceGeneralize{}    = YesCoverageCheck
+         covCheck NiceLoneConstructor{} = YesCoverageCheck
++        covCheck NiceUnquoteData{}   = YesCoverageCheck 
+ 
+         -- ASR (26 December 2015): Do not positivity check a mutual
+         -- block if any of its inner declarations comes with a
+@@ -1227,6 +1233,7 @@ niceDeclarations fixs ds = do
+         d@NiceRecDef{}                 -> return d
+         d@NicePatternSyn{}             -> return d
+         d@NiceGeneralize{}             -> return d
++        d@NiceUnquoteData{}            -> return d
+ 
+     setInstance
+       :: Range  -- Range of @instance@ keyword.
+@@ -1290,6 +1297,7 @@ instance MakeAbstract NiceDeclaration where
+       -- Need to set updater state to dirty!
+       NiceUnquoteDecl r p _ i tc cc x e -> tellDirty $> NiceUnquoteDecl r p AbstractDef i tc cc x e
+       NiceUnquoteDef r p _ tc cc x e    -> tellDirty $> NiceUnquoteDef r p AbstractDef tc cc x e
++      NiceUnquoteData r p _ tc cc x xs e -> tellDirty $> NiceUnquoteData r p AbstractDef tc cc x xs e
+       d@NiceModule{}                 -> return d
+       d@NiceModuleMacro{}            -> return d
+       d@NicePragma{}                 -> return d
+@@ -1363,6 +1371,7 @@ instance MakePrivate NiceDeclaration where
+       FunDef r ds a i tc cc x cls              -> FunDef r ds a i tc cc x <$> mkPrivate o cls
+       d@NiceDataDef{}                          -> return d
+       d@NiceRecDef{}                           -> return d
++      d@NiceUnquoteData{}                      -> return d
+ 
+ instance MakePrivate Clause where
+   mkPrivate o (Clause x catchall lhs rhs wh with) = do
+@@ -1408,6 +1417,7 @@ notSoNiceDeclarations = \case
+     NiceGeneralize r _ i tac n e   -> [Generalize r [TypeSig i tac n e]]
+     NiceUnquoteDecl r _ _ i _ _ x e -> inst i [UnquoteDecl r x e]
+     NiceUnquoteDef r _ _ _ _ x e    -> [UnquoteDef r x e]
++    NiceUnquoteData r _ _ _ _ x xs e  -> [UnquoteData r x xs e]
+   where
+     inst (InstanceDef r) ds = [InstanceB r ds]
+     inst NotInstanceDef  ds = ds
+@@ -1436,3 +1446,4 @@ niceHasAbstract = \case
+     NiceGeneralize{}              -> Nothing
+     NiceUnquoteDecl _ _ a _ _ _ _ _ -> Just a
+     NiceUnquoteDef _ _ a _ _ _ _    -> Just a
++    NiceUnquoteData _ _ a _ _ _ _ _ -> Just a
+diff --git a/src/full/Agda/Syntax/Concrete/Definitions/Types.hs b/src/full/Agda/Syntax/Concrete/Definitions/Types.hs
+index 572a79601..ad14a9744 100644
+--- a/src/full/Agda/Syntax/Concrete/Definitions/Types.hs
++++ b/src/full/Agda/Syntax/Concrete/Definitions/Types.hs
+@@ -80,6 +80,7 @@ data NiceDeclaration
+   | NiceGeneralize Range Access ArgInfo TacticAttribute Name Expr
+   | NiceUnquoteDecl Range Access IsAbstract IsInstance TerminationCheck CoverageCheck [Name] Expr
+   | NiceUnquoteDef Range Access IsAbstract TerminationCheck CoverageCheck [Name] Expr
++  | NiceUnquoteData Range Access IsAbstract PositivityCheck UniverseCheck [Name] [Name] Expr
+   deriving (Data, Show, Generic)
+ 
+ instance NFData NiceDeclaration
+@@ -215,7 +216,8 @@ instance HasRange NiceDeclaration where
+   getRange (NiceGeneralize r _ _ _ _ _)    = r
+   getRange (NiceFunClause r _ _ _ _ _ _)   = r
+   getRange (NiceUnquoteDecl r _ _ _ _ _ _ _) = r
+-  getRange (NiceUnquoteDef r _ _ _ _ _ _)    = r
++  getRange (NiceUnquoteDef r _ _ _ _ _ _)  = r
++  getRange (NiceUnquoteData r _ _ _ _ _ _ _) = r
+ 
+ instance Pretty NiceDeclaration where
+   pretty = \case
+@@ -240,6 +242,7 @@ instance Pretty NiceDeclaration where
+     NiceGeneralize _ _ _ _ x _     -> text "variable" <+> pretty x
+     NiceUnquoteDecl _ _ _ _ _ _ xs _ -> text "<unquote declarations>"
+     NiceUnquoteDef _ _ _ _ _ xs _    -> text "<unquote definitions>"
++    NiceUnquoteData _ _ _ _ _ x xs _ -> text "<unquote data types>"
+ 
+ declName :: NiceDeclaration -> String
+ declName Axiom{}             = "Postulates"
+@@ -255,6 +258,7 @@ declName NicePatternSyn{}    = "Pattern synonyms"
+ declName NiceGeneralize{}    = "Generalized variables"
+ declName NiceUnquoteDecl{}   = "Unquoted declarations"
+ declName NiceUnquoteDef{}    = "Unquoted definitions"
++declName NiceUnquoteData{}   = "Unquoted data types"
+ declName NiceRecSig{}        = "Records"
+ declName NiceDataSig{}       = "Data types"
+ declName NiceFunClause{}     = "Functions without a type signature"
+diff --git a/src/full/Agda/Syntax/Concrete/Fixity.hs b/src/full/Agda/Syntax/Concrete/Fixity.hs
+index 47a2c4b79..effa6bedf 100644
+--- a/src/full/Agda/Syntax/Concrete/Fixity.hs
++++ b/src/full/Agda/Syntax/Concrete/Fixity.hs
+@@ -180,6 +180,7 @@ fixitiesAndPolarities' = foldMap $ \case
+   Module          {}  -> mempty
+   UnquoteDecl     {}  -> mempty
+   UnquoteDef      {}  -> mempty
++  UnquoteData     {}  -> mempty
+   Pragma          {}  -> mempty
+ 
+ data DeclaredNames = DeclaredNames { _allNames, _postulates, _privateNames :: Set Name }
+@@ -208,39 +209,40 @@ declaresName x = declaresNames [x]
+ --   i.e., do not go into modules.
+ declaredNames :: Declaration -> DeclaredNames
+ declaredNames = \case
+-  TypeSig _ _ x _      -> declaresName x
+-  FieldSig _ _ x _     -> declaresName x
+-  Field _ fs           -> foldMap declaredNames fs
++  TypeSig _ _ x _       -> declaresName x
++  FieldSig _ _ x _      -> declaresName x
++  Field _ fs            -> foldMap declaredNames fs
+   FunClause (LHS p [] []) _ _ _
+     | IdentP (QName x) <- removeParenP p
+-                       -> declaresName x
+-  FunClause{}          -> mempty
+-  DataSig _ x _ _      -> declaresName x
+-  DataDef _ _ _ cs     -> foldMap declaredNames cs
+-  Data _ x _ _ cs      -> declaresName x <> foldMap declaredNames cs
+-  RecordSig _ x _ _    -> declaresName x
+-  RecordDef _ x d _ _  -> declaresNames $     foldMap (:[]) (fst <$> recConstructor d)
+-  Record _ x d _ _ _   -> declaresNames $ x : foldMap (:[]) (fst <$> recConstructor d)
+-  RecordDirective _    -> mempty
+-  Infix _ _            -> mempty
+-  Syntax _ _           -> mempty
+-  PatternSyn _ x _ _   -> declaresName x
+-  Mutual    _ ds       -> foldMap declaredNames ds
++                        -> declaresName x
++  FunClause{}           -> mempty
++  DataSig _ x _ _       -> declaresName x
++  DataDef _ _ _ cs      -> foldMap declaredNames cs
++  Data _ x _ _ cs       -> declaresName x <> foldMap declaredNames cs
++  RecordSig _ x _ _     -> declaresName x
++  RecordDef _ x d _ _   -> declaresNames $     foldMap (:[]) (fst <$> recConstructor d)
++  Record _ x d _ _ _    -> declaresNames $ x : foldMap (:[]) (fst <$> recConstructor d)
++  RecordDirective _     -> mempty
++  Infix _ _             -> mempty
++  Syntax _ _            -> mempty
++  PatternSyn _ x _ _    -> declaresName x
++  Mutual    _ ds        -> foldMap declaredNames ds
+   InterleavedMutual    _ ds -> foldMap declaredNames ds
+-  LoneConstructor _ ds -> foldMap declaredNames ds
+-  Abstract  _ ds       -> foldMap declaredNames ds
+-  Private _ _ ds       -> allPrivateNames $ foldMap declaredNames ds
+-  InstanceB _ ds       -> foldMap declaredNames ds
+-  Macro     _ ds       -> foldMap declaredNames ds
+-  Postulate _ ds       -> allPostulates $ foldMap declaredNames ds
+-  Primitive _ ds       -> foldMap declaredNames ds
+-  Generalize _ ds      -> foldMap declaredNames ds
+-  Open{}               -> mempty
+-  Import{}             -> mempty
+-  ModuleMacro{}        -> mempty
+-  Module{}             -> mempty
+-  UnquoteDecl _ xs _   -> declaresNames xs
+-  UnquoteDef{}         -> mempty
++  LoneConstructor _ ds  -> foldMap declaredNames ds
++  Abstract  _ ds        -> foldMap declaredNames ds
++  Private _ _ ds        -> allPrivateNames $ foldMap declaredNames ds
++  InstanceB _ ds        -> foldMap declaredNames ds
++  Macro     _ ds        -> foldMap declaredNames ds
++  Postulate _ ds        -> allPostulates $ foldMap declaredNames ds
++  Primitive _ ds        -> foldMap declaredNames ds
++  Generalize _ ds       -> foldMap declaredNames ds
++  Open{}                -> mempty
++  Import{}              -> mempty
++  ModuleMacro{}         -> mempty
++  Module{}              -> mempty
++  UnquoteDecl _ xs _    -> declaresNames xs
++  UnquoteDef{}          -> mempty
++  UnquoteData _ xs cs _ -> declaresNames (xs ++ cs)
+   -- BUILTIN pragmas which do not require an accompanying definition declare
+   -- the (unqualified) name they mention.
+   Pragma (BuiltinPragma _ b (QName x))
+diff --git a/src/full/Agda/Syntax/Concrete/Generic.hs b/src/full/Agda/Syntax/Concrete/Generic.hs
+index f36eb877b..e45c35c78 100644
+--- a/src/full/Agda/Syntax/Concrete/Generic.hs
++++ b/src/full/Agda/Syntax/Concrete/Generic.hs
+@@ -246,6 +246,7 @@ instance ExprLike Declaration where
+      Module r n tel ds         -> Module r n (mapE tel)                $ mapE ds
+      UnquoteDecl r x e         -> UnquoteDecl r x (mapE e)
+      UnquoteDef r x e          -> UnquoteDef r x (mapE e)
++     UnquoteData r x xs e      -> UnquoteData r x xs (mapE e)
+      e@Pragma{}                -> e
+    where
+      mapE :: ExprLike e => e -> e
+diff --git a/src/full/Agda/Syntax/Concrete/Pretty.hs b/src/full/Agda/Syntax/Concrete/Pretty.hs
+index 6bb12702b..8828a479b 100644
+--- a/src/full/Agda/Syntax/Concrete/Pretty.hs
++++ b/src/full/Agda/Syntax/Concrete/Pretty.hs
+@@ -386,128 +386,125 @@ instance Pretty DoStmt where
+   pretty (DoLet _ ds) = "let" <+> vcat (fmap pretty ds)
+ 
+ instance Pretty Declaration where
+-    prettyList = vcat . map pretty
+-    pretty d =
+-        case d of
+-            TypeSig i tac x e ->
+-                sep [ prettyTactic' tac $ prettyRelevance i $ prettyCohesion i $ prettyQuantity i $ pretty x <+> ":"
+-                    , nest 2 $ pretty e
+-                    ]
+-
+-            FieldSig inst tac x (Arg i e) ->
+-                mkInst inst $ mkOverlap i $
+-                prettyRelevance i $ prettyHiding i id $ prettyCohesion i $ prettyQuantity i $
+-                pretty $ TypeSig (setRelevance Relevant i) tac x e
+-
+-                where
+-
+-                  mkInst (InstanceDef _) d = sep [ "instance", nest 2 d ]
+-                  mkInst NotInstanceDef  d = d
+-
+-                  mkOverlap i d | isOverlappable i = "overlap" <+> d
+-                                | otherwise        = d
+-
+-            Field _ fs ->
+-              sep [ "field"
+-                  , nest 2 $ vcat (map pretty fs)
++  prettyList = vcat . map pretty
++  pretty = \case
++    TypeSig i tac x e ->
++      sep [ prettyTactic' tac $ prettyRelevance i $ prettyCohesion i $ prettyQuantity i $ pretty x <+> ":"
++          , nest 2 $ pretty e
++          ]
++    FieldSig inst tac x (Arg i e) ->
++      mkInst inst $ mkOverlap i $
++      prettyRelevance i $ prettyHiding i id $ prettyCohesion i $ prettyQuantity i $
++      pretty $ TypeSig (setRelevance Relevant i) tac x e
++      where
++        mkInst (InstanceDef _) d = sep [ "instance", nest 2 d ]
++        mkInst NotInstanceDef  d = d
++
++        mkOverlap i d | isOverlappable i = "overlap" <+> d
++                      | otherwise        = d
++    Field _ fs ->
++      sep [ "field"
++          , nest 2 $ vcat (map pretty fs)
++          ]
++    FunClause lhs rhs wh _ ->
++      sep [ pretty lhs
++          , nest 2 $ pretty rhs
++          ] $$ nest 2 (pretty wh)
++    DataSig _ x tel e ->
++      sep [ hsep  [ "data"
++                  , pretty x
++                  , fcat (map pretty tel)
+                   ]
+-            FunClause lhs rhs wh _ ->
+-                sep [ pretty lhs
+-                    , nest 2 $ pretty rhs
+-                    ] $$ nest 2 (pretty wh)
+-            DataSig _ x tel e ->
+-                sep [ hsep  [ "data"
+-                            , pretty x
+-                            , fcat (map pretty tel)
+-                            ]
+-                    , nest 2 $ hsep
+-                            [ ":"
+-                            , pretty e
+-                            ]
+-                    ]
+-            Data _ x tel e cs ->
+-                sep [ hsep  [ "data"
+-                            , pretty x
+-                            , fcat (map pretty tel)
+-                            ]
+-                    , nest 2 $ hsep
+-                            [ ":"
+-                            , pretty e
+-                            , "where"
+-                            ]
+-                    ] $$ nest 2 (vcat $ map pretty cs)
+-            DataDef _ x tel cs ->
+-                sep [ hsep  [ "data"
+-                            , pretty x
+-                            , fcat (map pretty tel)
+-                            ]
+-                    , nest 2 $ "where"
+-                    ] $$ nest 2 (vcat $ map pretty cs)
+-            RecordSig _ x tel e ->
+-                sep [ hsep  [ "record"
+-                            , pretty x
+-                            , fcat (map pretty tel)
+-                            ]
+-                    , nest 2 $ hsep
+-                            [ ":"
+-                            , pretty e
+-                            ]
+-                    ]
+-            Record _ x dir tel e cs ->
+-              pRecord x dir tel (Just e) cs
+-            RecordDef _ x dir tel cs ->
+-              pRecord x dir tel Nothing cs
+-            RecordDirective r -> pRecordDirective r
+-            Infix f xs  ->
+-                pretty f <+> fsep (punctuate comma $ fmap pretty xs)
+-            Syntax n xs -> "syntax" <+> pretty n <+> "..."
+-            PatternSyn _ n as p -> "pattern" <+> pretty n <+> fsep (map pretty as)
+-                                     <+> "=" <+> pretty p
+-            Mutual _ ds     -> namedBlock "mutual" ds
+-            InterleavedMutual _ ds  -> namedBlock "interleaved mutual" ds
+-            LoneConstructor _ ds -> namedBlock "constructor" ds
+-            Abstract _ ds   -> namedBlock "abstract" ds
+-            Private _ _ ds  -> namedBlock "private" ds
+-            InstanceB _ ds  -> namedBlock "instance" ds
+-            Macro _ ds      -> namedBlock "macro" ds
+-            Postulate _ ds  -> namedBlock "postulate" ds
+-            Primitive _ ds  -> namedBlock "primitive" ds
+-            Generalize _ ds -> namedBlock "variable" ds
+-            Module _ x tel ds ->
+-                hsep [ "module"
+-                     , pretty x
+-                     , fcat (map pretty tel)
+-                     , "where"
+-                     ] $$ nest 2 (vcat $ map pretty ds)
+-            ModuleMacro _ x (SectionApp _ [] e) DoOpen i | isNoName x ->
+-                sep [ pretty DoOpen
+-                    , nest 2 $ pretty e
+-                    , nest 4 $ pretty i
+-                    ]
+-            ModuleMacro _ x (SectionApp _ tel e) open i ->
+-                sep [ pretty open <+> "module" <+> pretty x <+> fcat (map pretty tel)
+-                    , nest 2 $ "=" <+> pretty e <+> pretty i
+-                    ]
+-            ModuleMacro _ x (RecordModuleInstance _ rec) open i ->
+-                sep [ pretty open <+> "module" <+> pretty x
+-                    , nest 2 $ "=" <+> pretty rec <+> "{{...}}"
+-                    ]
+-            Open _ x i  -> hsep [ "open", pretty x, pretty i ]
+-            Import _ x rn open i   ->
+-                hsep [ pretty open, "import", pretty x, as rn, pretty i ]
+-                where
+-                    as Nothing  = empty
+-                    as (Just x) = "as" <+> pretty (asName x)
+-            UnquoteDecl _ xs t ->
+-              sep [ "unquoteDecl" <+> fsep (map pretty xs) <+> "=", nest 2 $ pretty t ]
+-            UnquoteDef _ xs t ->
+-              sep [ "unquoteDef" <+> fsep (map pretty xs) <+> "=", nest 2 $ pretty t ]
+-            Pragma pr   -> sep [ "{-#" <+> pretty pr, "#-}" ]
+-        where
+-            namedBlock s ds =
+-                sep [ text s
+-                    , nest 2 $ vcat $ map pretty ds
+-                    ]
++          , nest 2 $ hsep
++                  [ ":"
++                  , pretty e
++                  ]
++          ]
++    Data _ x tel e cs ->
++      sep [ hsep  [ "data"
++                  , pretty x
++                  , fcat (map pretty tel)
++                  ]
++          , nest 2 $ hsep
++                  [ ":"
++                  , pretty e
++                  , "where"
++                  ]
++          ] $$ nest 2 (vcat $ map pretty cs)
++    DataDef _ x tel cs ->
++      sep [ hsep  [ "data"
++                  , pretty x
++                  , fcat (map pretty tel)
++                  ]
++          , nest 2 $ "where"
++          ] $$ nest 2 (vcat $ map pretty cs)
++    RecordSig _ x tel e ->
++      sep [ hsep  [ "record"
++                  , pretty x
++                  , fcat (map pretty tel)
++                  ]
++          , nest 2 $ hsep
++                  [ ":"
++                  , pretty e
++                  ]
++          ]
++    Record _ x dir tel e cs ->
++      pRecord x dir tel (Just e) cs
++    RecordDef _ x dir tel cs ->
++      pRecord x dir tel Nothing cs
++    RecordDirective r -> pRecordDirective r
++    Infix f xs  ->
++      pretty f <+> fsep (punctuate comma $ fmap pretty xs)
++    Syntax n xs -> "syntax" <+> pretty n <+> "..."
++    PatternSyn _ n as p -> "pattern" <+> pretty n <+> fsep (map pretty as)
++                             <+> "=" <+> pretty p
++    Mutual _ ds     -> namedBlock "mutual" ds
++    InterleavedMutual _ ds  -> namedBlock "interleaved mutual" ds
++    LoneConstructor _ ds -> namedBlock "constructor" ds
++    Abstract _ ds   -> namedBlock "abstract" ds
++    Private _ _ ds  -> namedBlock "private" ds
++    InstanceB _ ds  -> namedBlock "instance" ds
++    Macro _ ds      -> namedBlock "macro" ds
++    Postulate _ ds  -> namedBlock "postulate" ds
++    Primitive _ ds  -> namedBlock "primitive" ds
++    Generalize _ ds -> namedBlock "variable" ds
++    Module _ x tel ds ->
++      hsep [ "module"
++           , pretty x
++           , fcat (map pretty tel)
++           , "where"
++           ] $$ nest 2 (vcat $ map pretty ds)
++    ModuleMacro _ x (SectionApp _ [] e) DoOpen i | isNoName x ->
++      sep [ pretty DoOpen
++          , nest 2 $ pretty e
++          , nest 4 $ pretty i
++          ]
++    ModuleMacro _ x (SectionApp _ tel e) open i ->
++      sep [ pretty open <+> "module" <+> pretty x <+> fcat (map pretty tel)
++          , nest 2 $ "=" <+> pretty e <+> pretty i
++          ]
++    ModuleMacro _ x (RecordModuleInstance _ rec) open i ->
++      sep [ pretty open <+> "module" <+> pretty x
++          , nest 2 $ "=" <+> pretty rec <+> "{{...}}"
++          ]
++    Open _ x i  -> hsep [ "open", pretty x, pretty i ]
++    Import _ x rn open i   ->
++      hsep [ pretty open, "import", pretty x, as rn, pretty i ]
++      where
++        as Nothing  = empty
++        as (Just x) = "as" <+> pretty (asName x)
++    UnquoteDecl _ xs t ->
++      sep [ "unquoteDecl" <+> fsep (map pretty xs) <+> "=", nest 2 $ pretty t ]
++    UnquoteDef _ xs t ->
++      sep [ "unquoteDef" <+> fsep (map pretty xs) <+> "=", nest 2 $ pretty t ]
++    UnquoteData _ x xs t ->
++      sep [ "unquoteData" <+> pretty x <+> fsep (map pretty xs) <+> "=", nest 2 $ pretty t ]
++    Pragma pr   -> sep [ "{-#" <+> pretty pr, "#-}" ]
++    where
++      namedBlock s ds =
++          sep [ text s
++              , nest 2 $ vcat $ map pretty ds
++              ]
+ 
+ pHasEta0 :: HasEta0 -> Doc
+ pHasEta0 = \case
+diff --git a/src/full/Agda/Syntax/Parser/Parser.y b/src/full/Agda/Syntax/Parser/Parser.y
+index 275c28468..369d36e34 100644
+--- a/src/full/Agda/Syntax/Parser/Parser.y
++++ b/src/full/Agda/Syntax/Parser/Parser.y
+@@ -1307,6 +1307,9 @@ Primitive : 'primitive' ArgTypeSignaturesOrEmpty  {
+ UnquoteDecl :: { Declaration }
+ UnquoteDecl
+   : 'unquoteDecl' '=' Expr { UnquoteDecl (fuseRange $1 $3) [] $3 }
++  | 'unquoteDecl' 'data' SpaceIds '=' Expr { UnquoteData (getRange($1, $2, $5)) (List1.toList $3) [] $5 }
++  | 'unquoteDecl' 'constructor' SpaceIds '=' Expr { UnquoteData (getRange($1, $2, $5)) [] (List1.toList $3) $5 }
++  | 'unquoteDecl' 'data' SpaceIds 'constructor' SpaceIds '=' Expr { UnquoteData (getRange($1, $2, $4, $7)) (List1.toList $3) (List1.toList $5) $7 }
+   | 'unquoteDecl' SpaceIds '=' Expr { UnquoteDecl (fuseRange $1 $4) (List1.toList $2) $4 }
+   | 'unquoteDef'  SpaceIds '=' Expr { UnquoteDef (fuseRange $1 $4) (List1.toList $2) $4 }
+ 
+diff --git a/src/full/Agda/Syntax/Translation/AbstractToConcrete.hs b/src/full/Agda/Syntax/Translation/AbstractToConcrete.hs
+index 88099986a..499d2e0cd 100644
+--- a/src/full/Agda/Syntax/Translation/AbstractToConcrete.hs
++++ b/src/full/Agda/Syntax/Translation/AbstractToConcrete.hs
+@@ -1266,6 +1266,8 @@ instance ToConcrete A.Declaration where
+     xs <- mapM (unqual <=< toConcrete) xs
+     (:[]) . C.UnquoteDef (getRange i) xs <$> toConcrete e
+ 
++  toConcrete (A.UnquoteData i xs uc j cs e) = __IMPOSSIBLE__
++
+ 
+ data RangeAndPragma = RangeAndPragma Range A.Pragma
+ 
+diff --git a/src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs b/src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs
+index 7966e2bf7..f51ae7caf 100644
+--- a/src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs
++++ b/src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs
+@@ -225,6 +225,7 @@ recordConstructorType decls =
+         C.NiceGeneralize{}    -> failure
+         C.NiceUnquoteDecl{}   -> failure
+         C.NiceUnquoteDef{}    -> failure
++        C.NiceUnquoteData{}   -> failure
+ 
+ checkModuleApplication
+   :: C.ModuleApplication
+@@ -1719,7 +1720,9 @@ instance ToAbstract NiceDeclaration where
+ 
+   -- Definitions (possibly mutual)
+     NiceMutual r tc cc pc ds -> do
++      reportSLn "scope.mutual" 20 ("starting checking mutual definitions: " ++ prettyShow ds)
+       ds' <- toAbstract ds
++      reportSLn "scope.mutual" 20 ("finishing checking mutual definitions")
+       -- We only termination check blocks that do not have a measure.
+       return [ A.Mutual (MutualInfo tc cc pc r) ds' ]
+ 
+@@ -2039,6 +2042,24 @@ instance ToAbstract NiceDeclaration where
+       zipWithM_ (rebindName p OtherDefName) xs ys
+       return [ A.UnquoteDef [ mkDefInfo x fx PublicAccess a r | (fx, x) <- zip fxs xs ] ys e ]
+ 
++    NiceUnquoteData r p a pc uc xs cs e -> do
++      fxs <- mapM getConcreteFixity xs
++      xs' <- zipWithM freshAbstractQName fxs xs
++      zipWithM_ (bindName p QuotableName) xs xs'
++      fcs <- mapM getConcreteFixity cs
++      cs' <- zipWithM freshAbstractQName fcs cs
++      zipWithM_ (bindName p QuotableName) cs cs'
++      e <- toAbstract e
++      zipWithM_ (rebindName p DataName) xs xs'
++      zipWithM_ (rebindName p ConName) cs cs'
++      let mi = MutualInfo TerminationCheck YesCoverageCheck pc r
++      return
++        [ A.Mutual
++          mi [A.UnquoteData
++            [ mkDefInfo x fx p a r | (fx, x) <- zip fxs xs] xs' uc
++            [ mkDefInfo c fc p a r | (fc, c) <- zip fcs cs] cs' e ]
++        ]
++
+     NicePatternSyn r a n as p -> do
+       reportSLn "scope.pat" 10 $ "found nice pattern syn: " ++ prettyShow n
+       (as, p) <- withLocalVars $ do
+diff --git a/src/full/Agda/Termination/TermCheck.hs b/src/full/Agda/Termination/TermCheck.hs
+index 75ccbcf96..62022be7c 100644
+--- a/src/full/Agda/Termination/TermCheck.hs
++++ b/src/full/Agda/Termination/TermCheck.hs
+@@ -122,6 +122,7 @@ termDecl' = \case
+     A.DataDef{}     -> __IMPOSSIBLE__
+     A.UnquoteDecl{} -> __IMPOSSIBLE__
+     A.UnquoteDef{}  -> __IMPOSSIBLE__
++    A.UnquoteData{} -> __IMPOSSIBLE__
+   where
+     termDecls ds = concat <$> mapM termDecl' ds
+ 
+diff --git a/src/full/Agda/TypeChecking/Rules/Decl.hs b/src/full/Agda/TypeChecking/Rules/Decl.hs
+index 5cd36839c..1202df6b2 100644
+--- a/src/full/Agda/TypeChecking/Rules/Decl.hs
++++ b/src/full/Agda/TypeChecking/Rules/Decl.hs
+@@ -193,6 +193,9 @@ checkDecl d = setCurrentRange d $ do
+       -- TODO: Benchmarking for unquote.
+       A.UnquoteDecl mi is xs e -> checkMaybeAbstractly is $ checkUnquoteDecl mi is xs e
+       A.UnquoteDef is xs e     -> impossible $ checkMaybeAbstractly is $ checkUnquoteDef is xs e
++      A.UnquoteData is xs uc js cs e -> checkMaybeAbstractly (is ++ js) $ do
++        reportSDoc "tc.unquote.data" 20 $ "Checking unquoteDecl data" <+> sep (map prettyTCM xs)
++        Nothing <$ unquoteTop (xs ++ cs) e
+ 
+     whenNothingM (asksTC envMutualBlock) $ do
+ 
+@@ -402,6 +405,7 @@ highlight_ hlmod d = do
+     A.Generalize{}           -> highlight d
+     A.UnquoteDecl{}          -> highlight d
+     A.UnquoteDef{}           -> highlight d
++    A.UnquoteData{}           -> highlight d
+     A.Section i x tel ds     -> do
+       highlight (A.Section i x tel [])
+       when (hlmod == DoHighlightModuleContents) $ mapM_ (highlight_ hlmod) (deepUnscopeDecls ds)
+@@ -1031,6 +1035,7 @@ instance ShowHead A.Declaration where
+       A.UnquoteDecl  {} -> "UnquoteDecl"
+       A.ScopedDecl   {} -> "ScopedDecl"
+       A.UnquoteDef   {} -> "UnquoteDef"
++      A.UnquoteData   {} -> "UnquoteDecl data"
+ 
+ debugPrintDecl :: A.Declaration -> TCM ()
+ debugPrintDecl d = do
+-- 
+2.31.0
+
+Subject: [PATCH] [ reflection ] Add primitives tcDeclareData and tcDefineData
+
+(cherry picked from commit 14010f4d99dc32e13e25a6e1b0ccb74f24d38a74)
+---
+ doc/user-manual/language/reflection.lagda.rst |  13 ++
+ .../lib/prim/Agda/Builtin/Reflection.agda     |   6 +
+ src/full/Agda/Compiler/MAlonzo/Compiler.hs    |   2 +
+ src/full/Agda/Syntax/Builtin.hs               |   4 +-
+ src/full/Agda/Syntax/Concrete/Definitions.hs  |  60 ++++-----
+ src/full/Agda/TypeChecking/Monad/Builtin.hs   |   4 +-
+ src/full/Agda/TypeChecking/Rules/Builtin.hs   |   2 +
+ src/full/Agda/TypeChecking/Rules/Decl.hs      |  10 +-
+ src/full/Agda/TypeChecking/Rules/Decl.hs-boot |   2 +
+ src/full/Agda/TypeChecking/Unquote.hs         | 127 ++++++++++++++++--
+ 10 files changed, 185 insertions(+), 45 deletions(-)
+
+diff --git a/doc/user-manual/language/reflection.lagda.rst b/doc/user-manual/language/reflection.lagda.rst
+index e6389f515..329c2e59e 100644
+--- a/doc/user-manual/language/reflection.lagda.rst
++++ b/doc/user-manual/language/reflection.lagda.rst
+@@ -450,6 +450,17 @@ following primitive operations::
+     -- option.
+     declarePostulate : Arg Name → Type → TC ⊤
+ 
++    -- Declare a new datatype. The second argument indicates how many preceding
++    -- types of the third argument are parameters. The datatype must be defined
++    -- later using 'defineData'.
++    declareData      : Name → Nat → Type → TC ⊤
++
++    -- Define a declared datatype with constructor definitions. The datatype
++    -- may have been declared using 'declareData' or with the keyword
++    -- 'data ... where ... '. The second argument is a list of pairs, each
++    -- containing a name of a constructor and its type.
++    defineData       : Name → List (Σ Name (λ _ → Type)) → TC ⊤
++
+     -- Define a declared function. The function may have been declared using
+     -- 'declareDef' or with an explicit type signature in the program.
+     defineFun : Name → List Clause → TC ⊤
+@@ -518,6 +529,8 @@ following primitive operations::
+   {-# BUILTIN AGDATCMFRESHNAME                  freshName                  #-}
+   {-# BUILTIN AGDATCMDECLAREDEF                 declareDef                 #-}
+   {-# BUILTIN AGDATCMDECLAREPOSTULATE           declarePostulate           #-}
++  {-# BUILTIN AGDATCMDECLAREDATA                declareData                #-}
++  {-# BUILTIN AGDATCMDEFINEDATA                 defineData                 #-}
+   {-# BUILTIN AGDATCMDEFINEFUN                  defineFun                  #-}
+   {-# BUILTIN AGDATCMGETTYPE                    getType                    #-}
+   {-# BUILTIN AGDATCMGETDEFINITION              getDefinition              #-}
+diff --git a/src/data/lib/prim/Agda/Builtin/Reflection.agda b/src/data/lib/prim/Agda/Builtin/Reflection.agda
+index 597772348..2b26ab05d 100644
+--- a/src/data/lib/prim/Agda/Builtin/Reflection.agda
++++ b/src/data/lib/prim/Agda/Builtin/Reflection.agda
+@@ -285,6 +285,8 @@ postulate
+   freshName        : String → TC Name
+   declareDef       : Arg Name → Type → TC ⊤
+   declarePostulate : Arg Name → Type → TC ⊤
++  declareData      : Name → Nat → Type → TC ⊤
++  defineData       : Name → List (Σ Name (λ _ → Type)) → TC ⊤
+   defineFun        : Name → List Clause → TC ⊤
+   getType          : Name → TC Type
+   getDefinition    : Name → TC Definition
+@@ -343,6 +345,8 @@ postulate
+ {-# BUILTIN AGDATCMFRESHNAME                  freshName                  #-}
+ {-# BUILTIN AGDATCMDECLAREDEF                 declareDef                 #-}
+ {-# BUILTIN AGDATCMDECLAREPOSTULATE           declarePostulate           #-}
++{-# BUILTIN AGDATCMDECLAREDATA                declareData                #-}
++{-# BUILTIN AGDATCMDEFINEDATA                 defineData                 #-}
+ {-# BUILTIN AGDATCMDEFINEFUN                  defineFun                  #-}
+ {-# BUILTIN AGDATCMGETTYPE                    getType                    #-}
+ {-# BUILTIN AGDATCMGETDEFINITION              getDefinition              #-}
+@@ -381,6 +385,8 @@ postulate
+ {-# COMPILE JS freshName         = _ =>                undefined #-}
+ {-# COMPILE JS declareDef        = _ => _ =>           undefined #-}
+ {-# COMPILE JS declarePostulate  = _ => _ =>           undefined #-}
++{-# COMPILE JS declareData       = _ => _ => _ =>      undefined #-}
++{-# COMPILE JS defineData        = _ => _ =>           undefined #-}
+ {-# COMPILE JS defineFun         = _ => _ =>           undefined #-}
+ {-# COMPILE JS getType           = _ =>                undefined #-}
+ {-# COMPILE JS getDefinition     = _ =>                undefined #-}
+diff --git a/src/full/Agda/Compiler/MAlonzo/Compiler.hs b/src/full/Agda/Compiler/MAlonzo/Compiler.hs
+index 4cdb1b496..fd3eadce2 100644
+--- a/src/full/Agda/Compiler/MAlonzo/Compiler.hs
++++ b/src/full/Agda/Compiler/MAlonzo/Compiler.hs
+@@ -267,6 +267,8 @@ ghcPreCompile flags = do
+       , builtinAgdaTCMFreshName
+       , builtinAgdaTCMDeclareDef
+       , builtinAgdaTCMDeclarePostulate
++      , builtinAgdaTCMDeclareData
++      , builtinAgdaTCMDefineData
+       , builtinAgdaTCMDefineFun
+       , builtinAgdaTCMGetType
+       , builtinAgdaTCMGetDefinition
+diff --git a/src/full/Agda/Syntax/Builtin.hs b/src/full/Agda/Syntax/Builtin.hs
+index 7c6a22be4..1233919af 100644
+--- a/src/full/Agda/Syntax/Builtin.hs
++++ b/src/full/Agda/Syntax/Builtin.hs
+@@ -65,7 +65,7 @@ builtinNat, builtinSuc, builtinZero, builtinNatPlus, builtinNatMinus,
+   builtinAgdaTCMCheckType, builtinAgdaTCMNormalise, builtinAgdaTCMReduce,
+   builtinAgdaTCMCatchError,
+   builtinAgdaTCMGetContext, builtinAgdaTCMExtendContext, builtinAgdaTCMInContext,
+-  builtinAgdaTCMFreshName, builtinAgdaTCMDeclareDef, builtinAgdaTCMDeclarePostulate, builtinAgdaTCMDefineFun,
++  builtinAgdaTCMFreshName, builtinAgdaTCMDeclareDef, builtinAgdaTCMDeclarePostulate, builtinAgdaTCMDeclareData, builtinAgdaTCMDefineData, builtinAgdaTCMDefineFun,
+   builtinAgdaTCMGetType, builtinAgdaTCMGetDefinition,
+   builtinAgdaTCMQuoteTerm, builtinAgdaTCMUnquoteTerm, builtinAgdaTCMQuoteOmegaTerm,
+   builtinAgdaTCMBlockOnMeta, builtinAgdaTCMCommit, builtinAgdaTCMIsMacro,
+@@ -263,6 +263,8 @@ builtinAgdaTCMInContext                  = "AGDATCMINCONTEXT"
+ builtinAgdaTCMFreshName                  = "AGDATCMFRESHNAME"
+ builtinAgdaTCMDeclareDef                 = "AGDATCMDECLAREDEF"
+ builtinAgdaTCMDeclarePostulate           = "AGDATCMDECLAREPOSTULATE"
++builtinAgdaTCMDeclareData                = "AGDATCMDECLAREDATA"
++builtinAgdaTCMDefineData                 = "AGDATCMDEFINEDATA"
+ builtinAgdaTCMDefineFun                  = "AGDATCMDEFINEFUN"
+ builtinAgdaTCMGetType                    = "AGDATCMGETTYPE"
+ builtinAgdaTCMGetDefinition              = "AGDATCMGETDEFINITION"
+diff --git a/src/full/Agda/Syntax/Concrete/Definitions.hs b/src/full/Agda/Syntax/Concrete/Definitions.hs
+index 9d8748c8b..50b8735e9 100644
+--- a/src/full/Agda/Syntax/Concrete/Definitions.hs
++++ b/src/full/Agda/Syntax/Concrete/Definitions.hs
+@@ -300,10 +300,10 @@ niceDeclarations fixs ds = do
+             -- register x as lone type signature, to recognize clauses later
+             x' <- addLoneSig r x $ FunName termCheck covCheck
+             return ([FunSig r PublicAccess ConcreteDef NotInstanceDef NotMacroDef info termCheck covCheck x' t] , ds)
+-  
++
+           -- Should not show up: all FieldSig are part of a Field block
+           FieldSig{} -> __IMPOSSIBLE__
+-  
++
+           Generalize r [] -> justWarning $ EmptyGeneralize r
+           Generalize r sigs -> do
+             gs <- forM sigs $ \case
+@@ -311,7 +311,7 @@ niceDeclarations fixs ds = do
+                 return $ NiceGeneralize (getRange sig) PublicAccess info tac x t
+               _ -> __IMPOSSIBLE__
+             return (gs, ds)
+-  
++
+           FunClause lhs _ _ _         -> do
+             termCheck <- use terminationCheckPragma
+             covCheck  <- use coverageCheckPragma
+@@ -327,7 +327,7 @@ niceDeclarations fixs ds = do
+                         else span (couldBeFunClauseOf (Map.lookup x fixs) x) (d : ds)
+                  , not (null fits)
+                  ] of
+-  
++
+               -- case: clauses match none of the sigs
+               [] -> case lhs of
+                 -- Subcase: The lhs is single identifier (potentially anonymous).
+@@ -340,7 +340,7 @@ niceDeclarations fixs ds = do
+                 -- A missing type signature error might be raise in ConcreteToAbstract
+                 _ -> do
+                   return ([NiceFunClause (getRange d) PublicAccess ConcreteDef termCheck covCheck catchall d] , ds)
+-  
++
+               -- case: clauses match exactly one of the sigs
+               [(x,(x',fits,rest))] -> do
+                  -- The x'@NoName{} is the unique version of x@NoName{}.
+@@ -348,20 +348,20 @@ niceDeclarations fixs ds = do
+                  ds  <- expandEllipsis fits
+                  cs  <- mkClauses x' ds False
+                  return ([FunDef (getRange fits) fits ConcreteDef NotInstanceDef termCheck covCheck x' cs] , rest)
+-  
++
+               -- case: clauses match more than one sigs (ambiguity)
+               xf:xfs -> declarationException $ AmbiguousFunClauses lhs $ List1.reverse $ fmap fst $ xf :| xfs
+                    -- "ambiguous function clause; cannot assign it uniquely to one type signature"
+-  
++
+           Field r [] -> justWarning $ EmptyField r
+           Field _ fs -> (,ds) <$> niceAxioms FieldBlock fs
+-  
++
+           DataSig r x tel e -> do
+             pc <- use positivityCheckPragma
+             uc <- use universeCheckPragma
+             _ <- addLoneSig r x $ DataName pc uc
+             (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x (Just (tel, e)) Nothing
+-  
++
+           Data r x tel e cs -> do
+             pc <- use positivityCheckPragma
+             -- Andreas, 2018-10-27, issue #3327
+@@ -372,7 +372,7 @@ niceDeclarations fixs ds = do
+             uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
+             mt <- defaultTypeSig (DataName pc uc) x (Just e)
+             (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x ((tel,) <$> mt) (Just (tel, cs))
+-  
++
+           DataDef r x tel cs -> do
+             pc <- use positivityCheckPragma
+             -- Andreas, 2018-10-27, issue #3327
+@@ -383,13 +383,13 @@ niceDeclarations fixs ds = do
+             uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
+             mt <- defaultTypeSig (DataName pc uc) x Nothing
+             (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x ((tel,) <$> mt) (Just (tel, cs))
+-  
++
+           RecordSig r x tel e         -> do
+             pc <- use positivityCheckPragma
+             uc <- use universeCheckPragma
+             _ <- addLoneSig r x $ RecName pc uc
+             return ([NiceRecSig r PublicAccess ConcreteDef pc uc x tel e] , ds)
+-  
++
+           Record r x dir tel e cs   -> do
+             pc <- use positivityCheckPragma
+             -- Andreas, 2018-10-27, issue #3327
+@@ -401,7 +401,7 @@ niceDeclarations fixs ds = do
+             mt <- defaultTypeSig (RecName pc uc) x (Just e)
+             (,ds) <$> dataOrRec pc uc (\ r o a pc uc x tel cs -> NiceRecDef r o a pc uc x dir tel cs) NiceRecSig
+                         return r x ((tel,) <$> mt) (Just (tel, cs))
+-  
++
+           RecordDef r x dir tel cs   -> do
+             pc <- use positivityCheckPragma
+             -- Andreas, 2018-10-27, issue #3327
+@@ -413,9 +413,9 @@ niceDeclarations fixs ds = do
+             mt <- defaultTypeSig (RecName pc uc) x Nothing
+             (,ds) <$> dataOrRec pc uc (\ r o a pc uc x tel cs -> NiceRecDef r o a pc uc x dir tel cs) NiceRecSig
+                         return r x ((tel,) <$> mt) (Just (tel, cs))
+-  
++
+           RecordDirective r -> justWarning $ InvalidRecordDirective (getRange r)
+-  
++
+           Mutual r ds' -> do
+             -- The lone signatures encountered so far are not in scope
+             -- for the mutual definition
+@@ -423,7 +423,7 @@ niceDeclarations fixs ds = do
+             case ds' of
+               [] -> justWarning $ EmptyMutual r
+               _  -> (,ds) <$> (singleton <$> (mkOldMutual r =<< nice ds'))
+-  
++
+           InterleavedMutual r ds' -> do
+             -- The lone signatures encountered so far are not in scope
+             -- for the mutual definition
+@@ -431,55 +431,55 @@ niceDeclarations fixs ds = do
+             case ds' of
+               [] -> justWarning $ EmptyMutual r
+               _  -> (,ds) <$> (singleton <$> (mkInterleavedMutual r =<< nice ds'))
+-  
++
+           LoneConstructor r [] -> justWarning $ EmptyConstructor r
+           LoneConstructor r ds' ->
+             ((,ds) . singleton . NiceLoneConstructor r) <$> niceAxioms ConstructorBlock ds'
+-  
++
+           Abstract r []  -> justWarning $ EmptyAbstract r
+           Abstract r ds' ->
+             (,ds) <$> (abstractBlock r =<< nice ds')
+-  
++
+           Private r UserWritten []  -> justWarning $ EmptyPrivate r
+           Private r o ds' ->
+             (,ds) <$> (privateBlock r o =<< nice ds')
+-  
++
+           InstanceB r []  -> justWarning $ EmptyInstance r
+           InstanceB r ds' ->
+             (,ds) <$> (instanceBlock r =<< nice ds')
+-  
++
+           Macro r []  -> justWarning $ EmptyMacro r
+           Macro r ds' ->
+             (,ds) <$> (macroBlock r =<< nice ds')
+-  
++
+           Postulate r []  -> justWarning $ EmptyPostulate r
+           Postulate _ ds' ->
+             (,ds) <$> niceAxioms PostulateBlock ds'
+-  
++
+           Primitive r []  -> justWarning $ EmptyPrimitive r
+           Primitive _ ds' -> (,ds) <$> (map toPrim <$> niceAxioms PrimitiveBlock ds')
+-  
++
+           Module r x tel ds' -> return $
+             ([NiceModule r PublicAccess ConcreteDef x tel ds'] , ds)
+-  
++
+           ModuleMacro r x modapp op is -> return $
+             ([NiceModuleMacro r PublicAccess x modapp op is] , ds)
+-  
++
+           -- Fixity and syntax declarations and polarity pragmas have
+           -- already been processed.
+           Infix _ _  -> return ([], ds)
+           Syntax _ _ -> return ([], ds)
+-  
++
+           PatternSyn r n as p -> do
+             return ([NicePatternSyn r PublicAccess n as p] , ds)
+           Open r x is         -> return ([NiceOpen r x is] , ds)
+           Import r x as op is -> return ([NiceImport r x as op is] , ds)
+-  
++
+           UnquoteDecl r xs e -> do
+             tc <- use terminationCheckPragma
+             cc <- use coverageCheckPragma
+             return ([NiceUnquoteDecl r PublicAccess ConcreteDef NotInstanceDef tc cc xs e] , ds)
+-  
++
+           UnquoteDef r xs e -> do
+             sigs <- map fst . loneFuns <$> use loneSigs
+             List1.ifNotNull (filter (`notElem` sigs) xs)
+@@ -1164,7 +1164,7 @@ niceDeclarations fixs ds = do
+         covCheck NicePatternSyn{}    = YesCoverageCheck
+         covCheck NiceGeneralize{}    = YesCoverageCheck
+         covCheck NiceLoneConstructor{} = YesCoverageCheck
+-        covCheck NiceUnquoteData{}   = YesCoverageCheck 
++        covCheck NiceUnquoteData{}   = YesCoverageCheck
+ 
+         -- ASR (26 December 2015): Do not positivity check a mutual
+         -- block if any of its inner declarations comes with a
+diff --git a/src/full/Agda/TypeChecking/Monad/Builtin.hs b/src/full/Agda/TypeChecking/Monad/Builtin.hs
+index ba389aca5..8dbdcc676 100644
+--- a/src/full/Agda/TypeChecking/Monad/Builtin.hs
++++ b/src/full/Agda/TypeChecking/Monad/Builtin.hs
+@@ -214,7 +214,7 @@ primInteger, primIntegerPos, primIntegerNegSuc,
+     primAgdaTCMTypeError, primAgdaTCMInferType, primAgdaTCMCheckType,
+     primAgdaTCMNormalise, primAgdaTCMReduce,
+     primAgdaTCMCatchError, primAgdaTCMGetContext, primAgdaTCMExtendContext, primAgdaTCMInContext,
+-    primAgdaTCMFreshName, primAgdaTCMDeclareDef, primAgdaTCMDeclarePostulate, primAgdaTCMDefineFun,
++    primAgdaTCMFreshName, primAgdaTCMDeclareDef, primAgdaTCMDeclarePostulate, primAgdaTCMDeclareData, primAgdaTCMDefineData, primAgdaTCMDefineFun,
+     primAgdaTCMGetType, primAgdaTCMGetDefinition,
+     primAgdaTCMQuoteTerm, primAgdaTCMUnquoteTerm, primAgdaTCMQuoteOmegaTerm,
+     primAgdaTCMBlockOnMeta, primAgdaTCMCommit, primAgdaTCMIsMacro,
+@@ -409,6 +409,8 @@ primAgdaTCMInContext                  = getBuiltin builtinAgdaTCMInContext
+ primAgdaTCMFreshName                  = getBuiltin builtinAgdaTCMFreshName
+ primAgdaTCMDeclareDef                 = getBuiltin builtinAgdaTCMDeclareDef
+ primAgdaTCMDeclarePostulate           = getBuiltin builtinAgdaTCMDeclarePostulate
++primAgdaTCMDeclareData                = getBuiltin builtinAgdaTCMDeclareData
++primAgdaTCMDefineData                 = getBuiltin builtinAgdaTCMDefineData
+ primAgdaTCMDefineFun                  = getBuiltin builtinAgdaTCMDefineFun
+ primAgdaTCMGetType                    = getBuiltin builtinAgdaTCMGetType
+ primAgdaTCMGetDefinition              = getBuiltin builtinAgdaTCMGetDefinition
+diff --git a/src/full/Agda/TypeChecking/Rules/Builtin.hs b/src/full/Agda/TypeChecking/Rules/Builtin.hs
+index 50a4d52f6..7ece0e179 100644
+--- a/src/full/Agda/TypeChecking/Rules/Builtin.hs
++++ b/src/full/Agda/TypeChecking/Rules/Builtin.hs
+@@ -373,6 +373,8 @@ coreBuiltins =
+   , builtinAgdaTCMFreshName                  |-> builtinPostulate (tstring --> tTCM_ primQName)
+   , builtinAgdaTCMDeclareDef                 |-> builtinPostulate (targ tqname --> ttype --> tTCM_ primUnit)
+   , builtinAgdaTCMDeclarePostulate           |-> builtinPostulate (targ tqname --> ttype --> tTCM_ primUnit)
++  , builtinAgdaTCMDeclareData                |-> builtinPostulate (tqname --> tnat --> ttype --> tTCM_ primUnit)
++  , builtinAgdaTCMDefineData                 |-> builtinPostulate (tqname --> tlist (tpair primLevelZero primLevelZero tqname ttype) --> tTCM_ primUnit)
+   , builtinAgdaTCMDefineFun                  |-> builtinPostulate (tqname --> tlist tclause --> tTCM_ primUnit)
+   , builtinAgdaTCMGetType                    |-> builtinPostulate (tqname --> tTCM_ primAgdaTerm)
+   , builtinAgdaTCMGetDefinition              |-> builtinPostulate (tqname --> tTCM_ primAgdaDefinition)
+diff --git a/src/full/Agda/TypeChecking/Rules/Decl.hs b/src/full/Agda/TypeChecking/Rules/Decl.hs
+index 1202df6b2..2e78d7634 100644
+--- a/src/full/Agda/TypeChecking/Rules/Decl.hs
++++ b/src/full/Agda/TypeChecking/Rules/Decl.hs
+@@ -223,10 +223,6 @@ checkDecl d = setCurrentRange d $ do
+ 
+     where
+ 
+-    -- check record or data type signature
+-    checkSig kind i x gtel t = checkTypeSignature' (Just gtel) $
+-      A.Axiom kind i defaultArgInfo Nothing x t
+-
+     -- Switch maybe to abstract mode, benchmark, and debug print bracket.
+     check :: forall m i a
+           . ( MonadTCEnv m, MonadPretty m, MonadDebug m
+@@ -787,6 +783,12 @@ checkMutual i ds = inMutualBlock $ \ blockId -> defaultOpenLevelsToZero $ do
+ 
+   (blockId, ) . mutualNames <$> lookupMutualBlock blockId
+ 
++    -- check record or data type signature
++checkSig :: KindOfName -> A.DefInfo -> QName -> A.GeneralizeTelescope -> A.Expr -> TCM ()
++checkSig kind i x gtel t = checkTypeSignature' (Just gtel) $
++  A.Axiom kind i defaultArgInfo Nothing x t
++
++
+ -- | Type check the type signature of an inductive or recursive definition.
+ checkTypeSignature :: A.TypeSignature -> TCM ()
+ checkTypeSignature = checkTypeSignature' Nothing
+diff --git a/src/full/Agda/TypeChecking/Rules/Decl.hs-boot b/src/full/Agda/TypeChecking/Rules/Decl.hs-boot
+index 959b818d7..79f9a69ae 100644
+--- a/src/full/Agda/TypeChecking/Rules/Decl.hs-boot
++++ b/src/full/Agda/TypeChecking/Rules/Decl.hs-boot
+@@ -3,8 +3,10 @@ module Agda.TypeChecking.Rules.Decl where
+ 
+ import Agda.Syntax.Info (ModuleInfo)
+ import Agda.Syntax.Abstract
++import Agda.Syntax.Scope.Base
+ import Agda.TypeChecking.Monad.Base (TCM)
+ 
+ checkDecls :: [Declaration] -> TCM ()
+ checkDecl  :: Declaration -> TCM ()
++checkSig   :: KindOfName -> DefInfo -> QName -> GeneralizeTelescope -> Expr -> TCM ()
+ checkSectionApplication :: ModuleInfo -> ModuleName -> ModuleApplication -> ScopeCopyInfo -> TCM ()
+diff --git a/src/full/Agda/TypeChecking/Unquote.hs b/src/full/Agda/TypeChecking/Unquote.hs
+index 11e541fbf..dda10b753 100644
+--- a/src/full/Agda/TypeChecking/Unquote.hs
++++ b/src/full/Agda/TypeChecking/Unquote.hs
+@@ -28,10 +28,13 @@ import Agda.Syntax.Common hiding ( Nat )
+ import Agda.Syntax.Internal as I
+ import qualified Agda.Syntax.Reflected as R
+ import qualified Agda.Syntax.Abstract as A
++import Agda.Syntax.Abstract.Views
++import Agda.Syntax.Translation.InternalToAbstract
+ import Agda.Syntax.Literal
+ import Agda.Syntax.Position
+ import Agda.Syntax.Info
+ import Agda.Syntax.Translation.ReflectedToAbstract
++import Agda.Syntax.Scope.Base (KindOfName(ConName, DataName))
+ 
+ import Agda.Interaction.Library ( ExeName )
+ import Agda.Interaction.Options ( optTrustedExecutables, optAllowExec )
+@@ -54,6 +57,8 @@ import Agda.TypeChecking.InstanceArguments ( getInstanceCandidates )
+ 
+ import {-# SOURCE #-} Agda.TypeChecking.Rules.Term
+ import {-# SOURCE #-} Agda.TypeChecking.Rules.Def
++import {-# SOURCE #-} Agda.TypeChecking.Rules.Decl
++import Agda.TypeChecking.Rules.Data
+ 
+ import Agda.Utils.Either
+ import Agda.Utils.Lens
+@@ -575,20 +580,22 @@ evalTCM v = do
+              , (f `isDef` primAgdaTCMCheckType,  tcFun2 tcCheckType  u v)
+              , (f `isDef` primAgdaTCMDeclareDef, uqFun2 tcDeclareDef u v)
+              , (f `isDef` primAgdaTCMDeclarePostulate, uqFun2 tcDeclarePostulate u v)
++             , (f `isDef` primAgdaTCMDefineData, uqFun2 tcDefineData u v)
+              , (f `isDef` primAgdaTCMDefineFun,  uqFun2 tcDefineFun  u v)
+              , (f `isDef` primAgdaTCMQuoteOmegaTerm, tcQuoteTerm (unElim v))
+              ]
+              failEval
+     I.Def f [l, a, u] ->
+-      choice [ (f `isDef` primAgdaTCMReturn,             return (unElim u))
+-             , (f `isDef` primAgdaTCMTypeError,          tcFun1 tcTypeError   u)
+-             , (f `isDef` primAgdaTCMQuoteTerm,          tcQuoteTerm (unElim u))
+-             , (f `isDef` primAgdaTCMUnquoteTerm,        tcFun1 (tcUnquoteTerm (mkT (unElim l) (unElim a))) u)
+-             , (f `isDef` primAgdaTCMBlockOnMeta,        uqFun1 tcBlockOnMeta u)
+-             , (f `isDef` primAgdaTCMDebugPrint,         tcFun3 tcDebugPrint l a u)
+-             , (f `isDef` primAgdaTCMNoConstraints,      tcNoConstraints (unElim u))
+-             , (f `isDef` primAgdaTCMWithReconsParams,   tcWithReconsParams (unElim u))
+-             , (f `isDef` primAgdaTCMRunSpeculative,     tcRunSpeculative (unElim u))
++      choice [ (f `isDef` primAgdaTCMReturn,      return (unElim u))
++             , (f `isDef` primAgdaTCMTypeError,   tcFun1 tcTypeError   u)
++             , (f `isDef` primAgdaTCMQuoteTerm,   tcQuoteTerm (unElim u))
++             , (f `isDef` primAgdaTCMUnquoteTerm, tcFun1 (tcUnquoteTerm (mkT (unElim l) (unElim a))) u)
++             , (f `isDef` primAgdaTCMBlockOnMeta, uqFun1 tcBlockOnMeta u)
++             , (f `isDef` primAgdaTCMDebugPrint,  tcFun3 tcDebugPrint l a u)
++             , (f `isDef` primAgdaTCMNoConstraints, tcNoConstraints (unElim u))
++             , (f `isDef` primAgdaTCMWithReconsParams, tcWithReconsParams (unElim u))
++             , (f `isDef` primAgdaTCMDeclareData, uqFun3 tcDeclareData l a u)
++             , (f `isDef` primAgdaTCMRunSpeculative, tcRunSpeculative (unElim u))
+              , (f `isDef` primAgdaTCMExec, tcFun3 tcExec l a u)
+              ]
+              failEval
+@@ -930,6 +937,101 @@ evalTCM v = do
+         when (isInstance i) $ addTypedInstance x a
+         primUnitUnit
+ 
++    -- A datatype is expected to be declared with a function type.
++    -- The second argument indicates how many preceding types are parameters.
++    tcDeclareData :: QName -> Integer -> R.Type -> UnquoteM Term
++    tcDeclareData x npars t = inOriginalContext $ do
++      setDirty
++      tell [x]
++      liftTCM $ do
++        reportSDoc "tc.unquote.decl" 10 $ sep
++          [ "declare Data" <+> prettyTCM x <+> ":"
++          , nest 2 $ prettyR t
++          ]
++        alreadyDefined <- isRight <$> getConstInfo' x
++        when alreadyDefined $ genericError $ "Multiple declarations of " ++ prettyShow x
++        e <- toAbstract_ t
++        -- The type to be checked with @checkSig@ is without parameters.
++        let (tel, e') = removeParsThen (fromInteger npars) (,) e
++        ac <- asksTC (^. lensIsAbstract)
++        let defIn = mkDefInfo (nameConcrete $ qnameName x) noFixity' PublicAccess ac noRange
++        checkSig DataName defIn x (A.GeneralizeTel Map.empty tel) e'
++        primUnitUnit
++
++    -- For now, there is no reflected syntax for open terms
++    -- Thus the types of given constructors are expected to be function types
++    -- with arguments as parameters.
++    tcDefineData :: QName -> [(QName, R.Type)] -> UnquoteM Term
++    tcDefineData x cs = inOriginalContext $ (setDirty >>) $ liftTCM $ do
++      caseEitherM (getConstInfo' x)
++        (const $ genericError $ "Missing declaration for " ++ prettyShow x) $ \def -> do
++        npars <- case theDef def of
++                   DataOrRecSig n -> return n
++                   _              -> genericError $ prettyShow x ++
++                     " is not declared as a datatype or record, or it already has a definition."
++
++        es <- mapM (toAbstract_ . snd) cs
++        reportSDoc "tc.unquote.def" 10 $ vcat $
++          [ "declaring constructors of" <+> prettyTCM x <+> ":" ] ++ map prettyA es
++
++        -- The preceding arguments are removed before typechecking since @checkDataDef@ adds
++        -- the parameters of the declared datatype back to the context.
++        -- Variable names which refer to removed arguments in the given constructors
++        -- are substituted with those of the parameters of the declared datatype.
++
++        -- Translate parameters back to abstract syntax.
++        t   <- instantiateFull . defType =<< instantiateDef def
++        tel <- reify =<< theTel <$> telViewUpTo npars t
++
++        let f = removeParsThen npars (substNames' tel)
++        es' <- foldr (liftM2 (:) . f) (pure []) es -- Optimization?
++
++        ac <- asksTC (^. lensIsAbstract)
++        let i = mkDefInfo (nameConcrete $ qnameName x) noFixity' PublicAccess ac noRange
++            conNames = map fst cs
++            toAxiom c e = A.Axiom ConName i defaultArgInfo Nothing c e
++            as = zipWith toAxiom conNames es' -- Constructors are axioms.
++            lams = map toLamBinding tel
++        reportSDoc "tc.unquote.def" 10 $ vcat $
++          [ "checking datatype: " <+> prettyTCM x <+> " with constructors:"
++          , nest 2 (vcat (map prettyTCM conNames))
++          ]
++        checkDataDef i x YesUniverseCheck (A.DataDefParams Set.empty lams) as
++        primUnitUnit
++      where
++        toLamBinding :: A.TypedBinding -> A.LamBinding
++        toLamBinding (A.TBind _ tac (b :| []) _) = A.DomainFree tac b
++        toLamBinding _ = __IMPOSSIBLE__
++
++        -- Substitute @Var x@ for @Var y@ in an @Expr@.
++        substName :: Name -> Name -> (A.Expr -> A.Expr)
++        substName x y e@(A.Var n)
++                | y == n    = A.Var x
++                | otherwise = e
++        substName _ _ e = e
++
++        substNames' :: [A.TypedBinding] -> [A.TypedBinding] -> A.Expr -> TCM A.Expr
++        substNames' (a : as) (b : bs) e = do
++          let (namea, expra) = bindingToPair a
++              (nameb, exprb) = bindingToPair b -- Allow non-hidden arguments?
++          e' <- substNames' as bs e
++          return $ mapExpr (substName namea nameb) e'
++          -- Don't check the parameters match or not for now,
++          -- The parameters should be the same anyway.
++          --if expra == exprb
++          --then return $ mapExpr (substName namea nameb) e'
++          --else genericDocError =<< hcat
++          --       [ "Given argument ", prettyTCM exprb,
++          --         " doesn't match the parameter ", prettyTCM expra,
++          --         " of datatype ", pretty x ]
++               --TODO: Show which constructor causes the error.
++        substNames' [] [] e = return e
++        substNames' _ _ _ = genericError $ "Number of parameters doesn't match!"
++
++        bindingToPair :: A.TypedBinding -> (Name, A.Expr)
++        bindingToPair (A.TBind _ _ (n :| _) e) = (A.unBind . A.binderName $ namedArg n, e)
++        bindingToPair _ = __IMPOSSIBLE__
++
+     tcDefineFun :: QName -> [R.Clause] -> UnquoteM Term
+     tcDefineFun x cs = inOriginalContext $ (setDirty >>) $ liftTCM $ do
+       whenM (isLeft <$> getConstInfo' x) $
+@@ -961,6 +1063,13 @@ evalTCM v = do
+       Right cands -> liftTCM $
+         buildList <*> mapM (quoteTerm . candidateTerm) cands
+ 
++    -- The second argument is continuation.
++    removeParsThen :: Int -> ([A.TypedBinding] -> A.Expr -> a) -> A.Expr -> a
++    removeParsThen 0     f e                   = f [] e
++    removeParsThen npars f (A.Pi _ (n :| _) e) | npars < 0 = __IMPOSSIBLE__
++    removeParsThen npars f (A.Pi _ (n :| _) e) =
++      removeParsThen (npars - 1) (\xs e' -> f (n : xs) e') e
++    removeParsThen _ _ _ = __IMPOSSIBLE__
+ 
+ ------------------------------------------------------------------------
+ -- * Trusted executables
+-- 
+2.31.0
+
