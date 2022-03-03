@@ -149,6 +149,7 @@
 %%format `∷ = "\mathop{" ` "{" ∷ "}}"
 %format `A = ` A
 %format `B = ` B
+%format `D = ` D
 %format `T = ` T
 
 %format ᵇ = "_{\Conid B}"
@@ -413,7 +414,8 @@ We expect that datatype-generic libraries built with our framework ---being inte
 
 \maketitle
 
-\todo{Replace \emph{representations} by \emph{encodings}}
+%\todo{Replace \emph{representations} by \emph{encodings}}
+
 \section{Introduction}
 \label{sec:introduction}
 
@@ -1093,20 +1095,21 @@ where |foldAccT _ (A , R , P , p , _) {x , _} == foldAcc A R P p x| is a wrapper
 \section{Establishing Connections Using Elaborator Reflection}
 \label{sec:reflection}
 
-In this section, we use elaborator reflection to automate the constructions in \cref{sec:connections}.
-Specifically, we define a set of macros in our framework
+To automate the mechanical constructions in \cref{sec:connections}, we use Agda's elaborator reflection to define a set of macros
 \begin{enumerate*}[label=(\roman*)]
   \item to translate between fully typed higher-order representations used by generic programs and uni-typed first-order representations used by the reflection framework in \cref{sec:translation};
-  \item to generate connections (\cref{sec:DataC,sec:FoldC}) by synchronising two different types of representations in \cref{sec:connection-generation};
+  \item to generate connections by synchronising two different types of representations in \cref{sec:connection-generation};
   \item to partially evaluate generic programs (\cref{sec:FoldC}) and derive definitions that are comparable, if not identical, to hand-written definitions in \cref{sec:specialising}.
 \end{enumerate*}
-Regarding elaborator reflection itself, we only sketch its basic design in \cref{sec:elab}, and leave explanations of |TC| primitives to later sections when needed.
+Regarding elaborator reflection itself, we briefly introduce its basic design in \cref{sec:elab}, and leave explanations of reflection primitives to later sub-sections when needed.
+Due to space restrictions, we will only be able to provide sketches in most of this section.
+Examples of using the macros are given in \cref{sec:examples}.
 
 \subsection{Elaborator Reflection in Agda} \label{sec:elab}
 The reflection API includes the elaborator monad |TC|, a set of |TC| computations, and datatypes ---|Term|, |Pattern|, |Literal|, |Clause|, and |Definition| (\cref{fig:reflected-term,fig:reflected pattern,fig:other-type,fig:clause,fig:definition})--- reflecting the core language where every expression is in weak head normal form and every application is in spine-normal form.
 %Type expressions are a part of |Term| but usually marked as |Type| ---a synonym of |Term|--- for clarity.
-The type |Arg| decorates a type with the information |i : ArgInfo| about visibility (being implicit or not) and modality; the type |Abs| with a name |s : String| for display. 
-For brevity, we often suppress |i : ArgInfo| and binder's name |s|, so for example we write |pi a b | for |pi (arg i a) (abs s b)|.
+The type |Arg| decorates a type with an |ArgInfo| about visibility (being implicit or not) and modality; the type |Abs| with a |String| as the binder's name.
+For brevity, we often suppress |i : ArgInfo| and a binder's name |s|, so for example we write |pi a b | (a reflected \textPi-type) for |pi (arg i a) (abs s b)|.
 
 \begin{figure}[t]
 \codefigure
@@ -1204,7 +1207,7 @@ macro  give = unify
 \end{code}
 where we declare the primitive |unify : Term → Term → TC ⊤| unifying two expressions as a macro.
 Elaborating |give e| would splice the given expression |e : Term| in place of the call, if Agda did nothing to its argument |e|.
-In fact, Agda quotes arguments of |Term| and |Name| upon invocation, so elaborating |give e| amounts to running |unify (quoteTerm e) (meta x [])|. 
+In fact, Agda quotes macro arguments of types |Term| and |Name| upon invocation, so elaborating |give e| amounts to running |unify (quoteTerm e) (meta x [])|. 
 Afterwards, the call site becomes~|e| (and is elaborated again).
 In general, we can compute whatever expression we need inside a macro and then place it at the call site by unifying it with~|x|.
 
@@ -1238,12 +1241,12 @@ data Definition : Set where
 
 This section's main task is to translate |DataD|, a fully typed higher-order representation, into the reflected language to declare native datatypes.
 The reflected language is, by contrast, a uni-typed first-order representation using de Bruijn indices and \emph{not} hygiene, posing a challenge.
-We will not present the full detail --- in fact, it suffices to see how telescopes~(\cref{fig:telescopes}) are handled to get the essence of the translation.
+Rather than presenting the full detail, it suffices to see how telescopes~(\cref{fig:telescopes}) are handled to get the essence of the translation.
 For example, the tree-shaped telescope |[[ (A , _) ∶ [ _ ∶ Set ] [] ]] [ _ ∶ (A → A) ] []| of type |Tel (lsuc lzero)| should be translated to this (flattened) list of reflected types
 \begin{equation}\label{eq:telescope}
 |`Set ∷ pi (var 0 []) (var 1 []) ∷ [] : Telescope|
 \end{equation}
-where the type |Telescope| is defined in \cref{fig:type abbrs}, and the variables |var 0 []| and |var 1 []| in |pi| refer to the quotation $|`Set| = |agda-sort (lit 0)|$ of |Set|.
+where the type |Telescope| is defined in \cref{fig:type abbrs}, and the variables |var 0 []| and |var 1 []| in |pi| both refer to the quotation $|`Set| = |agda-sort (lit 0)|$ of |Set|.
 
 One obvious approach is to analyse the quotation of |T : Tel ℓ|.
 Such a macro needs to analyse abstract syntax trees \emph{modulo judgemental equality} --- it has to check which case is being analysed by reducing, say, a reflected expression |def (quote f) xs| for a definition $f$ to one of the three cases |con (quote Tel.[]) []|, |con (quote Tel._∷_) xs|, and |con (quote Tel._++_) xs|.
@@ -1259,13 +1262,14 @@ fromTel  (U ++  V)  = ... fromTel (V ?) ...
 \end{code}
 Note that |T|~is a function from |A|, and |V|~a function from |⟦ U ⟧ᵗ|, for some \emph{arbitrary} |A|~and~|U|; how do we give their arguments?
 We solve this problem by creating a \emph{local variable}.
-The |TC| monad stores the context during elaboration, which can be extended by a variable of a given type to run a |TC| computation locally, using the primitive |extendContext|.
-Then, the local variable can be actually brought into scope by another primitive |unquoteTC| which unquotes a given reflected expression within the |TC| monad.
-The above construction amounts to a |TC| computation\todo{explain |quoteTC|?}
+The |TC| monad stores the context during elaboration, which can be extended by a variable of a given type to run a |TC| computation locally, using the primitive $|extendContext| : |Type → TC A → TC A|$.
+The first argument of |extendContext| is a reflected type, which should be the quotation of the actual value of~|A|, which is not known until elaboration and thus cannot be obtained by |quoteTerm|; to obtain the quotation, we use the primitive $|quoteTC| : |A → TC Term|$.
+Then, in the second argument of |extendContext|, the local variable can be actually brought into scope by another primitive $|unquoteTC| : |Term → TC A|$ which unquotes a given reflected expression within the |TC| monad.
+The above construction amounts to a |TC| computation
 \begin{code}
 exCxtT : (B : Set ℓ) → (Type → B → TC A) → TC A
 exCxtT B f = do  `B ← quoteTC B
-                 (HL (extendContext)) `B ((HL (unquoteTC (var 0 []) >>= λ x)) → f `B x)
+                 extendContext `B (unquoteTC (var 0 []) >>= λ x → f `B x)
 \end{code}
 which creates a local variable~|x| of type~|B| for use in a |TC| computation~|f|.
 
@@ -1278,7 +1282,7 @@ To eliminate projections, we create a list of local variables for each type in |
 The last two cases of |fromTel| can then be defined by
 \begin{code}
 fromTel (A ∷ T) = do  {-"\hspace{4em}"-}  fromTel (U ++ V) = do  Γ ← fromTel U
-  (HL (exCxtT A)) λ `A x → do                                    (HL (exCxtTel U)) λ u → do
+  exCxtT A λ `A x → do                                           exCxtTel U λ u → do
     Γ ← fromTel (T x)                                            {-"\quad"-}  Δ ← fromTel (V u)
     return (`A ∷ Γ)                                                           return (Γ ++ Δ)
 \end{code}
@@ -1351,96 +1355,113 @@ where $|`[]| = |con (quote Tel.[]) []|$ and $|`A `∷ `T| = |con (quote Tel._∷
 \subsection{Generating Wrappers and Connections}
 \label{sec:connection-generation}
 
-Generating |DataT|, |DataC|, and |FoldC|~(\cref{fig:DataC,fig:FoldC}) involves generating function clauses of the form
+Our next task is generating |DataT|, |DataC|, and |FoldC|~(\cref{fig:DataC,fig:FoldC}).
+Their main ingredients are functions, which we define by pattern-matching \textlambda-expressions, reflected as |pat-lam| in \cref{fig:reflected-term}.
+We will focus on |DataT| and omit |DataC| and |FoldC|, which are handled similarly.
+For example, we should generate the datatype wrapper |AccT| as
+\begin{code}
+λ { {ℓ , ℓ' , tt} (A , R , tt) (as , tt) → Acc {ℓ} {ℓ'} {A} R as }
+\end{code}
+where all the implicit arguments are given.
+To construct the |pat-lam|, we need to construct a clause whose left-hand side consists of patterns in the form of uncurried tuples of variables (which in general can be tree-shaped), and whose right-hand side is the native datatype applied to a list of curried arguments.
+Moreover, we need to assign the right visibilities to the arguments of |Acc|.
+
+The macro |genDataT| that expands to a suitable pattern-matching \textlambda-expression is
+\begin{code}
+macro  genDataT : DataD → Name → Term → TC ⊤
+       genDataT D d hole = do  `D ← quoteωTC D
+                               checkType hole (def (quote DataT) (`D ∷ []))
+                               uncurryDataD D d >>= unify hole
+\end{code}
+where $|uncurryDataD| : |DataD → Name → TC Term|$ does the real work (explained below), before which the primitive $|checkType| : |Term → Type → TC Term|$ effectively provides a type annotation so that, for example, we can write $|AccT| = |genDataT AccD Acc|$ without giving its type.
+
 %with lists or tuples of variables and the argument information accordingly while traversing a telescope, a $\Pi$-type, or a tree-shaped higher-order telescope |T : Tel ℓ|.
-$|Δ| \vdash \overline{p} \hookrightarrow e$ (\cref{fig:clause}), where $\overline{p}$ is a list of patterns and $e$~a reflected expression with variables in the context~|Δ|.
-For example, the only clause of |AccT| (with all the implicit arguments shown)
-\begin{equation}\label{eq:AccT}
-|AccT {ℓ , ℓ'} (A , R , tt) (as , tt) = Acc {ℓ} {ℓ'} {A} R as|
-\end{equation}
-consists of patterns |(ℓ , ℓ')|, |(A , R , tt)|, |(as , tt)| and an expression |Acc {ℓ} {ℓ'} {A} R as| with variables in the context |[ ℓ : Level ] [ ℓ' : Level ] [ A : Set ℓ ] [ R : A → A → Set ℓ' ] [ as : A ]|.
+As for |uncurryDataD|, first we need to explain how clauses are given.
+A clause takes the form $|Δ| \vdash \overline{p} \hookrightarrow e$ (\cref{fig:clause}) where $\overline{p}$ is a list of patterns and $e$~a reflected expression; the types of the variables in~$\overline{p}$ are specified in the context~|Δ|.
 It may appear that the context~|Δ| needs to be fully specified beforehand, but actually it is not the case.
-This is because the reflected language plays the dual role of unchecked input and checked output of the elaborator~\cite{Cockx2020}; the context of a checked clause is fully specified, whereas the context of an unchecked clause ---which has the form `$\overline{p} \hookrightarrow e$'--- can simply be filled with |unknown|'s.
+This is because the reflected language plays the dual role of unchecked input and checked output of the elaborator~\cite{Cockx2020}: the context of a checked clause is fully specified, whereas the context of an unchecked clause, which has the form $\overline{p} \hookrightarrow e$, can simply be filled with |unknown|'s.
+So |uncurryDataD| only needs to give $\overline{p}$~and~$e$ for each clause:
+Each pattern in~$\overline{p}$ is computed from a |Tel| by labelling the elements with de Bruijn indices and replacing every `|∷|'~or~`|++|' with a (reflected) pair constructor and `|[]|' with the quotation of |tt|.
+And $e$~is computed by applying the native datatype~|d| to a list of de Bruijn indices paired with their visibilities, which are obtained with the help of the primitives $|getDefinition| : |Name → TC Definition|$ and $|getType| : |Name → TC Type|$.
+
 %whose length is the number of variables used in the clause.
-To generate a wrapper function, it suffices to generate a pattern-matching \textlambda-expression consisting of unchecked clauses and then type-check it using the primitive |checkType|.
+%To generate a wrapper function, it suffices to generate a pattern-matching \textlambda-expression consisting of unchecked clauses and then type-check it using the primitive |checkType|.
 %\begin{enumerate*}[label=(\roman*)]
 %  \item either check the function against its type |DataT D| as a pattern-matching lambda by the primitive |checkType|, 
 %  \item or define the function by the primitives |defineFun| and |declareDef|.
 %\end{enumerate*}
-Generating the clauses of a connection is similar.
 
 %Another issue to deal with is the visibility of an argument.
 %The two types |(x : A) → B x| and |{x : A} → B x| are different, so a single program is not possible to uncurry a function regardless of the visibility of its arguments.
 %Their quotation |pi `A `B| are, however, essentially the same, so the obstacle just disappears for metaprogramming.
 
-The native datatype to wrap or to connect can be provided by the user possibly with different choices of visibility (but in the same order) that are not and should not be specified by datatype descriptions or generic programs, so we have to visit and compare two different types of representations from both sides.
-For example, to check if a datatype |N| matches a description |D : DataD|, we have a |TC| computation |_⊆ᵗ?_| (\cref{fig:compare-tel-telescope}) that checks if |T : Tel ℓ| is a prefix of |Γ : Telescope| and returns a partition of |Γ|.\footnote{%
-Note that |unify| in \cref{fig:compare-tel-telescope} is used to check the equivalence between types (instead of just unifying some |e : Term| with a metavariable), since a unifier is indeed an equivalence~\cite{Cockx2016,Cockx2018}.}
-We also have a |TC| computation |telToVars| to generate a tuple and a list of variables based on a given |T : Tel ℓ| with a tuple and a list of arguments |Arg Term| based on the quotation of the type of a datatype, since the shape of a tuple such as |(A , R , _)| is specified by |Param| in |PDataD| but the visibility of arguments is by the type of datatype.
+%The native datatype to wrap or to connect can be provided by the user possibly with different choices of visibility (but in the same order) that are not and should not be specified by datatype descriptions or generic programs, so we have to visit and compare two different types of representations from both sides.
+%For example, to check if a datatype |N| matches a description |D : DataD|, we have a |TC| computation |_⊆ᵗ?_| (\cref{fig:compare-tel-telescope}) that checks if |T : Tel ℓ| is a prefix of |Γ : Telescope| and returns a partition of |Γ|.\footnote{%
+%Note that |unify| in \cref{fig:compare-tel-telescope} is used to check the equivalence between types (instead of just unifying some |e : Term| with a metavariable), since a unifier is indeed an equivalence~\cite{Cockx2016,Cockx2018}.}
+%We also have a |TC| computation |telToVars| to generate a tuple and a list of variables based on a given |T : Tel ℓ| with a tuple and a list of arguments |Arg Term| based on the quotation of the type of a datatype, since the shape of a tuple such as |(A , R , _)| is specified by |Param| in |PDataD| but the visibility of arguments is by the type of datatype.
 
-\begin{figure}[t]
-\codefigure
-\begin{minipage}[t]{.6\textwidth}
-\begin{code}
-_⊆ᵗ?_  : Tel ℓ → Telescope → TC (Telescope × Telescope)
-(A ∷ T)   ⊆ᵗ? (`B ∷ Γ)  = do
-  `A ← quoteTC A
-  (HL (unify `A `B))
-  exCxtT A λ _ x → do
-    (vs , Δ) ← T x ⊆ᵗ? Γ
-    return (`B ∷ vs , Δ)
-\end{code}
-\end{minipage}%
-\begin{minipage}[t]{.4\textwidth}
-\begin{code}
-[]        ⊆ᵗ? Γ         = return ([] , Γ)
-(T ++ U)  ⊆ᵗ? Γ         = do
-  (vs , Γ) ← T ⊆ᵗ? Γ
-  exCxtTel T λ t → do
-    (ws , Γ) ← U t ⊆ᵗ? Γ
-    return (vs <> ws , Γ)
-(A ∷ T)   ⊆ᵗ? []        = typeError ...
-\end{code}
-\end{minipage}
-\caption{The prefix comparison of a higher-order telescope with a first-order telescope}
-\label{fig:compare-tel-telescope}
-\end{figure}
+%\begin{figure}[t]
+%\codefigure
+%\begin{minipage}[t]{.6\textwidth}
+%\begin{code}
+%_⊆ᵗ?_  : Tel ℓ → Telescope → TC (Telescope × Telescope)
+%(A ∷ T)   ⊆ᵗ? (`B ∷ Γ)  = do
+%  `A ← quoteTC A
+%  (HL (unify `A `B))
+%  exCxtT A λ _ x → do
+%    (vs , Δ) ← T x ⊆ᵗ? Γ
+%    return (`B ∷ vs , Δ)
+%\end{code}
+%\end{minipage}%
+%\begin{minipage}[t]{.4\textwidth}
+%\begin{code}
+%[]        ⊆ᵗ? Γ         = return ([] , Γ)
+%(T ++ U)  ⊆ᵗ? Γ         = do
+%  (vs , Γ) ← T ⊆ᵗ? Γ
+%  exCxtTel T λ t → do
+%    (ws , Γ) ← U t ⊆ᵗ? Γ
+%    return (vs <> ws , Γ)
+%(A ∷ T)   ⊆ᵗ? []        = typeError ...
+%\end{code}
+%\end{minipage}
+%\caption{The prefix comparison of a higher-order telescope with a first-order telescope}
+%\label{fig:compare-tel-telescope}
+%\end{figure}
 
-We have macros |genDataT|, |genDataC|, |genFoldC|, etc.\ in our framework.
-In particular the wrapper |AccT| and connections |AccC| and |foldAccC| in \cref{sec:connections} are generated respectively by 
-\begin{code}
-AccT  = genDataT  AccD  Acc    {-"\hspace{3em}"-}   foldAccC = genFoldC foldAccP foldAcc
-AccC  = genDataC  AccD  AccT
-\end{code}
+%We have macros |genDataT|, |genDataC|, |genFoldC|, etc.\ in our framework.
+%In particular the wrapper |AccT| and connections |AccC| and |foldAccC| in \cref{sec:connections} are generated respectively by 
+%\begin{code}
+%AccT  = genDataT  AccD  Acc    {-"\hspace{3em}"-}   foldAccC = genFoldC foldAccP foldAcc
+%AccC  = genDataC  AccD  AccT
+%\end{code}
 
-\subsection{Instantiating Generic Functions without Bureaucracy}\label{sec:specialising}
-We define a |TC| computation |defineFold : FoldP → Name → TC ⊤| to instantiate a fold program |F : FoldP| by
-\begin{enumerate*}
-  \item generating the instantiated function type using |FoldNT|, 
-  \item generating a clause $\Delta_i \vdash \overline{p}_i \hookrightarrow e_i$
-    for each constructor~$c_i$ of the datatype specified in |F|, and
-  \item eliminating the intermediate conversion in $e_i$ by normalisation.
+\subsection{Instantiating Generic Functions with Normalisation}
+\label{sec:specialising}
+
+Finally, we define a |TC| computation |defineFold : FoldP → Name → TC ⊤| to instantiate a given |F : FoldP| as a native function~|f| by
+\begin{enumerate*}[label=(\roman*)]
+  \item generating the instantiated type using |FoldNT|, 
+  \item generating a clause for each constructor of the datatype specified in~|F|, and
+  \item eliminating the intermediate conversion by normalisation.
 \end{enumerate*}
+The most substantial step is~(ii), which we explain first.
 
-Let us first consider the clause generation defined as |conClause|. 
-To generate a clause as \eqref{eq:fold-base-before} for each constructor $c_i$ of the datatype |F .Native|, it has the form by the definition of |FoldNT F ℓs| 
+%Let us first consider the clause generation defined as |conClause|. 
+Abstracted from~\eqref{eq:fold-base-before}, the clause for each constructor $c_i$ of the datatype |F .Native| has the form
 \begin{equation} \label{eq:clause}
-  \Delta \vdash \overline{\Varid{ℓ}_j}\; \overline{p}\;\overline{x}\;(c_i\;\overline{a}) \hookrightarrow 
-  \Varid{fold-base}\;F\;(\Varid{ℓ}_1, \dots , \Varid{ℓ}_n)\;f\;\overline{p}\;\overline{x}\;(c_i\;\overline{a})
+  |Δ| \vdash \overline{\Varid{ℓ}}\; \overline{p}\;\overline{x}\;(c_i\;\overline{a}) \hookrightarrow 
+  \Varid{fold-base}\;F\;\{\Varid{ℓ}_1, \dots , \Varid{ℓ}_n, \Conid{tt}\}\;f\;\overline{p}\;\overline{x}\;(c_i\;\overline{a})
 \end{equation}
-To normalise the right-hand side of \eqref{eq:clause}, Agda's (bidirectional) elaborator first \emph{synthesises} its type to ensure that |e| is well-typed.
-The type of $e_i$ can be synthesised by looking at the type of |fold-base| and checking each of its arguments accordingly.
-We see that only the length of $\Delta$ needs to be specified, since all types will be solved upon checked.
-Moreover, the patterns $\overline{x}$ are forced since the value |is| of indices is determined by pattern-matching with $c_i\;\overline{a}$. 
+where $\overline{\Varid{ℓ}}$ is the list of level parameters, $\overline{p}$ the ordinary parameters, $\overline{x}$ the indices, and $\overline{a}$ the constructor arguments.
+In general, the context~|Δ| needs to be given because it will be used by the elaborator to determine the types of the variables when the right-hand side of \eqref{eq:clause} ---call it~|e|--- is normalised.
+But in this case only the length of~|Δ| needs to be specified, since all types will be solved by unification upon synthesising the type of~|e|, which is the first step of normalisation.
+Moreover, the patterns $\overline{x}$ are forced since the values of indices is determined by pattern-matching with $c_i\;\overline{a}$.
 It follows that $\overline{x}$ can be given as $\overline{\cons{unknown}}$ on both sides.
 Therefore, we only need to generate a simpler clause
 \begin{equation}\label{eq:clause'}
-  \overline{\Varid{ℓ}_j}\;\overline{p}\;\overline{\cons{.unknown}}\;(c_i\;\overline{a}) \hookrightarrow 
-  e_i'
-  \quad\text{with}\quad
-  e_i' = \Varid{fold-base}\;F\;\{\Varid{ℓ}_1,\dots,\Varid{ℓ}_n,\Conid{tt}\}\;f\;\overline{p}\;\overline{\cons{unknown}}\;(c_i\;\overline{a})
+  \overline{\Varid{ℓ}}\;\overline{p}\;\overline{\cons{.unknown}}\;(c_i\;\overline{a}) \hookrightarrow \Varid{fold-base}\;F\;\{\Varid{ℓ}_1,\dots,\Varid{ℓ}_n,\Conid{tt}\}\;f\;\overline{p}\;\overline{\cons{unknown}}\;(c_i\;\overline{a})
 \end{equation}
-for each constructor $c_i$. 
+for each constructor~$c_i$. 
 
 For the first step, as discussed in \cref{sec:telescopes}, it is impossible to define the curried form of the type specified by |FoldP| without reflection.
 Indeed, this issue is apparent with
@@ -1490,6 +1511,10 @@ unquoteDecl foldAcc  = defineFold  foldAccP  foldAcc
 \end{code}
 defines the very same function |foldAcc| in \cref{sec:FoldC} modulo variable renaming. 
 Similarly, we also have defined |defineInd| in our framework for inductive programs |I : IndP|.
+
+(bidirectional) elaborator first synthesises its type to ensure that |e|~is well-typed.
+Indeed, the type of~|e| can be synthesised by looking at the type of |fold-base| and checking each of its arguments accordingly.
+
 
 \section{Examples}
 \label{sec:examples}
@@ -1893,38 +1918,39 @@ While waiting for better languages to emerge, it is also important to enable the
 %Staging may be better for controlling what appears in the final code, but there's no implementation for dependently typed languages.
 %Efficiency problem due to conversion between generic and native representations (see below) since the Haskell era~\citep{Magalhaes-optimising-generics}.}
 
-A traditional way to instantiate generic programs is to compose the generic program with conversions between a native datatype and its generic description.
-If the generic program is defined on datatypes decoded by the |μ|-operator, the performance overhead would be significant due to the recursive conversion between the native and |μ|-decoded datatypes.
-We have not found much work on optimising such programs.
-The shallow encoding we employ, on the other hand, allows for faster conversion and easier optimisation.
-And various works have been done to optimise instantiation of generic programs in this manner.
+A traditional way to instantiate a generic program is to compose the program with conversions between a native datatype and its generic description.
+If the generic program was defined on datatypes decoded by the |μ|~operator and then instantiated by the recursive conversion between the native and |μ|-decoded datatypes, the conversion overhead would be roughly the same as that of unoptimised Haskell generic programs, and had to be eliminated.
+%We have not found much work on optimising such programs.
+Rather than optimising the composition of several recursive functions, the Haskell community has employed a shallow encoding and studied relevant optimisation/specialisation (see, for example, \citet[Section~5.1]{de-Vries-true-SoP}); this encoding is the basis of our design.
+Below we discuss previous attempts at optimising instantiated programs using the shallow encoding.
 
-Notably, staging~\citep{Yallop-staged-generic-programming, Pickering-staged-SoP} eliminates performance overheads by generating native function definitions that are almost identical to hand-written ones.
-There is no implementation of staging in existing dependently typed languages, so we cannot compare them properly on the same ground.
+Recent work using staging~\citep{Yallop-staged-generic-programming, Pickering-staged-SoP} eliminates performance overheads by generating native function definitions that are almost identical to hand-written ones.
+There is, however, no implementation of staging in existing dependently typed languages, so we cannot compare them properly on the same ground.
 But it shares a similar purpose with our framework of generating function definitions containing neither generic representations nor conversions, making them comparable regardless of the specific languages they work in.
 
-We compare staging with our proposed approach from the viewpoint of partial evaluation~\citep{Jones-partial-evaluation}.
-A partial evaluator takes a general program and known parts of its input and then generates a program that takes the remaining unknown input, which is extensionally equal to the general program applied to the given known input.
-Our metaprograms in \cref{sec:reflection} are partial evaluators that specialise a generic program (general program) to a known datatype description (given input).
-Indeed, it has been observed that we can optimise partial evaluation in functional languages by normalisation~\citep{Filinski1999}, which we exploit via elaborator reflection.
+We compare staging with our framework from the viewpoint of partial evaluation~\citep{Jones-partial-evaluation}.
+A partial evaluator takes a general program and known parts of its input, and generates a program that takes the remaining input; the resulting program is extensionally equal to ---and usually more optimised than--- the general program partially applied to the known input.
+Our macro |defineFold| in \cref{sec:reflection} is a partial evaluator which specialises a generic program (general program) to a given datatype description (known input).
+Indeed, it has been observed that we can perform partial evaluation in functional languages by normalisation~\citep{Filinski1999}, which |defineFold| does.
 
 % seperation of concerns + reasoning of metaprogram (generic struture not apearing in residual program), ref principles in staged-sop
-A staged generic program is a `specialised program' generator; it awaits a datatype and generates the corresponding specialised program.
-It essentially acts as an intermediate between a partial evaluator and a specialised program. 
-So not only do we share the same purpose, we share similar means to achieve it as well.
-However, staging requires manually inserting staging annotations.
-It puts burdens on generic programs as well as mixes a part of the instantiation process with the generic definitions.
-It also requires manipulations on generic programs to avoid stage errors. \todo{say something good about staging?}
-Such manipulations, as given by \citet[p.\ 6]{Pickering-staged-SoP}, are undesireable since they alter the definitions of generic programs.
-Our approach separates how we instantiate the generic programs (by metaprograms) from how we define them (as algebras).
-As a result, our generic programs are spared from annotations and modifications, making them easier to read and reason about.
-The separation of the instantiation process as metaprograms also provides a basis for future works on the reasoning of its correctness. 
-For example, there are principles on staging to avoid generic representations from appearing in residual programs~\citep[p.4]{Pickering-staged-SoP}.
-Similar guidances may now be stated for metaprograms, and their correctness can be stated or proved if we have better tools for reasoning about them. \todo{cref next paragraph?}
-
-Compared with staging, compiler optimisations~\citep{de-Vries-masters-thesis, Magalhaes-optimising-generics} do not introduce instantiated function definitions, making them harder to reason about and are less relevant to our work.
-However, their techniques can still be of use to us if elaborator reflection is better designed.
-For example, elaborator reflection may provide an interface for adding normalisation rules in certain contexts, such that programmers can optimise instantiation of generic programs by symbolic evaluation~\citep{de-Vries-masters-thesis} without modifying the global language behaviour.
+Similar to a partial evaluator, a staged generic program is a more specialised program-generator --- the generic/general program to be specialised has been fixed.
+%It essentially acts as an intermediate between a partial evaluator and a specialised program. 
+%So not only do we share the same purpose, we share similar means to achieve it as well.
+However, staging requires manually inserting staging annotations; this puts burdens on the programmer and mixes a part of the instantiation process with generic definitions.
+%Moreover, \citet[Section~4.2]{Pickering-staged-SoP} need to perform certain manipulations on generic programs, are undesireable since they alter the definitions of generic programs.
+Our approach separates how we instantiate generic programs (by metaprograms) from how we define them (as algebras).
+As a result, our generic programs are annotation-free, making them easier to write and read.
+%The separation of the instantiation process as metaprograms also provides a basis for future work on the reasoning of its correctness.
+On the other hand, staging has its own benefit: \citet[Section~4.1]{Pickering-staged-SoP} provide principles followed by the programmer to avoid generic representations from appearing in specialised programs; without staging annotations, it seems difficult to formulate similar principles in our setting.
+But we can explore alternative approaches --- for example, \citet{Alimarine2004} give theorems guaranteeing that generic representations can be removed from instantiated programs with suitable types by normalisation.
+%Similar guidelines may be stated for metaprograms, and their correctness can be stated and proved if we have better tools for reasoning about them. \todo{cref next paragraph?}
+%\todo{say something good about staging?}
+ 
+There have also been attempts using compiler optimisation~\citep{de-Vries-masters-thesis, Magalhaes-inlining}, which are less relevant to our work as explained in \cref{sec:introduction}.
+However, as generic programs become more complex, we may need more advanced code generation techniques that can be borrowed from compiler optimisation, possibly through extensions to elaborator reflection.
+%However, their techniques can still be of use to us if elaborator reflection is better designed.
+%For example, elaborator reflection may provide an interface for adding normalisation rules in certain contexts, such that programmers can optimise instantiation of generic programs~\citep{de-Vries-masters-thesis} without modifying the global language behaviour.
 
 \paragraph{Analysis of higher-order encodings}
 The local variable creation technique has been used extensively to analyse higher-order encodings, but it has to be used with caution.  
