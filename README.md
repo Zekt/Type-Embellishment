@@ -3,17 +3,17 @@
 ## Introduction
 
 This repo contains
-* a representation for inductive families (`DataD`), generic function (`FoldP`), and generic programs (`IndP`),
+* representations for inductive families and generic programs,
 * metaprograms and macros for traslation between generic and native datatypes/functions,
 * connections between generic and native definitions, and
 * examples.
 
-There are also highlighted and clickable HTML documents for traversing the modules.
+There are also highlighted and clickable HTML documents for traversing the modules in the `html` directory. The start page is `Everything.html`.
 
 ## Requirement
 
-1. 14 Gigabytes of memory or above.
-2. The development version of Agda 2.6.3 ([commit 8f8b1](https://github.com/agda/agda/commit/8f8b1f981a9d22bbb80316334964501c3958813f))
+* 14 Gigabytes of memory or above.
+* The development version of Agda 2.6.3 ([commit 8f8b1](https://github.com/agda/agda/commit/8f8b1f981a9d22bbb80316334964501c3958813f))
   patched by
   * Agda-Normalise-Level.diff
   * Agda-unquoteDecl-data.diff 
