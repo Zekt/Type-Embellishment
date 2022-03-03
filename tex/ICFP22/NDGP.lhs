@@ -1898,7 +1898,7 @@ Recent work using staging~\citep{Yallop-staged-generic-programming, Pickering-st
 There is, however, no implementation of staging in existing dependently typed languages, so we cannot compare them properly on the same ground.
 But it shares a similar purpose with our framework of generating function definitions containing neither generic representations nor conversions, making them comparable regardless of the specific languages they work in.
 
-We compare staging with our framework from the viewpoint of partial evaluation~\citep{Jones-partial-evaluation}.
+We compare staging with our framework from the view of partial evaluation~\citep{Jones-partial-evaluation}.
 A partial evaluator takes a general program and known parts of its input, and generates a program that takes the remaining input; the resulting program is extensionally equal to ---and usually more optimised than--- the general program partially applied to the known input.
 Our macro |defineFold|~(\cref{sec:specialising}) is a partial evaluator which specialises a generic program (general program) to a given datatype description (known input).
 Indeed, it has been observed that we can perform partial evaluation in functional languages by normalisation~\citep{Filinski1999}, which |defineFold| does.
@@ -1977,7 +1977,7 @@ Elaborator reflection is a useful paradigm but it has not been specified in theo
 More importantly, the correctness of a macro can only be verified externally at best, but it is internally guaranteed by typed metaprogramming like staging.
 \citet{Christiansen-elaborator-reflection} argued that programs in the reflected elaborator are shorter and simpler than typed metaprograms, but they also admitted the additional cost is for the mandatory correctness.
 Hopefully, the best of two worlds could be combined. 
-Say, suppose that we have a type |TTerm A| of |A|-typed reflected expression normalisation.
+Say, suppose that we have a type |TTerm A| of |A|-typed reflected expression.
 Since |normalise| always works on well-typed expressions, so the type of |normalise| could be |TTerm A → TTerm A|;
 type checking transforms a possibly ill-formed expression to a typed expression if successful, so the type of |checkType| could be |Term → (A : Set ℓ) → TC (TTerm A)|.
 Typed reflected expressions also benefit efficiency, since they need not be elaborated again.
