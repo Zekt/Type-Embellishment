@@ -10,7 +10,9 @@ This repo contains
 
 ## Requirement
 
-The development version of Agda 2.6.3 ([commit 8f8b1](https://github.com/agda/agda/commit/8f8b1f981a9d22bbb80316334964501c3958813f))
+1. 14 Gigabytes of memory or above.
+
+2. The development version of Agda 2.6.3 ([commit 8f8b1](https://github.com/agda/agda/commit/8f8b1f981a9d22bbb80316334964501c3958813f))
   patched by
   * Agda-Normalise-Level.diff
   * Agda-unquoteDecl-data.diff 
