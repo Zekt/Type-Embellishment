@@ -1,0 +1,31 @@
+Subject: [PATCH] [ fix ] Use normalisation for the universe check
+
+---
+ src/full/Agda/TypeChecking/Conversion.hs | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/full/Agda/TypeChecking/Conversion.hs b/src/full/Agda/TypeChecking/Conversion.hs
+index b14745379..98d4c6430 100644
+--- a/src/full/Agda/TypeChecking/Conversion.hs
++++ b/src/full/Agda/TypeChecking/Conversion.hs
+@@ -1303,7 +1303,7 @@ leqLevel a b = catchConstraint (LevelCmp CmpLeq a b) $ do
+           sep [ prettyTCM a <+> "=<"
+               , prettyTCM b ]
+ 
+-      (a, b) <- reduce (a, b)
++      (a, b) <- normalise (a, b)
+       SynEq.checkSyntacticEquality a b
+         (\_ _ ->
+           reportSDoc "tc.conv.level" 60
+@@ -1453,7 +1453,7 @@ equalLevel a b = do
+                ]
+         ]
+ 
+-  (a, b) <- reduce (a, b)
++  (a, b) <- normalise (a, b)
+   SynEq.checkSyntacticEquality a b
+     (\_ _ ->
+       reportSDoc "tc.conv.level" 60
+-- 
+2.31.0
+

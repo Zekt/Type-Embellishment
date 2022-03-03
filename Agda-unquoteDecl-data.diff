@@ -1,34 +1,3 @@
-Subject: [PATCH] [ fix ] Use normalisation for the universe check
-
----
- src/full/Agda/TypeChecking/Conversion.hs | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/src/full/Agda/TypeChecking/Conversion.hs b/src/full/Agda/TypeChecking/Conversion.hs
-index b14745379..98d4c6430 100644
---- a/src/full/Agda/TypeChecking/Conversion.hs
-+++ b/src/full/Agda/TypeChecking/Conversion.hs
-@@ -1303,7 +1303,7 @@ leqLevel a b = catchConstraint (LevelCmp CmpLeq a b) $ do
-           sep [ prettyTCM a <+> "=<"
-               , prettyTCM b ]
- 
--      (a, b) <- reduce (a, b)
-+      (a, b) <- normalise (a, b)
-       SynEq.checkSyntacticEquality a b
-         (\_ _ ->
-           reportSDoc "tc.conv.level" 60
-@@ -1453,7 +1453,7 @@ equalLevel a b = do
-                ]
-         ]
- 
--  (a, b) <- reduce (a, b)
-+  (a, b) <- normalise (a, b)
-   SynEq.checkSyntacticEquality a b
-     (\_ _ ->
-       reportSDoc "tc.conv.level" 60
--- 
-2.31.0
-
 Subject: [PATCH] [ new ] Add a new concrete syntax `UnquoteDecl` for unquoting
  data type declaration
 
@@ -1191,19 +1160,18 @@ index 5cd36839c..1202df6b2 100644
 
 Subject: [PATCH] [ reflection ] Add primitives tcDeclareData and tcDefineData
 
-(cherry picked from commit 14010f4d99dc32e13e25a6e1b0ccb74f24d38a74)
 ---
  doc/user-manual/language/reflection.lagda.rst |  13 ++
  .../lib/prim/Agda/Builtin/Reflection.agda     |   6 +
  src/full/Agda/Compiler/MAlonzo/Compiler.hs    |   2 +
  src/full/Agda/Syntax/Builtin.hs               |   4 +-
- src/full/Agda/Syntax/Concrete/Definitions.hs  |  60 ++++-----
+ src/full/Agda/Syntax/Concrete/Definitions.hs  |  60 ++++----
  src/full/Agda/TypeChecking/Monad/Builtin.hs   |   4 +-
  src/full/Agda/TypeChecking/Rules/Builtin.hs   |   2 +
  src/full/Agda/TypeChecking/Rules/Decl.hs      |  10 +-
  src/full/Agda/TypeChecking/Rules/Decl.hs-boot |   2 +
- src/full/Agda/TypeChecking/Unquote.hs         | 127 ++++++++++++++++--
- 10 files changed, 185 insertions(+), 45 deletions(-)
+ src/full/Agda/TypeChecking/Unquote.hs         | 129 ++++++++++++++++--
+ 10 files changed, 186 insertions(+), 46 deletions(-)
 
 diff --git a/doc/user-manual/language/reflection.lagda.rst b/doc/user-manual/language/reflection.lagda.rst
 index e6389f515..329c2e59e 100644
@@ -1583,9 +1551,18 @@ index 959b818d7..79f9a69ae 100644
 +checkSig   :: KindOfName -> DefInfo -> QName -> GeneralizeTelescope -> Expr -> TCM ()
  checkSectionApplication :: ModuleInfo -> ModuleName -> ModuleApplication -> ScopeCopyInfo -> TCM ()
 diff --git a/src/full/Agda/TypeChecking/Unquote.hs b/src/full/Agda/TypeChecking/Unquote.hs
-index 11e541fbf..dda10b753 100644
+index 11e541fbf..797fa0934 100644
 --- a/src/full/Agda/TypeChecking/Unquote.hs
 +++ b/src/full/Agda/TypeChecking/Unquote.hs
+@@ -2,7 +2,7 @@
+ module Agda.TypeChecking.Unquote where
+ 
+ import Control.Arrow          ( first, second, (&&&) )
+-import Control.Monad          ( (<=<) )
++import Control.Monad          ( (<=<), liftM2 )
+ import Control.Monad.Except   ( MonadError(..), ExceptT(..), runExceptT )
+ import Control.Monad.IO.Class ( MonadIO(..) )
+ import Control.Monad.Reader   ( ReaderT(..), runReaderT )
 @@ -28,10 +28,13 @@ import Agda.Syntax.Common hiding ( Nat )
  import Agda.Syntax.Internal as I
  import qualified Agda.Syntax.Reflected as R
