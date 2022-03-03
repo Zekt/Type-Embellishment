@@ -1901,10 +1901,10 @@ And various works have been done to optimise instantiation of generic programs i
 
 Notably, staging~\citep{Yallop-staged-generic-programming, Pickering-staged-SoP} eliminates performance overheads by generating native function definitions that are almost identical to hand-written ones.
 There is no implementation of staging in existing dependently typed languages, so we cannot compare them properly on the same ground.
-But it shares a similar purpose with our metaprograms of generating function definitions containing neither generic representations nor conversions, making them comparable regardless of the specific languages they work in.
+But it shares a similar purpose with our framework of generating function definitions containing neither generic representations nor conversions, making them comparable regardless of the specific languages they work in.
 
 We compare staging with our proposed approach from the viewpoint of partial evaluation~\citep{Jones-partial-evaluation}.
-A partial evaluator takes a general program and known parts of its input, and then generates a program that takes the rest unknown inputs, which is extensionally equal to the general program applied to the given known input.
+A partial evaluator takes a general program and known parts of its input and then generates a program that takes the remaining unknown input, which is extensionally equal to the general program applied to the given known input.
 Our metaprograms in \cref{sec:reflection} are partial evaluators that specialise a generic program (general program) to a known datatype description (given input).
 Indeed, it has been observed that we can optimise partial evaluation in functional languages by normalisation~\citep{Filinski1999}, which we exploit via elaborator reflection.
 
@@ -1912,10 +1912,11 @@ Indeed, it has been observed that we can optimise partial evaluation in function
 A staged generic program is a `specialised program' generator; it awaits a datatype and generates the corresponding specialised program.
 It essentially acts as an intermediate between a partial evaluator and a specialised program. 
 So not only do we share the same purpose, we share similar means to achieve it as well.
-However, staging puts burdens such as manually inserting staging annotations on programmers.
+However, staging requires manually inserting staging annotations.
+It puts burdens on generic programs as well as mixes a part of the instantiation process with the generic definitions.
 It also requires manipulations on generic programs to avoid stage errors. \todo{say something good about staging?}
 Such manipulations, as given by \citet[p.\ 6]{Pickering-staged-SoP}, are undesireable since they alter the definitions of generic programs.
-Our approach separates what we do with the generic programs (metaprograms for instantiation) from how we define them (algebras).
+Our approach separates how we instantiate the generic programs (by metaprograms) from how we define them (as algebras).
 As a result, our generic programs are spared from annotations and modifications, making them easier to read and reason about.
 The separation of the instantiation process as metaprograms also provides a basis for future works on the reasoning of its correctness. 
 For example, there are principles on staging to avoid generic representations from appearing in residual programs~\citep[p.4]{Pickering-staged-SoP}.
@@ -1923,7 +1924,7 @@ Similar guidances may now be stated for metaprograms, and their correctness can 
 
 Compared with staging, compiler optimisations~\citep{de-Vries-masters-thesis, Magalhaes-optimising-generics} do not introduce instantiated function definitions, making them harder to reason about and are less relevant to our work.
 However, their techniques can still be of use to us if elaborator reflection is better designed.
-For example, elaborator reflection may provide an interface for adding normalisation rules in certain contexts, such that programmers can optimise instantiation of generic programs by symbolic evaluation~\citep[p.\ 25]{de-Vries-masters-thesis} without modifiying the global language behaviour.
+For example, elaborator reflection may provide an interface for adding normalisation rules in certain contexts, such that programmers can optimise instantiation of generic programs by symbolic evaluation~\citep{de-Vries-masters-thesis} without modifying the global language behaviour.
 
 \paragraph{Analysis of higher-order encodings}
 The local variable creation technique has been used extensively to analyse higher-order encodings, but it has to be used with caution.  
