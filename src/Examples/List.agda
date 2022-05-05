@@ -50,6 +50,12 @@ foldListP = fold-operator ListC
 
 -- Generate foldList and its wrapper and connection, and then replace it with foldr
 -- unquoteDecl foldList = defineFold foldListP foldList
+foldList : {ℓ ℓ1 : Level} {p : Set ℓ1} {X : Set ℓ} (alg : X)
+           (alg1 : (a : p) (z : X) → X) (l : List p) →
+           X
+foldList alg alg₁ [] = alg
+foldList alg alg₁ (x ∷ xs) = alg₁ x (foldList alg alg₁ xs)
+
 
 foldrC = genFoldC' foldListP foldrT
   where
@@ -59,14 +65,14 @@ foldrC = genFoldC' foldListP foldrT
 foldr-fusionP : IndP
 foldr-fusionP = fold-fusion ListC foldrC
 
-unquoteDecl foldr-fusion = defineInd foldr-fusionP foldr-fusion
--- foldr-fusion :
---   ∀ {ℓ' ℓ'' ℓ} {A : Set ℓ} {B : Set ℓ'} {C : Set ℓ''} (h : B → C)
---   {e : B} {f : A → B → B} {e' : C} {f' : A → C → C}
---   (he : h e ≡ e') (hf : (a : A) (b : B) (c : C) → h b ≡ c → h (f a b) ≡ f' a c)
---   (as : List A) → h (foldr e f as) ≡ foldr e' f' as
--- foldr-fusion h he hf []       = he
--- foldr-fusion h he hf (a ∷ as) = hf a _ _ (foldr-fusion h he hf as)
+-- unquoteDecl foldr-fusion = defineInd foldr-fusionP foldr-fusion
+foldr-fusion :
+  ∀ {ℓ' ℓ'' ℓ} {A : Set ℓ} {B : Set ℓ'} {C : Set ℓ''} (h : B → C)
+  {e : B} {f : A → B → B} {e' : C} {f' : A → C → C}
+  (he : h e ≡ e') (hf : (a : A) (b : B) (c : C) → h b ≡ c → h (f a b) ≡ f' a c)
+  (as : List A) → h (foldr e f as) ≡ foldr e' f' as
+foldr-fusion h he hf []       = he
+foldr-fusion h he hf (a ∷ as) = hf a _ _ (foldr-fusion h he hf as)
 
 foldr-fusionC = genIndC foldr-fusionP foldr-fusion
 
@@ -78,11 +84,11 @@ AlgListOD = AlgOD foldListP
 
 AlgListO = ⌈ AlgListOD ⌉ᵈ
 
-unquoteDecl data AlgList constructor c0 c1 = defineByDataD ⌊ AlgListOD ⌋ᵈ AlgList (c0 ∷ c1 ∷ [])
--- data AlgList {ℓ' ℓ} {A : Set ℓ} {B : Set ℓ'}
---   (e : B) (f : A → B → B) : B → Set (ℓ ⊔ ℓ') where
---   []  : AlgList e f e
---   _∷_ : (a : A) {b : B} → AlgList e f b → AlgList e f (f a b)
+-- unquoteDecl data AlgList constructor c0 c1 = defineByDataD ⌊ AlgListOD ⌋ᵈ AlgList (c0 ∷ c1 ∷ [])
+data AlgList {ℓ' ℓ} {A : Set ℓ} {B : Set ℓ'}
+  (e : B) (f : A → B → B) : B → Set (ℓ ⊔ ℓ') where
+  []  : AlgList e f e
+  _∷_ : (a : A) {b : B} → AlgList e f b → AlgList e f (f a b)
 
 AlgListC = genDataC ⌊ AlgListOD ⌋ᵈ (genDataT ⌊ AlgListOD ⌋ᵈ AlgList)
 
@@ -96,7 +102,7 @@ VecOD = AlgOD lengthP
 
 VecO = ⌈ VecOD ⌉ᵈ
 
--- -- unquoteDecl data Vec constructor c0 c1 = defineByDataD ⌊ VecOD ⌋ᵈ Vec (c0 ∷ c1 ∷ [])
+-- unquoteDecl data Vec constructor c0 c1 = defineByDataD ⌊ VecOD ⌋ᵈ Vec (c0 ∷ c1 ∷ [])
 data Vec (A : Set ℓ) : (n : ℕ) → Set ℓ where
   []  : Vec A 0
   _∷_ : (a : A) {n : ℕ} → Vec A n → Vec A (suc n)
@@ -109,30 +115,30 @@ VecFin = [] ∷ (tt ∷ tt ∷ refl ∷ []) ∷ []
 fromVecP : FoldP
 fromVecP = forget VecC ListC VecO
 
-unquoteDecl fromVec = defineFold fromVecP fromVec
--- fromVec : {A : Set ℓ} {n : ℕ} (v : Vec A n) → List A
--- fromVec []       = []
--- fromVec (a ∷ as) = a ∷ fromVec as
+-- unquoteDecl fromVec = defineFold fromVecP fromVec
+fromVec : {A : Set ℓ} {n : ℕ} (v : Vec A n) → List A
+fromVec []       = []
+fromVec (a ∷ as) = a ∷ fromVec as
 
 fromVecC = genFoldC fromVecP fromVec
 
 toVecP : IndP
 toVecP = remember lengthC VecC
 
-unquoteDecl toVec = defineInd toVecP toVec
--- toVec :  {A : Set ℓ} (as : List A) → Vec A (length as)
--- toVec []       = []
--- toVec (a ∷ as) = a ∷ toVec as
+-- unquoteDecl toVec = defineInd toVecP toVec
+toVec :  {A : Set ℓ} (as : List A) → Vec A (length as)
+toVec []       = []
+toVec (a ∷ as) = a ∷ toVec as
 
 toVecC = genIndC toVecP toVec
 
 from-toVecP : IndP
 from-toVecP = forget-remember-inv lengthC VecC fromVecC toVecC (inl ListFin) -- (quote Vec) (quote List) (inl it)
 
-unquoteDecl from-toVec = defineInd from-toVecP from-toVec
--- from-toVec : {A : Set ℓ} (as : List A) → fromVec (toVec as) ≡ as
--- from-toVec []       = refl
--- from-toVec (a ∷ as) = cong (_∷_ a) (from-toVec as)
+-- unquoteDecl from-toVec = defineInd from-toVecP from-toVec
+from-toVec : {A : Set ℓ} (as : List A) → fromVec (toVec as) ≡ as
+from-toVec []       = refl
+from-toVec (a ∷ as) = cong (_∷_ a) (from-toVec as)
 
 from-toVecC = genIndC from-toVecP from-toVec
 
@@ -140,22 +146,22 @@ from-toVecC = genIndC from-toVecP from-toVec
 to-fromVecP : IndP
 to-fromVecP = remember-forget-inv lengthC VecC fromVecC toVecC (inl ListFin) -- (quote Vec) (quote List) (inl it)
 
-unquoteDecl to-fromVec = defineInd to-fromVecP to-fromVec
--- to-fromVec : {A : Set ℓ} {n : ℕ} (as : Vec A n) →
---              (length (fromVec as) , toVec (fromVec as)) ≡ ((n , as) ⦂ Σ ℕ (Vec A))
--- to-fromVec [] = refl
--- to-fromVec (a ∷ as) =
---   trans
---    (cong
---     (bimap (λ x₁ → x₁) (DataC.toN (findDataC (quote Vec))))
---     (cong (bimap (λ x₁ → x₁) inr)
---      (cong (bimap (λ x₁ → x₁) inl)
---       (cong (bimap (λ x₁ → x₁) (λ section → a , section))
---        (trans
---         (cong (λ p₁ → suc (fst p₁) , fst p₁ , snd p₁ , refl)
---          (to-fromVec as))
---         refl)))))
---    refl
+-- unquoteDecl to-fromVec = defineInd to-fromVecP to-fromVec
+to-fromVec : {A : Set ℓ} {n : ℕ} (as : Vec A n) →
+             (length (fromVec as) , toVec (fromVec as)) ≡ ((n , as) ⦂ Σ ℕ (Vec A))
+to-fromVec [] = refl
+to-fromVec (a ∷ as) =
+  trans
+   (cong
+    (bimap (λ x₁ → x₁) (DataC.toN VecC))
+    (cong (bimap (λ x₁ → x₁) inr)
+     (cong (bimap (λ x₁ → x₁) inl)
+      (cong (bimap (λ x₁ → x₁) (λ section → a , section))
+       (trans
+        (cong (λ p₁ → suc (fst p₁) , fst p₁ , snd p₁ , refl)
+         (to-fromVec as))
+        refl)))))
+   refl
 
 to-fromVecC = genIndC to-fromVecP to-fromVec
 
@@ -174,53 +180,53 @@ LenC = genDataC ⌊ LenOD ⌋ᵈ (genDataT ⌊ LenOD ⌋ᵈ Len)
 fromLenP : FoldP
 fromLenP = forget LenC VecC LenO -- (quote Len) (quote Vec)
 
-unquoteDecl fromLen = defineFold fromLenP fromLen
--- fromLen : {A : Set ℓ} {n : ℕ} {as : List A} → Len n as → Vec A n
--- fromLen  zero       = []
--- fromLen (suc {a} l) = a ∷ fromLen l
+-- unquoteDecl fromLen = defineFold fromLenP fromLen
+fromLen : {A : Set ℓ} {n : ℕ} {as : List A} → Len n as → Vec A n
+fromLen  zero       = []
+fromLen (suc {a} l) = a ∷ fromLen l
 
 fromLenC = genFoldC fromLenP fromLen
 
 toLenP : IndP
 toLenP = remember fromVecC LenC -- (quote Len)
 
-unquoteDecl toLen = defineInd toLenP toLen
--- toLen : {A : Set ℓ} {n : ℕ} (as : Vec A n) → Len n (fromVec as)
--- toLen []       = zero
--- toLen (a ∷ as) = suc (toLen as)
+-- unquoteDecl toLen = defineInd toLenP toLen
+toLen : {A : Set ℓ} {n : ℕ} (as : Vec A n) → Len n (fromVec as)
+toLen []       = zero
+toLen (a ∷ as) = suc (toLen as)
 
-instance toLenC = genIndC toLenP toLen
+toLenC = genIndC toLenP toLen
 
 from-toLenP : IndP
 from-toLenP = forget-remember-inv fromVecC LenC fromLenC toLenC (inl VecFin) -- (quote Len) (quote Vec) (inl it)
 
-unquoteDecl from-toLen = defineInd from-toLenP from-toLen
--- from-toLen : {A : Set ℓ} {n : ℕ} (as : Vec A n) → fromLen (toLen as) ≡ as
--- from-toLen []       = refl
--- from-toLen (a ∷ as) = cong (_∷_ a) (from-toLen as)
+-- unquoteDecl from-toLen = defineInd from-toLenP from-toLen
+from-toLen : {A : Set ℓ} {n : ℕ} (as : Vec A n) → fromLen (toLen as) ≡ as
+from-toLen []       = refl
+from-toLen (a ∷ as) = cong (_∷_ a) (from-toLen as)
 
 from-toLenC = genIndC from-toLenP from-toLen
 
 to-fromLenP : IndP
 to-fromLenP = remember-forget-inv fromVecC LenC fromLenC toLenC (inl VecFin) -- (quote Len) (quote Vec) (inl it)
 
-unquoteDecl to-fromLen = defineInd to-fromLenP to-fromLen
--- to-fromLen : {A : Set ℓ} {n : ℕ} {as : List A} (l : Len n as)
---            → (fromVec (fromLen l) , toLen (fromLen l))
---            ≡ ((as , l) ⦂ Σ[ as' ∈ List A ] Len n as')
--- to-fromLen                      zero   = refl
--- to-fromLen {n = suc n} {a ∷ _} (suc l) =
---   trans
---    (cong
---     (bimap (λ x → x) (DataC.toN (findDataC (quote Len))))
---     (cong (bimap (λ x → x) inr)
---      (cong (bimap (λ x → x) inl)
---       (cong (bimap (λ x → x) (λ section → a , section))
---        (cong (bimap (λ x → x) (λ section → n , section))
---         (trans
---          (cong (λ p → a ∷ fst p , fst p , snd p , refl) (to-fromLen l))
---          refl))))))
---    refl
+-- unquoteDecl to-fromLen = defineInd to-fromLenP to-fromLen
+to-fromLen : {A : Set ℓ} {n : ℕ} {as : List A} (l : Len n as)
+           → (fromVec (fromLen l) , toLen (fromLen l))
+           ≡ ((as , l) ⦂ Σ[ as' ∈ List A ] Len n as')
+to-fromLen                      zero   = refl
+to-fromLen {n = suc n} {a ∷ _} (suc l) =
+  trans
+   (cong
+    (bimap (λ x → x) (DataC.toN LenC))
+    (cong (bimap (λ x → x) inr)
+     (cong (bimap (λ x → x) inl)
+      (cong (bimap (λ x → x) (λ section → a , section))
+       (cong (bimap (λ x → x) (λ section → n , section))
+        (trans
+         (cong (λ p → a ∷ fst p , fst p , snd p , refl) (to-fromLen l))
+         refl))))))
+   refl
 
 to-fromLenC = genIndC to-fromLenP to-fromLen
 
@@ -247,10 +253,10 @@ ListPFin = [] ∷ (tt ∷ tt ∷ refl ∷ []) ∷ []
 fromListPP : FoldP
 fromListPP = forget ListPC ListC ListPO -- (quote ListP) (quote List)
 
-unquoteDecl fromListP = defineFold fromListPP fromListP
--- fromListP : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} → ListP P → List A
--- fromListP []               = []
--- fromListP (⟨ a , p ⟩∷ aps) = a ∷ fromListP aps
+-- unquoteDecl fromListP = defineFold fromListPP fromListP
+fromListP : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} → ListP P → List A
+fromListP []               = []
+fromListP (⟨ a , p ⟩∷ aps) = a ∷ fromListP aps
 
 fromListPC = genFoldC fromListPP fromListP
 
@@ -272,10 +278,10 @@ ListAllC = genDataC ⌊ ListAllOD ⌋ᵈ ListAllT
 fromAllP : FoldP
 fromAllP = forget ListAllC ListPC ListAllO -- (quote ListAll) (quote ListP)
 
-unquoteDecl fromAll = defineFold fromAllP fromAll
--- -- fromAll : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} {as : List A} → ListAll P as → ListP P
--- -- fromAll []       = []
--- -- fromAll (p ∷ ps) = ⟨ _ , p ⟩∷ fromAll ps
+-- unquoteDecl fromAll = defineFold fromAllP fromAll
+fromAll : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} {as : List A} → ListAll P as → ListP P
+fromAll []       = []
+fromAll (p ∷ ps) = ⟨ _ , p ⟩∷ fromAll ps
 
 fromAllC = genFoldC fromAllP fromAll
 
@@ -283,10 +289,10 @@ fromAllC = genFoldC fromAllP fromAll
 toAllP : IndP
 toAllP = remember fromListPC ListAllC -- (quote ListAll)
 
-unquoteDecl toAll = defineInd toAllP toAll
--- toAll : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} (aps : ListP P) → ListAll P (fromListP aps)
--- toAll []               = []
--- toAll (⟨ a , p ⟩∷ aps) = p ∷ toAll aps
+-- unquoteDecl toAll = defineInd toAllP toAll
+toAll : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} (aps : ListP P) → ListAll P (fromListP aps)
+toAll []               = []
+toAll (⟨ a , p ⟩∷ aps) = p ∷ toAll aps
 
 toAllC = genIndC toAllP toAll
 
@@ -294,35 +300,35 @@ toAllC = genIndC toAllP toAll
 from-toAllP : IndP
 from-toAllP = forget-remember-inv fromListPC ListAllC fromAllC toAllC (inl ListPFin) -- (quote ListAll) (quote ListP) (inl it)
 
-unquoteDecl from-toAll = defineInd from-toAllP from-toAll
--- from-toAll : {ℓ' ℓ : Level} {A : Set ℓ} {P : A → Set ℓ'}
---              (aps : ListP P) → fromAll (toAll aps) ≡ aps
--- from-toAll [] = refl
--- from-toAll (⟨ a , p ⟩∷ aps) = cong (⟨_,_⟩∷_ a p) (from-toAll aps)
+-- unquoteDecl from-toAll = defineInd from-toAllP from-toAll
+from-toAll : {ℓ' ℓ : Level} {A : Set ℓ} {P : A → Set ℓ'}
+             (aps : ListP P) → fromAll (toAll aps) ≡ aps
+from-toAll [] = refl
+from-toAll (⟨ a , p ⟩∷ aps) = cong (⟨_,_⟩∷_ a p) (from-toAll aps)
 
 from-toAllC = genIndC from-toAllP from-toAll
 
 to-fromAllP : IndP
 to-fromAllP = remember-forget-inv fromListPC ListAllC fromAllC toAllC (inl ListPFin) -- (quote ListAll) (quote ListP) (inl it)
 
-unquoteDecl to-fromAll = defineInd to-fromAllP to-fromAll
--- to-fromAll : {ℓ' ℓ : Level} {A : Set ℓ} {P : A → Set ℓ'}
---              {as : List A} (all : ListAll P as)
---            → (fromListP (fromAll all) , toAll (fromAll all))
---            ≡ ((as , all) ⦂ Σ (List A) (ListAll P))
--- to-fromAll [] = refl
--- to-fromAll (p ∷ all) =
---   trans
---    (cong
---     (bimap (λ x₂ → x₂) (DataC.toN (findDataD (quote ListAll))))
---     (cong (bimap (λ x₂ → x₂) inr)
---      (cong (bimap (λ x₂ → x₂) inl)
---       (cong (bimap (λ x₂ → x₂) (λ section → a , section))
---        (cong (bimap (λ x₂ → x₂) (λ section → p , section))
---         (trans
---          (cong (λ p₁ → a ∷ fst p₁ , fst p₁ , snd p₁ , refl) (to-fromAll all))
---          refl))))))
---    refl
+-- unquoteDecl to-fromAll = defineInd to-fromAllP to-fromAll
+to-fromAll : {ℓ' ℓ : Level} {A : Set ℓ} {P : A → Set ℓ'}
+             {as : List A} (all : ListAll P as)
+           → (fromListP (fromAll all) , toAll (fromAll all))
+           ≡ ((as , all) ⦂ Σ (List A) (ListAll P))
+to-fromAll [] = refl
+to-fromAll (p ∷ all) =
+  trans
+   (cong
+    (bimap (λ x₂ → x₂) (DataC.toN ListAllC))
+    (cong (bimap (λ x₂ → x₂) inr)
+     (cong (bimap (λ x₂ → x₂) inl)
+      (cong (bimap (λ x₂ → x₂) (λ section → _ , section))
+       (cong (bimap (λ x₂ → x₂) (λ section → p , section))
+        (trans
+         (cong (λ p₁ → _ ∷ fst p₁ , fst p₁ , snd p₁ , refl) (to-fromAll all))
+         refl))))))
+   refl
 
 to-fromAllC = genIndC to-fromAllP to-fromAll
 
@@ -348,9 +354,9 @@ xs ∋ x = ListAny (x ≡_) xs
 toℕP : FoldP
 toℕP = forget ListAnyC NatC ListAnyO -- (quote ListAny) (quote ℕ)
 
-unquoteDecl toℕ = defineFold toℕP toℕ
--- toℕ : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} {as : List A} → ListAny P as → ℕ
--- toℕ (here  p) = 0
--- toℕ (there i) = suc (toℕ i)
+-- unquoteDecl toℕ = defineFold toℕP toℕ
+toℕ : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} {as : List A} → ListAny P as → ℕ
+toℕ (here  p) = 0
+toℕ (there i) = suc (toℕ i)
 
 toℕC = genFoldC toℕP toℕ
