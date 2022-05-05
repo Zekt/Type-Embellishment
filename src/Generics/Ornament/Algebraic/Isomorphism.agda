@@ -200,12 +200,12 @@ module FunExt (funext : FunExt) where
     cong (bimap id inr) (remember-forget-invᶜˢ Ds (alg ∘ inr) f r g ns' all)
 
 forget-remember-inv :
-  ∀ (n' n : Name) {P f} ⦃ C : FoldC P f ⦄ {N'} ⦃ C' : Named n' (DataC ⌊ AlgOD P ⌋ᵈ N') ⦄
-  → let forgetP   = forget n' n ⦃ C' ⦄ ⦃ named (FoldP.Conv P) ⦄ ⦃ ⌈ AlgOD P ⌉ᵈ ⦄
-        rememberP = remember n' ⦃ C ⦄ ⦃ C' ⦄ in
-  ∀ {g} ⦃ gC : FoldC forgetP g ⦄ {r} ⦃ rC : IndC rememberP r ⦄
+  ∀ {P f} (C : FoldC P f) {N'} (C' : DataC ⌊ AlgOD P ⌋ᵈ N')
+  → let forgetP   = forget C' (FoldP.Conv P) ⌈ AlgOD P ⌉ᵈ
+        rememberP = remember C C' in
+  ∀ {g} (gC : FoldC forgetP g) {r} (rC : IndC rememberP r)
   → Finitary (FoldP.Desc P) ⊎ω FunExt → IndP
-forget-remember-inv _ _ {P} {f} ⦃ C ⦄ {N'} ⦃ named C' ⦄ {g} ⦃ gC ⦄ {r} ⦃ rC ⦄ cond =
+forget-remember-inv {P} {f} C {N'} C' {g} gC {r} rC cond =
   let open FoldP P in record
   { Conv    = Conv
   ; #levels = #levels
@@ -257,12 +257,12 @@ forget-remember-inv _ _ {P} {f} ⦃ C ⦄ {N'} ⦃ named C' ⦄ {g} ⦃ gC ⦄ {
     erase-fmap-subst-lemma O f xs refl = refl
 
 remember-forget-inv :
-  ∀ (n' n : Name) {P f} ⦃ C : FoldC P f ⦄ {N'} ⦃ C' : Named n' (DataC ⌊ AlgOD P ⌋ᵈ N') ⦄
-  → let forgetP   = forget n' n ⦃ C' ⦄ ⦃ named (FoldP.Conv P) ⦄ ⦃ ⌈ AlgOD P ⌉ᵈ ⦄
-        rememberP = remember n' ⦃ C ⦄ ⦃ C' ⦄ in
-  ∀ {g} ⦃ gC : FoldC forgetP g ⦄ {r} ⦃ rC : IndC rememberP r ⦄
+  ∀ {P f} (C : FoldC P f) {N'} (C' : DataC ⌊ AlgOD P ⌋ᵈ N')
+  → let forgetP   = forget C' (FoldP.Conv P) ⌈ AlgOD P ⌉ᵈ
+        rememberP = remember C C' in
+  ∀ {g} (gC : FoldC forgetP g) {r} (rC : IndC rememberP r)
   → Finitary (FoldP.Desc P) ⊎ω FunExt → IndP
-remember-forget-inv _ _ {P} {f} ⦃ C ⦄ {N'} ⦃ named C' ⦄ {g} ⦃ gC ⦄ {r} ⦃ rC ⦄ cond =
+remember-forget-inv {P} {f} C {N'} C' {g} gC {r} rC cond =
   let open FoldP P in record
   { Conv    = C'
   ; #levels = #levels

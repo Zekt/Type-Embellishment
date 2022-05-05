@@ -34,8 +34,8 @@ fold-opᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {X : Carrierᶜˢ D ℓ}
 fold-opᶜˢ (D ∷ Ds) (f , fs) (inl xs) = fold-opᶜ  D  f  xs
 fold-opᶜˢ (D ∷ Ds) (f , fs) (inr xs) = fold-opᶜˢ Ds fs xs
 
-fold-operator : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ → FoldP
-fold-operator _ {D} ⦃ named C ⦄ = record
+fold-operator : ∀ {D N} (C : DataC D N) → FoldP
+fold-operator {D} C = record
   { Conv    = C
   ; #levels = suc (DataD.#levels D)
   ; level   = snd
@@ -112,9 +112,9 @@ fold-fusionᶜˢ (D ∷ Ds) (f , _ ) (g , _ ) fold-fs fold-gs h (hom , _) (inl n
 fold-fusionᶜˢ (D ∷ Ds) (_ , fs) (_ , gs) fold-fs fold-gs h (_ , hom) (inr ns) all =
   fold-fusionᶜˢ Ds fs gs fold-fs fold-gs h hom ns all
 
-fold-fusion : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄
-              {fold} ⦃ foldC : FoldC (fold-operator n ⦃ C ⦄) fold ⦄ → IndP
-fold-fusion _ {D} ⦃ named C ⦄ {fold} ⦃ foldC ⦄ = record
+fold-fusion : ∀ {D N} (C : DataC D N)
+              {fold} (foldC : FoldC (fold-operator C) fold) → IndP
+fold-fusion {D} C {fold} foldC = record
   { Conv    = C
   ; #levels = suc (suc (DataD.#levels D))
   ; level   = snd ∘ snd
@@ -182,8 +182,8 @@ ind-opᶜˢ : {I : Set ℓⁱ} (D : ConDs I cbs) {N : Carrierᶜˢ D ℓ} (f : A
 ind-opᶜˢ (D ∷ Ds) f (g , gs) (inl ps) = ind-opᶜ  D  (f ∘ inl) g  ps
 ind-opᶜˢ (D ∷ Ds) f (g , gs) (inr ps) = ind-opᶜˢ Ds (f ∘ inr) gs ps
 
-ind-operator : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ → IndP
-ind-operator _ {D} {N} ⦃ named C ⦄ = record
+ind-operator : ∀ {D N} (C : DataC D N) → IndP
+ind-operator {D} {N} C = record
   { Conv    = C
   ; #levels = suc (DataD.#levels D)
   ; level   = snd

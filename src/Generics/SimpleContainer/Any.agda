@@ -305,7 +305,7 @@ AnyD-level-inequality ℓ ℓᵈ cbs sbs ineq =
 
 AnyODᵖᵈ : (D : PDataD) → SC D → {N : ∀ ps → Carrierᵖᵈ D ps (PDataD.dlevel D)}
         → (∀ {ps} → Algᵖᵈ D (N ps)) → Level
-        → PDataOD (DataD.applyL (findDataD (quote ℕ)) tt)
+        → PDataOD (DataD.applyL NatD tt)
 PDataOD.alevel (AnyODᵖᵈ D S {N} toN ℓ) = maxMap (uncurry (hasEl? ℓ)) (allToList (SC.pos S))
 PDataOD.plevel (AnyODᵖᵈ D S {N} toN ℓ) = _
 PDataOD.ilevel (AnyODᵖᵈ D S {N} toN ℓ) = _
@@ -322,15 +322,15 @@ PDataOD.applyP (AnyODᵖᵈ D S {N} toN ℓ) (ps , P , _) =
   let Dᶜˢ = PDataD.applyP D ps
   in  hereODᶜˢ Dᶜˢ (SC.pos S) (SC.coe S ps) toN P (thereODᶜˢ Dᶜˢ toN [])
 
-AnyOD : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄
-      → DataOD (findDataD (quote ℕ))
-DataOD.#levels (AnyOD _ {D} ⦃ named C ⦄ ⦃ S ⦄) = suc (DataD.#levels D)
-DataOD.level   (AnyOD _ {D} ⦃ named C ⦄ ⦃ S ⦄) _ = tt
-DataOD.applyL  (AnyOD _ {D} ⦃ named C ⦄ ⦃ S ⦄) (ℓ , ℓs) =
+AnyOD : ∀ {D N} (C : DataC D N) (S : SCᵈ D)
+      → DataOD NatD
+DataOD.#levels (AnyOD {D} C S) = suc (DataD.#levels D)
+DataOD.level   (AnyOD {D} C S) _ = tt
+DataOD.applyL  (AnyOD {D} C S) (ℓ , ℓs) =
   AnyODᵖᵈ (DataD.applyL D ℓs) S (DataC.toN C) ℓ
 
-AnyD : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄ → DataD
-AnyD n = ⌊ AnyOD n ⌋ᵈ
+AnyD : ∀ {D N} (C : DataC D N) (S : SCᵈ D) → DataD
+AnyD C S = ⌊ AnyOD C S ⌋ᵈ
 
 lookupAny-hereᶜ' :
     {I : Set ℓⁱ} (D : ConD I cb) {N : Carrierᶜ D ℓᵈ} (toN : Algᶜ D N) (X : Set ℓ)
@@ -443,13 +443,13 @@ lookupAny-thereᶜˢ (D ∷ Ds) toN P acc-alg =
   lookupAny-thereᶜˢ' _ P (lookupAny-thereᶜ  D  (toN ∘ inl) P)
                          (lookupAny-thereᶜˢ Ds (toN ∘ inr) P acc-alg)
 
-lookupAny : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄
-          → ∀ {n' N'} ⦃ _ : Named n' (DataC (AnyD n ⦃ C ⦄ ⦃ S ⦄) N') ⦄ → FoldP
-lookupAny n {D} ⦃ named C ⦄ ⦃ S ⦄ ⦃ named C' ⦄ = record
+lookupAny : ∀ {D N} (C : DataC D N) (S : SCᵈ D)
+          → ∀ {N'} (_ : DataC (AnyD C S) N') → FoldP
+lookupAny {D} C S C' = record
   { Conv    = C'
-  ; #levels = DataD.#levels (AnyD n ⦃ named C ⦄ ⦃ S ⦄)
+  ; #levels = DataD.#levels (AnyD C S)
   ; level   = id
-  ; Param   = λ ℓs → PDataD.Param (DataD.applyL (AnyD n ⦃ named C ⦄ ⦃ S ⦄) ℓs)
+  ; Param   = λ ℓs → PDataD.Param (DataD.applyL (AnyD C S) ℓs)
   ; param   = id
   ; ParamV  = constTelInfo hidden
   ; ParamN  = constTelInfo "p" ++ λ _ → "P" ∷ λ _ → []

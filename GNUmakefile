@@ -15,6 +15,7 @@ Everything.agda:
 # of cabal-install. See Issue #1001.
 	cabal run GenerateEverything
 
+.PHONY: benchmark
 benchmark : 
 	$(AGDA_EXEC) Benchmark.agda  -i. -vprofile.definitions:10
 	rm _build/*/agda/Benchmark.agdai

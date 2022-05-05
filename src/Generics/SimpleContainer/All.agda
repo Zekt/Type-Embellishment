@@ -92,20 +92,20 @@ PDataOD.index  (PredODᵖᵈ D S ℓ) _ = id
 PDataOD.applyP (PredODᵖᵈ D S ℓ) (ps , P , _) =
   PredODᶜˢ (PDataD.applyP D ps) (SC.El S ps) P (SC.pos S) (SC.coe S ps)
 
-PredOD : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄ → DataOD D
-DataOD.#levels (PredOD _ {D} ⦃ _ ⦄ ⦃ S ⦄) = suc (DataD.#levels D)
-DataOD.level   (PredOD _ {D} ⦃ _ ⦄ ⦃ S ⦄) = snd
-DataOD.applyL  (PredOD _ {D} ⦃ _ ⦄ ⦃ S ⦄) (ℓ , ℓs) = PredODᵖᵈ (DataD.applyL D ℓs) S ℓ
+PredOD : ∀ {D N} (C : (DataC D N)) (S : SCᵈ D) → DataOD D
+DataOD.#levels (PredOD {D} _ S) = suc (DataD.#levels D)
+DataOD.level   (PredOD {D} _ S) = snd
+DataOD.applyL  (PredOD {D} _ S) (ℓ , ℓs) = PredODᵖᵈ (DataD.applyL D ℓs) S ℓ
 
-PredD : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄ → DataD
-PredD n = ⌊ PredOD n ⌋ᵈ
+PredD : ∀ {D N} (C : (DataC D N)) (S : SCᵈ D) → DataD
+PredD C S = ⌊ PredOD C S ⌋ᵈ
 
-AllOD : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄
-      → ∀ {n' N'} ⦃ C' : Named n' (DataC (PredD n ⦃ C ⦄ ⦃ S ⦄) N') ⦄
-      → DataOD (PredD n ⦃ C ⦄ ⦃ S ⦄)
-AllOD n {D} ⦃ C ⦄ ⦃ S ⦄ ⦃ C' ⦄ =
-  AlgOD (forget _ _ ⦃ C' ⦄ ⦃ C ⦄ ⦃ ⌈ PredOD n ⦃ C ⦄ ⦃ S ⦄ ⌉ᵈ ⦄)
+AllOD : ∀ {D N} (C : DataC D N) (S : SCᵈ D)
+      → ∀ {N'} (C' : DataC (PredD C S) N')
+      → DataOD (PredD C S)
+AllOD {D} C S C' =
+  AlgOD (forget C' C ⌈ PredOD C S ⌉ᵈ)
 
-AllD : ∀ (n : Name) {D N} ⦃ C : Named n (DataC D N) ⦄ ⦃ S : SCᵈ D ⦄
-     → ∀ {n' N'} ⦃ C' : Named n' (DataC (PredD n ⦃ C ⦄ ⦃ S ⦄) N') ⦄ → DataD
-AllD n = ⌊ AllOD n ⌋ᵈ
+AllD : ∀ {D N} (C : (DataC D N)) (S : SCᵈ D)
+     → ∀ {N'} (C' : DataC (PredD C S) N') → DataD
+AllD C S C' = ⌊ AllOD C S C' ⌋ᵈ

@@ -25,13 +25,13 @@ record DataC (D : DataD) (N : DataT D) : Setω where
     fromN-toN : ∀ {ℓs ps is} (ns : ⟦ D ⟧ᵈ (N ℓs ps) is) → fromN (toN ns) ≡ ns
     toN-fromN : ∀ {ℓs ps is}          (n : N ℓs ps  is) → toN (fromN n ) ≡ n
 
+{-
 record Named (n : Name) (A : Setω) : Setω where
   constructor named
   field
     unNamed : A
 
 open Named public
-
 findNamed : (n : Name) (A : Setω) → ⦃ Named n A ⦄ → A
 findNamed _ _ ⦃ named a ⦄ = a
 
@@ -40,7 +40,7 @@ findDataC n = findNamed n _
 
 findDataD : ∀ (n : Name) {D N} → ⦃ Named n (DataC D N) ⦄ → DataD
 findDataD _ {D} = D
-
+-}
 record FoldP : Setω where
   field
     {Desc}   : DataD
