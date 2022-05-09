@@ -365,7 +365,8 @@
 \orcid{0000-0002-7656-6225}
 \email{vik@@iis.sinica.edu.tw}
 \affiliation{%
-  \institution{Institute of Information Science, Academia Sinica}
+  \department{Institute of Information Science}
+  \institution{Academia Sinica}
   \streetaddress{128 Academia Road, Section 2, Nankang}
   \city{Taipei}
   \country{Taiwan}
