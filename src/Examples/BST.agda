@@ -80,7 +80,7 @@ unquoteDecl data B23TreeP constructor c0 c1 c2 = defineByDataD B23TreePD B23Tree
 --         → ------------------------------------------------------
 --           B23TreeP P (suc h) l r
 
-B23TreePC = genDataC B23TreePD (genDataT ⌊ B23TreePOD ⌋ᵈ B23TreeP)
+B23TreePC = genDataC B23TreePD (genDataT B23TreePD B23TreeP)
 
 B23TreePFin : Finitary B23TreePD
 B23TreePFin = (tt ∷ tt ∷ tt ∷ [])
