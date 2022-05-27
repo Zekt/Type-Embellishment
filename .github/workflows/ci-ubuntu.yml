@@ -39,7 +39,7 @@ on:
 ########################################################################
 
 env:
-  GHC_VERSION: 8.10.7
+  GHC_VERSION: 8.8.4
   CABAL_VERSION: latest
   CABAL_BIN : $HOME/.local/bin
   CABAL_INSTALL: cabal install --installdir=$HOME/.local/bin --overwrite-policy=always --ghc-options='+RTS -M8G -RTS'
