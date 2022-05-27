@@ -24,10 +24,9 @@ data Λ : Set where
   app : Λ → Λ → Λ
   lam : Λ → Λ
 
-instance
-  UntypedTermC : Named (quote Λ) _
-  unNamed UntypedTermC = genDataC UntypedTermD (genDataT UntypedTermD Λ)
-    where UntypedTermD = genDataD Λ
+UntypedTermD = genDataD Λ
+UntypedTermT = genDataT UntypedTermD Λ
+UntypedTermC = genDataC UntypedTermD UntypedTermT
 
 --------
 -- Simply typed λ-calculus
@@ -59,30 +58,28 @@ data _⊢_ : List Ty → Ty → Set where
       → ----------
         Γ ⊢ τ ⇒ τ'
 
-instance
+TypedTermD = genDataD _⊢_
+TypedTermT = genDataT TypedTermD _⊢_
+TypedTermC = genDataC TypedTermD TypedTermT
 
-  TypedTermC : Named (quote _⊢_) _
-  unNamed TypedTermC = genDataC TypedTermD (genDataT TypedTermD _⊢_)
-    where TypedTermD = genDataD _⊢_
+TypedTermO : DataO TypedTermD UntypedTermD
+TypedTermO = record
+  { level  = λ _ → tt
+  ; applyL = λ _ → record
+      { param  = λ _ → tt
+      ; index  = λ _ _ → tt
+      ; applyP = λ _ → (Δ[ Γ ] Δ[ τ ] Δ[ i ] ∇ (toℕ i) ι)
+                  ∷ ∺ (Δ[ Γ ] Δ[ τ ] Δ[ τ' ] ρ ι (ρ ι ι))
+                  ∷ ∺ (Δ[ τ ] Δ[ Γ ] Δ[ τ' ] ρ ι ι) ∷ ∺ [] } }
 
-  TypedTermO : DataO (findDataD (quote _⊢_)) (findDataD (quote Λ))
-  TypedTermO = record
-    { level  = λ _ → tt
-    ; applyL = λ _ → record
-        { param  = λ _ → tt
-        ; index  = λ _ _ → tt
-        ; applyP = λ _ → (Δ[ Γ ] Δ[ τ ] Δ[ i ] ∇ (toℕ i) ι)
-                    ∷ ∺ (Δ[ Γ ] Δ[ τ ] Δ[ τ' ] ρ ι (ρ ι ι))
-                    ∷ ∺ (Δ[ τ ] Δ[ Γ ] Δ[ τ' ] ρ ι ι) ∷ ∺ [] } }
-
-  TypedTermFin : Finitary (findDataD (quote _⊢_))
-  TypedTermFin = (tt ∷ tt ∷ tt ∷ [])
-               ∷ (tt ∷ tt ∷ tt ∷ refl ∷ refl ∷ [])
-               ∷ (tt ∷ tt ∷ tt ∷ refl ∷ []) ∷ []
+TypedTermFin : Finitary TypedTermD
+TypedTermFin = (tt ∷ tt ∷ tt ∷ [])
+             ∷ (tt ∷ tt ∷ tt ∷ refl ∷ refl ∷ [])
+             ∷ (tt ∷ tt ∷ tt ∷ refl ∷ []) ∷ []
 
 private
   toΛP : FoldP
-  toΛP = forget (quote _⊢_) (quote Λ)
+  toΛP = forget TypedTermC UntypedTermC TypedTermO
 
 unquoteDecl toΛ = defineFold toΛP toΛ
 -- toΛ : Γ ⊢ τ → Λ
@@ -96,10 +93,10 @@ instance toΛC = genFoldC toΛP toΛ
 -- Typing relation as an algebraic ornamentation
 
 private
-  TypingOD : DataOD (findDataD (quote _⊢_))
+  TypingOD : DataOD TypedTermD
   TypingOD = AlgOD toΛP
 
-instance TypingO = ⌈ TypingOD ⌉ᵈ
+TypingO = ⌈ TypingOD ⌉ᵈ
 
 infix 3 _⊢_∶_
 
@@ -119,19 +116,19 @@ data _⊢_∶_ : List Ty → Λ → Ty → Set₀ where
       → ----------------------
         Γ ⊢ lam t ∶ τ ⇒ τ'
 
-instance
-  TypingC : Named (quote _⊢_∶_) _
-  unNamed TypingC = genDataC ⌊ TypingOD ⌋ᵈ TypingT
-    where
-      TypingT : DataT ⌊ TypingOD ⌋ᵈ
-      TypingT tt tt ((Γ , τ , tt) , t , tt) = Γ ⊢ t ∶ τ
+TypingD = ⌊ TypingOD ⌋ᵈ
+
+TypingT : DataT TypingD
+TypingT tt tt ((Γ , τ , tt) , t , tt) = Γ ⊢ t ∶ τ
+
+TypingC = genDataC TypingD TypingT
 
 --------
 -- Conversion between intrinsically and extrinsically typed terms
 
 private
   fromTypingP : FoldP
-  fromTypingP = forget (quote _⊢_∶_) (quote _⊢_)
+  fromTypingP = forget TypingC TypedTermC ⌈ TypingOD ⌉ᵈ
 
 unquoteDecl fromTyping = defineFold fromTypingP fromTyping
 -- fromTyping : ∀ {t} → Γ ⊢ t ∶ τ → Γ ⊢ τ
@@ -139,11 +136,11 @@ unquoteDecl fromTyping = defineFold fromTypingP fromTyping
 -- fromTyping (app d e) = app (fromTyping d) (fromTyping e)
 -- fromTyping (lam d  ) = lam (fromTyping d)
 
-instance fromTypingC = genFoldC fromTypingP fromTyping
+fromTypingC = genFoldC fromTypingP fromTyping
 
 private
   toTypingP : IndP
-  toTypingP = remember (quote _⊢_∶_)
+  toTypingP = remember toΛC TypingC
 
 unquoteDecl toTyping = defineInd toTypingP toTyping
 -- toTyping : (t : Γ ⊢ τ) → Γ ⊢ toΛ t ∶ τ
@@ -155,7 +152,7 @@ instance toTypingC = genIndC toTypingP toTyping
 
 private
   from-toTypingP : IndP
-  from-toTypingP = forget-remember-inv (quote _⊢_∶_) (quote _⊢_) (inl it)
+  from-toTypingP = forget-remember-inv toΛC TypingC fromTypingC toTypingC (inl TypedTermFin)
 
 unquoteDecl from-toTyping = defineInd from-toTypingP from-toTyping
 -- from-toTyping : (t : Γ ⊢ τ) → fromTyping (toTyping t) ≡ t
@@ -164,11 +161,11 @@ unquoteDecl from-toTyping = defineInd from-toTypingP from-toTyping
 --                                  (cong (λ n' → app n' u) (from-toTyping t))
 -- from-toTyping (lam t  ) = cong lam (from-toTyping t)
 
-instance from-toTypingC = genIndC from-toTypingP from-toTyping
+from-toTypingC = genIndC from-toTypingP from-toTyping
 
 private
   to-fromTypingP : IndP
-  to-fromTypingP = remember-forget-inv (quote _⊢_∶_) (quote _⊢_) (inl it)
+  to-fromTypingP = remember-forget-inv toΛC TypingC fromTypingC toTypingC (inl TypedTermFin)
 
 unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
 -- to-fromTyping : ∀ {t} (d : Γ ⊢ t ∶ τ)
@@ -212,4 +209,4 @@ unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
 --            refl))))))))
 --    refl
 
-instance to-fromTypingC = genIndC to-fromTypingP to-fromTyping
+to-fromTypingC = genIndC to-fromTypingP to-fromTyping

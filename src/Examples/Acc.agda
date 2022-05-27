@@ -18,29 +18,27 @@ data Acc {A : Set ℓ} (R : A → A → Set ℓ') : A → Set (ℓ ⊔ ℓ') whe
 --------
 -- Strong induction as the fold operator on Acc
 
-instance
-  AccC : Named (quote Acc) _
-  unNamed AccC = genDataC AccD (genDataT AccD Acc)
-    where AccD = genDataD Acc
+AccD = genDataD Acc
+AccC = genDataC AccD (genDataT AccD Acc)
 
 private
   foldAccP : FoldP
-  foldAccP = fold-operator (quote Acc)
+  foldAccP = fold-operator AccC
 
--- unquoteDecl foldAcc = defineFold foldAccP foldAcc
-foldAcc :
-  ∀ {ℓ'' ℓ ℓ'} {A : Set ℓ} {R : A → A → Set ℓ'} {P : A → Set ℓ''}
-  → ((x : A) → ((y : A) → R y x → P y) → P x)
-  → (x : A) → Acc R x → P x
-foldAcc p x (acc accs) = p x (λ y r → foldAcc p y (accs y r))
+unquoteDecl foldAcc = defineFold foldAccP foldAcc
+-- foldAcc :
+--   ∀ {ℓ'' ℓ ℓ'} {A : Set ℓ} {R : A → A → Set ℓ'} {P : A → Set ℓ''}
+--   → ((x : A) → ((y : A) → R y x → P y) → P x)
+--   → (x : A) → Acc R x → P x
+-- foldAcc p x (acc accs) = p x (λ y r → foldAcc p y (accs y r))
 
-instance foldAccC = genFoldC foldAccP foldAcc
+foldAccC = genFoldC foldAccP foldAcc
 
 --------
 -- Descending chains in terms of the Any predicate
 
 instance
-  AccS : SCᵈ (findDataD (quote Acc))
+  AccS : SCᵈ AccD
   AccS = record
     { El  = λ (A , _) → A
     ; pos = (true ∷ tt ∷ []) ∷ []
@@ -48,23 +46,21 @@ instance
 
 private
   AccAnyD : DataD
-  AccAnyD = AnyD (quote Acc)
+  AccAnyD = AnyD AccC AccS
 
--- unquoteDecl data AccAny constructor c0 c1 = defineByDataD AccAnyD AccAny (c0 ∷ c1 ∷ [])
-data AccAny {ℓ'' ℓ ℓ'} {A : Set ℓ} {R : A → A → Set ℓ'}
-  (P : A → Set ℓ'') : (x : A) → Acc R x → Set (ℓ ⊔ ℓ' ⊔ ℓ'') where
-  here  : ∀ {x accs} → P x → AccAny P x (acc accs)
-  there : ∀ {x accs y} (r : R y x)
-        → AccAny P y (accs y r) → AccAny P x (acc accs)
+unquoteDecl data AccAny constructor c0 c1 = defineByDataD AccAnyD AccAny (c0 ∷ c1 ∷ [])
+-- data AccAny {ℓ'' ℓ ℓ'} {A : Set ℓ} {R : A → A → Set ℓ'}
+--   (P : A → Set ℓ'') : (x : A) → Acc R x → Set (ℓ ⊔ ℓ' ⊔ ℓ'') where
+--   here  : ∀ {x accs} → P x → AccAny P x (acc accs)
+--   there : ∀ {x accs y} (r : R y x)
+--         → AccAny P y (accs y r) → AccAny P x (acc accs)
 
-instance
-  AccAnyC : Named (quote AccAny) _
-  unNamed AccAnyC = genDataC AccAnyD AccAnyT
-    where AccAnyT = genDataT AccAnyD AccAny
+AccAnyT = genDataT AccAnyD AccAny
+AccAnyC = genDataC AccAnyD AccAnyT
 
 private
   lookupAnyAccP : FoldP
-  lookupAnyAccP = lookupAny (quote Acc)
+  lookupAnyAccP = lookupAny AccC AccS AccAnyC
 
 unquoteDecl lookupAnyAcc = defineFold lookupAnyAccP lookupAnyAcc
 -- lookupAnyAcc :
@@ -73,4 +69,4 @@ unquoteDecl lookupAnyAcc = defineFold lookupAnyAccP lookupAnyAcc
 -- lookupAnyAcc (here p   ) = _ , p
 -- lookupAnyAcc (there _ i) = lookupAnyAcc i
 
-instance lookupAnyAccC = genFoldC lookupAnyAccP lookupAnyAcc
+lookupAnyAccC = genFoldC lookupAnyAccP lookupAnyAcc

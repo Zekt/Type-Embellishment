@@ -289,10 +289,10 @@ fromAllC = genFoldC fromAllP fromAll
 toAllP : IndP
 toAllP = remember fromListPC ListAllC -- (quote ListAll)
 
--- unquoteDecl toAll = defineInd toAllP toAll
-toAll : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} (aps : ListP P) → ListAll P (fromListP aps)
-toAll []               = []
-toAll (⟨ a , p ⟩∷ aps) = p ∷ toAll aps
+unquoteDecl toAll = defineInd toAllP toAll
+-- toAll : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} (aps : ListP P) → ListAll P (fromListP aps)
+-- toAll []               = []
+-- toAll (⟨ a , p ⟩∷ aps) = p ∷ toAll aps
 
 toAllC = genIndC toAllP toAll
 
