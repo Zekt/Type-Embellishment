@@ -1,5 +1,5 @@
 AGDA_BIN    ?= agda
-RTS_OPTIONS ?= +RTS -M14G -H3.5G -A128M -s -RTS
+RTS_OPTIONS ?= +RTS -M8G -H3.5G -A128M -s -RTS
 AGDA_EXEC   = $(AGDA_BIN) $(RTS_OPTIONS)
 
 test: Everything.agda
