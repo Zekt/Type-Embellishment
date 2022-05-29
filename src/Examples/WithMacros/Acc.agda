@@ -1,6 +1,6 @@
 {-# OPTIONS --safe --with-K #-}
 
-module Examples.Acc where
+module Examples.WithMacros.Acc where
 
 open import Prelude hiding (lookupAny)
 

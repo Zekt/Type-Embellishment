@@ -1,6 +1,6 @@
 {-# OPTIONS --safe --with-K #-}
 
-module Examples.BST where
+module Examples.WithMacros.BST where
 
 open import Prelude hiding (lookupAny)
 
@@ -65,16 +65,16 @@ B23TreePD = ⌊ B23TreePOD ⌋ᵈ
 
 unquoteDecl data B23TreeP constructor c0 c1 c2 = defineByDataD B23TreePD B23TreeP (c0 ∷ c1 ∷ c2 ∷ [])
 -- data B23TreeP (P : Value → Set ℓ) : Height → Value → Value → Set ℓ where
--- 
+--
 --   node₀ : ⦃ l ≤ r ⦄
 --         → ----------------
 --           B23TreeP P 0 l r
--- 
+--
 --   node₂ : (x : Value) → P x
 --         → B23TreeP P h l x → B23TreeP P h x r
 --         → -----------------------------------
 --           B23TreeP P (suc h) l r
--- 
+--
 --   node₃ : (x : Value) → P x → (y : Value) → P y
 --         → B23TreeP P h l x → B23TreeP P h x y → B23TreeP P h y r
 --         → ------------------------------------------------------
@@ -139,20 +139,20 @@ unquoteDecl toAll = defineInd toAllP toAll
 
 toAllC = genIndC toAllP toAll
 
-from-toAllP : IndP
-from-toAllP = forget-remember-inv toB23TreeC B23TreeAllC fromAllC toAllC (inl B23TreePFin)
+--from-toAllP : IndP
+--from-toAllP = forget-remember-inv toB23TreeC B23TreeAllC fromAllC toAllC (inl B23TreePFin)
 
-unquoteDecl from-toAll = defineInd from-toAllP from-toAll
+--unquoteDecl from-toAll = defineInd from-toAllP from-toAll
 
-from-toAllC = genIndC from-toAllP from-toAll
+--from-toAllC = genIndC from-toAllP from-toAll
 
-to-fromAllP : IndP
-to-fromAllP = remember-forget-inv toB23TreeC B23TreeAllC fromAllC toAllC (inl B23TreePFin)
+--to-fromAllP : IndP
+--to-fromAllP = remember-forget-inv toB23TreeC B23TreeAllC fromAllC toAllC (inl B23TreePFin)
 
-unquoteDecl to-fromAll = defineInd to-fromAllP to-fromAll
+--unquoteDecl to-fromAll = defineInd to-fromAllP to-fromAll
 
 
-to-fromAllC = genIndC to-fromAllP to-fromAll
+--to-fromAllC = genIndC to-fromAllP to-fromAll
 
 --------
 -- Any predicate
@@ -160,21 +160,21 @@ to-fromAllC = genIndC to-fromAllP to-fromAll
 B23TreeAnyD : DataD
 B23TreeAnyD = ⌊ AnyOD B23TreeC B23TreeS ⌋ᵈ
 
--- unquoteDecl data B23TreeAny constructor c0 c1 c2 c3 c4 c5 c6 c7 = defineByDataD B23TreeAnyD B23TreeAny (c0 ∷ c1 ∷ c2 ∷ c3 ∷ c4 ∷ c5 ∷ c6 ∷ c7 ∷ [])
-data B23TreeAny (P : Value → Set ℓ) : ∀ {h l r} → B23Tree h l r → Set ℓ where
-  node₂-here   : ∀ {x   t u  } → P x → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
-  node₃-here₀  : ∀ {x y t u v} → P x → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
-  node₃-here₁  : ∀ {x y t u v} → P y → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
-  node₂-there₀ : ∀ {x   t u  } → B23TreeAny P t
-               → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
-  node₂-there₁ : ∀ {x   t u  } → B23TreeAny P u
-               → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
-  node₃-there₀ : ∀ {x y t u v} → B23TreeAny P t
-               → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
-  node₃-there₁ : ∀ {x y t u v} → B23TreeAny P u
-               → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
-  node₃-there₂ : ∀ {x y t u v} → B23TreeAny P v
-               → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
+unquoteDecl data B23TreeAny constructor b23any0 b23any1 b23any2 b23any3 b23any4 b23any5 b23any6 b23any7 = defineByDataD B23TreeAnyD B23TreeAny (b23any0 ∷ b23any1 ∷ b23any2 ∷ b23any3 ∷ b23any4 ∷ b23any5 ∷ b23any6 ∷ b23any7 ∷ [])
+--data B23TreeAny (P : Value → Set ℓ) : ∀ {h l r} → B23Tree h l r → Set ℓ where
+--  node₂-here   : ∀ {x   t u  } → P x → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
+--  node₃-here₀  : ∀ {x y t u v} → P x → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
+--  node₃-here₁  : ∀ {x y t u v} → P y → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
+--  node₂-there₀ : ∀ {x   t u  } → B23TreeAny P t
+--               → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
+--  node₂-there₁ : ∀ {x   t u  } → B23TreeAny P u
+--               → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
+--  node₃-there₀ : ∀ {x y t u v} → B23TreeAny P t
+--               → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
+--  node₃-there₁ : ∀ {x y t u v} → B23TreeAny P u
+--               → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
+--  node₃-there₂ : ∀ {x y t u v} → B23TreeAny P v
+--               → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
 
 B23TreeAnyT = genDataT B23TreeAnyD B23TreeAny
 B23TreeAnyC = genDataC B23TreeAnyD B23TreeAnyT

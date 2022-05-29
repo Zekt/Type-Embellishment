@@ -1,6 +1,6 @@
 {-# OPTIONS --safe --without-K #-}
 
-module Examples.Nat where
+module Examples.WithMacros.Nat where
 
 open import Prelude
 

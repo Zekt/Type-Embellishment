@@ -1,6 +1,6 @@
 {-# OPTIONS --safe --with-K #-}
 
-module Examples.STLC where
+module Examples.WithMacros.STLC where
 
 open import Prelude
 
@@ -13,8 +13,8 @@ open import Generics.Ornament.Description
 open import Generics.Ornament.Algebraic
 open import Generics.Ornament.Algebraic.Isomorphism
 
-open import Examples.Nat
-open import Examples.List
+open import Examples.WithMacros.Nat
+open import Examples.WithMacros.List
 
 --------
 -- Untyped λ-calculus
@@ -100,21 +100,23 @@ TypingO = ⌈ TypingOD ⌉ᵈ
 
 infix 3 _⊢_∶_
 
--- unquoteDecl data Typing constructor c0 c1 c2 = defineByDataD ⌊ TypingOD ⌋ᵈ Typing (c0 ∷ c1 ∷ c2 ∷ [])
-data _⊢_∶_ : List Ty → Λ → Ty → Set₀ where
-
-  var : (i : Γ ∋ τ)
-      → -------------------
-        Γ ⊢ var (toℕ i) ∶ τ
-
-  app : ∀ {t} → Γ ⊢ t ∶ τ ⇒ τ'
-      → ∀ {u} → Γ ⊢ u ∶ τ
-      → ----------------------
-        Γ ⊢ app t u ∶ τ'
-
-  lam : ∀ {t} → τ ∷ Γ ⊢ t ∶ τ'
-      → ----------------------
-        Γ ⊢ lam t ∶ τ ⇒ τ'
+unquoteDecl data Typing constructor c0 c1 c2 = defineByDataD ⌊ TypingOD ⌋ᵈ Typing (c0 ∷ c1 ∷ c2 ∷ [])
+_⊢_∶_ : List Ty → Λ → Ty → Set
+_⊢_∶_ a b c = Typing a c b
+--data _⊢_∶_ : List Ty → Λ → Ty → Set₀ where
+--
+--  var : (i : Γ ∋ τ)
+--      → -------------------
+--        Γ ⊢ var (toℕ i) ∶ τ
+--
+--  app : ∀ {t} → Γ ⊢ t ∶ τ ⇒ τ'
+--      → ∀ {u} → Γ ⊢ u ∶ τ
+--      → ----------------------
+--        Γ ⊢ app t u ∶ τ'
+--
+--  lam : ∀ {t} → τ ∷ Γ ⊢ t ∶ τ'
+--      → ----------------------
+--        Γ ⊢ lam t ∶ τ ⇒ τ'
 
 TypingD = ⌊ TypingOD ⌋ᵈ
 
@@ -150,24 +152,24 @@ unquoteDecl toTyping = defineInd toTypingP toTyping
 
 instance toTypingC = genIndC toTypingP toTyping
 
-private
-  from-toTypingP : IndP
-  from-toTypingP = forget-remember-inv toΛC TypingC fromTypingC toTypingC (inl TypedTermFin)
+--private
+--  from-toTypingP : IndP
+--  from-toTypingP = forget-remember-inv toΛC TypingC fromTypingC toTypingC (inl TypedTermFin)
 
-unquoteDecl from-toTyping = defineInd from-toTypingP from-toTyping
+--unquoteDecl from-toTyping = defineInd from-toTypingP from-toTyping
 -- from-toTyping : (t : Γ ⊢ τ) → fromTyping (toTyping t) ≡ t
 -- from-toTyping (var i  ) = refl
 -- from-toTyping (app t u) = trans' (cong (app (fromTyping (toTyping t))) (from-toTyping u))
 --                                  (cong (λ n' → app n' u) (from-toTyping t))
 -- from-toTyping (lam t  ) = cong lam (from-toTyping t)
 
-from-toTypingC = genIndC from-toTypingP from-toTyping
+--from-toTypingC = genIndC from-toTypingP from-toTyping
 
-private
-  to-fromTypingP : IndP
-  to-fromTypingP = remember-forget-inv toΛC TypingC fromTypingC toTypingC (inl TypedTermFin)
+--private
+--  to-fromTypingP : IndP
+--  to-fromTypingP = remember-forget-inv toΛC TypingC fromTypingC toTypingC (inl TypedTermFin)
 
-unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
+--unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
 -- to-fromTyping : ∀ {t} (d : Γ ⊢ t ∶ τ)
 --               → (toΛ (fromTyping d) , toTyping (fromTyping d))
 --               ≡ ((t , d) ⦂ Σ[ t' ∈ Λ ] Γ ⊢ t' ∶ τ)  -- [FAIL] manual type annotation
@@ -209,4 +211,4 @@ unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
 --            refl))))))))
 --    refl
 
-to-fromTypingC = genIndC to-fromTypingP to-fromTyping
+--to-fromTypingC = genIndC to-fromTypingP to-fromTyping
