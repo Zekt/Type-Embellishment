@@ -159,11 +159,11 @@ unquoteDecl toAll = defineInd toAllP toAll
 
 instance toAllC = genIndC toAllP toAll
 
-private
-  from-toAllP : IndP
-  from-toAllP = forget-remember-inv (quote B23TreeAll) (quote B23TreeP) (inl it)
-
-unquoteDecl from-toAll = defineInd from-toAllP from-toAll
+--private
+--  from-toAllP : IndP
+--  from-toAllP = forget-remember-inv (quote B23TreeAll) (quote B23TreeP) (inl it)
+--
+--unquoteDecl from-toAll = defineInd from-toAllP from-toAll
 -- from-toAll : ∀ {P : Value → Set ℓ} {h l r} (t : B23TreeP P h l r) → fromAll (toAll t) ≡ t
 -- from-toAll  node₀ = refl
 -- from-toAll (node₂ x p t u) =
@@ -180,13 +180,13 @@ unquoteDecl from-toAll = defineInd from-toAllP from-toAll
 --      (from-toAll u))
 --     (cong (λ n' → node₃ x p y q n' u v) (from-toAll t)))
 
-instance from-toAllC = genIndC from-toAllP from-toAll
-
-private
-  to-fromAllP : IndP
-  to-fromAllP = remember-forget-inv (quote B23TreeAll) (quote B23TreeP) (inl it)
-
-unquoteDecl to-fromAll = defineInd to-fromAllP to-fromAll
+--instance from-toAllC = genIndC from-toAllP from-toAll
+--
+--private
+--  to-fromAllP : IndP
+--  to-fromAllP = remember-forget-inv (quote B23TreeAll) (quote B23TreeP) (inl it)
+--
+--unquoteDecl to-fromAll = defineInd to-fromAllP to-fromAll
 -- to-fromAll : ∀ {P : Value → Set ℓ} {h l r} {t : B23Tree h l r} (allt : B23TreeAll P t)
 --            → (toB23Tree (fromAll allt) , toAll (fromAll allt))
 --            ≡ ((t , allt) ⦂ Σ[ t' ∈ B23Tree h l r ] B23TreeAll P t')
@@ -256,7 +256,7 @@ unquoteDecl to-fromAll = defineInd to-fromAllP to-fromAll
 --                    refl))))))))))))))))
 --    refl
 
-instance to-fromAllC = genIndC to-fromAllP to-fromAll
+--instance to-fromAllC = genIndC to-fromAllP to-fromAll
 
 --------
 -- Any predicate

@@ -104,6 +104,8 @@ instance TypingO = ⌈ TypingOD ⌉ᵈ
 infix 3 _⊢_∶_
 
 unquoteDecl data Typing constructor typ0 typ1 typ2 = defineByDataD ⌊ TypingOD ⌋ᵈ Typing (typ0 ∷ typ1 ∷ typ2 ∷ [])
+_⊢_∶_ : List Ty → Λ → Ty → Set
+_⊢_∶_ a b c = Typing a c b
 --data _⊢_∶_ : List Ty → Λ → Ty → Set₀ where
 --
 --  var : (i : Γ ∋ τ)
@@ -153,24 +155,24 @@ unquoteDecl toTyping = defineInd toTypingP toTyping
 
 instance toTypingC = genIndC toTypingP toTyping
 
-private
-  from-toTypingP : IndP
-  from-toTypingP = forget-remember-inv (quote _⊢_∶_) (quote _⊢_) (inl it)
+--private
+--  from-toTypingP : IndP
+--  from-toTypingP = forget-remember-inv (quote _⊢_∶_) (quote _⊢_) (inl it)
 
-unquoteDecl from-toTyping = defineInd from-toTypingP from-toTyping
+--unquoteDecl from-toTyping = defineInd from-toTypingP from-toTyping
 -- from-toTyping : (t : Γ ⊢ τ) → fromTyping (toTyping t) ≡ t
 -- from-toTyping (var i  ) = refl
 -- from-toTyping (app t u) = trans' (cong (app (fromTyping (toTyping t))) (from-toTyping u))
 --                                  (cong (λ n' → app n' u) (from-toTyping t))
 -- from-toTyping (lam t  ) = cong lam (from-toTyping t)
 
-instance from-toTypingC = genIndC from-toTypingP from-toTyping
+--instance from-toTypingC = genIndC from-toTypingP from-toTyping
 
-private
-  to-fromTypingP : IndP
-  to-fromTypingP = remember-forget-inv (quote _⊢_∶_) (quote _⊢_) (inl it)
+--private
+--  to-fromTypingP : IndP
+--  to-fromTypingP = remember-forget-inv (quote _⊢_∶_) (quote _⊢_) (inl it)
 
-unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
+--unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
 -- to-fromTyping : ∀ {t} (d : Γ ⊢ t ∶ τ)
 --               → (toΛ (fromTyping d) , toTyping (fromTyping d))
 --               ≡ ((t , d) ⦂ Σ[ t' ∈ Λ ] Γ ⊢ t' ∶ τ)  -- [FAIL] manual type annotation
@@ -212,4 +214,4 @@ unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
 --            refl))))))))
 --    refl
 
-instance to-fromTypingC = genIndC to-fromTypingP to-fromTyping
+--instance to-fromTypingC = genIndC to-fromTypingP to-fromTyping

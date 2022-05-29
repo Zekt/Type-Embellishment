@@ -22,38 +22,43 @@ open import Examples.WithoutMacros.Nat
 --------
 -- Connecting with the existing List datatype
 
-instance
-
-  ListC : Named (quote List) _
-  unNamed ListC = genDataC ListD (genDataT ListD List)
-    where ListD = genDataD List
-
-  ListO : DataO (findDataD (quote List)) (findDataD (quote ℕ))
-  ListO = record
-    { level  = λ _ → tt
-    ; applyL = λ (ℓ , _) → record
-        { param  = λ _ → tt
-        ; index  = λ _ _ → tt
-        ; applyP = λ _ → ι ∷ ∺ (Δ[ _ ] ρ ι ι) ∷ ∺ [] } }
-
-  ListFin : Finitary (findDataD (quote List))
-  ListFin = [] ∷ (tt ∷ refl ∷ []) ∷ []
-
-  ListS : SCᵈ (findDataD (quote List))
-  ListS = record
-    { El  = λ (A , _) → A
-    ; pos = [] ∷ (true ∷ tt ∷ []) ∷ []
-    ; coe = λ _ → lift tt ,ωω (refl ,ωω λ _ → lift tt) ,ωω lift tt }
-
---------
--- Connecting with the existing foldr function and deriving the fold fusion theorem
-
-private
-  foldListP : FoldP
-  foldListP = fold-operator (quote List)
+--instance
+--
+--  ListC : Named (quote List) _
+--  unNamed ListC = genDataC ListD (genDataT ListD List)
+--    where ListD = genDataD List
+--
+--  ListO : DataO (findDataD (quote List)) (findDataD (quote ℕ))
+--  ListO = record
+--    { level  = λ _ → tt
+--    ; applyL = λ (ℓ , _) → record
+--        { param  = λ _ → tt
+--        ; index  = λ _ _ → tt
+--        ; applyP = λ _ → ι ∷ ∺ (Δ[ _ ] ρ ι ι) ∷ ∺ [] } }
+--
+--  ListFin : Finitary (findDataD (quote List))
+--  ListFin = [] ∷ (tt ∷ refl ∷ []) ∷ []
+--
+--  ListS : SCᵈ (findDataD (quote List))
+--  ListS = record
+--    { El  = λ (A , _) → A
+--    ; pos = [] ∷ (true ∷ tt ∷ []) ∷ []
+--    ; coe = λ _ → lift tt ,ωω (refl ,ωω λ _ → lift tt) ,ωω lift tt }
+--
+----------
+---- Connecting with the existing foldr function and deriving the fold fusion theorem
+--
+--private
+--  foldListP : FoldP
+--  foldListP = fold-operator (quote List)
 
 -- Generate foldList and its wrapper and connection, and then replace it with foldr
-unquoteDecl foldList = defineFold foldListP foldList
+--unquoteDecl foldList = defineFold foldListP foldList
+foldList : {ℓ ℓ1 : Level} {p : Set ℓ1} {X : Set ℓ} (alg : X)
+           (alg1 : (a : p) (z : X) → X) (l : List p) →
+           X
+foldList alg alg₁ [] = alg
+foldList alg alg₁ (x ∷ xs) = alg₁ x (foldList alg alg₁ xs)
 
 --instance
 --  foldrC = genFoldC' foldListP foldrT
@@ -93,34 +98,34 @@ data AlgList {ℓ' ℓ} {A : Set ℓ} {B : Set ℓ'}
 
 --instance AlgListC = genDataC ⌊ AlgListOD ⌋ᵈ (genDataT ⌊ AlgListOD ⌋ᵈ AlgList)
 --
-private
-  lengthP : FoldP
-  lengthP = forget (quote List) (quote ℕ)
+--private
+--  lengthP : FoldP
+--  lengthP = forget (quote List) (quote ℕ)
 
-instance lengthC = genFoldC lengthP length
+--instance lengthC = genFoldC lengthP length
 
-private
-  VecOD : DataOD (findDataD (quote List))
-  VecOD = AlgOD lengthP
+--private
+--  VecOD : DataOD (findDataD (quote List))
+--  VecOD = AlgOD lengthP
 
-instance VecO = ⌈ VecOD ⌉ᵈ
+--instance VecO = ⌈ VecOD ⌉ᵈ
 
 -- unquoteDecl data Vec constructor c0 c1 = defineByDataD ⌊ VecOD ⌋ᵈ Vec (c0 ∷ c1 ∷ [])
 data Vec (A : Set ℓ) : (n : ℕ) → Set ℓ where
   []  : Vec A 0
   _∷_ : (a : A) {n : ℕ} → Vec A n → Vec A (suc n)
 
-instance
-
-  VecC : Named (quote Vec) _
-  unNamed VecC = genDataC ⌊ VecOD ⌋ᵈ (genDataT ⌊ VecOD ⌋ᵈ Vec)
+--instance
+--
+--  VecC : Named (quote Vec) _
+--  unNamed VecC = genDataC ⌊ VecOD ⌋ᵈ (genDataT ⌊ VecOD ⌋ᵈ Vec)
 
 --  VecFin : Finitary ⌊ VecOD ⌋ᵈ
 --  VecFin = [] ∷ (tt ∷ tt ∷ refl ∷ []) ∷ []
 --
-private
-  fromVecP : FoldP
-  fromVecP = forget (quote Vec) (quote List)
+--private
+--  fromVecP : FoldP
+--  fromVecP = forget (quote Vec) (quote List)
 
 -- unquoteDecl fromVec = defineFold fromVecP fromVec
 fromVec : {A : Set ℓ} {n : ℕ} (v : Vec A n) → List A
@@ -156,38 +161,38 @@ from-toVec (a ∷ as) = cong (_∷_ a) (from-toVec as)
 --  to-fromVecP = remember-forget-inv (quote Vec) (quote List) (inl it)
 --
 -- unquoteDecl to-fromVec = defineInd to-fromVecP to-fromVec
-to-fromVec : {A : Set ℓ} {n : ℕ} (as : Vec A n) →
-             (length (fromVec as) , toVec (fromVec as)) ≡ ((n , as) ⦂ Σ ℕ (Vec A))
-to-fromVec [] = refl
-to-fromVec {ℓ} (a ∷ as) =
-  trans
-   (cong {ℓ}
-    (bimap {lzero} (λ x₁ → x₁) (DataC.toN (findDataC (quote Vec))))
-    (cong (bimap {lzero} (λ x₁ → x₁) inr)
-     (cong (bimap (λ x₁ → x₁) inl)
-      (cong (bimap (λ x₁ → x₁) (λ section → a , section))
-       (trans
-        (cong (λ p₁ → suc (fst p₁) , fst p₁ , snd p₁ , refl)
-         (to-fromVec as))
-        refl)))))
-   refl
+--to-fromVec : {A : Set ℓ} {n : ℕ} (as : Vec A n) →
+--             (length (fromVec as) , toVec (fromVec as)) ≡ ((n , as) ⦂ Σ ℕ (Vec A))
+--to-fromVec [] = refl
+--to-fromVec {ℓ} (a ∷ as) =
+--  trans
+--   (cong {ℓ}
+--    (bimap {lzero} (λ x₁ → x₁) (DataC.toN (findDataC (quote Vec))))
+--    (cong (bimap {lzero} (λ x₁ → x₁) inr)
+--     (cong (bimap (λ x₁ → x₁) inl)
+--      (cong (bimap (λ x₁ → x₁) (λ section → a , section))
+--       (trans
+--        (cong (λ p₁ → suc (fst p₁) , fst p₁ , snd p₁ , refl)
+--         (to-fromVec as))
+--        refl)))))
+--   refl
 
 --instance to-fromVecC = genIndC to-fromVecP to-fromVec
 --
-private
-  LenOD : DataOD (findDataD (quote Vec))
-  LenOD = AlgOD fromVecP
+--private
+--  LenOD : DataOD (findDataD (quote Vec))
+--  LenOD = AlgOD fromVecP
 
-instance LenO = ⌈ LenOD ⌉ᵈ
+--instance LenO = ⌈ LenOD ⌉ᵈ
 
 -- unquoteDecl data Len constructor c0 c1 = defineByDataD ⌊ LenOD ⌋ᵈ Len (c0 ∷ c1 ∷ [])
 data Len {A : Set ℓ} : ℕ → List A → Set ℓ where
   zero : Len 0 []
   suc  : {a : A} {n : ℕ} {as : List A} → Len n as → Len (suc n) (a ∷ as)
 
-instance
-  LenC : Named (quote Len) _
-  unNamed LenC = genDataC ⌊ LenOD ⌋ᵈ (genDataT ⌊ LenOD ⌋ᵈ Len)
+--instance
+--  LenC : Named (quote Len) _
+--  unNamed LenC = genDataC ⌊ LenOD ⌋ᵈ (genDataT ⌊ LenOD ⌋ᵈ Len)
 
 --private
 --  fromLenP : FoldP
@@ -227,22 +232,22 @@ from-toLen (a ∷ as) = cong (_∷_ a) (from-toLen as)
 --  to-fromLenP = remember-forget-inv (quote Len) (quote Vec) (inl it)
 --
 -- unquoteDecl to-fromLen = defineInd to-fromLenP to-fromLen
-to-fromLen : {A : Set ℓ} {n : ℕ} {as : List A} (l : Len n as)
-           → (fromVec (fromLen l) , toLen (fromLen l))
-           ≡ ((as , l) ⦂ Σ[ as' ∈ List A ] Len n as')
-to-fromLen                      zero   = refl
-to-fromLen {ℓ} {n = suc n} {a ∷ _} (suc l) =
-  trans
-   (cong
-    (bimap (λ x → x) (DataC.toN (findDataC (quote Len))))
-    (cong (bimap (λ x → x) inr)
-     (cong (bimap (λ x → x) inl)
-      (cong (bimap (λ x → x) (λ section → a , section))
-       (cong (bimap (λ x → x) (λ section → n , section))
-        (trans
-         (cong (λ p → a ∷ fst p , fst p , snd p , refl) (to-fromLen l))
-         refl))))))
-   refl
+--to-fromLen : {A : Set ℓ} {n : ℕ} {as : List A} (l : Len n as)
+--           → (fromVec (fromLen l) , toLen (fromLen l))
+--           ≡ ((as , l) ⦂ Σ[ as' ∈ List A ] Len n as')
+--to-fromLen                      zero   = refl
+--to-fromLen {ℓ} {n = suc n} {a ∷ _} (suc l) =
+--  trans
+--   (cong
+--    (bimap (λ x → x) (DataC.toN (findDataC (quote Len))))
+--    (cong (bimap (λ x → x) inr)
+--     (cong (bimap (λ x → x) inl)
+--      (cong (bimap (λ x → x) (λ section → a , section))
+--       (cong (bimap (λ x → x) (λ section → n , section))
+--        (trans
+--         (cong (λ p → a ∷ fst p , fst p , snd p , refl) (to-fromLen l))
+--         refl))))))
+--   refl
 
 --instance to-fromLenC = genIndC to-fromLenP to-fromLen
 --
@@ -255,11 +260,11 @@ to-fromLen {ℓ} {n = suc n} {a ∷ _} (suc l) =
 --
 --instance ListPO = ⌈ ListPOD ⌉ᵈ
 --
----- unquoteDecl data ListP constructor c0 c1 = defineByDataD ⌊ ListPOD ⌋ᵈ ListP (c0 ∷ c1 ∷ [])
---data ListP {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
---  []      : ListP P
---  ⟨_,_⟩∷_ : (a : A) → P a → ListP P → ListP P
---
+-- unquoteDecl data ListP constructor c0 c1 = defineByDataD ⌊ ListPOD ⌋ᵈ ListP (c0 ∷ c1 ∷ [])
+data ListP {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
+  []      : ListP P
+  ⟨_,_⟩∷_ : (a : A) → P a → ListP P → ListP P
+
 --instance
 --
 --  ListPC : Named (quote ListP) _
@@ -272,11 +277,11 @@ to-fromLen {ℓ} {n = suc n} {a ∷ _} (suc l) =
 --  fromListPP : FoldP
 --  fromListPP = forget (quote ListP) (quote List)
 --
----- unquoteDecl fromListP = defineFold fromListPP fromListP
---fromListP : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} → ListP P → List A
---fromListP []               = []
---fromListP (⟨ a , p ⟩∷ aps) = a ∷ fromListP aps
---
+-- unquoteDecl fromListP = defineFold fromListPP fromListP
+fromListP : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} → ListP P → List A
+fromListP []               = []
+fromListP (⟨ a , p ⟩∷ aps) = a ∷ fromListP aps
+
 --instance fromListPC = genFoldC fromListPP fromListP
 --
 --private
@@ -285,11 +290,11 @@ to-fromLen {ℓ} {n = suc n} {a ∷ _} (suc l) =
 --
 --instance ListAllO = ⌈ ListAllOD ⌉ᵈ
 --
----- unquoteDecl data ListAll constructor c0 c1 = defineByDataD ⌊ ListAllOD ⌋ᵈ ListAll (c0 ∷ c1 ∷ [])
---data ListAll {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') where
---  []  : ListAll P []
---  _∷_ : {a : A} → P a → {as : List A} → ListAll P as → ListAll P (a ∷ as)
---
+-- unquoteDecl data ListAll constructor c0 c1 = defineByDataD ⌊ ListAllOD ⌋ᵈ ListAll (c0 ∷ c1 ∷ [])
+data ListAll {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') where
+  []  : ListAll P []
+  _∷_ : {a : A} → P a → {as : List A} → ListAll P as → ListAll P (a ∷ as)
+
 --instance
 --  ListAllC : Named (quote ListAll) _
 --  unNamed ListAllC = genDataC ⌊ ListAllOD ⌋ᵈ ListAllT
@@ -299,34 +304,34 @@ to-fromLen {ℓ} {n = suc n} {a ∷ _} (suc l) =
 --  fromAllP : FoldP
 --  fromAllP = forget (quote ListAll) (quote ListP)
 --
----- unquoteDecl fromAll = defineFold fromAllP fromAll
---fromAll : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} {as : List A} → ListAll P as → ListP P
---fromAll []       = []
---fromAll (p ∷ ps) = ⟨ _ , p ⟩∷ fromAll ps
---
+-- unquoteDecl fromAll = defineFold fromAllP fromAll
+fromAll : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} {as : List A} → ListAll P as → ListP P
+fromAll []       = []
+fromAll (p ∷ ps) = ⟨ _ , p ⟩∷ fromAll ps
+
 --instance fromAllC = genFoldC fromAllP fromAll
 --
 --private
 --  toAllP : IndP
 --  toAllP = remember (quote ListAll)
 --
----- unquoteDecl toAll = defineInd toAllP toAll
---toAll : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} (aps : ListP P) → ListAll P (fromListP aps)
---toAll []               = []
---toAll (⟨ a , p ⟩∷ aps) = p ∷ toAll aps
---
+-- unquoteDecl toAll = defineInd toAllP toAll
+toAll : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} (aps : ListP P) → ListAll P (fromListP aps)
+toAll []               = []
+toAll (⟨ a , p ⟩∷ aps) = p ∷ toAll aps
+
 --instance toAllC = genIndC toAllP toAll
 --
 --private
 --  from-toAllP : IndP
 --  from-toAllP = forget-remember-inv (quote ListAll) (quote ListP) (inl it)
 --
----- unquoteDecl from-toAll = defineInd from-toAllP from-toAll
---from-toAll : {ℓ' ℓ : Level} {A : Set ℓ} {P : A → Set ℓ'}
---             (aps : ListP P) → fromAll (toAll aps) ≡ aps
---from-toAll [] = refl
---from-toAll (⟨ a , p ⟩∷ aps) = cong (⟨_,_⟩∷_ a p) (from-toAll aps)
---
+-- unquoteDecl from-toAll = defineInd from-toAllP from-toAll
+from-toAll : {ℓ' ℓ : Level} {A : Set ℓ} {P : A → Set ℓ'}
+             (aps : ListP P) → fromAll (toAll aps) ≡ aps
+from-toAll [] = refl
+from-toAll (⟨ a , p ⟩∷ aps) = cong (⟨_,_⟩∷_ a p) (from-toAll aps)
+
 --instance from-toAllC = genIndC from-toAllP from-toAll
 --
 --private
@@ -363,26 +368,26 @@ to-fromLen {ℓ} {n = suc n} {a ∷ _} (suc l) =
 --
 --instance ListAnyO = ⌈ ListAnyOD ⌉ᵈ
 --
----- unquoteDecl data ListAny constructor c0 c1 = defineByDataD ⌊ ListAnyOD ⌋ᵈ ListAny (c0 ∷ c1 ∷ [])
---data ListAny {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') where
---  here  : ∀ {a as} → P a → ListAny P (a ∷ as)
---  there : ∀ {a as} → ListAny P as → ListAny P (a ∷ as)
---
+-- unquoteDecl data ListAny constructor c0 c1 = defineByDataD ⌊ ListAnyOD ⌋ᵈ ListAny (c0 ∷ c1 ∷ [])
+data ListAny {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') where
+  here  : ∀ {a as} → P a → ListAny P (a ∷ as)
+  there : ∀ {a as} → ListAny P as → ListAny P (a ∷ as)
+
 --instance
 --  ListAnyC : Named (quote ListAny) _
 --  unNamed ListAnyC = genDataC ⌊ ListAnyOD ⌋ᵈ ListAnyT
 --    where ListAnyT = genDataT ⌊ ListAnyOD ⌋ᵈ ListAny
 --
---_∋_ : {A : Set ℓ} → List A → A → Set ℓ
---xs ∋ x = ListAny (x ≡_) xs
---
+_∋_ : {A : Set ℓ} → List A → A → Set ℓ
+xs ∋ x = ListAny (x ≡_) xs
+
 --private
 --  toℕP : FoldP
 --  toℕP = forget (quote ListAny) (quote ℕ)
 --
----- unquoteDecl toℕ = defineFold toℕP toℕ
---toℕ : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} {as : List A} → ListAny P as → ℕ
---toℕ (here  p) = 0
---toℕ (there i) = suc (toℕ i)
---
+-- unquoteDecl toℕ = defineFold toℕP toℕ
+toℕ : ∀ {ℓ' ℓ} {A : Set ℓ} {P : A → Set ℓ'} {as : List A} → ListAny P as → ℕ
+toℕ (here  p) = 0
+toℕ (there i) = suc (toℕ i)
+
 --instance toℕC = genFoldC toℕP toℕ

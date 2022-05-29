@@ -140,22 +140,22 @@ unquoteDecl toVec = defineInd toVecP toVec
 
 instance toVecC = genIndC toVecP toVec
 
-private
-  from-toVecP : IndP
-  from-toVecP = forget-remember-inv (quote Vec) (quote List) (inl it)
-
-unquoteDecl from-toVec = defineInd from-toVecP from-toVec
+--private
+--  from-toVecP : IndP
+--  from-toVecP = forget-remember-inv (quote Vec) (quote List) (inl it)
+--
+--unquoteDecl from-toVec = defineInd from-toVecP from-toVec
 -- from-toVec : {A : Set ℓ} (as : List A) → fromVec (toVec as) ≡ as
 -- from-toVec []       = refl
 -- from-toVec (a ∷ as) = cong (_∷_ a) (from-toVec as)
 
-instance from-toVecC = genIndC from-toVecP from-toVec
+--instance from-toVecC = genIndC from-toVecP from-toVec
 
-private
-  to-fromVecP : IndP
-  to-fromVecP = remember-forget-inv (quote Vec) (quote List) (inl it)
+--private
+--  to-fromVecP : IndP
+--  to-fromVecP = remember-forget-inv (quote Vec) (quote List) (inl it)
 
-unquoteDecl to-fromVec = defineInd to-fromVecP to-fromVec
+--unquoteDecl to-fromVec = defineInd to-fromVecP to-fromVec
 -- to-fromVec : {A : Set ℓ} {n : ℕ} (as : Vec A n) →
 --              (length (fromVec as) , toVec (fromVec as)) ≡ ((n , as) ⦂ Σ ℕ (Vec A))
 -- to-fromVec [] = refl
@@ -172,7 +172,7 @@ unquoteDecl to-fromVec = defineInd to-fromVecP to-fromVec
 --         refl)))))
 --    refl
 
-instance to-fromVecC = genIndC to-fromVecP to-fromVec
+--instance to-fromVecC = genIndC to-fromVecP to-fromVec
 
 private
   LenOD : DataOD (findDataD (quote Vec))
@@ -212,22 +212,22 @@ unquoteDecl toLen = defineInd toLenP toLen
 
 instance toLenC = genIndC toLenP toLen
 
-private
-  from-toLenP : IndP
-  from-toLenP = forget-remember-inv (quote Len) (quote Vec) (inl it)
+--private
+--  from-toLenP : IndP
+--  from-toLenP = forget-remember-inv (quote Len) (quote Vec) (inl it)
 
-unquoteDecl from-toLen = defineInd from-toLenP from-toLen
+--unquoteDecl from-toLen = defineInd from-toLenP from-toLen
 -- from-toLen : {A : Set ℓ} {n : ℕ} (as : Vec A n) → fromLen (toLen as) ≡ as
 -- from-toLen []       = refl
 -- from-toLen (a ∷ as) = cong (_∷_ a) (from-toLen as)
 
-instance from-toLenC = genIndC from-toLenP from-toLen
+--instance from-toLenC = genIndC from-toLenP from-toLen
 
-private
-  to-fromLenP : IndP
-  to-fromLenP = remember-forget-inv (quote Len) (quote Vec) (inl it)
-
-unquoteDecl to-fromLen = defineInd to-fromLenP to-fromLen
+--private
+--  to-fromLenP : IndP
+--  to-fromLenP = remember-forget-inv (quote Len) (quote Vec) (inl it)
+--
+--unquoteDecl to-fromLen = defineInd to-fromLenP to-fromLen
 -- to-fromLen : {A : Set ℓ} {n : ℕ} {as : List A} (l : Len n as)
 --            → (fromVec (fromLen l) , toLen (fromLen l))
 --            ≡ ((as , l) ⦂ Σ[ as' ∈ List A ] Len n as')
@@ -245,7 +245,7 @@ unquoteDecl to-fromLen = defineInd to-fromLenP to-fromLen
 --          refl))))))
 --    refl
 
-instance to-fromLenC = genIndC to-fromLenP to-fromLen
+--instance to-fromLenC = genIndC to-fromLenP to-fromLen
 
 --------
 -- All predicate
@@ -318,23 +318,23 @@ unquoteDecl toAll = defineInd toAllP toAll
 
 instance toAllC = genIndC toAllP toAll
 
-private
-  from-toAllP : IndP
-  from-toAllP = forget-remember-inv (quote ListAll) (quote ListP) (inl it)
-
-unquoteDecl from-toAll = defineInd from-toAllP from-toAll
+--private
+--  from-toAllP : IndP
+--  from-toAllP = forget-remember-inv (quote ListAll) (quote ListP) (inl it)
+--
+--unquoteDecl from-toAll = defineInd from-toAllP from-toAll
 -- from-toAll : {ℓ' ℓ : Level} {A : Set ℓ} {P : A → Set ℓ'}
 --              (aps : ListP P) → fromAll (toAll aps) ≡ aps
 -- from-toAll [] = refl
 -- from-toAll (⟨ a , p ⟩∷ aps) = cong (⟨_,_⟩∷_ a p) (from-toAll aps)
 
-instance from-toAllC = genIndC from-toAllP from-toAll
+--instance from-toAllC = genIndC from-toAllP from-toAll
 
-private
-  to-fromAllP : IndP
-  to-fromAllP = remember-forget-inv (quote ListAll) (quote ListP) (inl it)
-
-unquoteDecl to-fromAll = defineInd to-fromAllP to-fromAll
+--private
+--  to-fromAllP : IndP
+--  to-fromAllP = remember-forget-inv (quote ListAll) (quote ListP) (inl it)
+--
+--unquoteDecl to-fromAll = defineInd to-fromAllP to-fromAll
 -- to-fromAll : {ℓ' ℓ : Level} {A : Set ℓ} {P : A → Set ℓ'}
 --              {as : List A} (all : ListAll P as)
 --            → (fromListP (fromAll all) , toAll (fromAll all))
@@ -353,7 +353,7 @@ unquoteDecl to-fromAll = defineInd to-fromAllP to-fromAll
 --          refl))))))
 --    refl
 
-instance to-fromAllC = genIndC to-fromAllP to-fromAll
+--instance to-fromAllC = genIndC to-fromAllP to-fromAll
 
 --------
 -- Any predicate
