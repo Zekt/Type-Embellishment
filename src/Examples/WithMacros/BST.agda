@@ -1,6 +1,6 @@
 {-# OPTIONS --safe --with-K #-}
 
-module Examples.BST where
+module Examples.WithMacros.BST where
 
 open import Prelude hiding (lookupAny)
 
@@ -65,22 +65,22 @@ private
 
 instance B23TreePO = ⌈ B23TreePOD ⌉ᵈ
 
--- unquoteDecl data B23TreeP constructor c0 c1 c2 = defineByDataD ⌊ B23TreePOD ⌋ᵈ B23TreeP (c0 ∷ c1 ∷ c2 ∷ [])
-data B23TreeP (P : Value → Set ℓ) : Height → Value → Value → Set ℓ where
-
-  node₀ : ⦃ l ≤ r ⦄
-        → ----------------
-          B23TreeP P 0 l r
-
-  node₂ : (x : Value) → P x
-        → B23TreeP P h l x → B23TreeP P h x r
-        → -----------------------------------
-          B23TreeP P (suc h) l r
-
-  node₃ : (x : Value) → P x → (y : Value) → P y
-        → B23TreeP P h l x → B23TreeP P h x y → B23TreeP P h y r
-        → ------------------------------------------------------
-          B23TreeP P (suc h) l r
+unquoteDecl data B23TreeP constructor b230 b231 b232 = defineByDataD ⌊ B23TreePOD ⌋ᵈ B23TreeP (b230 ∷ b231 ∷ b232 ∷ [])
+--data B23TreeP (P : Value → Set ℓ) : Height → Value → Value → Set ℓ where
+--
+--  node₀ : ⦃ l ≤ r ⦄
+--        → ----------------
+--          B23TreeP P 0 l r
+--
+--  node₂ : (x : Value) → P x
+--        → B23TreeP P h l x → B23TreeP P h x r
+--        → -----------------------------------
+--          B23TreeP P (suc h) l r
+--
+--  node₃ : (x : Value) → P x → (y : Value) → P y
+--        → B23TreeP P h l x → B23TreeP P h x y → B23TreeP P h y r
+--        → ------------------------------------------------------
+--          B23TreeP P (suc h) l r
 
 instance
 
@@ -110,25 +110,25 @@ private
 
 instance B23TreeAllO = ⌈ B23TreeAllOD ⌉ᵈ
 
--- unquoteDecl data B23TreeAll constructor c0 c1 c2 = defineByDataD ⌊ B23TreeAllOD ⌋ᵈ B23TreeAll (c0 ∷ c1 ∷ c2 ∷ [])
-data B23TreeAll (P : Value → Set ℓ) : ∀ {h l r} → B23Tree h l r → Set ℓ where
-
-  node₀ : ⦃ _ : l ≤ r ⦄
-        → ------------------------------
-          B23TreeAll P {0} {l} {r} node₀
-
-  node₂ : ∀ {x} → P x
-        → ∀ {t} → B23TreeAll P {h} {l} {x} t
-        → ∀ {u} → B23TreeAll P {h} {x} {r} u
-        → ----------------------------------
-          B23TreeAll P (node₂ x t u)
-
-  node₃ : ∀ {x} → P x → ∀ {y} → P y
-        → ∀ {t} → B23TreeAll P {h} {l} {x} t
-        → ∀ {u} → B23TreeAll P {h} {x} {y} u
-        → ∀ {v} → B23TreeAll P {h} {y} {r} v
-        → ----------------------------------
-          B23TreeAll P (node₃ x y t u v)
+unquoteDecl data B23TreeAll constructor b23all0 b23all1 b23all2 = defineByDataD ⌊ B23TreeAllOD ⌋ᵈ B23TreeAll (b23all0 ∷ b23all1 ∷ b23all2 ∷ [])
+--data B23TreeAll (P : Value → Set ℓ) : ∀ {h l r} → B23Tree h l r → Set ℓ where
+--
+--  node₀ : ⦃ _ : l ≤ r ⦄
+--        → ------------------------------
+--          B23TreeAll P {0} {l} {r} node₀
+--
+--  node₂ : ∀ {x} → P x
+--        → ∀ {t} → B23TreeAll P {h} {l} {x} t
+--        → ∀ {u} → B23TreeAll P {h} {x} {r} u
+--        → ----------------------------------
+--          B23TreeAll P (node₂ x t u)
+--
+--  node₃ : ∀ {x} → P x → ∀ {y} → P y
+--        → ∀ {t} → B23TreeAll P {h} {l} {x} t
+--        → ∀ {u} → B23TreeAll P {h} {x} {y} u
+--        → ∀ {v} → B23TreeAll P {h} {y} {r} v
+--        → ----------------------------------
+--          B23TreeAll P (node₃ x y t u v)
 
 instance
   B23TreeAllC : Named (quote B23TreeAll) _
@@ -265,21 +265,21 @@ private
   B23TreeAnyD : DataD
   B23TreeAnyD = AnyD (quote B23Tree)
 
--- unquoteDecl data B23TreeAny constructor c0 c1 c2 c3 c4 c5 c6 c7 = defineByDataD B23TreeAnyD B23TreeAny (c0 ∷ c1 ∷ c2 ∷ c3 ∷ c4 ∷ c5 ∷ c6 ∷ c7 ∷ [])
-data B23TreeAny (P : Value → Set ℓ) : ∀ {h l r} → B23Tree h l r → Set ℓ where
-  node₂-here   : ∀ {x   t u  } → P x → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
-  node₃-here₀  : ∀ {x y t u v} → P x → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
-  node₃-here₁  : ∀ {x y t u v} → P y → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
-  node₂-there₀ : ∀ {x   t u  } → B23TreeAny P t
-               → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
-  node₂-there₁ : ∀ {x   t u  } → B23TreeAny P u
-               → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
-  node₃-there₀ : ∀ {x y t u v} → B23TreeAny P t
-               → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
-  node₃-there₁ : ∀ {x y t u v} → B23TreeAny P u
-               → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
-  node₃-there₂ : ∀ {x y t u v} → B23TreeAny P v
-               → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
+unquoteDecl data B23TreeAny constructor b23any0 b23any1 b23any2 b23any3 b23any4 b23any5 b23any6 b23any7 = defineByDataD B23TreeAnyD B23TreeAny (b23any0 ∷ b23any1 ∷ b23any2 ∷ b23any3 ∷ b23any4 ∷ b23any5 ∷ b23any6 ∷ b23any7 ∷ [])
+--data B23TreeAny (P : Value → Set ℓ) : ∀ {h l r} → B23Tree h l r → Set ℓ where
+--  node₂-here   : ∀ {x   t u  } → P x → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
+--  node₃-here₀  : ∀ {x y t u v} → P x → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
+--  node₃-here₁  : ∀ {x y t u v} → P y → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
+--  node₂-there₀ : ∀ {x   t u  } → B23TreeAny P t
+--               → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
+--  node₂-there₁ : ∀ {x   t u  } → B23TreeAny P u
+--               → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
+--  node₃-there₀ : ∀ {x y t u v} → B23TreeAny P t
+--               → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
+--  node₃-there₁ : ∀ {x y t u v} → B23TreeAny P u
+--               → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
+--  node₃-there₂ : ∀ {x y t u v} → B23TreeAny P v
+--               → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)
 
 instance
   B23TreeAnyC : Named (quote B23TreeAny) _

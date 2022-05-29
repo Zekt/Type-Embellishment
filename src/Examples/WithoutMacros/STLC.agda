@@ -1,6 +1,6 @@
 {-# OPTIONS --safe --with-K #-}
 
-module Examples.STLC where
+module Examples.WithoutMacros.STLC where
 
 open import Prelude
 
@@ -84,11 +84,11 @@ private
   toΛP : FoldP
   toΛP = forget (quote _⊢_) (quote Λ)
 
-unquoteDecl toΛ = defineFold toΛP toΛ
--- toΛ : Γ ⊢ τ → Λ
--- toΛ (var i  ) = var (toℕ i)
--- toΛ (app t u) = app (toΛ t) (toΛ u)
--- toΛ (lam t  ) = lam (toΛ t)
+-- unquoteDecl toΛ = defineFold toΛP toΛ
+toΛ : Γ ⊢ τ → Λ
+toΛ (var i  ) = var (toℕ i)
+toΛ (app t u) = app (toΛ t) (toΛ u)
+toΛ (lam t  ) = lam (toΛ t)
 
 instance toΛC = genFoldC toΛP toΛ
 
@@ -133,11 +133,11 @@ private
   fromTypingP : FoldP
   fromTypingP = forget (quote _⊢_∶_) (quote _⊢_)
 
-unquoteDecl fromTyping = defineFold fromTypingP fromTyping
--- fromTyping : ∀ {t} → Γ ⊢ t ∶ τ → Γ ⊢ τ
--- fromTyping (var i  ) = var i
--- fromTyping (app d e) = app (fromTyping d) (fromTyping e)
--- fromTyping (lam d  ) = lam (fromTyping d)
+-- unquoteDecl fromTyping = defineFold fromTypingP fromTyping
+fromTyping : ∀ {t} → Γ ⊢ t ∶ τ → Γ ⊢ τ
+fromTyping (var i  ) = var i
+fromTyping (app d e) = app (fromTyping d) (fromTyping e)
+fromTyping (lam d  ) = lam (fromTyping d)
 
 instance fromTypingC = genFoldC fromTypingP fromTyping
 
@@ -145,11 +145,11 @@ private
   toTypingP : IndP
   toTypingP = remember (quote _⊢_∶_)
 
-unquoteDecl toTyping = defineInd toTypingP toTyping
--- toTyping : (t : Γ ⊢ τ) → Γ ⊢ toΛ t ∶ τ
--- toTyping (var i  ) = var i
--- toTyping (app t u) = app (toTyping t) (toTyping u)
--- toTyping (lam t  ) = lam (toTyping t)
+-- unquoteDecl toTyping = defineInd toTypingP toTyping
+toTyping : (t : Γ ⊢ τ) → Γ ⊢ toΛ t ∶ τ
+toTyping (var i  ) = var i
+toTyping (app t u) = app (toTyping t) (toTyping u)
+toTyping (lam t  ) = lam (toTyping t)
 
 instance toTypingC = genIndC toTypingP toTyping
 
@@ -157,12 +157,12 @@ private
   from-toTypingP : IndP
   from-toTypingP = forget-remember-inv (quote _⊢_∶_) (quote _⊢_) (inl it)
 
-unquoteDecl from-toTyping = defineInd from-toTypingP from-toTyping
--- from-toTyping : (t : Γ ⊢ τ) → fromTyping (toTyping t) ≡ t
--- from-toTyping (var i  ) = refl
--- from-toTyping (app t u) = trans' (cong (app (fromTyping (toTyping t))) (from-toTyping u))
---                                  (cong (λ n' → app n' u) (from-toTyping t))
--- from-toTyping (lam t  ) = cong lam (from-toTyping t)
+-- unquoteDecl from-toTyping = defineInd from-toTypingP from-toTyping
+from-toTyping : (t : Γ ⊢ τ) → fromTyping (toTyping t) ≡ t
+from-toTyping (var i  ) = refl
+from-toTyping (app t u) = trans' (cong (app (fromTyping (toTyping t))) (from-toTyping u))
+                                 (cong (λ n' → app n' u) (from-toTyping t))
+from-toTyping (lam t  ) = cong lam (from-toTyping t)
 
 instance from-toTypingC = genIndC from-toTypingP from-toTyping
 
@@ -170,46 +170,46 @@ private
   to-fromTypingP : IndP
   to-fromTypingP = remember-forget-inv (quote _⊢_∶_) (quote _⊢_) (inl it)
 
-unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
--- to-fromTyping : ∀ {t} (d : Γ ⊢ t ∶ τ)
---               → (toΛ (fromTyping d) , toTyping (fromTyping d))
---               ≡ ((t , d) ⦂ Σ[ t' ∈ Λ ] Γ ⊢ t' ∶ τ)  -- [FAIL] manual type annotation
--- to-fromTyping (var i) = refl
--- to-fromTyping (app {Γ} {τ} {τ'} {t} d e) =
---   trans
---    (cong
---     (bimap (λ x → x) (DataC.toN (findDataC (quote _⊢_∶_))))
---     (cong (bimap (λ x → x) inr)
---      (cong (bimap (λ x → x) inl)
---       (cong (bimap (λ x → x) (λ section → Γ , section))
---        (cong (bimap (λ x → x) (λ section → τ , section))
---         (cong (bimap (λ x → x) (λ section → τ' , section))
---          (trans
---           (cong
---            (λ p →
---               app (fst p) (toΛ (fromTyping e)) ,
---               fst p ,
---               snd p , toΛ (fromTyping e) , toTyping (fromTyping e) , refl)
---            (to-fromTyping d))
---           (cong (bimap (λ x → x) (λ x → t , d , x))
---            (trans
---             (cong (λ p → app t (fst p) , fst p , snd p , refl)
---              (to-fromTyping e))
---             refl)))))))))
---    refl
--- to-fromTyping (lam {τ} {Γ} {τ'} d) =
---   trans
---    (cong
---     (bimap (λ x → x) (DataC.toN (findDataC (quote _⊢_∶_))))
---     (cong (bimap (λ x → x) inr)
---      (cong (bimap (λ x → x) inr)
---       (cong (bimap (λ x → x) inl)
---        (cong (bimap (λ x → x) (λ section → τ , section))
---         (cong (bimap (λ x → x) (λ section → Γ , section))
---          (cong (bimap (λ x → x) (λ section → τ' , section))
---           (trans
---            (cong (λ p → lam (fst p) , fst p , snd p , refl) (to-fromTyping d))
---            refl))))))))
---    refl
+-- unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping
+to-fromTyping : ∀ {t} (d : Γ ⊢ t ∶ τ)
+              → (toΛ (fromTyping d) , toTyping (fromTyping d))
+              ≡ ((t , d) ⦂ Σ[ t' ∈ Λ ] Γ ⊢ t' ∶ τ)  -- [FAIL] manual type annotation
+to-fromTyping (var i) = refl
+to-fromTyping (app {Γ} {τ} {τ'} {t} d e) =
+  trans
+   (cong
+    (bimap (λ x → x) (DataC.toN (findDataC (quote _⊢_∶_))))
+    (cong (bimap (λ x → x) inr)
+     (cong (bimap (λ x → x) inl)
+      (cong (bimap (λ x → x) (λ section → Γ , section))
+       (cong (bimap (λ x → x) (λ section → τ , section))
+        (cong (bimap (λ x → x) (λ section → τ' , section))
+         (trans
+          (cong
+           (λ p →
+              app (fst p) (toΛ (fromTyping e)) ,
+              fst p ,
+              snd p , toΛ (fromTyping e) , toTyping (fromTyping e) , refl)
+           (to-fromTyping d))
+          (cong (bimap (λ x → x) (λ x → t , d , x))
+           (trans
+            (cong (λ p → app t (fst p) , fst p , snd p , refl)
+             (to-fromTyping e))
+            refl)))))))))
+   refl
+to-fromTyping (lam {τ} {Γ} {τ'} d) =
+  trans
+   (cong
+    (bimap (λ x → x) (DataC.toN (findDataC (quote _⊢_∶_))))
+    (cong (bimap (λ x → x) inr)
+     (cong (bimap (λ x → x) inr)
+      (cong (bimap (λ x → x) inl)
+       (cong (bimap (λ x → x) (λ section → τ , section))
+        (cong (bimap (λ x → x) (λ section → Γ , section))
+         (cong (bimap (λ x → x) (λ section → τ' , section))
+          (trans
+           (cong (λ p → lam (fst p) , fst p , snd p , refl) (to-fromTyping d))
+           refl))))))))
+   refl
 
 instance to-fromTypingC = genIndC to-fromTypingP to-fromTyping

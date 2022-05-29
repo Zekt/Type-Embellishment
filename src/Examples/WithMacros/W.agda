@@ -1,6 +1,6 @@
 {-# OPTIONS --safe --with-K #-}
 
-module Examples.W where
+module Examples.WithMacros.W where
 
 open import Prelude hiding (lookupAny)
 
@@ -49,11 +49,11 @@ private
   WAnyD : DataD
   WAnyD = AnyD (quote W)
 
--- unquoteDecl data WAny constructor c0 c1 = defineByDataD WAnyD WAny (c0 ∷ c1 ∷ [])
-data WAny {ℓ'' ℓ ℓ'} {A : Set ℓ} {B : A → Set ℓ'} (P : A → Set ℓ'') :
-  W A B → Set (ℓ ⊔ ℓ' ⊔ ℓ'') where
-  here  : ∀ {a ws} → P a → WAny P (sup a ws)
-  there : ∀ {a ws} (b : B a) → WAny P (ws b) → WAny P (sup a ws)
+unquoteDecl data WAny constructor wany0 wany1 = defineByDataD WAnyD WAny (wany0 ∷ wany1 ∷ [])
+--data WAny {ℓ'' ℓ ℓ'} {A : Set ℓ} {B : A → Set ℓ'} (P : A → Set ℓ'') :
+--  W A B → Set (ℓ ⊔ ℓ' ⊔ ℓ'') where
+--  here  : ∀ {a ws} → P a → WAny P (sup a ws)
+--  there : ∀ {a ws} (b : B a) → WAny P (ws b) → WAny P (sup a ws)
 
 instance
   WAnyC : Named (quote WAny) _

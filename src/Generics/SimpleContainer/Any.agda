@@ -11,7 +11,7 @@ open import Generics.Ornament.Description
 open import Generics.Algebra
 open import Generics.Recursion
 open import Generics.SimpleContainer
-open import Examples.Nat
+open import Examples.WithMacros.Nat
 
 private variable
   rb : RecB

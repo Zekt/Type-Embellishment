@@ -1,6 +1,6 @@
 {-# OPTIONS --safe --with-K #-}
 
-module Examples.Acc where
+module Examples.WithoutMacros.Acc where
 
 open import Prelude hiding (lookupAny)
 
@@ -66,11 +66,11 @@ private
   lookupAnyAccP : FoldP
   lookupAnyAccP = lookupAny (quote Acc)
 
-unquoteDecl lookupAnyAcc = defineFold lookupAnyAccP lookupAnyAcc
--- lookupAnyAcc :
---   ∀ {ℓ'' ℓ ℓ'} {A : Set ℓ} {R : A → A → Set ℓ'} {P : A → Set ℓ''}
---   {x : A} {a : Acc R x} → AccAny P x a → Σ A P
--- lookupAnyAcc (here p   ) = _ , p
--- lookupAnyAcc (there _ i) = lookupAnyAcc i
+--unquoteDecl lookupAnyAcc = defineFold lookupAnyAccP lookupAnyAcc
+lookupAnyAcc :
+  ∀ {ℓ'' ℓ ℓ'} {A : Set ℓ} {R : A → A → Set ℓ'} {P : A → Set ℓ''}
+  {x : A} {a : Acc R x} → AccAny P x a → Σ A P
+lookupAnyAcc (here p   ) = _ , p
+lookupAnyAcc (there _ i) = lookupAnyAcc i
 
 instance lookupAnyAccC = genFoldC lookupAnyAccP lookupAnyAcc

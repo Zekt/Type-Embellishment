@@ -1,6 +1,6 @@
 {-# OPTIONS --safe --with-K #-}
 
-module Examples.List where
+module Examples.WithMacros.List where
 
 open import Prelude
 
@@ -17,7 +17,7 @@ open import Generics.SimpleContainer
 open import Generics.SimpleContainer.All
 open import Generics.SimpleContainer.Any
 
-open import Examples.Nat
+open import Examples.WithMacros.Nat
 
 --------
 -- Connecting with the existing List datatype
@@ -53,7 +53,7 @@ private
   foldListP = fold-operator (quote List)
 
 -- Generate foldList and its wrapper and connection, and then replace it with foldr
--- unquoteDecl foldList = defineFold foldListP foldList
+unquoteDecl foldList = defineFold foldListP foldList
 
 instance
   foldrC = genFoldC' foldListP foldrT
@@ -85,11 +85,11 @@ private
 
 instance AlgListO = ⌈ AlgListOD ⌉ᵈ
 
--- unquoteDecl data AlgList constructor c0 c1 = defineByDataD ⌊ AlgListOD ⌋ᵈ AlgList (c0 ∷ c1 ∷ [])
-data AlgList {ℓ' ℓ} {A : Set ℓ} {B : Set ℓ'}
-  (e : B) (f : A → B → B) : B → Set (ℓ ⊔ ℓ') where
-  []  : AlgList e f e
-  _∷_ : (a : A) {b : B} → AlgList e f b → AlgList e f (f a b)
+unquoteDecl data AlgList constructor alg0 alg1 = defineByDataD ⌊ AlgListOD ⌋ᵈ AlgList (alg0 ∷ alg1 ∷ [])
+--data AlgList {ℓ' ℓ} {A : Set ℓ} {B : Set ℓ'}
+--  (e : B) (f : A → B → B) : B → Set (ℓ ⊔ ℓ') where
+--  []  : AlgList e f e
+--  _∷_ : (a : A) {b : B} → AlgList e f b → AlgList e f (f a b)
 
 instance AlgListC = genDataC ⌊ AlgListOD ⌋ᵈ (genDataT ⌊ AlgListOD ⌋ᵈ AlgList)
 
@@ -105,10 +105,10 @@ private
 
 instance VecO = ⌈ VecOD ⌉ᵈ
 
--- unquoteDecl data Vec constructor c0 c1 = defineByDataD ⌊ VecOD ⌋ᵈ Vec (c0 ∷ c1 ∷ [])
-data Vec (A : Set ℓ) : (n : ℕ) → Set ℓ where
-  []  : Vec A 0
-  _∷_ : (a : A) {n : ℕ} → Vec A n → Vec A (suc n)
+unquoteDecl data Vec constructor vec0 vec1 = defineByDataD ⌊ VecOD ⌋ᵈ Vec (vec0 ∷ vec1 ∷ [])
+--data Vec (A : Set ℓ) : (n : ℕ) → Set ℓ where
+--  []  : Vec A 0
+--  _∷_ : (a : A) {n : ℕ} → Vec A n → Vec A (suc n)
 
 instance
 
@@ -180,10 +180,11 @@ private
 
 instance LenO = ⌈ LenOD ⌉ᵈ
 
--- unquoteDecl data Len constructor c0 c1 = defineByDataD ⌊ LenOD ⌋ᵈ Len (c0 ∷ c1 ∷ [])
-data Len {A : Set ℓ} : ℕ → List A → Set ℓ where
-  zero : Len 0 []
-  suc  : {a : A} {n : ℕ} {as : List A} → Len n as → Len (suc n) (a ∷ as)
+unquoteDecl data Len constructor len0 len1 = defineByDataD ⌊ LenOD ⌋ᵈ Len (len0 ∷ len1 ∷ [])
+--data Len {A : Set ℓ} : ℕ → List A → Set ℓ where
+--  zero : Len 0 []
+--  suc  : {a : A} {n : ℕ} {as : List A} → Len n as → Len (suc n) (a ∷ as)
+
 
 instance
   LenC : Named (quote Len) _
@@ -255,10 +256,10 @@ private
 
 instance ListPO = ⌈ ListPOD ⌉ᵈ
 
--- unquoteDecl data ListP constructor c0 c1 = defineByDataD ⌊ ListPOD ⌋ᵈ ListP (c0 ∷ c1 ∷ [])
-data ListP {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
-  []      : ListP P
-  ⟨_,_⟩∷_ : (a : A) → P a → ListP P → ListP P
+unquoteDecl data ListP constructor lp0 lp1 = defineByDataD ⌊ ListPOD ⌋ᵈ ListP (lp0 ∷ lp1 ∷ [])
+--data ListP {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
+--  []      : ListP P
+--  ⟨_,_⟩∷_ : (a : A) → P a → ListP P → ListP P
 
 instance
 
@@ -285,10 +286,10 @@ private
 
 instance ListAllO = ⌈ ListAllOD ⌉ᵈ
 
--- unquoteDecl data ListAll constructor c0 c1 = defineByDataD ⌊ ListAllOD ⌋ᵈ ListAll (c0 ∷ c1 ∷ [])
-data ListAll {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') where
-  []  : ListAll P []
-  _∷_ : {a : A} → P a → {as : List A} → ListAll P as → ListAll P (a ∷ as)
+unquoteDecl data ListAll constructor all0 all1 = defineByDataD ⌊ ListAllOD ⌋ᵈ ListAll (all0 ∷ all1 ∷ [])
+--data ListAll {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') where
+--  []  : ListAll P []
+--  _∷_ : {a : A} → P a → {as : List A} → ListAll P as → ListAll P (a ∷ as)
 
 instance
   ListAllC : Named (quote ListAll) _
@@ -363,18 +364,18 @@ private
 
 instance ListAnyO = ⌈ ListAnyOD ⌉ᵈ
 
--- unquoteDecl data ListAny constructor c0 c1 = defineByDataD ⌊ ListAnyOD ⌋ᵈ ListAny (c0 ∷ c1 ∷ [])
-data ListAny {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') where
-  here  : ∀ {a as} → P a → ListAny P (a ∷ as)
-  there : ∀ {a as} → ListAny P as → ListAny P (a ∷ as)
+unquoteDecl data ListAny constructor any0 any1 = defineByDataD ⌊ ListAnyOD ⌋ᵈ ListAny (any0 ∷ any1 ∷ [])
+--data ListAny {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') where
+--  here  : ∀ {a as} → P a → ListAny P (a ∷ as)
+--  there : ∀ {a as} → ListAny P as → ListAny P (a ∷ as)
 
 instance
   ListAnyC : Named (quote ListAny) _
   unNamed ListAnyC = genDataC ⌊ ListAnyOD ⌋ᵈ ListAnyT
     where ListAnyT = genDataT ⌊ ListAnyOD ⌋ᵈ ListAny
 
-_∋_ : {A : Set ℓ} → List A → A → Set ℓ
-xs ∋ x = ListAny (x ≡_) xs
+_∋_ : {A : Set ℓ} → List A → A → Set _
+_∋_ {A = A} xs x = ListAny A (x ≡_) xs
 
 private
   toℕP : FoldP
