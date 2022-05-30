@@ -32,8 +32,11 @@ Type `make AGDA_BIN=agda-2.6.3` to check all modules in the `src` directory with
 
 	src
 	├── Examples
-	│   ├── Acc.agda --------------- Running examples in section 2, 3 and 4.
-	│   └── ...
+	│   ├── WithMacros
+    │   │   ├── Acc.agda ----------- Running examples in section 2, 3 and 4.
+	│   │   └── ...
+	│   └── WithoutMacros
+	│       └── ...
 	├── Generics
 	│   ├── Algebra.agda ----------- Section 4.2 (Figure 6).
 	│   ├── Description
