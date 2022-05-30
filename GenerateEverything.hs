@@ -47,11 +47,16 @@ withKModules = map modToFile
   , "Generics.Ornament.Algebraic"
   , "Generics.Ornament.Algebraic.Isomorphism"
   , "Generics.Ornament.Description"
-  , "Examples.List"
-  , "Examples.STLC"
-  , "Examples.BST"
-  , "Examples.Acc"
-  , "Examples.W"
+  , "Examples.WithMacros.List"
+  , "Examples.WithMacros.STLC"
+  , "Examples.WithMacros.BST"
+  , "Examples.WithMacros.Acc"
+  , "Examples.WithMacros.W"
+  , "Examples.WithoutMacros.List"
+  , "Examples.WithoutMacros.STLC"
+  , "Examples.WithoutMacros.BST"
+  , "Examples.WithoutMacros.Acc"
+  , "Examples.WithoutMacros.W"
   ]
 
 isWithKModule :: FilePath -> Bool
