@@ -52,6 +52,11 @@ withKModules = map modToFile
   , "Examples.WithMacros.BST"
   , "Examples.WithMacros.Acc"
   , "Examples.WithMacros.W"
+  , "Examples.WithoutMacros.List"
+  , "Examples.WithoutMacros.STLC"
+  , "Examples.WithoutMacros.BST"
+  , "Examples.WithoutMacros.Acc"
+  , "Examples.WithoutMacros.W"
   ]
 
 isWithKModule :: FilePath -> Bool
