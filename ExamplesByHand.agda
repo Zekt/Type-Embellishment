@@ -1,12 +1,6 @@
 {-# OPTIONS --rewriting --guardedness --sized-types #-}
 
-module Examples where
-import Examples.WithMacros.Acc
-import Examples.WithMacros.BST
-import Examples.WithMacros.List
-import Examples.WithMacros.Nat
-import Examples.WithMacros.STLC
-import Examples.WithMacros.W
+module ExamplesByHand where
 import Examples.WithoutMacros.Acc
 import Examples.WithoutMacros.BST
 import Examples.WithoutMacros.List
