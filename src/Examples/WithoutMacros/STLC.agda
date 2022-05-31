@@ -4,14 +4,14 @@ module Examples.WithoutMacros.STLC where
 
 open import Prelude
 
-open import Generics.Description
-open import Generics.Recursion
-open import Generics.Reflection
-
-open import Generics.Ornament
-open import Generics.Ornament.Description
-open import Generics.Ornament.Algebraic
-open import Generics.Ornament.Algebraic.Isomorphism
+--open import Generics.Description
+--open import Generics.Recursion
+--open import Generics.Reflection
+--
+--open import Generics.Ornament
+--open import Generics.Ornament.Description
+--open import Generics.Ornament.Algebraic
+--open import Generics.Ornament.Algebraic.Isomorphism
 
 open import Examples.WithoutMacros.Nat
 open import Examples.WithoutMacros.List

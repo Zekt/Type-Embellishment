@@ -4,13 +4,13 @@ module Examples.WithoutMacros.Acc where
 
 open import Prelude hiding (lookupAny)
 
-open import Generics.Description
-open import Generics.Recursion
-open import Generics.Reflection
-
-open import Generics.RecursionScheme
-open import Generics.SimpleContainer
-open import Generics.SimpleContainer.Any
+--open import Generics.Description
+--open import Generics.Recursion
+--open import Generics.Reflection
+--
+--open import Generics.RecursionScheme
+--open import Generics.SimpleContainer
+--open import Generics.SimpleContainer.Any
 
 data Acc {A : Set ℓ} (R : A → A → Set ℓ') : A → Set (ℓ ⊔ ℓ') where
   acc : {x : A} → ((y : A) → R y x → Acc R y) → Acc R x

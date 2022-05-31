@@ -4,11 +4,11 @@ module Examples.WithoutMacros.Nat where
 
 open import Prelude
 
-open import Generics.Description
-open import Generics.Recursion
-open import Generics.Reflection
-
-open import Generics.RecursionScheme
+--open import Generics.Description
+--open import Generics.Recursion
+--open import Generics.Reflection
+--
+--open import Generics.RecursionScheme
 
 --------
 -- Connecting with the existing ℕ datatype

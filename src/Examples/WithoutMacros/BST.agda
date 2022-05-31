@@ -6,17 +6,17 @@ open import Prelude hiding (lookupAny)
 
 open import Utils.Reflection.Print
 
-open import Generics.Description
-open import Generics.Recursion
-open import Generics.Reflection
-
-open import Generics.Ornament
-open import Generics.Ornament.Description
-open import Generics.Ornament.Algebraic
-open import Generics.Ornament.Algebraic.Isomorphism
-open import Generics.SimpleContainer
-open import Generics.SimpleContainer.All
-open import Generics.SimpleContainer.Any
+--open import Generics.Description
+--open import Generics.Recursion
+--open import Generics.Reflection
+--
+--open import Generics.Ornament
+--open import Generics.Ornament.Description
+--open import Generics.Ornament.Algebraic
+--open import Generics.Ornament.Algebraic.Isomorphism
+--open import Generics.SimpleContainer
+--open import Generics.SimpleContainer.All
+--open import Generics.SimpleContainer.Any
 
 Height : Set
 Height = ℕ

@@ -4,18 +4,18 @@ module Examples.WithoutMacros.List where
 
 open import Prelude
 
-open import Generics.Description
-open import Generics.Recursion
-open import Generics.Reflection
-
-open import Generics.RecursionScheme
-open import Generics.Ornament
-open import Generics.Ornament.Description
-open import Generics.Ornament.Algebraic
-open import Generics.Ornament.Algebraic.Isomorphism
-open import Generics.SimpleContainer
-open import Generics.SimpleContainer.All
-open import Generics.SimpleContainer.Any
+--open import Generics.Description
+--open import Generics.Recursion
+--open import Generics.Reflection
+--
+--open import Generics.RecursionScheme
+--open import Generics.Ornament
+--open import Generics.Ornament.Description
+--open import Generics.Ornament.Algebraic
+--open import Generics.Ornament.Algebraic.Isomorphism
+--open import Generics.SimpleContainer
+--open import Generics.SimpleContainer.All
+--open import Generics.SimpleContainer.Any
 
 open import Examples.WithoutMacros.Nat
 
