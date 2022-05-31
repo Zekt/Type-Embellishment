@@ -2,17 +2,17 @@ AGDA_BIN    ?= agda
 RTS_OPTIONS ?= +RTS -M8G -H3.5G -A128M -s -RTS
 AGDA_EXEC   = $(AGDA_BIN) $(RTS_OPTIONS)
 
+everything: Everything.agda
+	$(AGDA_EXEC) -i. -isrc README.agda --profile=internal
+
 library: Library.agda
-	$(AGDA_EXEC) -i. -isrc Library.agda -vprofile:7
+	$(AGDA_EXEC) -i. -isrc Library.agda --profile=internal
 
 example1: ExamplesByMacro.agda
-	$(AGDA_EXEC) -i. -isrc ExamplesByMacro.agda -vprofile:7
+	$(AGDA_EXEC) -i. -isrc ExamplesByMacro.agda --profile=internal
 
 example2: ExamplesByHand.agda
-	$(AGDA_EXEC) -i. -isrc ExamplesByHand.agda -vprofile:7
-
-test: Everything.agda
-	$(AGDA_EXEC) -i. -isrc README.agda -vprofile:7
+	$(AGDA_EXEC) -i. -isrc ExamplesByHand.agda --profile=internal
 
 setup: Everything.agda
 
@@ -25,7 +25,7 @@ Everything.agda:
 	cabal run GenerateEverything
 
 benchmark : 
-	$(AGDA_EXEC) Benchmark.agda  -i. -vprofile.definitions:10
+	$(AGDA_EXEC) Benchmark.agda  -i. --profile=definitions
 	rm _build/*/agda/Benchmark.agdai
 
 clean :
