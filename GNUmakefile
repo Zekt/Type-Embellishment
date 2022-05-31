@@ -25,7 +25,7 @@ Everything.agda:
 	cabal run GenerateEverything
 
 benchmark : 
-	$(AGDA_EXEC) Benchmark.agda  -i. -vprofile.definitions:10
+	$(AGDA_EXEC) Benchmark.agda  -i. --profile=definitions
 	rm _build/*/agda/Benchmark.agdai
 
 clean :
