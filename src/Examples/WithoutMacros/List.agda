@@ -4,18 +4,18 @@ module Examples.WithoutMacros.List where
 
 open import Prelude
 
-open import Generics.Description
-open import Generics.Recursion
-open import Generics.Reflection
-
-open import Generics.RecursionScheme
-open import Generics.Ornament
-open import Generics.Ornament.Description
-open import Generics.Ornament.Algebraic
-open import Generics.Ornament.Algebraic.Isomorphism
-open import Generics.SimpleContainer
-open import Generics.SimpleContainer.All
-open import Generics.SimpleContainer.Any
+--open import Generics.Description
+--open import Generics.Recursion
+--open import Generics.Reflection
+--
+--open import Generics.RecursionScheme
+--open import Generics.Ornament
+--open import Generics.Ornament.Description
+--open import Generics.Ornament.Algebraic
+--open import Generics.Ornament.Algebraic.Isomorphism
+--open import Generics.SimpleContainer
+--open import Generics.SimpleContainer.All
+--open import Generics.SimpleContainer.Any
 
 open import Examples.WithoutMacros.Nat
 
@@ -150,9 +150,9 @@ toVec (a ∷ as) = a ∷ toVec as
 --  from-toVecP = forget-remember-inv (quote Vec) (quote List) (inl it)
 --
 -- unquoteDecl from-toVec = defineInd from-toVecP from-toVec
-from-toVec : {A : Set ℓ} (as : List A) → fromVec (toVec as) ≡ as
-from-toVec []       = refl
-from-toVec (a ∷ as) = cong (_∷_ a) (from-toVec as)
+-- from-toVec : {A : Set ℓ} (as : List A) → fromVec (toVec as) ≡ as
+-- from-toVec []       = refl
+-- from-toVec (a ∷ as) = cong (_∷_ a) (from-toVec as)
 
 --instance from-toVecC = genIndC from-toVecP from-toVec
 --
@@ -221,9 +221,9 @@ toLen (a ∷ as) = suc (toLen as)
 --  from-toLenP = forget-remember-inv (quote Len) (quote Vec) (inl it)
 --
 -- unquoteDecl from-toLen = defineInd from-toLenP from-toLen
-from-toLen : {A : Set ℓ} {n : ℕ} (as : Vec A n) → fromLen (toLen as) ≡ as
-from-toLen []       = refl
-from-toLen (a ∷ as) = cong (_∷_ a) (from-toLen as)
+-- from-toLen : {A : Set ℓ} {n : ℕ} (as : Vec A n) → fromLen (toLen as) ≡ as
+-- from-toLen []       = refl
+-- from-toLen (a ∷ as) = cong (_∷_ a) (from-toLen as)
 
 --instance from-toLenC = genIndC from-toLenP from-toLen
 --
@@ -327,10 +327,10 @@ toAll (⟨ a , p ⟩∷ aps) = p ∷ toAll aps
 --  from-toAllP = forget-remember-inv (quote ListAll) (quote ListP) (inl it)
 --
 -- unquoteDecl from-toAll = defineInd from-toAllP from-toAll
-from-toAll : {ℓ' ℓ : Level} {A : Set ℓ} {P : A → Set ℓ'}
-             (aps : ListP P) → fromAll (toAll aps) ≡ aps
-from-toAll [] = refl
-from-toAll (⟨ a , p ⟩∷ aps) = cong (⟨_,_⟩∷_ a p) (from-toAll aps)
+-- from-toAll : {ℓ' ℓ : Level} {A : Set ℓ} {P : A → Set ℓ'}
+--              (aps : ListP P) → fromAll (toAll aps) ≡ aps
+-- from-toAll [] = refl
+-- from-toAll (⟨ a , p ⟩∷ aps) = cong (⟨_,_⟩∷_ a p) (from-toAll aps)
 
 --instance from-toAllC = genIndC from-toAllP from-toAll
 --

@@ -4,13 +4,13 @@ module Examples.WithoutMacros.W where
 
 open import Prelude hiding (lookupAny)
 
-open import Generics.Description
-open import Generics.Recursion
-open import Generics.Reflection
-
-open import Generics.RecursionScheme
-open import Generics.SimpleContainer
-open import Generics.SimpleContainer.Any
+--open import Generics.Description
+--open import Generics.Recursion
+--open import Generics.Reflection
+--
+--open import Generics.RecursionScheme
+--open import Generics.SimpleContainer
+--open import Generics.SimpleContainer.Any
 
 data W (A : Set ℓ) (B : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
   sup : (a : A) → (B a → W A B) → W A B
