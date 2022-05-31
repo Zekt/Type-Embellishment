@@ -3,7 +3,7 @@ RTS_OPTIONS ?= +RTS -M8G -H3.5G -A128M -s -RTS
 AGDA_EXEC   = $(AGDA_BIN) $(RTS_OPTIONS)
 
 everything: Everything.agda
-	$(AGDA_EXEC) -i. -isrc README.agda --profile=internal
+	$(AGDA_EXEC) -i. -isrc Everything.agda --profile=internal
 
 library: Library.agda
 	$(AGDA_EXEC) -i. -isrc Library.agda --profile=internal
