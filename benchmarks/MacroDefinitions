@@ -1,0 +1,89 @@
+Total                                     69,989ms
+Miscellaneous                             31,741ms
+Examples.WithMacros.BST.B23TreeAnyC       10,662ms
+Examples.WithMacros.BST.B23TreeAllC        4,781ms
+Examples.WithMacros.BST.lookupB23TreeAnyC  3,471ms
+Examples.WithMacros.BST.fromAllC           2,969ms
+Examples.WithMacros.List.ListAllC          2,007ms
+Examples.WithMacros.BST.B23TreePC          1,623ms
+Examples.WithMacros.BST.toAllC             1,042ms
+Examples.WithMacros.List.LenC              1,007ms
+Examples.WithMacros.STLC.TypingC             945ms
+Examples.WithMacros.List.fromAllC            811ms
+Examples.WithMacros.List.foldr-fusionC       667ms
+Examples.WithMacros.List.fromLenC            588ms
+Examples.WithMacros.BST.B23TreeC             556ms
+Examples.WithMacros.W.WAnyC                  554ms
+Examples.WithMacros.BST.toB23TreeC           537ms
+Examples.WithMacros.STLC.TypedTermC          418ms
+Examples.WithMacros.Acc.AccAnyC              417ms
+Examples.WithMacros.List.AlgListC            409ms
+Examples.WithMacros.STLC.fromTypingC         402ms
+Examples.WithMacros.List.fromListPC          372ms
+Examples.WithMacros.List.VecC                310ms
+Examples.WithMacros.List.ListAnyC            295ms
+Examples.WithMacros.List.ListPC              277ms
+Examples.WithMacros.Acc.lookupAnyAccC        251ms
+Examples.WithMacros.STLC.TypedTermD          246ms
+Examples.WithMacros.W.lookupWAnyC            239ms
+Examples.WithMacros.List.toℕC                173ms
+Examples.WithMacros.STLC.toTypingC           167ms
+Examples.WithMacros.STLC.UntypedTermC        153ms
+Examples.WithMacros.STLC.toΛC                150ms
+Examples.WithMacros.W.indWC                  128ms
+Examples.WithMacros.List.toLenC              126ms
+Examples.WithMacros.List.fromVecC            124ms
+Examples.WithMacros.List.toAllC              118ms
+Examples.WithMacros.List.ListC               108ms
+Examples.WithMacros.Acc.foldAccC             108ms
+Examples.WithMacros.Acc.AccC                  86ms
+Examples.WithMacros.W.WC                      78ms
+Examples.WithMacros.STLC.TypedTermO           64ms
+Examples.WithMacros.W.WAnyT                   62ms
+Examples.WithMacros.Acc.AccAnyT               61ms
+Examples.WithMacros.BST.B23TreeAnyT           59ms
+Examples.WithMacros.List.toVecC               47ms
+Examples.WithMacros.BST.B23TreeAllT           47ms
+Examples.WithMacros.BST.toAllP                46ms
+Examples.WithMacros.List._.ListAllT           44ms
+Examples.WithMacros.BST.B23TreeD              40ms
+Examples.WithMacros.List.foldrC               39ms
+Examples.WithMacros.List.lengthC              39ms
+Examples.WithMacros.List._.ListAnyT           37ms
+Examples.WithMacros.BST.B23TreeS              27ms
+Examples.WithMacros.List._.foldrT             27ms
+Examples.WithMacros.BST.B23TreePFin           25ms
+Examples.WithMacros.Acc.AccD                  25ms
+Examples.WithMacros.W.WD                      24ms
+Examples.WithMacros.List.ListO                20ms
+Examples.WithMacros.STLC.TypedTermFin         18ms
+Examples.WithMacros.List.ListD                18ms
+Examples.WithMacros.List.toAllP               17ms
+Examples.WithMacros.STLC.UntypedTermD         13ms
+Examples.WithMacros.List.ListAllOD            13ms
+Examples.WithMacros.STLC.TypedTermT           12ms
+Examples.WithMacros.List.toLenP               12ms
+Examples.WithMacros.BST.B23TreeAllOD          10ms
+ 111,230,668,368 bytes allocated in the heap
+   9,958,407,880 bytes copied during GC
+   1,144,020,320 bytes maximum residency (8 sample(s))
+       2,888,352 bytes maximum slop
+            3960 MiB total memory in use (0 MB lost due to fragmentation)
+
+                                     Tot time (elapsed)  Avg pause  Max pause
+  Gen  0        43 colls,     0 par   11.404s  11.407s     0.2653s    0.9310s
+  Gen  1         8 colls,     0 par    5.369s   5.370s     0.6713s    1.4644s
+
+  TASKS: 4 (1 bound, 3 peak workers (3 total), using -N1)
+
+  SPARKS: 0 (0 converted, 0 overflowed, 0 dud, 0 GC'd, 0 fizzled)
+
+  INIT    time    0.001s  (  0.001s elapsed)
+  MUT     time   53.424s  ( 53.367s elapsed)
+  GC      time   16.773s  ( 16.777s elapsed)
+  EXIT    time    0.001s  (  0.005s elapsed)
+  Total   time   70.199s  ( 70.150s elapsed)
+
+  Alloc rate    2,082,044,119 bytes per MUT second
+
+  Productivity  76.1% of total user, 76.1% of total elapsed

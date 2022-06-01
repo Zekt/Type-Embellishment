@@ -1,0 +1,51 @@
+Total                        71,676ms
+Miscellaneous                    12ms
+Typing                       11,548ms (31,623ms)
+Typing.CheckLHS              13,090ms (14,234ms)
+Typing.CheckLHS.UnifyIndices  1,143ms
+Typing.CheckRHS               5,661ms
+Typing.OccursCheck              101ms
+Typing.TypeSig                   41ms
+Typing.Generalize                19ms
+Typing.InstanceSearch            15ms
+Serialization                14,679ms (15,114ms)
+Serialization.BinaryEncode      328ms
+Serialization.Compress           83ms
+Serialization.Sort               21ms
+Coverage                     12,229ms
+DeadCode                      4,814ms
+Deserialization               3,279ms  (3,617ms)
+Deserialization.Compaction      338ms
+Injectivity                   1,784ms
+Positivity                    1,731ms
+Scoping                          57ms    (570ms)
+Scoping.InverseScopeLookup      513ms
+Parsing                          15ms    (116ms)
+Parsing.OperatorsExpr            97ms
+Termination                      13ms     (39ms)
+Termination.RecCheck             17ms
+Import                           22ms
+Highlighting                     15ms
+ 114,167,076,984 bytes allocated in the heap
+  10,118,945,344 bytes copied during GC
+   1,213,936,384 bytes maximum residency (8 sample(s))
+       3,009,792 bytes maximum slop
+            3959 MiB total memory in use (0 MB lost due to fragmentation)
+
+                                     Tot time (elapsed)  Avg pause  Max pause
+  Gen  0        42 colls,     0 par   11.551s  11.552s     0.2751s    0.8830s
+  Gen  1         8 colls,     0 par    5.714s   5.715s     0.7144s    1.8795s
+
+  TASKS: 4 (1 bound, 3 peak workers (3 total), using -N1)
+
+  SPARKS: 0 (0 converted, 0 overflowed, 0 dud, 0 GC'd, 0 fizzled)
+
+  INIT    time    0.003s  (  0.003s elapsed)
+  MUT     time   54.469s  ( 54.407s elapsed)
+  GC      time   17.266s  ( 17.267s elapsed)
+  EXIT    time    0.001s  (  0.003s elapsed)
+  Total   time   71.738s  ( 71.680s elapsed)
+
+  Alloc rate    2,096,007,789 bytes per MUT second
+
+  Productivity  75.9% of total user, 75.9% of total elapsed

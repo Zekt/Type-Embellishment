@@ -1,0 +1,47 @@
+Total                        2,911ms
+Miscellaneous                   14ms
+Deserialization              1,639ms (1,752ms)
+Deserialization.Compaction     113ms
+Typing                          82ms   (529ms)
+Typing.CheckLHS                 70ms   (130ms)
+Typing.CheckLHS.UnifyIndices    59ms
+Typing.Generalize              121ms
+Typing.CheckRHS                109ms
+Typing.TypeSig                  60ms
+Typing.OccursCheck              24ms
+Serialization                  220ms   (301ms)
+Serialization.BinaryEncode      56ms
+Serialization.Compress          17ms
+Parsing                         15ms   (108ms)
+Parsing.OperatorsExpr           80ms
+Parsing.OperatorsPattern        13ms
+Coverage                        78ms
+Scoping                         35ms    (42ms)
+Import                          40ms
+DeadCode                        19ms
+Termination                      7ms    (17ms)
+Positivity                      15ms
+Highlighting                    13ms
+   6,509,211,592 bytes allocated in the heap
+       3,363,184 bytes copied during GC
+      23,351,752 bytes maximum residency (2 sample(s))
+         908,856 bytes maximum slop
+            3777 MiB total memory in use (0 MB lost due to fragmentation)
+
+                                     Tot time (elapsed)  Avg pause  Max pause
+  Gen  0         1 colls,     0 par    0.023s   0.023s     0.0234s    0.0234s
+  Gen  1         2 colls,     0 par    0.018s   0.018s     0.0090s    0.0144s
+
+  TASKS: 4 (1 bound, 3 peak workers (3 total), using -N1)
+
+  SPARKS: 0 (0 converted, 0 overflowed, 0 dud, 0 GC'd, 0 fizzled)
+
+  INIT    time    0.003s  (  0.003s elapsed)
+  MUT     time    2.901s  (  2.900s elapsed)
+  GC      time    0.041s  (  0.041s elapsed)
+  EXIT    time    0.000s  (  0.006s elapsed)
+  Total   time    2.945s  (  2.950s elapsed)
+
+  Alloc rate    2,244,108,502 bytes per MUT second
+
+  Productivity  98.5% of total user, 98.3% of total elapsed

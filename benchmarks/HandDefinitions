@@ -1,0 +1,48 @@
+Total                                       3,003ms
+Miscellaneous                               2,468ms
+Examples.WithoutMacros.BST.lookupB23TreeAny    77ms
+Examples.WithoutMacros.BST.fromAll             67ms
+Examples.WithoutMacros.BST.B23TreeAny          42ms
+Examples.WithoutMacros.List.foldr-fusion       32ms
+Examples.WithoutMacros.BST.toAll               30ms
+Examples.WithoutMacros.BST.toB23Tree           24ms
+Examples.WithoutMacros.Nat.foldℕ-fusion        22ms
+Examples.WithoutMacros.W.WAny                  22ms
+Examples.WithoutMacros.STLC.fromTyping         22ms
+Examples.WithoutMacros.W.lookupWAny            19ms
+Examples.WithoutMacros.Acc.AccAny              18ms
+Examples.WithoutMacros.STLC.toTyping           18ms
+Examples.WithoutMacros.BST.B23TreeAll          17ms
+Examples.WithoutMacros.Acc.lookupAnyAcc        17ms
+Examples.WithoutMacros.STLC.toΛ                14ms
+Examples.WithoutMacros.List.fromLen            11ms
+Examples.WithoutMacros.List.fromAll            11ms
+Examples.WithoutMacros.W.indW                  11ms
+Examples.WithoutMacros.BST.B23TreeP            10ms
+Examples.WithoutMacros.List.toℕ                10ms
+Examples.WithoutMacros.STLC._⊢_∶_              10ms
+Examples.WithoutMacros.List.AlgList            10ms
+Examples.WithoutMacros.List.ListAny            10ms
+   6,459,449,488 bytes allocated in the heap
+       4,440,528 bytes copied during GC
+      15,906,000 bytes maximum residency (2 sample(s))
+         846,640 bytes maximum slop
+            3752 MiB total memory in use (0 MB lost due to fragmentation)
+
+                                     Tot time (elapsed)  Avg pause  Max pause
+  Gen  0         1 colls,     0 par    0.026s   0.026s     0.0260s    0.0260s
+  Gen  1         2 colls,     0 par    0.021s   0.021s     0.0107s    0.0176s
+
+  TASKS: 4 (1 bound, 3 peak workers (3 total), using -N1)
+
+  SPARKS: 0 (0 converted, 0 overflowed, 0 dud, 0 GC'd, 0 fizzled)
+
+  INIT    time    0.001s  (  0.001s elapsed)
+  MUT     time    3.086s  (  3.083s elapsed)
+  GC      time    0.047s  (  0.047s elapsed)
+  EXIT    time    0.000s  (  0.008s elapsed)
+  Total   time    3.135s  (  3.140s elapsed)
+
+  Alloc rate    2,093,433,907 bytes per MUT second
+
+  Productivity  98.4% of total user, 98.2% of total elapsed
