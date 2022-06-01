@@ -1,0 +1,52 @@
+Total                        220,135ms
+Miscellaneous                     11ms
+Typing                        16,654ms (86,663ms)
+Typing.CheckRHS               36,108ms
+Typing.CheckLHS               28,836ms (32,929ms)
+Typing.CheckLHS.UnifyIndices   4,092ms
+Typing.InstanceSearch            716ms
+Typing.OccursCheck               179ms
+Typing.TypeSig                    55ms
+Typing.Generalize                 18ms
+Serialization                 65,378ms (65,816ms)
+Serialization.BinaryEncode       322ms
+Serialization.Compress            85ms
+Serialization.Sort                19ms
+Positivity                    23,380ms
+Coverage                      21,919ms
+DeadCode                      15,614ms
+Deserialization                3,412ms  (3,733ms)
+Deserialization.Compaction       321ms
+Injectivity                    2,478ms
+Scoping                           57ms    (318ms)
+Scoping.InverseScopeLookup       261ms
+Parsing                           15ms    (142ms)
+Parsing.OperatorsExpr            117ms
+Termination                       12ms     (44ms)
+Termination.RecCheck              23ms
+Import                            21ms
+Highlighting                      18ms
+ 259,494,900,144 bytes allocated in the heap
+  37,657,483,872 bytes copied during GC
+   4,950,376,312 bytes maximum residency (13 sample(s))
+      11,944,072 bytes maximum slop
+            7690 MiB total memory in use (0 MB lost due to fragmentation)
+
+                                     Tot time (elapsed)  Avg pause  Max pause
+  Gen  0       977 colls,     0 par   56.687s  56.698s     0.0580s    1.7700s
+  Gen  1        13 colls,     0 par   54.210s  54.215s     4.1704s    22.1708s
+
+  TASKS: 4 (1 bound, 3 peak workers (3 total), using -N1)
+
+  SPARKS: 0 (0 converted, 0 overflowed, 0 dud, 0 GC'd, 0 fizzled)
+
+  INIT    time    0.003s  (  0.003s elapsed)
+  MUT     time  111.406s  (111.255s elapsed)
+  GC      time  110.897s  (110.913s elapsed)
+  EXIT    time    0.001s  (  0.000s elapsed)
+  Total   time  222.307s  (222.171s elapsed)
+
+  Alloc rate    2,329,281,276 bytes per MUT second
+
+  Productivity  50.1% of total user, 50.1% of total elapsed
+
