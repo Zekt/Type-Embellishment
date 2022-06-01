@@ -24,9 +24,18 @@ Everything.agda:
 # of cabal-install. See Issue #1001.
 	cabal run GenerateEverything
 
+example1-defs: ExamplesByMacro.agda
+	rm -rf _build/*/agda/src/Examples/WithMacros
+	$(AGDA_EXEC) -i. -isrc ExamplesByMacro.agda --profile=definitions
+
+example2-defs: ExamplesByMacro.agda
+	rm -rf _build/*/agda/src/Examples/WithoutMacros
+	$(AGDA_EXEC) -i. -isrc ExamplesByHand.agda --profile=definitions
+
 benchmark : 
+	rm -f _build/*/agda/Benchmark.agdai
 	$(AGDA_EXEC) Benchmark.agda  -i. --profile=definitions
-	rm _build/*/agda/Benchmark.agdai
+	rm -f _build/*/agda/Benchmark.agdai
 
 clean :
 	find . -type f -name '*.agdai' -delete
