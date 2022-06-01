@@ -24,6 +24,14 @@ Everything.agda:
 # of cabal-install. See Issue #1001.
 	cabal run GenerateEverything
 
+example1-defs : 
+	rm -rf _build/*/agda/src/WithMacros
+	$(AGDA_EXEC) ExamplesByMacro.agda  -i. --profile=definitions
+
+example2-defs : 
+	rm -rf _build/*/agda/src/WithoutMacros
+	$(AGDA_EXEC) ExamplesByHand.agda  -i. --profile=definitions
+
 benchmark : 
 	$(AGDA_EXEC) Benchmark.agda  -i. --profile=definitions
 	rm _build/*/agda/Benchmark.agdai
