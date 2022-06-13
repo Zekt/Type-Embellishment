@@ -530,7 +530,7 @@ To interface with the metaprograms, generic libraries should (either directly or
 \label{sec:recap}
 
 We start from a recap of standard datatype-generic programming (in a dependently typed setting).
-The core idea of datatype-genericity is to encode datatype definitions as `descriptions', which can take a variety of forms but should be first-class data on which computation can be performed.
+The core idea of datatype-genericity is to encode datatype definitions as `descriptions', which can take a variety of forms but should be some kind of first-class data on which computation can be performed.
 Programs that manipulate datatype descriptions in some way are dubbed `generic programs', and can perform constructions tailored for specific datatypes by analysing input descriptions or produce new datatypes by computing output descriptions.
 The power of generic programs depends crucially on the range of datatypes encoded by the chosen descriptions.
 In \cref{sec:ConDs} we fix on a class of descriptions covering inductive families~\citep{Dybjer1994} in the form of sums of products.
@@ -714,7 +714,7 @@ data Acc {A : Set} (R : A → A → Set) : A → Set where
   acc : (x : A) → ((y : A) → R y x → Acc R y) → Acc R x
 \end{code}
 %We ought to extend our datatype descriptions to express this kind of parametric and universe-polymorphic datatypes given their prevalence in Agda codebases.
-The second feature is a data structure ---which we call datatype \emph{connections}--- that abstracts and replaces the generic |μ|~operator.
+The second, and more important, feature is a data structure ---which we call datatype \emph{connections}--- that abstracts and replaces the generic |μ|~operator.
 Here is a motivating example:
 Recall that we will use a metaprogram to manufacture a native datatype~|N| from a description~|D|.
 Subsequently we may need to compute from~|D| a new description that refers to~|N| and its constructors.
@@ -1367,14 +1367,15 @@ To turn this into a valid definition, we pattern-match the variable~|a| with all
 \begin{equation}\label{eq:fold-base-before}
 |foldAcc′ A R P p .x (acc x as) = fold-base foldAccP foldAcc′ A R P p x (acc x as)|
 \end{equation}
-Now normalise the right-hand side,
+Now normalise the right-hand side:
 \begin{code}
 foldAcc′ A R P p .x (acc x as) = p x (λ y lt → foldAcc′ A R P p y (as y lt))
 \end{code}
-and this final definition can be directly shown to satisfy the connecting equation
+This final definition necessarily passes the termination check because, after normalisation, the |fmapᵖᵈ Desc| part in |fold-base| necessarily applies |rec| to smaller arguments.
+And the definition can be directly shown to satisfy the connecting equation
 \begin{code}
-foldAccC : PFoldC foldAccP foldAccT′
-foldAccC = record { equation = λ { (inl (x , as , refl)) → refl } }
+foldAccC′ : PFoldC foldAccP foldAccT′
+foldAccC′ = record { equation = λ { (inl (x , as , refl)) → refl } }
 \end{code}
 (The inverse property |DataC.fromN-toN| does not appear in the proof, but we need it at the meta-level to argue generically that the proof always works.)
 
@@ -1611,43 +1612,27 @@ Here we are using the simpler datatype level--checking rule employed when Agda's
 If there are more components in the datatype level, they are specified in |alevel|, and the final datatype level is |alevel ⊔ ilevel|.
 The datatype level is not uniquely determined by the content of the datatype ---for example, we could define alternative versions of natural numbers at any level--- but must be no less than the level of any |π|- or |σ|-field of the constructors; this is enforced by |level-ineq|, where the relation |ℓ ⊑ ℓ'| is defined by |ℓ ⊔ ℓ' ≡ ℓ'|.
 With |level-ineq|, we could even define a universe-polymorphic version of the |μ|~operator~(\cref{sec:recap}), so even the traditional approach to datatype-genericity in Agda could be extended to incorporate universe polymorphism.
-
-\todo[inline]{Emphasise the ability to reason about levels}
+In general, the ability to manipulate and reason about levels internally seems crucial for datatype-genericity, because computation of universe-polymorphic datatype descriptions ---in particular the levels in the descriptions--- can be arbitrarily complex, and it may no longer be feasible to infer levels or check level constraints automatically as can be done for specific datatypes in languages with typical ambiguity~\citep{Sozeau-universe-polymorphism-Coq}.
 
 \subsection{Level Parameters}
 \label{sec:UP-levels}
 
-\todo[inline]{Move some level-related stuff in \cref{sec:reflection} here}
-
-Incidentally, if we attempt a similar construction for |Level ^ n| (which can be viewed as a kind of specialised telescope) to produce curried forms of level parameters as well,
+Conceptually, level parameters could be treated in the same way as ordinary ones --- in particular, |Level ^ n| could be thought of as a kind of specialised telescope, so we could start with a construction similar to |Curriedᵗ|~(\cref{fig:Curried}), computing a curried function type with |n|~level quantifications:
 \begin{code}
-CurriedL : (n : ℕ) {f : Level ^ n → Level} → ((ℓs : Level ^ n) → Set (f ℓs)) → Set {! !}
+CurriedL : (n : ℕ) {f : Level ^ n → Level} → ((ℓs : Level ^ n) → Set (f ℓs)) → Set ?
 CurriedL    zero    X = X tt
 CurriedL (  suc n)  X = (ℓ : Level) → CurriedL n (λ ℓs → X (ℓ , ℓs))
 \end{code}
-we will not be able to fill in the hole `|{! !}|' since it should be a finite level when |n|~is zero (meaning that there is no level quantification), or~|ω| when |n|~is non-zero, going beyond the current capabilities of Agda's universe polymorphism.
-We will rely on elaborator reflection to deal with level parameters in \cref{sec:reflection}.
+However, the hole~`|?|' is problematic since it should be a finite level when |n|~is zero (meaning that there is no level quantification), or~|ω| when |n|~is non-zero, but currently Agda's universe polymorphism supports only finite levels.
+To produce such types, we have to operate at the meta-level and generate the level quantifications in their syntax trees in relevant metaprograms such as |defineFold|, of which |definePFold|~(\cref{fig:definePFold}) is a cut-down version.
+The need for the special treatment is one reason that we separate level parameters from ordinary ones instead of allowing them to mix freely.
 
-To handle |D : DataD|, a |TC| computation |defineByDataD| is defined using the same local variable creation technique, but to apply |D .applyL : Level ^ #levels → PDataD| we need a variant |exCxtℓs| (\cref{fig:exCxtTel}) which extends the context by a list of |Level| variables.
-
-\begin{figure}
-\codefigure
-\begin{code} 
-exCxtℓs : (n : ℕ) (f : Level ^ n → TC A) → TC A
-exCxtℓs  zero      f  = f tt
-exCxtℓs  (suc n)   f  = exCxtT Level λ _ ℓ →
-  exCxtℓs n λ ℓs → f (ℓ , ℓs)
-\end{code}
-\caption{Context extension by |Level|'s} 
-\label{fig:exCxtls}
-\end{figure}
-
-\begin{code}
-FoldNT : (F : FoldP) (ℓs : Level ^ (F .#levels)) → Set _
-FoldNT F ℓs = let open FoldP F; open PFoldP (F .applyL ℓs) in
-  Curriedᵗ Param λ ps → Curriedᵗ (Desc .applyL (level ℓs) .Index (param ps)) λ is →
-  Native (level ℓs) (param ps) is → Carrier ps is
-\end{code}
+%\begin{code}
+%FoldNT : (F : FoldP) (ℓs : Level ^ (F .#levels)) → Set _
+%FoldNT F ℓs = let open FoldP F; open PFoldP (F .applyL ℓs) in
+%  Curriedᵗ Param λ ps → Curriedᵗ (Desc .applyL (level ℓs) .Index (param ps)) λ is →
+%  Native (level ℓs) (param ps) is → Carrier ps is
+%\end{code}
 
 \section{Examples}
 \label{sec:examples}
@@ -1688,7 +1673,7 @@ The type of~|X| is in a curried form, which is then uncurried for |FoldOpTel| an
 \begin{code}
 fold-operator C .applyL (ℓ , ℓs) .Carrier = λ (ps , X , calgs) → uncurryᵗ X
 \end{code}
-This is a recurring pattern (which we first saw in \cref{sec:DataC}): curried forms are exposed to the library user, whereas uncurried forms are processed by generic programs.
+This is a recurring pattern (which we first saw in \cref{sec:PDataC}): curried forms are exposed to the library user, whereas uncurried forms are processed by generic programs.
 The pattern is also facilitated by the telescope-appending constructor, which appears in |Param| above (disguised with the syntax~|[[ ... ]]|): the parameters are instantiated in a curried form for the library user, but for generic programs they are separated into three groups |ps|, |X|, and |calgs|, making it convenient to refer to each group like in |Carrier| above.
 
 %Part~(i) is computed by
@@ -1803,7 +1788,8 @@ Write an ornament between the datatypes |Λ|~and~`|_⊢_|' of untyped and intrin
 
 We have deliberately omitted the types of the generic programs because they are somewhat verbose, making generic program invocation less cost-effective --- for example, the generic programs proving the inverse properties need connections for the original and the new datatypes, the fold used to compute the algebraic ornament, and the `from' and `to' functions.
 In general, we should seek to reduce the cost of invoking generic programs.
-We have implemented a smaller-scale solution where generic programs use Agda's instance arguments~\citep{Devriese-instance-arguments} to automatically look for the connections and other information they need, and the solution works well --- for example, |to-fromV| can be derived by supplying just the names |Vec| and |List|.
+We have tested a smaller-scale solution where generic programs use Agda's instance arguments~\citep{Devriese-instance-arguments} to automatically look for the connections and other information they need, and the solution works --- for example, |to-fromV| can be derived by supplying just the names |Vec| and |List|.
+However, instance searching currently brings serious performance overhead, and the solution still requires us to instantiate one definition at a time.
 Larger-scale solutions such as instantiating the definitions in a parametrised module all at once may be required in practice.
 
 Finally, we should briefly mention how |AlgD| handles universe polymorphism.
@@ -1816,7 +1802,8 @@ algConB ℓ (inr  rb  ∷ cb)  = inl (max-ℓ rb ⊔ ℓ) ∷ inr rb ∷ algConB
 \end{code}
 (where |max-ℓ rb| is the maximum level in |rb|).
 Subsequently we need to prove |level-ineq| for |AlgD F|, which requires non-trivial reasoning and involves properties about |algConB| such as |max-σ (algConB ℓ cb) ≡ max-π cb ⊔ max-σ cb ⊔ hasRec? ℓ cb|.
-The reasoning is not difficult, but is probably one of the first examples that require non-trivial reasoning about universe levels.
+The reasoning is not difficult, but is probably one of the first examples that require non-trivial reasoning about universe levels.%
+\todo{necessity of the reasoning}
 
 \subsection{Predicates on Simple Containers}
 \label{sec:simple-containers}
@@ -2056,16 +2043,27 @@ However, as generic programs become more complex, we may need more advanced code
 %However, their techniques can still be of use to us if elaborator reflection is better designed.
 %For example, elaborator reflection may provide an interface for adding normalisation rules in certain contexts, such that programmers can optimise instantiation of generic programs~\citep{de-Vries-masters-thesis} without modifying the global language behaviour.
 
+\paragraph{Performance overhead of the framework}
+
+While programs instantiated using our framework are optimised, there is still the overhead of type-checking the additional definitions required by our framework and running the metaprograms to generate code.
+Minimising this overhead is particularly important for an interactive development environment (which Agda is famous for).
+We performed a quick experiment comparing two versions of all our examples: the first version used our metaprograms to instantiate the generic programs, whereas the second version contained printed (hand-written) definitions only, without anything from our framework.
+The result was disappointing: on a typical laptop, it took about 66~seconds to check the first version, and about 5~seconds to check the second version.
+%(We notice that some connections take significantly more time to check than the others, in particular those related to the |All| predicate, which is defined using two layers of ornamentation; this also means that for simpler definitions the overhead is more tolerable.)
+We think that the experiment is more an indication of how much the current implementation of Agda’s type-checker and elaborator reflection (and, to a lesser extent, our metaprograms) can still be optimised, since the overhead inherently associated with our core idea ---instantiating generic programs with normalisation and unquotation--- should not be so high (and our metaprograms are just straightforward implementations of the idea).
+But however high the overhead is, it can always be alleviated by separate compilation ---collecting generic entities in separate files, which are checked only once and do not interfere with subsequent interactive development sessions--- or copying and pasting printed definitions into the programmer’s files.
+These solutions require the programmer’s effort, but as generic libraries become more powerful and the user interface gets improved, the cost will be easily outweighed by the benefit of not having to write the definitions that can generated.
+
 \paragraph{Analysis of higher-order encodings}
 The local variable creation technique has been used extensively to analyse higher-order encodings, but it has to be used with caution.  
 Agda's elaborator checks if a local variable escapes its context in the result of |extendContext| during the runtime of elaboration.\footnote{%
 In previous versions of Agda, the existing de Bruijn indices in an extended context were not weakened~\citep{AgdaIssue3831} and the check was not implemented in full until the recent version 2.6.2 of Agda~\citep{AgdaIssue4898}.}
 This is similar to the |nu| constructor of the typed tactic language Mtac~\citep{Ziliani2015}, which checks the escape of local variables during tactic execution.
 Indeed, \citet{Chen-Mtac-Agda} implemented Mtac's |nu| constructor by elaborator reflection in the same way.
-On the contrary, the $\nu$-operator for \emph{local name creation} in a modal calculus \citep{Nanevski2005} and a two-level functional language \citep{Schurmann2005} statically ensures that local names cannot escape their scope. 
+By contrast, the $\nu$-operator for \emph{local name creation} in a modal calculus \citep{Nanevski2005} and a two-level functional language \citep{Schurmann2005} statically ensures that local names cannot escape their scope. 
 
 Our higher-order encodings are not actually higher-order abstract syntax~\citep{Harper1993}, since exotic terms such as |Bool ∷ λ { false → [ A ∶ Set ] [] ; true → [ P ∶ (ℕ → Set) ] [] }| are not excluded by the typing discipline.
-As argued by \citet{McBride-ornaments}, exotic terms, which we do not use, could be exploited for richer expressiveness, but then it is harder to analyse and deviates too much from Agda's current datatype declarations, which our framework targets.
+As argued by \citet{McBride-ornaments}, exotic terms (which we do not use) could be exploited for richer expressiveness, but then it is harder to analyse and deviates too much from Agda's current datatype declarations, which our framework targets.
 
 \paragraph{Dependently typed datatype-generic libraries}
 Our framework makes it possible and worthwhile to develop datatype-generic libraries for wider and practical use in Agda.

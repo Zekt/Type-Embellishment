@@ -1,20 +1,52 @@
 %% This BibTeX bibliography file was created using BibDesk.
-%% https://bibdesk.sourceforge.io/
+%% http://bibdesk.sourceforge.net/
 
-%% Created for Josh Ko at 2022-03-03 17:36:15 +0800 
+%% Created for Josh Ko at 2022-06-13 22:56:21 +0800 
 
 
 %% Saved with string encoding Unicode (UTF-8) 
 
 
 
+@inproceedings{Sozeau-universe-polymorphism-Coq,
+	abstract = {Universes are used in Type Theory to ensure consistency by checking that definitions are well-stratified according to a certain hierarchy. In the case of the \textsc{Coq} proof assistant, based on the predicative Calculus of Inductive Constructions (pCIC), this hierachy is built from an impredicative sort \texttt{Prop} and an infinite number of predicative \texttt{Type}$_i$ universes. A cumulativity relation represents the inclusion order of universes in the core theory. Originally, universes were thought to be floating levels, and definitions to implicitely constrain these levels in a consistent manner. This works well for most theories, however the globality of levels and constraints precludes \emph{generic} constructions on universes that could work at different levels. Universe polymorphism extends this setup by adding \emph{local} bindings of universes and constraints, supporting generic definitions over universes, reusable at different levels. This provides the same kind of code reuse facilities as ML-style parametric polymorphism. However, the structure and hierarchy of universes is more complex than bare polymorphic type variables. In this paper, we introduce a conservative extension of pCIC supporting universe polymorphism and treating its whole hierarchy. This new design supports typical ambiguity and implicit polymorphic generalization at the same time, keeping it mostly transparent to the user. Benchmarking the implementation as an extension of the \textsc{Coq} proof assistant on real-world examples gives encouraging results.},
+	author = {Sozeau, Matthieu and Tabareau, Nicolas},
+	booktitle = {International Conference on Interactive Theorem Proving (ITP)},
+	date-added = {2022-06-13 22:27:03 +0800},
+	date-modified = {2022-06-13 22:27:03 +0800},
+	doi = {10.1007/978-3-319-08970-6_32},
+	pages = {499--514},
+	publisher = {Springer},
+	series = {Lecture Notes in Computer Science},
+	title = {Universe Polymorphism in {Coq}},
+	volume = {8558},
+	year = 2014,
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCYLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L1NvemVhdSBldCBhbCAyMDE0IC0gVW5pdmVyc2UgUG9seW1vcnBoaXNtIGluIENvcS5wZGZPEQJuAAAAAAJuAAIAAAZTeXN0ZW0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQkQAAf////8fU296ZWF1IGV0IGFsIDIwMTQgI0ZGRkZGRkZGLnBkZgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wAAAAAAAAAAAAAAAAAFAAYAAAogY3UAAAAAAAAAAAAAAAAADUJpYlJlcG9zaXRvcnkAAAIAmC86VXNlcnM6am9zaGtvOkxpYnJhcnk6TW9iaWxlIERvY3VtZW50czpKRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlcjpEb2N1bWVudHM6QmliUmVwb3NpdG9yeTpTb3plYXUgZXQgYWwgMjAxNCAtIFVuaXZlcnNlIFBvbHltb3JwaGlzbSBpbiBDb3EucGRmAA4AagA0AFMAbwB6AGUAYQB1ACAAZQB0ACAAYQBsACAAMgAwADEANAAgAC0AIABVAG4AaQB2AGUAcgBzAGUAIABQAG8AbAB5AG0AbwByAHAAaABpAHMAbQAgAGkAbgAgAEMAbwBxAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgCWVXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9Tb3plYXUgZXQgYWwgMjAxNCAtIFVuaXZlcnNlIFBvbHltb3JwaGlzbSBpbiBDb3EucGRmABMAAS8AABUAAgAN//8AAAAIAA0AGgAkAL8AAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAADMQ==}}
+
+@article{Fiore-SOAS-Agda,
+	abstract = {Despite extensive research both on the theoretical and practical fronts, formalising, reasoning about, and implementing languages with variable binding is still a daunting endeavour -- repetitive boilerplate and the overly complicated metatheory of capture-avoiding substitution often get in the way of progressing on to the actually interesting properties of a language. Existing developments offer some relief, however at the expense of inconvenient and error-prone term encodings and lack of formal foundations.\par
+
+We present a mathematically-inspired language-formalisation framework implemented in Agda. The system translates the description of a syntax signature with variable-binding operators into an intrinsically-encoded, inductive data type equipped with syntactic operations such as weakening and substitution, along with their correctness properties. The generated metatheory further incorporates metavariables and their associated operation of metasubstitution, which enables second-order equational/rewriting reasoning. The underlying mathematical foundation of the framework -- initial algebra semantics -- derives compositional interpretations of languages into their models satisfying the semantic substitution lemma by construction.},
+	author = {Fiore, Marcelo and Szamozvancev, Dmitrij},
+	date-added = {2022-06-13 13:57:47 +0800},
+	date-modified = {2022-06-13 13:57:47 +0800},
+	doi = {10.1145/3498715},
+	journal = {Proceedings of the ACM on Programming Languages},
+	number = {POPL},
+	pages = {53:1--29},
+	title = {Formal Metatheory of Second-Order Abstract Syntax},
+	volume = {6},
+	year = {2022},
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCsLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0Zpb3JlIGV0IGFsIDIwMjIgLSBGb3JtYWwgTWV0YXRoZW9yeSBvZiBTZWNvbmQtT3JkZXIgQWJzdHJhY3QgU3ludGF4LnBkZk8RAr4AAAAAAr4AAgAABlN5c3RlbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCRAAB/////x9GaW9yZSBldCBhbCAyMDIyIC0jRkZGRkZGRkYucGRmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAUABgAACiBjdQAAAAAAAAAAAAAAAAANQmliUmVwb3NpdG9yeQAAAgCsLzpVc2Vyczpqb3Noa286TGlicmFyeTpNb2JpbGUgRG9jdW1lbnRzOkpGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyOkRvY3VtZW50czpCaWJSZXBvc2l0b3J5OkZpb3JlIGV0IGFsIDIwMjIgLSBGb3JtYWwgTWV0YXRoZW9yeSBvZiBTZWNvbmQtT3JkZXIgQWJzdHJhY3QgU3ludGF4LnBkZgAOAJIASABGAGkAbwByAGUAIABlAHQAIABhAGwAIAAyADAAMgAyACAALQAgAEYAbwByAG0AYQBsACAATQBlAHQAYQB0AGgAZQBvAHIAeQAgAG8AZgAgAFMAZQBjAG8AbgBkAC0ATwByAGQAZQByACAAQQBiAHMAdAByAGEAYwB0ACAAUwB5AG4AdABhAHgALgBwAGQAZgAPAA4ABgBTAHkAcwB0AGUAbQASAKpVc2Vycy9qb3Noa28vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0Zpb3JlIGV0IGFsIDIwMjIgLSBGb3JtYWwgTWV0YXRoZW9yeSBvZiBTZWNvbmQtT3JkZXIgQWJzdHJhY3QgU3ludGF4LnBkZgATAAEvAAAVAAIADf//AAAACAANABoAJADTAAAAAAAAAgEAAAAAAAAABQAAAAAAAAAAAAAAAAAAA5U=}}
+
 @misc{Yang-recursion-schemes,
 	abstract = {This document is a `dictionary' of \emph{structured recursion schemes} in functional programming. Each recursion scheme is motivated and explained with concrete programming examples in Haskell, and the dual of each recursion scheme is also presented.},
 	author = {Yang, Zhixuan and Wu, Nicolas},
 	date-added = {2022-03-01 16:27:21 +0800},
-	date-modified = {2022-03-01 16:27:21 +0800},
-	howpublished = {\arXiv{2202.13633}},
+	date-modified = {2022-06-13 14:57:48 +0800},
+	howpublished = {To appear in the \textit{International Conference on Mathematics of Program Construction (MPC)}},
 	title = {Fantastic Morphisms and Where to Find Them: A Guide to Recursion Schemes},
+	url = {https://arxiv.org/abs/2202.13633},
 	year = {2022},
 	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxDBLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L1lhbmcgZXQgYWwgMjAyMiAtIEZhbnRhc3RpYyBNb3JwaGlzbXMgYW5kIFdoZXJlIHRvIEZpbmQgVGhlbSBBIEd1aWRlIHRvIFJlY3Vyc2lvbiBTY2hlbWVzLnBkZk8RAxQAAAAAAxQAAgAABlN5c3RlbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCRAAB/////x9ZYW5nIGV0IGFsIDIwMjIgLSAjRkZGRkZGRkYucGRmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAUABgAACiBjdQAAAAAAAAAAAAAAAAANQmliUmVwb3NpdG9yeQAAAgDBLzpVc2Vyczpqb3Noa286TGlicmFyeTpNb2JpbGUgRG9jdW1lbnRzOkpGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyOkRvY3VtZW50czpCaWJSZXBvc2l0b3J5OllhbmcgZXQgYWwgMjAyMiAtIEZhbnRhc3RpYyBNb3JwaGlzbXMgYW5kIFdoZXJlIHRvIEZpbmQgVGhlbSBBIEd1aWRlIHRvIFJlY3Vyc2lvbiBTY2hlbWVzLnBkZgAADgC8AF0AWQBhAG4AZwAgAGUAdAAgAGEAbAAgADIAMAAyADIAIAAtACAARgBhAG4AdABhAHMAdABpAGMAIABNAG8AcgBwAGgAaQBzAG0AcwAgAGEAbgBkACAAVwBoAGUAcgBlACAAdABvACAARgBpAG4AZAAgAFQAaABlAG0AIABBACAARwB1AGkAZABlACAAdABvACAAUgBlAGMAdQByAHMAaQBvAG4AIABTAGMAaABlAG0AZQBzAC4AcABkAGYADwAOAAYAUwB5AHMAdABlAG0AEgC/VXNlcnMvam9zaGtvL0xpYnJhcnkvTW9iaWxlIERvY3VtZW50cy9KRkpXV1A2NFFEfmNvbX5nb29kaXdhcmV+R29vZFJlYWRlci9Eb2N1bWVudHMvQmliUmVwb3NpdG9yeS9ZYW5nIGV0IGFsIDIwMjIgLSBGYW50YXN0aWMgTW9ycGhpc21zIGFuZCBXaGVyZSB0byBGaW5kIFRoZW0gQSBHdWlkZSB0byBSZWN1cnNpb24gU2NoZW1lcy5wZGYAABMAAS8AABUAAgAN//8AAAAIAA0AGgAkAOgAAAAAAAACAQAAAAAAAAAFAAAAAAAAAAAAAAAAAAAEAA==}}
 
@@ -446,7 +478,7 @@ The story begins with a class of simple types which are given a purely syntactic
 	read = {1},
 	title = {Algebra of Programming},
 	year = {1997},
-	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCQLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0JpcmQgZXQgYWwgMTk5NyAtIEFsZ2VicmEgb2YgUHJvZ3JhbW1pbmcucGRmTxECTgAAAAACTgACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H0JpcmQgZXQgYWwgMTk5NyAtICNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAAAAAAAAAAAAABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJAvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6QmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYADgBaACwAQgBpAHIAZAAgAGUAdAAgAGEAbAAgADEAOQA5ADcAIAAtACAAQQBsAGcAZQBiAHIAYQAgAG8AZgAgAFAAcgBvAGcAcgBhAG0AbQBpAG4AZwAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAjlVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvQmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYAEwABLwAAFQACAA3//wAAAAgADQAaACQAtwAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAMJ}}
+	bdsk-file-1 = {YnBsaXN0MDDSAQIDBFxyZWxhdGl2ZVBhdGhZYWxpYXNEYXRhXxCQLi4vLi4vLi4vLi4vLi4vTGlicmFyeS9Nb2JpbGUgRG9jdW1lbnRzL0pGSldXUDY0UUR+Y29tfmdvb2Rpd2FyZX5Hb29kUmVhZGVyL0RvY3VtZW50cy9CaWJSZXBvc2l0b3J5L0JpcmQgZXQgYWwgMTk5NyAtIEFsZ2VicmEgb2YgUHJvZ3JhbW1pbmcucGRmTxECTgAAAAACTgACAAAGU3lzdGVtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEJEAAH/////H0JpcmQgZXQgYWwgMTk5NyAtICNGRkZGRkZGRi5wZGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP////8AAAAAUERGIENBUk8ABQAGAAAKIGN1AAAAAAAAAAAAAAAAAA1CaWJSZXBvc2l0b3J5AAACAJAvOlVzZXJzOmpvc2hrbzpMaWJyYXJ5Ok1vYmlsZSBEb2N1bWVudHM6SkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXI6RG9jdW1lbnRzOkJpYlJlcG9zaXRvcnk6QmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYADgBaACwAQgBpAHIAZAAgAGUAdAAgAGEAbAAgADEAOQA5ADcAIAAtACAAQQBsAGcAZQBiAHIAYQAgAG8AZgAgAFAAcgBvAGcAcgBhAG0AbQBpAG4AZwAuAHAAZABmAA8ADgAGAFMAeQBzAHQAZQBtABIAjlVzZXJzL2pvc2hrby9MaWJyYXJ5L01vYmlsZSBEb2N1bWVudHMvSkZKV1dQNjRRRH5jb21+Z29vZGl3YXJlfkdvb2RSZWFkZXIvRG9jdW1lbnRzL0JpYlJlcG9zaXRvcnkvQmlyZCBldCBhbCAxOTk3IC0gQWxnZWJyYSBvZiBQcm9ncmFtbWluZy5wZGYAEwABLwAAFQACAA3//wAAAAgADQAaACQAtwAAAAAAAAIBAAAAAAAAAAUAAAAAAAAAAAAAAAAAAAMJ}}
 
 @inproceedings{Magalhaes-optimising-generics,
 	abstract = {Datatype-generic programming increases program reliability by reducing code duplication and enhancing reusability and modularity. Several generic programming libraries for Haskell have been developed in the past few years. These libraries have been compared in detail with respect to expressiveness, extensibility, typing issues, etc., but performance comparisons have been brief, limited, and preliminary. It is widely believed that generic programs run slower than hand-written code. In this paper we present an extensive benchmark suite for generic functions and analyze the potential for automatic code optimization at compilation time. Our benchmark confirms that generic programs, when compiled with the standard optimization flags of the Glasgow Haskell Compiler (GHC), are substantially slower than their hand-written counterparts. However, we also find that more advanced optimization capabilities of GHC can be used to further optimize generic functions, sometimes achieving the same efficiency as hand-written code.},
@@ -1011,7 +1043,8 @@ Keywords: homotopy type theory, coherences, strict equality, homotopy type syste
 	note = {Accessed: 2022-03-02},
 	title = {Wrong {de Bruijn} Indices for Reflected Variables inside an Extended Context},
 	url = {https://github.com/agda/agda/issues/3831},
-	year = {2019}}
+	year = {2019},
+	bdsk-url-1 = {https://github.com/agda/agda/issues/3831}}
 
 @misc{AgdaIssue4898,
 	author = {{Agda Issue}},
@@ -1019,7 +1052,8 @@ Keywords: homotopy type theory, coherences, strict equality, homotopy type syste
 	note = {Accessed: 2022-03-02},
 	title = {Get Rid of \textsc{UNREACHABLE} on Escaping Variable},
 	url = {https://github.com/agda/agda/pull/4898},
-	year = {2020}}
+	year = {2020},
+	bdsk-url-1 = {https://github.com/agda/agda/pull/4898}}
 
 @misc{AgdaIssue5810,
 	author = {{Agda Issue}},
@@ -1027,7 +1061,8 @@ Keywords: homotopy type theory, coherences, strict equality, homotopy type syste
 	note = {Accessed: 2022-03-02},
 	title = {Loss of Subject Reduction with Setω},
 	url = {https://github.com/agda/agda/issues/5810},
-	year = {2022}}
+	year = {2022},
+	bdsk-url-1 = {https://github.com/agda/agda/issues/5810}}
 
 @article{Harper1993,
 	author = {Harper, Robert and Honsell, Furio and Plotkin, Gordon D.},
