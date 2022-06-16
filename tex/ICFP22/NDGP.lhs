@@ -299,6 +299,7 @@
 %format e = "\iden e"
 %format e' = "\iden{e^\prime}"
 %format f = "\iden f"
+%format g = "\iden g"
 %format f' = "\iden{f^\prime}"
 %format fC = "\iden{fC}"
 %format fs = "\iden{fs}"
@@ -458,9 +459,9 @@ foldr-fusion h he hf (a ∷ as)  = hf a _ _ (foldr-fusion h he hf as)
 Note that both |foldr| and |foldr-fusion| are fully universe-polymorphic (otherwise they would be inconvenient to use).
 Also important (especially in a dependently typed setting) is the ability to derive new datatypes --- the standard example is the derivation of vectors from list |length|,
 \begin{code}
-data Vec (A : Set ℓ) : ℕ → Set ℓ where                      length : {A : Set ℓ} → List A → ℕ
-  []   :                Vec A    zero                       length []        = zero
-  _∷_  : A → Vec A n →  Vec A (  suc n) {-"\hspace{4em}"-}  length (a ∷ as)  = suc (length as)
+data Vec (A : Set ℓ) : ℕ → Set ℓ where                              length : {A : Set ℓ} → List A → ℕ
+  []   :                        Vec A    zero                       length []        = zero
+  _∷_  : A → ∀ {n} → Vec A n →  Vec A (  suc n) {-"\hspace{2em}"-}  length (a ∷ as)  = suc (length as)
 \end{code}
 and subsequently we want to derive constructions about vectors too.
 What we want is conceptually simple but immediately useful in practice: automated generation of native entities that had to written manually ---including all the entities shown above--- from datatype-generic programs.
@@ -1112,9 +1113,9 @@ Among these datatypes, the one we will see most frequently is |Term|, the dataty
 %Type expressions are a part of |Term| but usually marked as |Type| ---a synonym of |Term|--- for clarity.
 The quotation of an expression~|e| can be obtained as |quoteTerm e : Term|; this syntax makes it easy to produce concrete examples of |Term| --- for example, we may evaluate |quoteTerm ((A : Set) → Vec A zero)| and get%
 \footnote{In fact there is some additional information embedded in |Term|s such as argument visibility (being implicit or not) and binder names, which we suppress in our presentation for brevity.}
-\begin{spec}
+\begin{code}
 pi (agda-sort (lit 0)) (def (quote Vec) (var 0 [] ∷ con (quote zero) [] ∷ [])) : Term
-\end{spec}
+\end{code}
 where the structure of the type expression is turned into the composition of several of the |Term| constructors, namely
 \begin{itemize}[leftmargin=*]
 \item |pi : Term → Term → Term|, which represents a dependent function type,
@@ -1159,7 +1160,6 @@ unquoteDecl data d constructor c₁ {-"\ldots\;"-} cₙ = {-"\;\cdots"-}
 \end{code}
 which introduces a datatype~|d| and its constructors |c₁|,~\ldots,~|cₙ| into the scope.
 The definitions of |d|~and |c₁|,~\ldots,~|cₙ| are supplied by the metaprogram using the new primitives |declareData| and |defineData|, whose details are omitted from the presentation.
-%(The declaration form is somewhat verbose, but is chosen so that Agda's scope- and type-checking can be kept unchanged.)
 
 Below we look at some actual metaprograms for generating the components in our framework.
 
@@ -1629,7 +1629,7 @@ CurriedL    zero    X = X tt
 CurriedL (  suc n)  X = (ℓ : Level) → CurriedL n (λ ℓs → X (ℓ , ℓs))
 \end{code}
 However, the hole~`|?|' is problematic since it should be a finite level when |n|~is zero (meaning that there is no level quantification), or~|ω| when |n|~is non-zero, but currently Agda's universe polymorphism supports only finite levels.
-To produce such types, we have to operate at the meta-level (evading the type-checker) and generate the level quantifications in their syntax trees in relevant metaprograms such as |defineFold|, of which |definePFold|~(\cref{fig:definePFold}) is a cut-down version.
+To produce curried types with level quantifications, we have to operate at the meta-level (evading the type-checker) and generate the level quantifications in their syntax trees in relevant metaprograms such as |defineFold|, of which |definePFold|~(\cref{fig:definePFold}) is a cut-down version.
 The need for the special treatment is one reason that we separate level parameters from ordinary ones instead of allowing the two kinds of parameters to mix freely.
 
 %\begin{code}
@@ -1656,15 +1656,64 @@ fold-operator : (C : DataC D N) → FoldP
 \end{code}
 %For example, the fold program |foldAccP| can be obtained as |fold-operator AccC|.
 As an example of instantiating the generic program, suppose that we have written the datatype |Acc| manually, and want to derive its fold operator.
-First we generate the description |AccD| by the macro |genDataD Acc|, and then the datatype connection |AccC| by |genDataC AccD (genDataT AccD Acc)|.
-Now |fold-operator AccC| is exactly the fold program |foldAccP|, and the fold operator/function |foldAcc| can be manufactured from |foldAccP| by
+First we generate from |Acc| its description |AccD|, a wrapper |AccT|, and a datatype connection |AccC| between |AccD| and |AccT| by some macros:
+\begin{code}
+AccD = genDataD Acc{-"\,"-};{-"\quad"-} AccT = genDataT AccD Acc{-"\,"-};{-"\quad"-} AccC = genDataC AccD AccT
+\end{code}
+We can then use the connection |AccC| to instantiate |fold-operator| to the fold program
+\begin{code}
+foldAccP = fold-operator AccC
+\end{code}
+from which the fold operator/function |foldAcc| can be manufactured by using the |unquoteDecl| syntax to introduce the name |foldAcc| into scope, and then invoking the metaprogram |defineFold| with the fold program and the newly introduced name:
 \begin{code}
 unquoteDecl foldAcc = defineFold foldAccP foldAcc
 \end{code}
-and connected with |foldAccP| by |genFoldC foldAccP foldAcc|.
-(The macros are manually invoked for now, but the process could be streamlined as, say, pressing a few buttons of an editor.)
+Finally, we generate a fold connection between |foldAccP| and |foldAcc| by
+\begin{code}
+foldAccC = genFoldC foldAccP foldAcc
+\end{code}
+which can be used to instantiate other generic programs (such as |fold-fusion| below) for |foldAcc|.
+The macros are manually invoked for now and might be invoked with wrong arguments, but usually the error messages are reasonable because the macros are typed --- for example, checking |genDataC AccD Acc| will give rise to a standard error message saying that |Acc| does not have the type |DataT AccD|.
+(Perhaps the instantiation process could eventually be streamlined as, say, pressing a few buttons of an editor, which displays only valid options.)
 
-Let us look at |fold-operator| in a bit more detail.
+It would not be too interesting if we could only manufacture functions but not prove some of their properties.
+For fold operators, one of the most useful theorems is the fusion theorem~\citep{Bird-AoP}, of which |foldr-fusion| in \cref{sec:introduction} is an instance.
+The interface to the theorem is
+\begin{code}
+fold-fusion : (C : DataC D N) (fC : FoldC (fold-operator C) f) → IndP
+\end{code}
+where the fold connection~|fC| is used to quantify over functions~|f| that are fold operators of~|N|.
+Suppose that we want to instantiate the theorem for the |foldr| operator on |List| in \cref{sec:introduction}.
+Note that this version of |foldr| is different from the one manufactured by |defineFold| from the fold program $|foldListP| = |fold-operator ListC|$, where |ListC| is the datatype connection for |List|; in particular, the arguments of |foldr| are in a different order from that specified by |foldListP|.
+However, we can still connect |foldr| with |foldListP| by manually writing a wrapper to specify the argument order,
+\begin{code}
+foldrT : FoldT foldListP
+foldrT (ℓ' , ℓ , tt) ((A , tt) , B , e , f , tt) = foldr f e
+\end{code}
+and then generating a fold connection (using a variant of |genFoldC| that takes a wrapper)
+\begin{code}
+foldrC = genFoldC' foldListP foldrT
+\end{code}
+Now we can obtain |foldr-fusion| in \cref{sec:introduction} by
+\begin{code}
+unquoteDecl foldr-fusion = defineInd (fold-fusion ListC foldrC) foldr-fusion
+\end{code}
+and use |foldr-fusion| to prove, for example, the handy law that a |map| followed by a |foldr| (two list traversals) can be optimised as a |foldr| (a single list traversal),
+\begin{code}
+foldr-map-fusion :  {A : Set ℓ} {B : Set ℓ'} {C : Set ℓ''}
+                    (f : B → C → C) (e : C) (g : A → B) →
+                    (as : List A) → foldr f e (map g as) ≡ foldr (f ∘ g) e as
+foldr-map-fusion f e g = foldr-fusion (foldr f e) refl (λ { _ _ _ refl → refl })
+\end{code}
+where $|map g| = |foldr [] (_∷_ ∘ g)|$.
+(The law could also be proved generically, but first we would need to give |map| a generic definition, which requires extra machinery not developed in this paper.)
+
+In general, if the library user is not satisfied with the form of a manufactured function (argument order, visibility, etc), they can print the function definition, change it to a form they want, and connect the customised version back to the library in the same way as we treated |foldr|.
+This customisation can be tiresome if it has to be done frequently, however, and there should be ways to get the manufactured forms right most of the time.
+We have implemented a cheap solution where argument name suggestions (for definition-printing) and visibility specifications are included in |FoldP| (and |IndP|) and processed by relevant components such as |Curriedᵗ|, and the solution works well for our small selection of examples.
+More systematic solutions are probably needed for larger libraries though, for example name suggestion based on machine learning~\citep{Alon-code2vec} and visibility calculation by analysing which arguments can be inferred by unification.
+
+Let us switch to the perspective of the library programmer and look at |fold-operator| in a bit more detail.
 The ordinary parameters of |fold-operator C| are mainly a |⟦ D ⟧ᵈ|-algebra in a curried form, so the work of |fold-operator| is purely cosmetic:
 at type level, compute the types of a curried algebra, which are the curried types of the constructors of~|D| where all the recursive fields are replaced with a given carrier, and at program level, uncurry a curried algebra.
 The level parameters of |fold-operator C| include those of~|D| and one more for the carrier~|X| appearing in the |Param| telescope shown below, which also contains the ordinary parameters of~|D| and a curried algebra represented as a telescope computed (by |FoldOpTel|) from the list of constructor descriptions in~|D|:
@@ -1718,20 +1767,6 @@ The pattern is also facilitated by the telescope-appending constructor, which ap
 %\end{code}
 %The definition of |fold-opᶜ| is essentially uncurrying, gradually applying a given function to the argument of the algebra --- which is a tuple.
 
-It would not be too interesting if we could only manufacture functions but not prove some of their properties.
-For fold operators, one of the most useful theorems is the fusion theorem~\citep{Bird-AoP}, of which |foldr-fusion| in \cref{sec:introduction} is an instance.
-The interface to the theorem is
-\begin{code}
-fold-fusion : (C : DataC D N) (fC : FoldC (fold-operator C) f) → IndP
-\end{code}
-where the fold connection~|fC| is used to quantify over functions~|f| that are fold operators of~|N|.
-Although the version of |foldr| in \cref{sec:introduction} is not manufactured by |defineFold| from the fold program $|foldListP| = |fold-operator ListC|$ (where |ListC| is the datatype connection for |List|) and the arguments of |foldr| are in a different order from that specified by |foldListP|, there is no problem instantiating |fold-fusion| for |foldr|: in this case we can still manually write a wrapper $|foldrT| = |λ _ ((A , _) , B , e , f , _) → foldr f e| : |FoldT foldListP|$ and manufacture a fold connection |foldrC| by |genFoldC' foldListP foldrT|, and then |fold-fusion ListC foldrC| instantiates to |foldr-fusion|.
-
-In general, if the library user is not satisfied with the form of a manufactured function (argument order, visibility, etc), they can print the function definition, change it to a form they want, and connect the customised version back to the library in the same way as we treated |foldr|.
-This customisation can be tiresome if it has to be done frequently, however, and there should be ways to get the manufactured forms right most of the time.
-We have implemented a cheap solution where argument name suggestions (for definition-printing) and visibility specifications are included in |FoldP| (and |IndP|) and processed by relevant components such as |Curriedᵗ|, and the solution works well for our small selection of examples.
-More systematic solutions are probably needed for larger libraries though, for example name suggestion based on machine learning~\citep{Alon-code2vec} and visibility calculation by analysing which arguments can be inferred by unification.
-
 \subsection{Algebraic Ornamentation}
 \label{sec:algebraic-ornamentation}
 
@@ -1745,24 +1780,41 @@ ListO = record { level = λ _ → tt ;{-"~~"-} applyL = λ (ℓ , _) → record
 Do not worry about the details --- the point here is that it is not difficult to write ornaments between concrete datatypes (and it will be even easier if there is a (semi-)automatic inference algorithm~\citep{Ringer-ornaments-Coq} or an editing interface showing two datatypes side by side and allowing the user to mark their differences intuitively).
 %Moreover, the ornament is the only thing the user needs to write to derive all the entities related to |List| and~|ℕ| below.
 
-The first thing we can derive from an ornament is a forgetful function; in the case of |ListO|, the derived forgetful function is list |length|, which discards the additional element field.
+The first thing we can derive from an ornament is
+\begin{code}
+forget : DataC D M → DataC E N → DataO D E → FoldP
+\end{code}
+which instantiates to a forgetful function from~|M| to~|N| --- if we instantiate |forget| with |ListO|,
+\begin{code}
+lenP = forget ListC NatC ListO
+\end{code}
+(where |ListC| and |NatC| are connections for |List| and~|ℕ| respectively) the function manufactured from |lenP| will be list |length|~(\cref{sec:introduction}), which discards the additional element field.
 More can be derived from special kinds of ornaments, with a notable example being `algebraic ornaments'.
 In our formulation, given a fold program |F : FoldP| we can compute a more informative version of the description~|F .Desc| and an ornament between them:
 \begin{code}
 AlgD : FoldP → DataD{-"\,"-};{-"\quad"-} AlgO : (F : FoldP) → DataO (AlgD F) (F .Desc)
 \end{code}
 The new datatype described by |AlgD F| has the parameters of~|F| and an extra index that is the result of the fold corresponding to~|F|.
-For example, the following datatype of `algebraic lists'~\citep{Ko-metamorphisms-in-Agda} can be obtained by applying the macro |defineByDataD| to the description |AlgD (fold-operator ListC)|:
+For example, the following datatype of `algebraic lists'~\citep{Ko-metamorphisms-in-Agda} can be manufactured from the description |AlgD (fold-operator ListC)|:
 \begin{code}
 data AlgList {A : Set ℓ} {B : Set ℓ'} (e : B) (f : A → B → B) : B → Set (ℓ ⊔ ℓ') where
   []   :                                    AlgList e f    e
   _∷_  : (a : A) → ∀ {b} → AlgList e f b →  AlgList e f (  f a b)
 \end{code}
-But it is usually easier to program with more specialised datatypes such as |Vec|, which is a standard example of a datatype computed by algebraic ornamentation (over |List|), using the forgetful function derived from |ListO|, namely |length|.
-From the algebraic ornament between |Vec| and |List|, in addition to a forgetful function |fromV| we can also derive its inverse |toV| and the inverse properties:
+But it is usually easier to program with more specialised datatypes such as |Vec|~(\cref{sec:introduction}), which is a standard example of algebraic ornamentation.
+To manufacture |Vec|, we use the |unquoteDecl data| syntax to introduce the names of the datatype and its constructors into scope, and invoke the metaprogram |defineByDataD| with the description $|VecD| = |AlgD lenP|$ and the newly introduced names (where the constructor names are collected in a list):
+%\footnote{The declaration form is somewhat verbose, but is chosen so that Agda's scope- and type-checking can be kept unchanged.}
 \begin{code}
-fromV  : Vec A n → List A
-toV    : (as : List A) → Vec A (length as)
+unquoteDecl data Vec constructor [] _∷_ = defineByDataD VecD Vec ([] ∷ _∷_ ∷ [])
+\end{code}
+Then we generate a datatype connection between |VecD| and (a wrapper around) |Vec| so that we can instantiate generic programs for |Vec| later:
+\begin{code}
+VecC = genDataC VecD (genDataT VecD Vec)
+\end{code}
+
+From the algebraic ornament $|VecO| = |AlgO lenP|$ between |Vec| and |List|, in addition to a forgetful function |fromV| instantiated from |forget VecC ListC VecO|, we can also derive its inverse |toV| and the inverse properties:
+\begin{code}
+fromV  : Vec A n → List A{-"\,"-};{-"\quad"-} toV : (as : List A) → Vec A (length as)
 
 from-toV  : (as : List  A)    → fromV (toV as) ≡ as
 to-fromV  : (as : Vec   A n)  → (length (fromV as) , toV (fromV as)) (EQ(Σ ℕ (Vec A))) (n , as)
@@ -1791,7 +1843,7 @@ data Ty : Set where                    data _⊢_∶_ : List Ty → Λ → Ty �
 (The list membership relation~`|_∋_|' will be defined in \cref{sec:simple-containers}.)
 Write an ornament between the datatypes |Λ|~and~`|_⊢_|' of untyped and intrinsically typed \textlambda-terms, and we get the typing relation `|_⊢_∶_|' and an isomorphism between |vΓ ⊢ τ| and |Σ[ t ∶ Λ ] vΓ ⊢ t ∶ τ| for free, allowing us to promote an untyped term~|t| to an intrinsically typed one if a typing derivation for~|t| can be supplied.
 
-We have deliberately omitted the types of the generic programs because they are somewhat verbose, making generic program invocation less cost-effective --- for example, the generic programs proving the inverse properties need connections for the original and the new datatypes, the fold used to compute the algebraic ornament, and the `from' and `to' functions.
+We have omitted the types of the generic programs related to algebraic ornamentation because they are somewhat verbose, making generic program invocation less cost-effective --- for example, the generic programs proving the inverse properties need the connections for the original and the new datatypes, the fold used to compute the algebraic ornament, and the `from' and `to' functions.
 In general, we should seek to reduce the cost of invoking generic programs.
 We have tested a smaller-scale solution where generic programs use Agda's instance arguments~\citep{Devriese-instance-arguments} to automatically look for the connections and other information they need, and the solution works --- for example, |to-fromV| can be derived by supplying just the names |Vec| and |List|.
 However, instance searching currently brings serious performance overhead, and the solution still requires us to instantiate one definition at a time.
@@ -1807,8 +1859,8 @@ algConB ℓ (inr  rb  ∷ cb)  = inl (max-ℓ rb ⊔ ℓ) ∷ inr rb ∷ algConB
 \end{code}
 (where |max-ℓ rb| is the maximum level in |rb|).
 Subsequently we need to prove |level-ineq| for |AlgD F|, which requires non-trivial reasoning and involves properties about |algConB| such as |max-σ (algConB ℓ cb) ≡ max-π cb ⊔ max-σ cb ⊔ hasRec? ℓ cb|.
-The reasoning is not difficult, but is probably one of the first examples that require non-trivial reasoning about universe levels.%
-\todo{necessity of the reasoning}
+In this case the datatype computation is not difficult, but it still makes sense to reason that the computed levels will always pass the universe check, and Agda conveniently allows us to perform the reasoning internally.
+%The reasoning is not difficult, but is probably one of the first examples that require non-trivial reasoning about universe levels.
 
 \subsection{Predicates on Simple Containers}
 \label{sec:simple-containers}
@@ -1853,7 +1905,7 @@ SCᶜ   (ρ  D  E  )  (_      ∷ s)  X =                                       
 
 There are not too many generic programs that work without assumptions on the datatypes they operate on; with dependent types, such assumptions can be formulated as predicates on datatype descriptions.
 As a simple example, below we characterise a datatype~|N| as a `simple container' type by marking some fields of its description as elements of some type~|X|, and then derive predicates |All P| and |Any P| on~|N| lifted from a predicate~|P| on~|X|, stating that |P|~holds for all or one of the elements in an inhabitant of~|N|.
-For example, the |ListAll| datatype (\cref{sec:connections}) is an instance of |All|.
+For example, the |ListAll| datatype (\cref{sec:framework}) is an instance of |All|.
 
 The definition of simple containers (in several layers) is shown in \cref{fig:SC}.
 %\footnote{\Cref{fig:SC} is in fact simplified:
