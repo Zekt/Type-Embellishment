@@ -394,9 +394,9 @@
 \begin{abstract}
 Datatype-generic programming is natural and useful in dependently typed languages such as Agda.
 However, datatype-generic libraries in Agda are not reused as much as they should be, because traditionally they work only on datatypes decoded from a library's own version of datatype descriptions; this means that different generic libraries cannot be used together, and they do not work on native datatypes, which are preferred by the practical Agda programmer for better language support and access to other libraries.
-This paper presents a framework using Agda's elaborator reflection to instantiate datatype-generic programs as, and for, a useful range of native datatypes and functions ---including universe-polymorphic ones--- in programmer-friendly and customisable forms.
-We expect that datatype-generic libraries built with our framework ---being interoperable with native entities--- will finally be suitable for the toolbox of the practical Agda programmer.
-Our design will be portable to other languages as the elaboration reflection features we use (such as open-term normalisation) become more widespread, and our universe-polymorphic datatype descriptions serve as a practical justification for first-class universe levels.
+Based on elaborator reflection, we present a framework in Agda featuring a set of general metaprograms for instantiating datatype-generic programs as, and for, a useful range of native datatypes and functions ---including universe-polymorphic ones--- in programmer-friendly and customisable forms.
+We expect that datatype-generic libraries built with our framework will be more attractive to the practical Agda programmer.
+As the elaborator reflection features used by our framework become more widespread, our design can be ported to other languages too.
 \end{abstract}
 
 \begin{CCSXML}
@@ -417,7 +417,7 @@ Our design will be portable to other languages as the elaboration reflection fea
 \ccsdesc[500]{Software and its engineering~Functional languages}
 \ccsdesc[500]{Software and its engineering~Data types and structures}
 
-\keywords{datatype-generic programming, dependently typed programming, inductive families, elaborator reflection, metaprogramming}
+\keywords{datatype-generic programming, dependently typed programming, inductive families, universe polymorphism, elaborator reflection, metaprogramming}
 
 \maketitle
 
@@ -498,9 +498,9 @@ Central to the framework is a set of general metaprograms performing transformat
 These metaprograms are general in the sense that they are decoupled from generic libraries, and can be independently maintained and widely reused; the decoupling also allows generic libraries to be developed or adapted from old ones in largely the same, traditional way, without having to deal with native entities themselves.
 To interface with the metaprograms, generic libraries should (either directly or indirectly) target the datatype descriptions and function representations provided by our framework, which are expressive: we support inductive families~\citep{Dybjer1994} and both fold and inductive functions, all of which can be parametrised and universe-polymorphic.
 
-We expect that datatype-generic libraries built with our framework will finally be suitable for the toolbox of the practical Agda programmer.
+We expect that datatype-generic libraries built with our framework will be more attractive to the practical Agda programmer.
 As the elaborator reflection features used by our framework become more widespread, our design will be portable to other languages too (in particular dependently typed ones) --- for example, by including an open-term normalisation operation, a metaprogramming system immediately gains the ability to optimise definitions.
-Finally, Agda's currently unique design of universe polymorphism (where universe levels are made explicit and first-class) plays an important role in our universe-polymorphic datatype descriptions, and our work serves as a practical justification for studying such design further~\citep{Kovacs-universe-hierarchies}.
+Moreover, Agda's currently unique design of universe polymorphism ---where universe levels are made explicit and first-class--- plays an important role in our universe-polymorphic datatype descriptions, and our work serves as a practical justification for further investigation into such design~\citep{Kovacs-universe-hierarchies}.
 
 For the rest of the paper:
 After recapping standard datatype-generic programming~(\cref{sec:recap}) and refining and replacing some definitions for our framework~(\cref{sec:framework}), we present some of our metaprograms that showcase the power of elaborator reflection~(\cref{sec:reflection}).
@@ -536,7 +536,7 @@ Finally we conclude with some discussions~(\cref{sec:discussion}).
 
 We start from a recap of standard datatype-generic programming (in a dependently typed setting).
 The core idea of datatype-genericity is to encode datatype definitions as `descriptions', which can take a variety of forms but should be some kind of first-class data on which computation can be performed.
-Programs that manipulate datatype descriptions in some way are dubbed `generic programs', and can perform constructions tailored for individual datatypes by analysing input descriptions or produce new datatypes by computing output descriptions.
+Programs that manipulate datatype descriptions in some way are dubbed `(datatype-)\allowbreak generic programs', and can perform constructions tailored for individual datatypes by analysing input descriptions or produce new datatypes by computing output descriptions.
 The power of generic programs depends crucially on the range of datatypes encoded by the chosen descriptions.
 In \cref{sec:ConDs} we fix on a class of descriptions covering inductive families~\citep{Dybjer1994} in the form of sums of products.
 Then we review (|F|-)algebras in \cref{sec:algebras}, the kind of generic program that our presentation will focus on (but not the only kind we use).
@@ -628,8 +628,11 @@ Specified by the definition of the base functor |⟦ D ⟧ᶜˢ| in \cref{fig:ba
 |A ⊎ B| is the sum of the types |A|~and~|B| with constructors |inl : A → A ⊎ B| and |inr : B → A ⊎ B|.
 |Σ[ a ∶ A ] B| is a dependent pair type, where |Σ[ a ∶ A ]| binds the variable~|a|, which can appear in~|B|; the pair constructor |_,_| associates to the right.
 Free variables in types (such as~|I| in the types of |⟦_⟧ᶜˢ|, |⟦_⟧ᶜ|, and |⟦_⟧ʳ|) are implicitly universally quantified.}
-the argument of |con| encodes the choice of a constructor and the arguments of the chosen constructor in a sum-of-products structure; for example, in Agda it is customary to use a pattern synonym~\citep{Pickering-pattern-synonyms} to define |acc| in terms of |con|: $|pattern acc n as| = |con (inl (n , as , refl))|$.
-The arguments |n|~and~|as| of |acc| are collected in a tuple (product structure), tagged by |inl| (left injection into a sum type), and finally wrapped up with |con| as an inhabitant of |μ Acc<D n|.
+the argument of |con| encodes the choice of a constructor and the arguments of the chosen constructor in a sum-of-products structure; for example, in Agda it is customary to use a pattern synonym~\citep{Pickering-pattern-synonyms} to define |acc| in terms of |con|,
+\begin{code}
+pattern acc n as = con (inl (n , as , refl))
+\end{code}
+where the arguments |n|~and~|as| of |acc| are collected in a tuple (product structure), tagged by |inl| (left injection into a sum type), and finally wrapped up with |con| as an inhabitant of |μ Acc<D n|.
 In general, when there are multiple constructors, the injection parts will look like |inl ...|, |inr (inl ...)|, |inr (inr (inl ...))|, etc, specifying the constructor choice in Peano style.
 The equality proof |refl| at the end of the tuple needs a bit more explanation: in the type of |con|, the index~|i| is universally quantified, which seems to suggest that we could construct inhabitants of |μ D i| for any~|i|, but the equality proof forces~|i| to be~|n|, the index targeted by |acc|.
 
@@ -728,7 +731,7 @@ data ListAll {A : Set} (P : A → Set) : List A → Set where
 whose description can be computed from the description of |List|.
 %Note that the index type of |ListAll| refers to |List| ---a native datatype--- and the indices targeted by the |ListAll| constructors refer to the native |List| constructors.
 If |μ|~were in use, then |N|~would simply be |μ D|, whose constructor would also be known to be |con|; without~|μ|, however, |N|~and its constructors have to be provided as additional input to the generic construction of |All| to allow the latter to specialise to the description of |ListAll|.
-In general, datatype connections capture the extensional behaviour of datatypes generically such that what we can do with the connections are more or less the same as what we can do with those datatypes manufactured with~|μ|.
+In general, datatype connections capture the extensional behaviour of datatypes generically such that what we can do with connections are more or less the same as what we can do with those datatypes manufactured with~|μ|.
 Thus, by replacing~|μ| with datatype connections, we can easily adapt generic programs that assume the presence of~|μ| to work on native datatypes instead.
 The extensionality also allows us to customise the forms of native datatypes flexibly as long as they still behave the same.
 
@@ -862,7 +865,7 @@ record PDataC (D : PDataD) (N : PDataT D) : Set where field
 \label{fig:PDataC}
 \end{figure}
 
-When |μ|~was present, generic programs only needed to take a description |D : DataD| as input, and the corresponding native datatype would simply be |μ D|.
+When |μ|~was present, generic programs only needed to take a description |D : PDataD| as input, and the corresponding native datatype would simply be |μ D|.
 Without~|μ|, a corresponding native datatype~|N| needs to be passed as an additional argument, and the first issue is the type of~|N|: the native datatype is usually in a curried form, but it is easier for generic programs to handle an uncurried form, which can be computed by |PDataT D| as defined in \cref{fig:PDataC}.
 Regardless of how many parameters and indices there actually are, this uncurried form always represents parameters and indices as two arguments |ps| and |is|, presenting a uniform view to generic programs.
 The conversion from a curried form to the uncurried form is purely cosmetic and can be done with a `wrapper' function, for example,
@@ -873,9 +876,9 @@ AccT (A , R , _) (as , _) = Acc R as
 Note that |AccT| allows the form of the native datatype to be customised: we can change the order and visibility of the arguments (for example, the visibility of~|A| is set to implicit in |Acc|) as long as we change |AccT| accordingly.
 Also, corresponding to the |con| constructor of~|μ|, we need a function |toN| to construct inhabitants of~|N|, and moreover, we need to perform pattern matching, which can be simulated by an inverse |fromN| of |toN|.
 These are packed into the record type |PDataC| of `datatype connections' in \cref{fig:PDataC}, replacing |μ|'s functionalities.
-(Strictly speaking, the inverse property |fromN-toN| here is only propositional whereas for |con| it is definitional, but this does not pose a problem at least for our examples in \cref{sec:examples}.)
+(Strictly speaking, the inverse property |fromN-toN| here is only propositional whereas for |con| it is definitional, but this does not pose a problem for our examples in \cref{sec:examples}.)
 %|DataC| is an example of generic definitions that benefit from the |DataT| wrapper --- the types of the fields would have been much messier if |N|~were in a curried form.
-An inhabitant of |DataC D N| performs invertible conversion between the branches of the sum structure in~|D| with the constructors of~|N|, and the conversion is highly mechanical --- for example,
+An inhabitant of |PDataC D N| performs invertible conversion between the branches of the sum structure in~|D| with the constructors of~|N|, and the conversion is highly mechanical --- for example,
 \begin{code}
 AccC : PDataC AccD AccT
 AccC = record  {  toN        = λ { (inl (x , as , refl))  → acc x as             }
@@ -972,7 +975,7 @@ As explained at the end of \cref{sec:PDataC}, our framework can be thought of as
 This syncing can be tedious: whenever we write a native datatype~|N|, we need to produce its description~|D|, a wrapper~|T| around~|N|, and a connection between |D|~and~|T|; conversely, whenever we compute a new datatype description, we also need to produce the corresponding native datatype, wrapper, and connection; and the same goes for instantiating generic programs as native functions.
 Fortunately, such tasks can be automated by a set of metaprograms supplied by our framework.
 
-Our metaprograms are based on Agda's elaborator reflection~(\cref{sec:elab}), which provides some important features and makes the tasks much easier to accomplish than with traditional metaprogramming.
+Our metaprograms are based on Agda's elaborator reflection~(\cref{sec:elab}), which provides a few important features that make some of the tasks much easier to accomplish than with traditional metaprogramming.
 We will focus on two particularly noteworthy examples~(\cref{sec:translation,sec:specialising}):
 The first is the translation from our datatype descriptions ---which use a higher-order representation of binders--- to the elaborator reflection API's first-order representations ---which use de Bruijn indices--- for generating a native datatype.
 Surprisingly, we are able to avoid the tedious and error-prone manipulation of de Bruijn indices using the `local variable creation' technique~\citep{Nanevski2005,Schurmann2005}, which is easily supported by elaborator reflection.
@@ -1476,13 +1479,14 @@ data Acc {ℓ ℓ' : Level} {A : Set ℓ} (R : A → A → Set ℓ') : A → Set
   acc : (x : A) → ((y : A) → R y x → Acc R y) → Acc R x
 \end{code}
 where the universe levels |ℓ|~and~|ℓ'| in the types of |A|~and~|R| can be arbitrary.
-Agda supports such \emph{universe polymorphism} through a currently unique system where (finite) universe levels are internalised and have a type |Level : Set|.
+Our framework ought to support such \emph{universe-polymorphic} datatypes given their prevalence in Agda.
+
+Agda supports universe polymorphism through a currently unique system where (finite) universe levels are internalised and have a type |Level : Set|.
 Levels can be constructed with the primitives |lzero : Level| and |lsuc : Level → Level| in the same way as natural numbers are constructed, but we cannot pattern-match levels with |lzero| and |lsuc|.
 There is also an operator |_⊔_ : Level → Level → Level| that computes the maximum of two levels.
 The internalisation makes it convenient to encode universe-polymorphic datatypes --- just put levels inside datatype descriptions.
 It is also possible to compute new datatypes where the universe levels are the results of non-trivial computation, which can be reasoned about.
-Below we extend our framework to support universe polymorphism.
-Besides showing that it is possible to deal with universe-polymorphic entities datatype-generically, our work also serves as a practical justification of (Agda's) first-class universe levels, making essential use of the capabilities of computing and reasoning about levels internally.
+Besides showing that it is possible to deal with universe-polymorphic entities generically, our encoding in this section also serves as a practical justification of (Agda's) first-class universe levels, as we make essential use of the capabilities of computing and reasoning about levels internally.
 
 \begin{figure}
 \codefigure
@@ -1527,7 +1531,7 @@ Our framework makes a simplifying assumption that holds for common universe-poly
 Under this assumption, to describe a possibly universe-polymorphic datatype, we start with a number |n : ℕ| of level parameters, from which we can compute a type |Level ^ n| of tuples of |n|~levels (as defined by |A ^ zero == ⊤| and |A ^ (suc n) == A × (A ^ n)|), and then provide a function of type |Level ^ n → PDataD|, which brings |n|~level parameters into the scope of the definition of a |PDataD|.
 We create a new description layer |DataD| for level parametrisation, which is shown in \cref{fig:DataD} along with the existing four layers adapted to accommodate levels, to be explained below in \cref{sec:UP-telescopes,sec:UP-sums-of-products,sec:UP-parameters}.
 The rest of our framework are similarly adapted, so there are also definitions of |DataT|, |DataC|, |FoldP|, |FoldT|, and |FoldC|, which we omit from the presentation.
-Finally, the metaprograms in \cref{sec:reflection} are extended to treat level parameters, but due to the current limit on Agda's universe polymorphism, the treatment is different from that of ordinary parameters, and is briefly sketched in \cref{sec:UP-levels}.
+Finally, the metaprograms in \cref{sec:reflection} are extended to treat level parameters, but due to the current limit of Agda's universe polymorphism, the treatment is different from that of ordinary parameters, and is briefly sketched in \cref{sec:UP-levels}.
 
 \subsection{Telescopes}
 \label{sec:UP-telescopes}
@@ -1560,7 +1564,7 @@ Before we adapt the descriptions, telescopes need to be adapted too, as shown in
 The core change is made to the type of the first argument of~`|∷|', from |Set| to |Set ℓ|.
 We also add an index of type |Level| to |Tel| such that |T : Tel ℓ| implies that the maximum level appearing in~|T| is~|ℓ|.
 This maximum level is important since it is the universe level of the type |⟦ T ⟧ᵗ|, which is a nested |Σ|-type inhabited by tuples whose components have the types in~|T|.
-Since the elements of a telescope can now be |Set|s of arbitrary finite levels, the level of the type of the telescope itself has to be greater than all those levels, and is set to the first infinite level~|ω| here.
+Since the elements of a telescope can now be |Set|s of arbitrary finite levels, the level of the type of the telescope itself has to be greater than all those levels, and is set as the first infinite level~|ω| here.
 
 \subsection{Sum-of-Products Descriptions}
 \label{sec:UP-sums-of-products}
@@ -1625,8 +1629,8 @@ CurriedL    zero    X = X tt
 CurriedL (  suc n)  X = (ℓ : Level) → CurriedL n (λ ℓs → X (ℓ , ℓs))
 \end{code}
 However, the hole~`|?|' is problematic since it should be a finite level when |n|~is zero (meaning that there is no level quantification), or~|ω| when |n|~is non-zero, but currently Agda's universe polymorphism supports only finite levels.
-To produce such types, we have to operate at the meta-level and generate the level quantifications in their syntax trees in relevant metaprograms such as |defineFold|, of which |definePFold|~(\cref{fig:definePFold}) is a cut-down version.
-The need for the special treatment is one reason that we separate level parameters from ordinary ones instead of allowing them to mix freely.
+To produce such types, we have to operate at the meta-level (evading the type-checker) and generate the level quantifications in their syntax trees in relevant metaprograms such as |defineFold|, of which |definePFold|~(\cref{fig:definePFold}) is a cut-down version.
+The need for the special treatment is one reason that we separate level parameters from ordinary ones instead of allowing the two kinds of parameters to mix freely.
 
 %\begin{code}
 %FoldNT : (F : FoldP) (ℓs : Level ^ (F .#levels)) → Set _
