@@ -52,8 +52,9 @@
 \newcommand{\varcitet}[3][]{\citeauthor{#2}#3~[\ifthenelse{\isempty{#1}}{\citeyear{#2}}{\citeyear[#1]{#2}}]}
 \newcommand{\NoPeriod}[1]{\,}
 
-\usepackage[color=yellow,textsize=scriptsize]{todonotes}
-\setlength{\marginparwidth}{1.25cm}
+%\usepackage[color=yellow,textsize=scriptsize]{todonotes}
+%\setlength{\marginparwidth}{1.25cm}
+\usepackage[disable]{todonotes}
 
 \newcommand{\LT}[1]{\todo[author=LT,inline,color=green!40,caption={}]{{#1}}}
 \newcommand{\Josh}[1]{\todo[author=Josh,inline,caption={}]{{#1}}}
@@ -618,7 +619,7 @@ syntax π A (λ a → D) = π[ a ∶  A ] D{-"\,"-};{-"\quad"-} syntax σ A (λ 
 \end{code}
 For example, |Acc<D| can be rewritten as |(σ[ n ∶ ℕ ] ρ (π[ m ∶ ℕ ] π[ lt ∶ m < n ] ι m) (ι n)) ∷ []|.
 
-In the standard recipe, a description |D : ConDs I| is converted to a type family |μ D : I → Set| by taking the least fixed point of the base functor |⟦ D ⟧ᶜˢ : (I → Set) → (I → Set)|:
+A description |D : ConDs I| is converted to a datatype |μ D : I → Set| for day-to-day programming by taking the least fixed point of the base functor |⟦ D ⟧ᶜˢ : (I → Set) → (I → Set)|:
 \begin{code}
 data μ (D : ConDs I) : I → Set where
   con : ∀ {i} → ⟦ D ⟧ᶜˢ (μ D) i → μ D i
@@ -719,7 +720,7 @@ data Acc {A : Set} (R : A → A → Set) : A → Set where
   acc : (x : A) → ((y : A) → R y x → Acc R y) → Acc R x
 \end{code}
 %We ought to extend our datatype descriptions to express this kind of parametric and universe-polymorphic datatypes given their prevalence in Agda codebases.
-The second, and more important, feature is a data structure ---which we call datatype \emph{connections}--- that abstracts and replaces the generic |μ|~operator.
+The second feature is a data structure ---which we call datatype \emph{connections}--- that abstracts and replaces the generic |μ|~operator (although similar structures have long been present in the Haskell tradition of datatype-generic programming).
 Here is a motivating example:
 From a description~|D|, we will use a metaprogram to manufacture a native datatype~|N| (in place of |μ D|).
 Subsequently we may need to compute from~|D| a new description that refers to~|N| and its constructors.
@@ -1375,8 +1376,8 @@ Now normalise the right-hand side:
 \begin{code}
 foldAcc′ A R P p .x (acc x as) = p x (λ y lt → foldAcc′ A R P p y (as y lt))
 \end{code}
-This final definition necessarily passes the termination check because, after normalisation, the |fmapᵖᵈ Desc| part in |fold-base| necessarily applies |rec| to smaller arguments.
-And the definition can be directly shown to satisfy the connecting equation
+In general, this final definition will pass the termination check if |Con .fromN| works normally by breaks its input into structurally smaller pieces, in which case the |fmapᵖᵈ Desc| part in |fold-base| applies |rec| to those smaller pieces.
+And the connecting equation always holds definitionally:
 \begin{code}
 foldAccC′ : PFoldC foldAccP foldAccT′
 foldAccC′ = record { equation = λ { (inl (x , as , refl)) → refl } }
@@ -1789,6 +1790,7 @@ which instantiates to a forgetful function from~|M| to~|N| --- if we instantiate
 lenP = forget ListC NatC ListO
 \end{code}
 (where |ListC| and |NatC| are connections for |List| and~|ℕ| respectively) the function manufactured from |lenP| will be list |length|~(\cref{sec:introduction}), which discards the additional element field.
+
 More can be derived from special kinds of ornaments, with a notable example being `algebraic ornaments'.
 In our formulation, given a fold program |F : FoldP| we can compute a more informative version of the description~|F .Desc| and an ornament between them:
 \begin{code}
@@ -2078,8 +2080,8 @@ But it shares a similar purpose with our framework of generating function defini
 
 We compare staging with our framework from the view of partial evaluation~\citep{Jones-partial-evaluation}.
 A partial evaluator takes a general program and known parts of its input, and generates a program that takes the remaining input; the resulting program is extensionally equal to ---and usually more optimised than--- the general program partially applied to the known input.
-Our macro |defineFold|~(\cref{sec:specialising}) is a partial evaluator which specialises a generic program (general program) to a given datatype description (known input).
-Indeed, it has been observed that we can perform partial evaluation in functional languages by normalisation~\citep{Filinski1999}, which |defineFold| does.
+Our metaprogram |define|($\Conid{P}$)|Fold|~(\cref{sec:specialising}) is a partial evaluator that specialises a generic program (general program) to a given description (known input).
+Indeed, it has been observed that we can perform partial evaluation in functional languages by normalisation~\citep{Filinski-semantic-partial-evaluation}, which |define|($\Conid{P}$)|Fold| does.
 
 % seperation of concerns + reasoning of metaprogram (generic struture not apearing in residual program), ref principles in staged-sop
 Similar to a partial evaluator, a staged generic program is a more specialised program-generator --- the generic/general program to be specialised has been fixed.
