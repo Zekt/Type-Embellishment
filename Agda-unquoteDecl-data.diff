@@ -1161,3 +1161,160 @@ index 11e541fbf..12a794190 100644
 -- 
 2.31.0
 
+From bb475ac5bcd2bb4865b1ae522d704b07977e3357 Mon Sep 17 00:00:00 2001
+From: Liang-Ting Chen <liang.ting.chen.tw@gmail.com>
+Date: Mon, 27 Jun 2022 15:04:55 +0800
+Subject: [PATCH] `unquoteDecl data` takes exactly one datatype name
+
+---
+ src/full/Agda/Syntax/Abstract.hs                       | 2 +-
+ src/full/Agda/Syntax/Abstract/Views.hs                 | 2 +-
+ src/full/Agda/Syntax/Concrete.hs                       | 3 ++-
+ src/full/Agda/Syntax/Concrete/Definitions.hs           | 2 +-
+ src/full/Agda/Syntax/Concrete/Definitions/Types.hs     | 2 +-
+ src/full/Agda/Syntax/Concrete/Fixity.hs                | 2 +-
+ src/full/Agda/Syntax/Parser/Parser.y                   | 5 ++---
+ src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs | 7 ++-----
+ src/full/Agda/TypeChecking/Rules/Decl.hs               | 6 +++---
+ 9 files changed, 14 insertions(+), 17 deletions(-)
+
+diff --git a/src/full/Agda/Syntax/Abstract.hs b/src/full/Agda/Syntax/Abstract.hs
+index a7f18b16b..8ddb97034 100644
+--- a/src/full/Agda/Syntax/Abstract.hs
++++ b/src/full/Agda/Syntax/Abstract.hs
+@@ -189,7 +189,7 @@ data Declaration
+       -- ^ Only for highlighting purposes
+   | UnquoteDecl MutualInfo [DefInfo] [QName] Expr
+   | UnquoteDef  [DefInfo] [QName] Expr
+-  | UnquoteData [DefInfo] [QName] UniverseCheck [DefInfo] [QName] Expr
++  | UnquoteData [DefInfo] QName UniverseCheck [DefInfo] [QName] Expr
+   | ScopedDecl ScopeInfo [Declaration]  -- ^ scope annotation
+   deriving (Data, Show, Generic)
+ 
+diff --git a/src/full/Agda/Syntax/Abstract/Views.hs b/src/full/Agda/Syntax/Abstract/Views.hs
+index 4dc9ed7bf..28dae3be8 100644
+--- a/src/full/Agda/Syntax/Abstract/Views.hs
++++ b/src/full/Agda/Syntax/Abstract/Views.hs
+@@ -491,7 +491,7 @@ instance DeclaredNames Declaration where
+       PatternSynDef q _ _          -> singleton (WithKind PatternSynName q)
+       UnquoteDecl _ _ qs _         -> fromList $ map (WithKind OtherDefName) qs  -- could be Fun or Axiom
+       UnquoteDef _ qs _            -> fromList $ map (WithKind FunName) qs       -- cannot be Axiom
+-      UnquoteData _ xs _ _ cs _    -> fromList $ map (WithKind DataName) xs ++ map (WithKind ConName) cs
++      UnquoteData _ d _ _ cs _     -> singleton (WithKind DataName d) <> (fromList $ map (WithKind ConName) cs) -- singleton _ <> map (WithKind ConName) cs
+       FunDef _ q _ cls             -> singleton (WithKind FunName q) <> declaredNames cls
+       ScopedDecl _ decls           -> declaredNames decls
+       Section _ _ _ decls          -> declaredNames decls
+diff --git a/src/full/Agda/Syntax/Concrete.hs b/src/full/Agda/Syntax/Concrete.hs
+index 54bf6e5ce..df57af354 100644
+--- a/src/full/Agda/Syntax/Concrete.hs
++++ b/src/full/Agda/Syntax/Concrete.hs
+@@ -482,7 +482,8 @@ data Declaration
+       -- ^ @unquoteDecl xs = e@
+   | UnquoteDef  Range [Name] Expr
+       -- ^ @unquoteDef xs = e@
+-  | UnquoteData Range [Name] [Name] Expr
++  | UnquoteData Range Name [Name] Expr
++      -- ^ @unquoteDecl data d constructor xs = e@
+   | Pragma      Pragma
+   deriving (Data, Eq)
+ 
+diff --git a/src/full/Agda/Syntax/Concrete/Definitions.hs b/src/full/Agda/Syntax/Concrete/Definitions.hs
+index e01bc6e6a..3de32fe77 100644
+--- a/src/full/Agda/Syntax/Concrete/Definitions.hs
++++ b/src/full/Agda/Syntax/Concrete/Definitions.hs
+@@ -155,7 +155,7 @@ declKind (NiceRecSig r _ _ pc uc x pars _)   = LoneSigDecl r (RecName pc uc) x
+ declKind (NiceDataSig r _ _ pc uc x pars _)  = LoneSigDecl r (DataName pc uc) x
+ declKind (FunDef r _ abs ins tc cc x _)      = LoneDefs (FunName tc cc) [x]
+ declKind (NiceDataDef _ _ _ pc uc x pars _)  = LoneDefs (DataName pc uc) [x]
+-declKind (NiceUnquoteData _ _ _ pc uc xs _ _) = LoneDefs (DataName pc uc) xs
++declKind (NiceUnquoteData _ _ _ pc uc x _ _) = LoneDefs (DataName pc uc) [x]
+ declKind (NiceRecDef _ _ _ pc uc x _ pars _) = LoneDefs (RecName pc uc) [x]
+ declKind (NiceUnquoteDef _ _ _ tc cc xs _)   = LoneDefs (FunName tc cc) xs
+ declKind Axiom{}                             = OtherDecl
+diff --git a/src/full/Agda/Syntax/Concrete/Definitions/Types.hs b/src/full/Agda/Syntax/Concrete/Definitions/Types.hs
+index ad14a9744..a36d937d0 100644
+--- a/src/full/Agda/Syntax/Concrete/Definitions/Types.hs
++++ b/src/full/Agda/Syntax/Concrete/Definitions/Types.hs
+@@ -80,7 +80,7 @@ data NiceDeclaration
+   | NiceGeneralize Range Access ArgInfo TacticAttribute Name Expr
+   | NiceUnquoteDecl Range Access IsAbstract IsInstance TerminationCheck CoverageCheck [Name] Expr
+   | NiceUnquoteDef Range Access IsAbstract TerminationCheck CoverageCheck [Name] Expr
+-  | NiceUnquoteData Range Access IsAbstract PositivityCheck UniverseCheck [Name] [Name] Expr
++  | NiceUnquoteData Range Access IsAbstract PositivityCheck UniverseCheck Name [Name] Expr
+   deriving (Data, Show, Generic)
+ 
+ instance NFData NiceDeclaration
+diff --git a/src/full/Agda/Syntax/Concrete/Fixity.hs b/src/full/Agda/Syntax/Concrete/Fixity.hs
+index effa6bedf..886ddc34b 100644
+--- a/src/full/Agda/Syntax/Concrete/Fixity.hs
++++ b/src/full/Agda/Syntax/Concrete/Fixity.hs
+@@ -242,7 +242,7 @@ declaredNames = \case
+   Module{}              -> mempty
+   UnquoteDecl _ xs _    -> declaresNames xs
+   UnquoteDef{}          -> mempty
+-  UnquoteData _ xs cs _ -> declaresNames (xs ++ cs)
++  UnquoteData _ x cs _  -> declaresNames (x:cs)
+   -- BUILTIN pragmas which do not require an accompanying definition declare
+   -- the (unqualified) name they mention.
+   Pragma (BuiltinPragma _ b (QName x))
+diff --git a/src/full/Agda/Syntax/Parser/Parser.y b/src/full/Agda/Syntax/Parser/Parser.y
+index 369d36e34..87f5ed63c 100644
+--- a/src/full/Agda/Syntax/Parser/Parser.y
++++ b/src/full/Agda/Syntax/Parser/Parser.y
+@@ -1307,9 +1307,8 @@ Primitive : 'primitive' ArgTypeSignaturesOrEmpty  {
+ UnquoteDecl :: { Declaration }
+ UnquoteDecl
+   : 'unquoteDecl' '=' Expr { UnquoteDecl (fuseRange $1 $3) [] $3 }
+-  | 'unquoteDecl' 'data' SpaceIds '=' Expr { UnquoteData (getRange($1, $2, $5)) (List1.toList $3) [] $5 }
+-  | 'unquoteDecl' 'constructor' SpaceIds '=' Expr { UnquoteData (getRange($1, $2, $5)) [] (List1.toList $3) $5 }
+-  | 'unquoteDecl' 'data' SpaceIds 'constructor' SpaceIds '=' Expr { UnquoteData (getRange($1, $2, $4, $7)) (List1.toList $3) (List1.toList $5) $7 }
++  | 'unquoteDecl' 'data' Id '=' Expr { UnquoteData (getRange($1, $2, $5)) $3 [] $5 }
++  | 'unquoteDecl' 'data' Id 'constructor' SpaceIds '=' Expr { UnquoteData (getRange($1, $2, $4, $7)) $3 (List1.toList $5) $7 }
+   | 'unquoteDecl' SpaceIds '=' Expr { UnquoteDecl (fuseRange $1 $4) (List1.toList $2) $4 }
+   | 'unquoteDef'  SpaceIds '=' Expr { UnquoteDef (fuseRange $1 $4) (List1.toList $2) $4 }
+ 
+diff --git a/src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs b/src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs
+index b37d32aa8..c1e3007c9 100644
+--- a/src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs
++++ b/src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs
+@@ -2042,10 +2042,7 @@ instance ToAbstract NiceDeclaration where
+       zipWithM_ (rebindName p OtherDefName) xs ys
+       return [ A.UnquoteDef [ mkDefInfo x fx PublicAccess a r | (fx, x) <- zip fxs xs ] ys e ]
+ 
+-    NiceUnquoteData r p a pc uc xs cs e -> do
+-      x <- maybe (typeError $ GenericError $ "Cannot unquote multiple data names at once")
+-                 (return . List1.head)
+-                 (List1.nonEmpty xs)
++    NiceUnquoteData r p a pc uc x cs e -> do
+       fx <- getConcreteFixity x
+       x' <- freshAbstractQName fx x
+       bindName p QuotableName x x'
+@@ -2068,7 +2065,7 @@ instance ToAbstract NiceDeclaration where
+       return
+         [ A.Mutual
+           mi [A.UnquoteData
+-            [ mkDefInfo x fx p a r ] [x'] uc
++            [ mkDefInfo x fx p a r ] x' uc
+             [ mkDefInfo c fc p a r | (fc, c) <- zip fcs cs] cs' e ]
+         ]
+ 
+diff --git a/src/full/Agda/TypeChecking/Rules/Decl.hs b/src/full/Agda/TypeChecking/Rules/Decl.hs
+index 2e78d7634..97a951bb2 100644
+--- a/src/full/Agda/TypeChecking/Rules/Decl.hs
++++ b/src/full/Agda/TypeChecking/Rules/Decl.hs
+@@ -193,9 +193,9 @@ checkDecl d = setCurrentRange d $ do
+       -- TODO: Benchmarking for unquote.
+       A.UnquoteDecl mi is xs e -> checkMaybeAbstractly is $ checkUnquoteDecl mi is xs e
+       A.UnquoteDef is xs e     -> impossible $ checkMaybeAbstractly is $ checkUnquoteDef is xs e
+-      A.UnquoteData is xs uc js cs e -> checkMaybeAbstractly (is ++ js) $ do
+-        reportSDoc "tc.unquote.data" 20 $ "Checking unquoteDecl data" <+> sep (map prettyTCM xs)
+-        Nothing <$ unquoteTop (xs ++ cs) e
++      A.UnquoteData is x uc js cs e -> checkMaybeAbstractly (is ++ js) $ do
++        reportSDoc "tc.unquote.data" 20 $ "Checking unquoteDecl data" <+> prettyTCM x
++        Nothing <$ unquoteTop (x:cs) e
+ 
+     whenNothingM (asksTC envMutualBlock) $ do
+ 
+-- 
+2.31.0
+
