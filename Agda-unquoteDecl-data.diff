@@ -1,3 +1,6 @@
+From 611271b2260a5a4ec35547cecc6b24c72410c1fc Mon Sep 17 00:00:00 2001
+From: Liang-Ting Chen <liang.ting.chen.tw@gmail.com>
+Date: Thu, 12 Aug 2021 21:10:19 +0800
 Subject: [PATCH] [ new ] Add a new concrete syntax `UnquoteDecl` for unquoting
  data type declaration
 
@@ -6,20 +9,20 @@ Subject: [PATCH] [ new ] Add a new concrete syntax `UnquoteDecl` for unquoting
  src/full/Agda/Syntax/Abstract.hs              |   3 +
  src/full/Agda/Syntax/Abstract/Views.hs        |   2 +
  src/full/Agda/Syntax/Concrete.hs              |   4 +
- src/full/Agda/Syntax/Concrete/Definitions.hs  | 469 +++++++++---------
+ src/full/Agda/Syntax/Concrete/Definitions.hs  |  54 ++--
  .../Agda/Syntax/Concrete/Definitions/Types.hs |   6 +-
- src/full/Agda/Syntax/Concrete/Fixity.hs       |  62 +--
+ src/full/Agda/Syntax/Concrete/Fixity.hs       |  62 ++---
  src/full/Agda/Syntax/Concrete/Generic.hs      |   1 +
- src/full/Agda/Syntax/Concrete/Pretty.hs       | 239 +++++----
+ src/full/Agda/Syntax/Concrete/Pretty.hs       | 239 +++++++++---------
  src/full/Agda/Syntax/Parser/Parser.y          |   3 +
  .../Syntax/Translation/AbstractToConcrete.hs  |   2 +
- .../Syntax/Translation/ConcreteToAbstract.hs  |  21 +
+ .../Syntax/Translation/ConcreteToAbstract.hs  |  52 ++++
  src/full/Agda/Termination/TermCheck.hs        |   1 +
  src/full/Agda/TypeChecking/Rules/Decl.hs      |   5 +
- 14 files changed, 438 insertions(+), 381 deletions(-)
+ 14 files changed, 263 insertions(+), 172 deletions(-)
 
 diff --git a/src/full/Agda/Interaction/Highlighting/FromAbstract.hs b/src/full/Agda/Interaction/Highlighting/FromAbstract.hs
-index 2b69932a1..31035e4cf 100644
+index 1d5a322aa..76bbefbd5 100644
 --- a/src/full/Agda/Interaction/Highlighting/FromAbstract.hs
 +++ b/src/full/Agda/Interaction/Highlighting/FromAbstract.hs
 @@ -214,6 +214,7 @@ instance Hilite A.Declaration where
@@ -31,10 +34,10 @@ index 2b69932a1..31035e4cf 100644
        A.Pragma _r pragma                     -> hl pragma
      where
 diff --git a/src/full/Agda/Syntax/Abstract.hs b/src/full/Agda/Syntax/Abstract.hs
-index fed5bcd9f..27a247baa 100644
+index 4fa6cb0e3..a7f18b16b 100644
 --- a/src/full/Agda/Syntax/Abstract.hs
 +++ b/src/full/Agda/Syntax/Abstract.hs
-@@ -185,6 +185,7 @@ data Declaration
+@@ -189,6 +189,7 @@ data Declaration
        -- ^ Only for highlighting purposes
    | UnquoteDecl MutualInfo [DefInfo] [QName] Expr
    | UnquoteDef  [DefInfo] [QName] Expr
@@ -42,7 +45,7 @@ index fed5bcd9f..27a247baa 100644
    | ScopedDecl ScopeInfo [Declaration]  -- ^ scope annotation
    deriving (Data, Show, Generic)
  
-@@ -661,6 +662,7 @@ instance HasRange Declaration where
+@@ -666,6 +667,7 @@ instance HasRange Declaration where
      getRange (PatternSynDef x _ _   ) = getRange x
      getRange (UnquoteDecl _ i _ _)    = getRange i
      getRange (UnquoteDef i _ _)       = getRange i
@@ -50,7 +53,7 @@ index fed5bcd9f..27a247baa 100644
  
  instance HasRange (Pattern' e) where
      getRange (VarP x)           = getRange x
-@@ -794,6 +796,7 @@ instance KillRange Declaration where
+@@ -799,6 +801,7 @@ instance KillRange Declaration where
    killRange (PatternSynDef x xs p     ) = killRange3 PatternSynDef x xs p
    killRange (UnquoteDecl mi i x e     ) = killRange4 UnquoteDecl mi i x e
    killRange (UnquoteDef i x e         ) = killRange3 UnquoteDef i x e
@@ -59,7 +62,7 @@ index fed5bcd9f..27a247baa 100644
  instance KillRange ModuleApplication where
    killRange (SectionApp a b c  ) = killRange3 SectionApp a b c
 diff --git a/src/full/Agda/Syntax/Abstract/Views.hs b/src/full/Agda/Syntax/Abstract/Views.hs
-index eebec8f8e..b7eab489a 100644
+index 67190f798..4dc9ed7bf 100644
 --- a/src/full/Agda/Syntax/Abstract/Views.hs
 +++ b/src/full/Agda/Syntax/Abstract/Views.hs
 @@ -428,6 +428,7 @@ instance ExprLike Declaration where
@@ -79,18 +82,18 @@ index eebec8f8e..b7eab489a 100644
        ScopedDecl _ decls           -> declaredNames decls
        Section _ _ _ decls          -> declaredNames decls
 diff --git a/src/full/Agda/Syntax/Concrete.hs b/src/full/Agda/Syntax/Concrete.hs
-index b23cdecf0..77625ffdc 100644
+index d256b8fc5..54bf6e5ce 100644
 --- a/src/full/Agda/Syntax/Concrete.hs
 +++ b/src/full/Agda/Syntax/Concrete.hs
-@@ -480,6 +480,7 @@ data Declaration
-   | Module      Range QName Telescope [Declaration]
-   | UnquoteDecl Range [Name] Expr
+@@ -482,6 +482,7 @@ data Declaration
+       -- ^ @unquoteDecl xs = e@
    | UnquoteDef  Range [Name] Expr
+       -- ^ @unquoteDef xs = e@
 +  | UnquoteData Range [Name] [Name] Expr
    | Pragma      Pragma
    deriving (Data, Eq)
  
-@@ -903,6 +904,7 @@ instance HasRange Declaration where
+@@ -905,6 +906,7 @@ instance HasRange Declaration where
    getRange (PatternSyn r _ _ _)    = r
    getRange (UnquoteDecl r _ _)     = r
    getRange (UnquoteDef r _ _)      = r
@@ -98,7 +101,7 @@ index b23cdecf0..77625ffdc 100644
    getRange (Pragma p)              = getRange p
  
  instance HasRange LHS where
-@@ -1050,6 +1052,7 @@ instance KillRange Declaration where
+@@ -1052,6 +1054,7 @@ instance KillRange Declaration where
    killRange (Module _ q t d)        = killRange3 (Module noRange) q t d
    killRange (UnquoteDecl _ x t)     = killRange2 (UnquoteDecl noRange) x t
    killRange (UnquoteDef _ x t)      = killRange2 (UnquoteDef noRange) x t
@@ -106,7 +109,7 @@ index b23cdecf0..77625ffdc 100644
    killRange (Pragma p)              = killRange1 Pragma p
  
  instance KillRange Expr where
-@@ -1265,6 +1268,7 @@ instance NFData Declaration where
+@@ -1267,6 +1270,7 @@ instance NFData Declaration where
    rnf (Module _ a b c)        = rnf a `seq` rnf b `seq` rnf c
    rnf (UnquoteDecl _ a b)     = rnf a `seq` rnf b
    rnf (UnquoteDef _ a b)      = rnf a `seq` rnf b
@@ -115,7 +118,7 @@ index b23cdecf0..77625ffdc 100644
  
  instance NFData OpenShortHand
 diff --git a/src/full/Agda/Syntax/Concrete/Definitions.hs b/src/full/Agda/Syntax/Concrete/Definitions.hs
-index 49d40d2d4..9d8748c8b 100644
+index acb4be2d9..0717c5248 100644
 --- a/src/full/Agda/Syntax/Concrete/Definitions.hs
 +++ b/src/full/Agda/Syntax/Concrete/Definitions.hs
 @@ -150,27 +150,28 @@ data DeclKind
@@ -167,434 +170,19 @@ index 49d40d2d4..9d8748c8b 100644
  
  -- | Replace (Data/Rec/Fun)Sigs with Axioms for postulated names
  --   The first argument is a list of axioms only.
-@@ -280,215 +281,217 @@ niceDeclarations fixs ds = do
+@@ -492,6 +493,11 @@ niceDeclarations fixs ds = do
+               mapM_ removeLoneSig xs
+               return ([NiceUnquoteDef r PublicAccess ConcreteDef TerminationCheck YesCoverageCheck xs e] , ds)
  
-     nice1 :: [Declaration] -> Nice ([NiceDeclaration], [Declaration])
-     nice1 []     = return ([], []) -- Andreas, 2017-09-16, issue #2759: no longer __IMPOSSIBLE__
--    nice1 (d:ds) = do
--      let justWarning :: HasCallStack => DeclarationWarning' -> Nice ([NiceDeclaration], [Declaration])
--          justWarning w = do
--            -- NOTE: This is the location of the invoker of justWarning, not here.
--            withCallerCallStack $ declarationWarning' w
--            nice1 ds
--
--      case d of
--
--        TypeSig info _tac x t -> do
--          termCheck <- use terminationCheckPragma
--          covCheck  <- use coverageCheckPragma
--          -- Andreas, 2020-09-28, issue #4950: take only range of identifier,
--          -- since parser expands type signatures with several identifiers
--          -- (like @x y z : A@) into several type signatures (with imprecise ranges).
--          let r = getRange x
--          -- register x as lone type signature, to recognize clauses later
--          x' <- addLoneSig r x $ FunName termCheck covCheck
--          return ([FunSig r PublicAccess ConcreteDef NotInstanceDef NotMacroDef info termCheck covCheck x' t] , ds)
--
--        -- Should not show up: all FieldSig are part of a Field block
--        FieldSig{} -> __IMPOSSIBLE__
--
--        Generalize r [] -> justWarning $ EmptyGeneralize r
--        Generalize r sigs -> do
--          gs <- forM sigs $ \case
--            sig@(TypeSig info tac x t) -> do
--              return $ NiceGeneralize (getRange sig) PublicAccess info tac x t
--            _ -> __IMPOSSIBLE__
--          return (gs, ds)
--
--        (FunClause lhs _ _ _)         -> do
--          termCheck <- use terminationCheckPragma
--          covCheck  <- use coverageCheckPragma
--          catchall  <- popCatchallPragma
--          xs <- loneFuns <$> use loneSigs
--          -- for each type signature 'x' waiting for clauses, we try
--          -- if we have some clauses for 'x'
--          case [ (x, (x', fits, rest))
--               | (x, x') <- xs
--               , let (fits, rest) =
--                      -- Anonymous declarations only have 1 clause each!
--                      if isNoName x then ([d], ds)
--                      else span (couldBeFunClauseOf (Map.lookup x fixs) x) (d : ds)
--               , not (null fits)
--               ] of
--
--            -- case: clauses match none of the sigs
--            [] -> case lhs of
--              -- Subcase: The lhs is single identifier (potentially anonymous).
--              -- Treat it as a function clause without a type signature.
--              LHS p [] [] | Just x <- isSingleIdentifierP p -> do
--                d  <- mkFunDef (setOrigin Inserted defaultArgInfo) termCheck covCheck x Nothing [d] -- fun def without type signature is relevant
--                return (d , ds)
--              -- Subcase: The lhs is a proper pattern.
--              -- This could be a let-pattern binding. Pass it on.
--              -- A missing type signature error might be raise in ConcreteToAbstract
--              _ -> do
--                return ([NiceFunClause (getRange d) PublicAccess ConcreteDef termCheck covCheck catchall d] , ds)
--
--            -- case: clauses match exactly one of the sigs
--            [(x,(x',fits,rest))] -> do
--               -- The x'@NoName{} is the unique version of x@NoName{}.
--               removeLoneSig x
--               ds  <- expandEllipsis fits
--               cs  <- mkClauses x' ds False
--               return ([FunDef (getRange fits) fits ConcreteDef NotInstanceDef termCheck covCheck x' cs] , rest)
--
--            -- case: clauses match more than one sigs (ambiguity)
--            xf:xfs -> declarationException $ AmbiguousFunClauses lhs $ List1.reverse $ fmap fst $ xf :| xfs
--                 -- "ambiguous function clause; cannot assign it uniquely to one type signature"
--
--        Field r [] -> justWarning $ EmptyField r
--        Field _ fs -> (,ds) <$> niceAxioms FieldBlock fs
--
--        DataSig r x tel t -> do
--          pc <- use positivityCheckPragma
--          uc <- use universeCheckPragma
--          _ <- addLoneSig r x $ DataName pc uc
--          (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x (Just (tel, t)) Nothing
--
--        Data r x tel t cs -> do
--          pc <- use positivityCheckPragma
--          -- Andreas, 2018-10-27, issue #3327
--          -- Propagate {-# NO_UNIVERSE_CHECK #-} pragma from signature to definition.
--          -- Universe check is performed if both the current value of
--          -- 'universeCheckPragma' AND the one from the signature say so.
--          uc <- use universeCheckPragma
--          uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
--          mt <- defaultTypeSig (DataName pc uc) x (Just t)
--          (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x ((tel,) <$> mt) (Just (tel, cs))
--
--        DataDef r x tel cs -> do
--          pc <- use positivityCheckPragma
--          -- Andreas, 2018-10-27, issue #3327
--          -- Propagate {-# NO_UNIVERSE_CHECK #-} pragma from signature to definition.
--          -- Universe check is performed if both the current value of
--          -- 'universeCheckPragma' AND the one from the signature say so.
--          uc <- use universeCheckPragma
--          uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
--          mt <- defaultTypeSig (DataName pc uc) x Nothing
--          (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x ((tel,) <$> mt) (Just (tel, cs))
--
--        RecordSig r x tel t         -> do
--          pc <- use positivityCheckPragma
--          uc <- use universeCheckPragma
--          _ <- addLoneSig r x $ RecName pc uc
--          return ([NiceRecSig r PublicAccess ConcreteDef pc uc x tel t] , ds)
--
--        Record r x dir tel t cs   -> do
--          pc <- use positivityCheckPragma
--          -- Andreas, 2018-10-27, issue #3327
--          -- Propagate {-# NO_UNIVERSE_CHECK #-} pragma from signature to definition.
--          -- Universe check is performed if both the current value of
--          -- 'universeCheckPragma' AND the one from the signature say so.
--          uc <- use universeCheckPragma
--          uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
--          mt <- defaultTypeSig (RecName pc uc) x (Just t)
--          (,ds) <$> dataOrRec pc uc (\ r o a pc uc x tel cs -> NiceRecDef r o a pc uc x dir tel cs) NiceRecSig
--                      return r x ((tel,) <$> mt) (Just (tel, cs))
--
--        RecordDef r x dir tel cs   -> do
--          pc <- use positivityCheckPragma
--          -- Andreas, 2018-10-27, issue #3327
--          -- Propagate {-# NO_UNIVERSE_CHECK #-} pragma from signature to definition.
--          -- Universe check is performed if both the current value of
--          -- 'universeCheckPragma' AND the one from the signature say so.
--          uc <- use universeCheckPragma
--          uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
--          mt <- defaultTypeSig (RecName pc uc) x Nothing
--          (,ds) <$> dataOrRec pc uc (\ r o a pc uc x tel cs -> NiceRecDef r o a pc uc x dir tel cs) NiceRecSig
--                      return r x ((tel,) <$> mt) (Just (tel, cs))
--
--        RecordDirective r -> justWarning $ InvalidRecordDirective (getRange r)
--
--        Mutual r ds' -> do
--          -- The lone signatures encountered so far are not in scope
--          -- for the mutual definition
--          forgetLoneSigs
--          case ds' of
--            [] -> justWarning $ EmptyMutual r
--            _  -> (,ds) <$> (singleton <$> (mkOldMutual r =<< nice ds'))
--
--        InterleavedMutual r ds' -> do
--          -- The lone signatures encountered so far are not in scope
--          -- for the mutual definition
--          forgetLoneSigs
--          case ds' of
--            [] -> justWarning $ EmptyMutual r
--            _  -> (,ds) <$> (singleton <$> (mkInterleavedMutual r =<< nice ds'))
--
--        LoneConstructor r [] -> justWarning $ EmptyConstructor r
--        LoneConstructor r ds' ->
--          ((,ds) . singleton . NiceLoneConstructor r) <$> niceAxioms ConstructorBlock ds'
--
--
--        Abstract r []  -> justWarning $ EmptyAbstract r
--        Abstract r ds' ->
--          (,ds) <$> (abstractBlock r =<< nice ds')
--
--        Private r UserWritten []  -> justWarning $ EmptyPrivate r
--        Private r o ds' ->
--          (,ds) <$> (privateBlock r o =<< nice ds')
--
--        InstanceB r []  -> justWarning $ EmptyInstance r
--        InstanceB r ds' ->
--          (,ds) <$> (instanceBlock r =<< nice ds')
--
--        Macro r []  -> justWarning $ EmptyMacro r
--        Macro r ds' ->
--          (,ds) <$> (macroBlock r =<< nice ds')
--
--        Postulate r []  -> justWarning $ EmptyPostulate r
--        Postulate _ ds' ->
--          (,ds) <$> niceAxioms PostulateBlock ds'
--
--        Primitive r []  -> justWarning $ EmptyPrimitive r
--        Primitive _ ds' -> (,ds) <$> (map toPrim <$> niceAxioms PrimitiveBlock ds')
--
--        Module r x tel ds' -> return $
--          ([NiceModule r PublicAccess ConcreteDef x tel ds'] , ds)
--
--        ModuleMacro r x modapp op is -> return $
--          ([NiceModuleMacro r PublicAccess x modapp op is] , ds)
--
--        -- Fixity and syntax declarations and polarity pragmas have
--        -- already been processed.
--        Infix _ _  -> return ([], ds)
--        Syntax _ _ -> return ([], ds)
--
--        PatternSyn r n as p -> do
--          return ([NicePatternSyn r PublicAccess n as p] , ds)
--        Open r x is         -> return ([NiceOpen r x is] , ds)
--        Import r x as op is -> return ([NiceImport r x as op is] , ds)
--
--        UnquoteDecl r xs e -> do
--          tc <- use terminationCheckPragma
--          cc <- use coverageCheckPragma
--          return ([NiceUnquoteDecl r PublicAccess ConcreteDef NotInstanceDef tc cc xs e] , ds)
--
--        UnquoteDef r xs e -> do
--          sigs <- map fst . loneFuns <$> use loneSigs
--          List1.ifNotNull (filter (`notElem` sigs) xs)
--            {-then-} (declarationException . UnquoteDefRequiresSignature)
--            {-else-} $ do
--              mapM_ removeLoneSig xs
--              return ([NiceUnquoteDef r PublicAccess ConcreteDef TerminationCheck YesCoverageCheck xs e] , ds)
--
--        Pragma p -> nicePragma p ds
-+    nice1 (d:ds) = helper d
-+      where
-+        justWarning :: HasCallStack => DeclarationWarning' -> Nice ([NiceDeclaration], [Declaration])
-+        justWarning w = do
-+          -- NOTE: This is the location of the invoker of justWarning, not here.
-+          withCallerCallStack $ declarationWarning' w
-+          nice1 ds
-+        helper :: Declaration -> Nice ([NiceDeclaration], [Declaration])
-+        helper = \case
-+          TypeSig info _tac x t -> do
-+            termCheck <- use terminationCheckPragma
-+            covCheck  <- use coverageCheckPragma
-+            -- Andreas, 2020-09-28, issue #4950: take only range of identifier,
-+            -- since parser expands type signatures with several identifiers
-+            -- (like @x y z : A@) into several type signatures (with imprecise ranges).
-+            let r = getRange x
-+            -- register x as lone type signature, to recognize clauses later
-+            x' <- addLoneSig r x $ FunName termCheck covCheck
-+            return ([FunSig r PublicAccess ConcreteDef NotInstanceDef NotMacroDef info termCheck covCheck x' t] , ds)
-+  
-+          -- Should not show up: all FieldSig are part of a Field block
-+          FieldSig{} -> __IMPOSSIBLE__
-+  
-+          Generalize r [] -> justWarning $ EmptyGeneralize r
-+          Generalize r sigs -> do
-+            gs <- forM sigs $ \case
-+              sig@(TypeSig info tac x t) -> do
-+                return $ NiceGeneralize (getRange sig) PublicAccess info tac x t
-+              _ -> __IMPOSSIBLE__
-+            return (gs, ds)
-+  
-+          FunClause lhs _ _ _         -> do
-+            termCheck <- use terminationCheckPragma
-+            covCheck  <- use coverageCheckPragma
-+            catchall  <- popCatchallPragma
-+            xs <- loneFuns <$> use loneSigs
-+            -- for each type signature 'x' waiting for clauses, we try
-+            -- if we have some clauses for 'x'
-+            case [ (x, (x', fits, rest))
-+                 | (x, x') <- xs
-+                 , let (fits, rest) =
-+                        -- Anonymous declarations only have 1 clause each!
-+                        if isNoName x then ([d], ds)
-+                        else span (couldBeFunClauseOf (Map.lookup x fixs) x) (d : ds)
-+                 , not (null fits)
-+                 ] of
-+  
-+              -- case: clauses match none of the sigs
-+              [] -> case lhs of
-+                -- Subcase: The lhs is single identifier (potentially anonymous).
-+                -- Treat it as a function clause without a type signature.
-+                LHS p [] [] | Just x <- isSingleIdentifierP p -> do
-+                  d  <- mkFunDef (setOrigin Inserted defaultArgInfo) termCheck covCheck x Nothing [d] -- fun def without type signature is relevant
-+                  return (d , ds)
-+                -- Subcase: The lhs is a proper pattern.
-+                -- This could be a let-pattern binding. Pass it on.
-+                -- A missing type signature error might be raise in ConcreteToAbstract
-+                _ -> do
-+                  return ([NiceFunClause (getRange d) PublicAccess ConcreteDef termCheck covCheck catchall d] , ds)
-+  
-+              -- case: clauses match exactly one of the sigs
-+              [(x,(x',fits,rest))] -> do
-+                 -- The x'@NoName{} is the unique version of x@NoName{}.
-+                 removeLoneSig x
-+                 ds  <- expandEllipsis fits
-+                 cs  <- mkClauses x' ds False
-+                 return ([FunDef (getRange fits) fits ConcreteDef NotInstanceDef termCheck covCheck x' cs] , rest)
-+  
-+              -- case: clauses match more than one sigs (ambiguity)
-+              xf:xfs -> declarationException $ AmbiguousFunClauses lhs $ List1.reverse $ fmap fst $ xf :| xfs
-+                   -- "ambiguous function clause; cannot assign it uniquely to one type signature"
-+  
-+          Field r [] -> justWarning $ EmptyField r
-+          Field _ fs -> (,ds) <$> niceAxioms FieldBlock fs
-+  
-+          DataSig r x tel e -> do
-+            pc <- use positivityCheckPragma
-+            uc <- use universeCheckPragma
-+            _ <- addLoneSig r x $ DataName pc uc
-+            (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x (Just (tel, e)) Nothing
-+  
-+          Data r x tel e cs -> do
-+            pc <- use positivityCheckPragma
-+            -- Andreas, 2018-10-27, issue #3327
-+            -- Propagate {-# NO_UNIVERSE_CHECK #-} pragma from signature to definition.
-+            -- Universe check is performed if both the current value of
-+            -- 'universeCheckPragma' AND the one from the signature say so.
-+            uc <- use universeCheckPragma
-+            uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
-+            mt <- defaultTypeSig (DataName pc uc) x (Just e)
-+            (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x ((tel,) <$> mt) (Just (tel, cs))
-+  
-+          DataDef r x tel cs -> do
-+            pc <- use positivityCheckPragma
-+            -- Andreas, 2018-10-27, issue #3327
-+            -- Propagate {-# NO_UNIVERSE_CHECK #-} pragma from signature to definition.
-+            -- Universe check is performed if both the current value of
-+            -- 'universeCheckPragma' AND the one from the signature say so.
-+            uc <- use universeCheckPragma
-+            uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
-+            mt <- defaultTypeSig (DataName pc uc) x Nothing
-+            (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x ((tel,) <$> mt) (Just (tel, cs))
-+  
-+          RecordSig r x tel e         -> do
-+            pc <- use positivityCheckPragma
-+            uc <- use universeCheckPragma
-+            _ <- addLoneSig r x $ RecName pc uc
-+            return ([NiceRecSig r PublicAccess ConcreteDef pc uc x tel e] , ds)
-+  
-+          Record r x dir tel e cs   -> do
-+            pc <- use positivityCheckPragma
-+            -- Andreas, 2018-10-27, issue #3327
-+            -- Propagate {-# NO_UNIVERSE_CHECK #-} pragma from signature to definition.
-+            -- Universe check is performed if both the current value of
-+            -- 'universeCheckPragma' AND the one from the signature say so.
-+            uc <- use universeCheckPragma
-+            uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
-+            mt <- defaultTypeSig (RecName pc uc) x (Just e)
-+            (,ds) <$> dataOrRec pc uc (\ r o a pc uc x tel cs -> NiceRecDef r o a pc uc x dir tel cs) NiceRecSig
-+                        return r x ((tel,) <$> mt) (Just (tel, cs))
-+  
-+          RecordDef r x dir tel cs   -> do
-+            pc <- use positivityCheckPragma
-+            -- Andreas, 2018-10-27, issue #3327
-+            -- Propagate {-# NO_UNIVERSE_CHECK #-} pragma from signature to definition.
-+            -- Universe check is performed if both the current value of
-+            -- 'universeCheckPragma' AND the one from the signature say so.
-+            uc <- use universeCheckPragma
-+            uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
-+            mt <- defaultTypeSig (RecName pc uc) x Nothing
-+            (,ds) <$> dataOrRec pc uc (\ r o a pc uc x tel cs -> NiceRecDef r o a pc uc x dir tel cs) NiceRecSig
-+                        return r x ((tel,) <$> mt) (Just (tel, cs))
-+  
-+          RecordDirective r -> justWarning $ InvalidRecordDirective (getRange r)
-+  
-+          Mutual r ds' -> do
-+            -- The lone signatures encountered so far are not in scope
-+            -- for the mutual definition
-+            forgetLoneSigs
-+            case ds' of
-+              [] -> justWarning $ EmptyMutual r
-+              _  -> (,ds) <$> (singleton <$> (mkOldMutual r =<< nice ds'))
-+  
-+          InterleavedMutual r ds' -> do
-+            -- The lone signatures encountered so far are not in scope
-+            -- for the mutual definition
-+            forgetLoneSigs
-+            case ds' of
-+              [] -> justWarning $ EmptyMutual r
-+              _  -> (,ds) <$> (singleton <$> (mkInterleavedMutual r =<< nice ds'))
-+  
-+          LoneConstructor r [] -> justWarning $ EmptyConstructor r
-+          LoneConstructor r ds' ->
-+            ((,ds) . singleton . NiceLoneConstructor r) <$> niceAxioms ConstructorBlock ds'
-+  
-+          Abstract r []  -> justWarning $ EmptyAbstract r
-+          Abstract r ds' ->
-+            (,ds) <$> (abstractBlock r =<< nice ds')
-+  
-+          Private r UserWritten []  -> justWarning $ EmptyPrivate r
-+          Private r o ds' ->
-+            (,ds) <$> (privateBlock r o =<< nice ds')
-+  
-+          InstanceB r []  -> justWarning $ EmptyInstance r
-+          InstanceB r ds' ->
-+            (,ds) <$> (instanceBlock r =<< nice ds')
-+  
-+          Macro r []  -> justWarning $ EmptyMacro r
-+          Macro r ds' ->
-+            (,ds) <$> (macroBlock r =<< nice ds')
-+  
-+          Postulate r []  -> justWarning $ EmptyPostulate r
-+          Postulate _ ds' ->
-+            (,ds) <$> niceAxioms PostulateBlock ds'
-+  
-+          Primitive r []  -> justWarning $ EmptyPrimitive r
-+          Primitive _ ds' -> (,ds) <$> (map toPrim <$> niceAxioms PrimitiveBlock ds')
-+  
-+          Module r x tel ds' -> return $
-+            ([NiceModule r PublicAccess ConcreteDef x tel ds'] , ds)
-+  
-+          ModuleMacro r x modapp op is -> return $
-+            ([NiceModuleMacro r PublicAccess x modapp op is] , ds)
-+  
-+          -- Fixity and syntax declarations and polarity pragmas have
-+          -- already been processed.
-+          Infix _ _  -> return ([], ds)
-+          Syntax _ _ -> return ([], ds)
-+  
-+          PatternSyn r n as p -> do
-+            return ([NicePatternSyn r PublicAccess n as p] , ds)
-+          Open r x is         -> return ([NiceOpen r x is] , ds)
-+          Import r x as op is -> return ([NiceImport r x as op is] , ds)
-+  
-+          UnquoteDecl r xs e -> do
-+            tc <- use terminationCheckPragma
-+            cc <- use coverageCheckPragma
-+            return ([NiceUnquoteDecl r PublicAccess ConcreteDef NotInstanceDef tc cc xs e] , ds)
-+  
-+          UnquoteDef r xs e -> do
-+            sigs <- map fst . loneFuns <$> use loneSigs
-+            List1.ifNotNull (filter (`notElem` sigs) xs)
-+              {-then-} (declarationException . UnquoteDefRequiresSignature)
-+              {-else-} $ do
-+                mapM_ removeLoneSig xs
-+                return ([NiceUnquoteDef r PublicAccess ConcreteDef TerminationCheck YesCoverageCheck xs e] , ds)
-+          UnquoteData r xs cs e -> do
-+            pc <- use positivityCheckPragma
-+            uc <- use universeCheckPragma
-+            return ([NiceUnquoteData r PublicAccess ConcreteDef pc uc xs cs e], ds)
-+          Pragma p -> nicePragma p ds
++        UnquoteData r xs cs e -> do
++          pc <- use positivityCheckPragma
++          uc <- use universeCheckPragma
++          return ([NiceUnquoteData r PublicAccess ConcreteDef pc uc xs cs e], ds)
++
+         Pragma p -> nicePragma p ds
  
      nicePragma :: Pragma -> [Declaration] -> Nice ([NiceDeclaration], [Declaration])
- 
-@@ -1032,6 +1035,7 @@ niceDeclarations fixs ds = do
+@@ -1036,6 +1042,7 @@ niceDeclarations fixs ds = do
              NiceGeneralize{}    -> top
              NiceUnquoteDecl{}   -> top
              NiceUnquoteDef{}    -> bottom
@@ -602,7 +190,7 @@ index 49d40d2d4..9d8748c8b 100644
              NicePragma r pragma -> case pragma of
  
                OptionsPragma{}           -> top     -- error thrown in the type checker
-@@ -1135,6 +1139,7 @@ niceDeclarations fixs ds = do
+@@ -1139,6 +1146,7 @@ niceDeclarations fixs ds = do
          termCheck NicePatternSyn{}    = TerminationCheck
          termCheck NiceGeneralize{}    = TerminationCheck
          termCheck NiceLoneConstructor{} = TerminationCheck
@@ -610,7 +198,7 @@ index 49d40d2d4..9d8748c8b 100644
  
          covCheck :: NiceDeclaration -> CoverageCheck
          covCheck (FunSig _ _ _ _ _ _ _ cc _ _)      = cc
-@@ -1159,6 +1164,7 @@ niceDeclarations fixs ds = do
+@@ -1163,6 +1171,7 @@ niceDeclarations fixs ds = do
          covCheck NicePatternSyn{}    = YesCoverageCheck
          covCheck NiceGeneralize{}    = YesCoverageCheck
          covCheck NiceLoneConstructor{} = YesCoverageCheck
@@ -618,7 +206,7 @@ index 49d40d2d4..9d8748c8b 100644
  
          -- ASR (26 December 2015): Do not positivity check a mutual
          -- block if any of its inner declarations comes with a
-@@ -1227,6 +1233,7 @@ niceDeclarations fixs ds = do
+@@ -1231,6 +1240,7 @@ niceDeclarations fixs ds = do
          d@NiceRecDef{}                 -> return d
          d@NicePatternSyn{}             -> return d
          d@NiceGeneralize{}             -> return d
@@ -626,7 +214,7 @@ index 49d40d2d4..9d8748c8b 100644
  
      setInstance
        :: Range  -- Range of @instance@ keyword.
-@@ -1290,6 +1297,7 @@ instance MakeAbstract NiceDeclaration where
+@@ -1294,6 +1304,7 @@ instance MakeAbstract NiceDeclaration where
        -- Need to set updater state to dirty!
        NiceUnquoteDecl r p _ i tc cc x e -> tellDirty $> NiceUnquoteDecl r p AbstractDef i tc cc x e
        NiceUnquoteDef r p _ tc cc x e    -> tellDirty $> NiceUnquoteDef r p AbstractDef tc cc x e
@@ -634,7 +222,7 @@ index 49d40d2d4..9d8748c8b 100644
        d@NiceModule{}                 -> return d
        d@NiceModuleMacro{}            -> return d
        d@NicePragma{}                 -> return d
-@@ -1363,6 +1371,7 @@ instance MakePrivate NiceDeclaration where
+@@ -1367,6 +1378,7 @@ instance MakePrivate NiceDeclaration where
        FunDef r ds a i tc cc x cls              -> FunDef r ds a i tc cc x <$> mkPrivate o cls
        d@NiceDataDef{}                          -> return d
        d@NiceRecDef{}                           -> return d
@@ -642,7 +230,7 @@ index 49d40d2d4..9d8748c8b 100644
  
  instance MakePrivate Clause where
    mkPrivate o (Clause x catchall lhs rhs wh with) = do
-@@ -1408,6 +1417,7 @@ notSoNiceDeclarations = \case
+@@ -1412,6 +1424,7 @@ notSoNiceDeclarations = \case
      NiceGeneralize r _ i tac n e   -> [Generalize r [TypeSig i tac n e]]
      NiceUnquoteDecl r _ _ i _ _ x e -> inst i [UnquoteDecl r x e]
      NiceUnquoteDef r _ _ _ _ x e    -> [UnquoteDef r x e]
@@ -650,7 +238,7 @@ index 49d40d2d4..9d8748c8b 100644
    where
      inst (InstanceDef r) ds = [InstanceB r ds]
      inst NotInstanceDef  ds = ds
-@@ -1436,3 +1446,4 @@ niceHasAbstract = \case
+@@ -1440,3 +1453,4 @@ niceHasAbstract = \case
      NiceGeneralize{}              -> Nothing
      NiceUnquoteDecl _ _ a _ _ _ _ _ -> Just a
      NiceUnquoteDef _ _ a _ _ _ _    -> Just a
@@ -1054,7 +642,7 @@ index 275c28468..369d36e34 100644
    | 'unquoteDef'  SpaceIds '=' Expr { UnquoteDef (fuseRange $1 $4) (List1.toList $2) $4 }
  
 diff --git a/src/full/Agda/Syntax/Translation/AbstractToConcrete.hs b/src/full/Agda/Syntax/Translation/AbstractToConcrete.hs
-index 88099986a..499d2e0cd 100644
+index c6d47e098..b06f4cd49 100644
 --- a/src/full/Agda/Syntax/Translation/AbstractToConcrete.hs
 +++ b/src/full/Agda/Syntax/Translation/AbstractToConcrete.hs
 @@ -1266,6 +1266,8 @@ instance ToConcrete A.Declaration where
@@ -1067,7 +655,7 @@ index 88099986a..499d2e0cd 100644
  data RangeAndPragma = RangeAndPragma Range A.Pragma
  
 diff --git a/src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs b/src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs
-index 7966e2bf7..f51ae7caf 100644
+index c2e7ea495..b37d32aa8 100644
 --- a/src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs
 +++ b/src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs
 @@ -225,6 +225,7 @@ recordConstructorType decls =
@@ -1088,36 +676,74 @@ index 7966e2bf7..f51ae7caf 100644
        -- We only termination check blocks that do not have a measure.
        return [ A.Mutual (MutualInfo tc cc pc r) ds' ]
  
-@@ -2039,6 +2042,24 @@ instance ToAbstract NiceDeclaration where
+@@ -2039,6 +2042,36 @@ instance ToAbstract NiceDeclaration where
        zipWithM_ (rebindName p OtherDefName) xs ys
        return [ A.UnquoteDef [ mkDefInfo x fx PublicAccess a r | (fx, x) <- zip fxs xs ] ys e ]
  
 +    NiceUnquoteData r p a pc uc xs cs e -> do
-+      fxs <- mapM getConcreteFixity xs
-+      xs' <- zipWithM freshAbstractQName fxs xs
-+      zipWithM_ (bindName p QuotableName) xs xs'
++      x <- maybe (typeError $ GenericError $ "Cannot unquote multiple data names at once")
++                 (return . List1.head)
++                 (List1.nonEmpty xs)
++      fx <- getConcreteFixity x
++      x' <- freshAbstractQName fx x
++      bindName p QuotableName x x'
++
++      -- Create the module for the qualified constructors
++      checkForModuleClash x
++      let m = qnameToMName x'
++      createModule (Just IsDataModule) m
++      bindModule p x m  -- make it a proper module
++
++      cs' <- withCurrentModule m $ mapM (bindUnquoteConstructorName m p) cs
++
++      e <- withCurrentModule m $ toAbstract e
++
++      rebindName p DataName x x'
++      withCurrentModule m $ zipWithM_ (rebindName p ConName) cs cs'
++
 +      fcs <- mapM getConcreteFixity cs
-+      cs' <- zipWithM freshAbstractQName fcs cs
-+      zipWithM_ (bindName p QuotableName) cs cs'
-+      e <- toAbstract e
-+      zipWithM_ (rebindName p DataName) xs xs'
-+      zipWithM_ (rebindName p ConName) cs cs'
 +      let mi = MutualInfo TerminationCheck YesCoverageCheck pc r
 +      return
 +        [ A.Mutual
 +          mi [A.UnquoteData
-+            [ mkDefInfo x fx p a r | (fx, x) <- zip fxs xs] xs' uc
++            [ mkDefInfo x fx p a r ] [x'] uc
 +            [ mkDefInfo c fc p a r | (fc, c) <- zip fcs cs] cs' e ]
 +        ]
 +
      NicePatternSyn r a n as p -> do
        reportSLn "scope.pat" 10 $ "found nice pattern syn: " ++ prettyShow n
        (as, p) <- withLocalVars $ do
+@@ -2237,6 +2270,25 @@ bindRecordConstructorName x kind a p = do
+            AbstractDef -> PrivateAccess Inserted
+            _           -> p
+ 
++bindUnquoteConstructorName :: ModuleName -> Access -> C.Name -> TCM A.QName
++bindUnquoteConstructorName m p c = do
++
++  r <- resolveName (C.QName c)
++  fc <- getConcreteFixity c
++  c' <- withCurrentModule m $ freshAbstractQName fc c
++  let aname qn = AbsName qn QuotableName Defined NoMetadata
++      addName = modifyCurrentScope $ addNameToScope (localNameSpace p) c $ aname c'
++      success = addName >> (withCurrentModule m $ addName)
++  case r of
++    _ | isNoName c       -> success
++    UnknownName          -> success
++    ConstructorName i ds -> if all (isJust . isConName . anameKind) ds
++      then success
++      else typeError $ ClashingDefinition (C.QName c) (anameName $ List1.head ds) Nothing
++    _ -> typeError $ GenericError $
++       "The name " ++ prettyShow c ++ " already has non-constructor definitions"
++  return c'
++
+ instance ToAbstract DataConstrDecl where
+   type AbsOfCon DataConstrDecl = A.Declaration
+ 
 diff --git a/src/full/Agda/Termination/TermCheck.hs b/src/full/Agda/Termination/TermCheck.hs
-index 75ccbcf96..62022be7c 100644
+index d24734356..39fa79d67 100644
 --- a/src/full/Agda/Termination/TermCheck.hs
 +++ b/src/full/Agda/Termination/TermCheck.hs
-@@ -122,6 +122,7 @@ termDecl' = \case
+@@ -125,6 +125,7 @@ termDecl' = \case
      A.DataDef{}     -> __IMPOSSIBLE__
      A.UnquoteDecl{} -> __IMPOSSIBLE__
      A.UnquoteDef{}  -> __IMPOSSIBLE__
@@ -1158,20 +784,24 @@ index 5cd36839c..1202df6b2 100644
 -- 
 2.31.0
 
+From c274216854e6ad358e2011ed2a2e5d2b32cf0083 Mon Sep 17 00:00:00 2001
+From: Viktor Lin <hi@viktorl.in>
+Date: Fri, 16 Jul 2021 14:00:19 +0800
 Subject: [PATCH] [ reflection ] Add primitives tcDeclareData and tcDefineData
 
+The type of a constructor given to tcDefineData excludes data type parameters.
 ---
  doc/user-manual/language/reflection.lagda.rst |  13 ++
  .../lib/prim/Agda/Builtin/Reflection.agda     |   6 +
  src/full/Agda/Compiler/MAlonzo/Compiler.hs    |   2 +
  src/full/Agda/Syntax/Builtin.hs               |   4 +-
- src/full/Agda/Syntax/Concrete/Definitions.hs  |  60 ++++----
+ src/full/Agda/Syntax/Concrete/Definitions.hs  |   2 +-
  src/full/Agda/TypeChecking/Monad/Builtin.hs   |   4 +-
  src/full/Agda/TypeChecking/Rules/Builtin.hs   |   2 +
  src/full/Agda/TypeChecking/Rules/Decl.hs      |  10 +-
  src/full/Agda/TypeChecking/Rules/Decl.hs-boot |   2 +
- src/full/Agda/TypeChecking/Unquote.hs         | 129 ++++++++++++++++--
- 10 files changed, 186 insertions(+), 46 deletions(-)
+ src/full/Agda/TypeChecking/Unquote.hs         | 112 ++++++++++++++++--
+ 10 files changed, 139 insertions(+), 18 deletions(-)
 
 diff --git a/doc/user-manual/language/reflection.lagda.rst b/doc/user-manual/language/reflection.lagda.rst
 index e6389f515..329c2e59e 100644
@@ -1271,199 +901,10 @@ index 7c6a22be4..1233919af 100644
  builtinAgdaTCMGetType                    = "AGDATCMGETTYPE"
  builtinAgdaTCMGetDefinition              = "AGDATCMGETDEFINITION"
 diff --git a/src/full/Agda/Syntax/Concrete/Definitions.hs b/src/full/Agda/Syntax/Concrete/Definitions.hs
-index 9d8748c8b..50b8735e9 100644
+index 0717c5248..e01bc6e6a 100644
 --- a/src/full/Agda/Syntax/Concrete/Definitions.hs
 +++ b/src/full/Agda/Syntax/Concrete/Definitions.hs
-@@ -300,10 +300,10 @@ niceDeclarations fixs ds = do
-             -- register x as lone type signature, to recognize clauses later
-             x' <- addLoneSig r x $ FunName termCheck covCheck
-             return ([FunSig r PublicAccess ConcreteDef NotInstanceDef NotMacroDef info termCheck covCheck x' t] , ds)
--  
-+
-           -- Should not show up: all FieldSig are part of a Field block
-           FieldSig{} -> __IMPOSSIBLE__
--  
-+
-           Generalize r [] -> justWarning $ EmptyGeneralize r
-           Generalize r sigs -> do
-             gs <- forM sigs $ \case
-@@ -311,7 +311,7 @@ niceDeclarations fixs ds = do
-                 return $ NiceGeneralize (getRange sig) PublicAccess info tac x t
-               _ -> __IMPOSSIBLE__
-             return (gs, ds)
--  
-+
-           FunClause lhs _ _ _         -> do
-             termCheck <- use terminationCheckPragma
-             covCheck  <- use coverageCheckPragma
-@@ -327,7 +327,7 @@ niceDeclarations fixs ds = do
-                         else span (couldBeFunClauseOf (Map.lookup x fixs) x) (d : ds)
-                  , not (null fits)
-                  ] of
--  
-+
-               -- case: clauses match none of the sigs
-               [] -> case lhs of
-                 -- Subcase: The lhs is single identifier (potentially anonymous).
-@@ -340,7 +340,7 @@ niceDeclarations fixs ds = do
-                 -- A missing type signature error might be raise in ConcreteToAbstract
-                 _ -> do
-                   return ([NiceFunClause (getRange d) PublicAccess ConcreteDef termCheck covCheck catchall d] , ds)
--  
-+
-               -- case: clauses match exactly one of the sigs
-               [(x,(x',fits,rest))] -> do
-                  -- The x'@NoName{} is the unique version of x@NoName{}.
-@@ -348,20 +348,20 @@ niceDeclarations fixs ds = do
-                  ds  <- expandEllipsis fits
-                  cs  <- mkClauses x' ds False
-                  return ([FunDef (getRange fits) fits ConcreteDef NotInstanceDef termCheck covCheck x' cs] , rest)
--  
-+
-               -- case: clauses match more than one sigs (ambiguity)
-               xf:xfs -> declarationException $ AmbiguousFunClauses lhs $ List1.reverse $ fmap fst $ xf :| xfs
-                    -- "ambiguous function clause; cannot assign it uniquely to one type signature"
--  
-+
-           Field r [] -> justWarning $ EmptyField r
-           Field _ fs -> (,ds) <$> niceAxioms FieldBlock fs
--  
-+
-           DataSig r x tel e -> do
-             pc <- use positivityCheckPragma
-             uc <- use universeCheckPragma
-             _ <- addLoneSig r x $ DataName pc uc
-             (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x (Just (tel, e)) Nothing
--  
-+
-           Data r x tel e cs -> do
-             pc <- use positivityCheckPragma
-             -- Andreas, 2018-10-27, issue #3327
-@@ -372,7 +372,7 @@ niceDeclarations fixs ds = do
-             uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
-             mt <- defaultTypeSig (DataName pc uc) x (Just e)
-             (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x ((tel,) <$> mt) (Just (tel, cs))
--  
-+
-           DataDef r x tel cs -> do
-             pc <- use positivityCheckPragma
-             -- Andreas, 2018-10-27, issue #3327
-@@ -383,13 +383,13 @@ niceDeclarations fixs ds = do
-             uc <- if uc == NoUniverseCheck then return uc else getUniverseCheckFromSig x
-             mt <- defaultTypeSig (DataName pc uc) x Nothing
-             (,ds) <$> dataOrRec pc uc NiceDataDef NiceDataSig (niceAxioms DataBlock) r x ((tel,) <$> mt) (Just (tel, cs))
--  
-+
-           RecordSig r x tel e         -> do
-             pc <- use positivityCheckPragma
-             uc <- use universeCheckPragma
-             _ <- addLoneSig r x $ RecName pc uc
-             return ([NiceRecSig r PublicAccess ConcreteDef pc uc x tel e] , ds)
--  
-+
-           Record r x dir tel e cs   -> do
-             pc <- use positivityCheckPragma
-             -- Andreas, 2018-10-27, issue #3327
-@@ -401,7 +401,7 @@ niceDeclarations fixs ds = do
-             mt <- defaultTypeSig (RecName pc uc) x (Just e)
-             (,ds) <$> dataOrRec pc uc (\ r o a pc uc x tel cs -> NiceRecDef r o a pc uc x dir tel cs) NiceRecSig
-                         return r x ((tel,) <$> mt) (Just (tel, cs))
--  
-+
-           RecordDef r x dir tel cs   -> do
-             pc <- use positivityCheckPragma
-             -- Andreas, 2018-10-27, issue #3327
-@@ -413,9 +413,9 @@ niceDeclarations fixs ds = do
-             mt <- defaultTypeSig (RecName pc uc) x Nothing
-             (,ds) <$> dataOrRec pc uc (\ r o a pc uc x tel cs -> NiceRecDef r o a pc uc x dir tel cs) NiceRecSig
-                         return r x ((tel,) <$> mt) (Just (tel, cs))
--  
-+
-           RecordDirective r -> justWarning $ InvalidRecordDirective (getRange r)
--  
-+
-           Mutual r ds' -> do
-             -- The lone signatures encountered so far are not in scope
-             -- for the mutual definition
-@@ -423,7 +423,7 @@ niceDeclarations fixs ds = do
-             case ds' of
-               [] -> justWarning $ EmptyMutual r
-               _  -> (,ds) <$> (singleton <$> (mkOldMutual r =<< nice ds'))
--  
-+
-           InterleavedMutual r ds' -> do
-             -- The lone signatures encountered so far are not in scope
-             -- for the mutual definition
-@@ -431,55 +431,55 @@ niceDeclarations fixs ds = do
-             case ds' of
-               [] -> justWarning $ EmptyMutual r
-               _  -> (,ds) <$> (singleton <$> (mkInterleavedMutual r =<< nice ds'))
--  
-+
-           LoneConstructor r [] -> justWarning $ EmptyConstructor r
-           LoneConstructor r ds' ->
-             ((,ds) . singleton . NiceLoneConstructor r) <$> niceAxioms ConstructorBlock ds'
--  
-+
-           Abstract r []  -> justWarning $ EmptyAbstract r
-           Abstract r ds' ->
-             (,ds) <$> (abstractBlock r =<< nice ds')
--  
-+
-           Private r UserWritten []  -> justWarning $ EmptyPrivate r
-           Private r o ds' ->
-             (,ds) <$> (privateBlock r o =<< nice ds')
--  
-+
-           InstanceB r []  -> justWarning $ EmptyInstance r
-           InstanceB r ds' ->
-             (,ds) <$> (instanceBlock r =<< nice ds')
--  
-+
-           Macro r []  -> justWarning $ EmptyMacro r
-           Macro r ds' ->
-             (,ds) <$> (macroBlock r =<< nice ds')
--  
-+
-           Postulate r []  -> justWarning $ EmptyPostulate r
-           Postulate _ ds' ->
-             (,ds) <$> niceAxioms PostulateBlock ds'
--  
-+
-           Primitive r []  -> justWarning $ EmptyPrimitive r
-           Primitive _ ds' -> (,ds) <$> (map toPrim <$> niceAxioms PrimitiveBlock ds')
--  
-+
-           Module r x tel ds' -> return $
-             ([NiceModule r PublicAccess ConcreteDef x tel ds'] , ds)
--  
-+
-           ModuleMacro r x modapp op is -> return $
-             ([NiceModuleMacro r PublicAccess x modapp op is] , ds)
--  
-+
-           -- Fixity and syntax declarations and polarity pragmas have
-           -- already been processed.
-           Infix _ _  -> return ([], ds)
-           Syntax _ _ -> return ([], ds)
--  
-+
-           PatternSyn r n as p -> do
-             return ([NicePatternSyn r PublicAccess n as p] , ds)
-           Open r x is         -> return ([NiceOpen r x is] , ds)
-           Import r x as op is -> return ([NiceImport r x as op is] , ds)
--  
-+
-           UnquoteDecl r xs e -> do
-             tc <- use terminationCheckPragma
-             cc <- use coverageCheckPragma
-             return ([NiceUnquoteDecl r PublicAccess ConcreteDef NotInstanceDef tc cc xs e] , ds)
--  
-+
-           UnquoteDef r xs e -> do
-             sigs <- map fst . loneFuns <$> use loneSigs
-             List1.ifNotNull (filter (`notElem` sigs) xs)
-@@ -1164,7 +1164,7 @@ niceDeclarations fixs ds = do
+@@ -1171,7 +1171,7 @@ niceDeclarations fixs ds = do
          covCheck NicePatternSyn{}    = YesCoverageCheck
          covCheck NiceGeneralize{}    = YesCoverageCheck
          covCheck NiceLoneConstructor{} = YesCoverageCheck
@@ -1495,10 +936,10 @@ index ba389aca5..8dbdcc676 100644
  primAgdaTCMGetType                    = getBuiltin builtinAgdaTCMGetType
  primAgdaTCMGetDefinition              = getBuiltin builtinAgdaTCMGetDefinition
 diff --git a/src/full/Agda/TypeChecking/Rules/Builtin.hs b/src/full/Agda/TypeChecking/Rules/Builtin.hs
-index 50a4d52f6..7ece0e179 100644
+index 0220b5251..1e4ba40ef 100644
 --- a/src/full/Agda/TypeChecking/Rules/Builtin.hs
 +++ b/src/full/Agda/TypeChecking/Rules/Builtin.hs
-@@ -373,6 +373,8 @@ coreBuiltins =
+@@ -371,6 +371,8 @@ coreBuiltins =
    , builtinAgdaTCMFreshName                  |-> builtinPostulate (tstring --> tTCM_ primQName)
    , builtinAgdaTCMDeclareDef                 |-> builtinPostulate (targ tqname --> ttype --> tTCM_ primUnit)
    , builtinAgdaTCMDeclarePostulate           |-> builtinPostulate (targ tqname --> ttype --> tTCM_ primUnit)
@@ -1551,7 +992,7 @@ index 959b818d7..79f9a69ae 100644
 +checkSig   :: KindOfName -> DefInfo -> QName -> GeneralizeTelescope -> Expr -> TCM ()
  checkSectionApplication :: ModuleInfo -> ModuleName -> ModuleApplication -> ScopeCopyInfo -> TCM ()
 diff --git a/src/full/Agda/TypeChecking/Unquote.hs b/src/full/Agda/TypeChecking/Unquote.hs
-index 11e541fbf..797fa0934 100644
+index 11e541fbf..12a794190 100644
 --- a/src/full/Agda/TypeChecking/Unquote.hs
 +++ b/src/full/Agda/TypeChecking/Unquote.hs
 @@ -2,7 +2,7 @@
@@ -1618,7 +1059,7 @@ index 11e541fbf..797fa0934 100644
               , (f `isDef` primAgdaTCMExec, tcFun3 tcExec l a u)
               ]
               failEval
-@@ -930,6 +937,101 @@ evalTCM v = do
+@@ -930,6 +937,86 @@ evalTCM v = do
          when (isInstance i) $ addTypedInstance x a
          primUnitUnit
  
@@ -1637,15 +1078,12 @@ index 11e541fbf..797fa0934 100644
 +        when alreadyDefined $ genericError $ "Multiple declarations of " ++ prettyShow x
 +        e <- toAbstract_ t
 +        -- The type to be checked with @checkSig@ is without parameters.
-+        let (tel, e') = removeParsThen (fromInteger npars) (,) e
++        let (tel, e') = splitPars (fromInteger npars) e
 +        ac <- asksTC (^. lensIsAbstract)
 +        let defIn = mkDefInfo (nameConcrete $ qnameName x) noFixity' PublicAccess ac noRange
 +        checkSig DataName defIn x (A.GeneralizeTel Map.empty tel) e'
 +        primUnitUnit
 +
-+    -- For now, there is no reflected syntax for open terms
-+    -- Thus the types of given constructors are expected to be function types
-+    -- with arguments as parameters.
 +    tcDefineData :: QName -> [(QName, R.Type)] -> UnquoteM Term
 +    tcDefineData x cs = inOriginalContext $ (setDirty >>) $ liftTCM $ do
 +      caseEitherM (getConstInfo' x)
@@ -1655,28 +1093,28 @@ index 11e541fbf..797fa0934 100644
 +                   _              -> genericError $ prettyShow x ++
 +                     " is not declared as a datatype or record, or it already has a definition."
 +
-+        es <- mapM (toAbstract_ . snd) cs
++        -- For some reasons, reifying parameters and adding them to the context via
++        -- `addContext` before `toAbstract_` is different from substituting the type after
++        -- `toAbstract_, so some dummy parameters are added and removed later.
++        es <- mapM (toAbstract_ . addDummy npars . snd) cs
 +        reportSDoc "tc.unquote.def" 10 $ vcat $
 +          [ "declaring constructors of" <+> prettyTCM x <+> ":" ] ++ map prettyA es
 +
-+        -- The preceding arguments are removed before typechecking since @checkDataDef@ adds
-+        -- the parameters of the declared datatype back to the context.
-+        -- Variable names which refer to removed arguments in the given constructors
-+        -- are substituted with those of the parameters of the declared datatype.
-+
-+        -- Translate parameters back to abstract syntax.
++        -- Translate parameters from internal definitions back to abstract syntax.
 +        t   <- instantiateFull . defType =<< instantiateDef def
 +        tel <- reify =<< theTel <$> telViewUpTo npars t
 +
-+        let f = removeParsThen npars (substNames' tel)
-+        es' <- foldr (liftM2 (:) . f) (pure []) es -- Optimization?
++        es' <- case mapM (uncurry (substNames' tel) . splitPars npars) es of
++                 Nothing -> genericError $ "Number of parameters doesn't match!"
++                 Just es -> return es
 +
 +        ac <- asksTC (^. lensIsAbstract)
 +        let i = mkDefInfo (nameConcrete $ qnameName x) noFixity' PublicAccess ac noRange
 +            conNames = map fst cs
 +            toAxiom c e = A.Axiom ConName i defaultArgInfo Nothing c e
-+            as = zipWith toAxiom conNames es' -- Constructors are axioms.
-+            lams = map toLamBinding tel
++            as = zipWith toAxiom conNames es'
++            lams = map (\case {A.TBind _ tac (b :| []) _ -> A.DomainFree tac b
++                              ;_ -> __IMPOSSIBLE__ }) tel
 +        reportSDoc "tc.unquote.def" 10 $ vcat $
 +          [ "checking datatype: " <+> prettyTCM x <+> " with constructors:"
 +          , nest 2 (vcat (map prettyTCM conNames))
@@ -1684,56 +1122,42 @@ index 11e541fbf..797fa0934 100644
 +        checkDataDef i x YesUniverseCheck (A.DataDefParams Set.empty lams) as
 +        primUnitUnit
 +      where
-+        toLamBinding :: A.TypedBinding -> A.LamBinding
-+        toLamBinding (A.TBind _ tac (b :| []) _) = A.DomainFree tac b
-+        toLamBinding _ = __IMPOSSIBLE__
++        addDummy :: Int -> R.Type -> R.Type
++        addDummy 0 t = t
++        addDummy n t = R.Pi (defaultDom (R.Sort $ R.LitS 0)) (R.Abs "dummy" $ addDummy (n - 1) t)
 +
-+        -- Substitute @Var x@ for @Var y@ in an @Expr@.
-+        substName :: Name -> Name -> (A.Expr -> A.Expr)
-+        substName x y e@(A.Var n)
-+                | y == n    = A.Var x
-+                | otherwise = e
-+        substName _ _ e = e
-+
-+        substNames' :: [A.TypedBinding] -> [A.TypedBinding] -> A.Expr -> TCM A.Expr
++        substNames' :: [A.TypedBinding] -> [A.TypedBinding] -> A.Expr -> Maybe A.Expr
 +        substNames' (a : as) (b : bs) e = do
-+          let (namea, expra) = bindingToPair a
-+              (nameb, exprb) = bindingToPair b -- Allow non-hidden arguments?
++          let (A.TBind _ _ (na :| _) expra) = a
++              (A.TBind _ _ (nb :| _) exprb) = b
++              getName n = A.unBind . A.binderName $ namedArg n
 +          e' <- substNames' as bs e
-+          return $ mapExpr (substName namea nameb) e'
-+          -- Don't check the parameters match or not for now,
-+          -- The parameters should be the same anyway.
-+          --if expra == exprb
-+          --then return $ mapExpr (substName namea nameb) e'
-+          --else genericDocError =<< hcat
-+          --       [ "Given argument ", prettyTCM exprb,
-+          --         " doesn't match the parameter ", prettyTCM expra,
-+          --         " of datatype ", pretty x ]
-+               --TODO: Show which constructor causes the error.
++          return $ mapExpr (substName (getName na) (getName nb)) e'
++          where
++            -- Substitute @Var x@ for @Var y@ in an @Expr@.
++            substName :: Name -> Name -> (A.Expr -> A.Expr)
++            substName x y e@(A.Var n)
++                    | y == n    = A.Var x
++                    | otherwise = e
++            substName _ _ e = e
 +        substNames' [] [] e = return e
-+        substNames' _ _ _ = genericError $ "Number of parameters doesn't match!"
-+
-+        bindingToPair :: A.TypedBinding -> (Name, A.Expr)
-+        bindingToPair (A.TBind _ _ (n :| _) e) = (A.unBind . A.binderName $ namedArg n, e)
-+        bindingToPair _ = __IMPOSSIBLE__
++        substNames' _ _ _ = Nothing
 +
      tcDefineFun :: QName -> [R.Clause] -> UnquoteM Term
      tcDefineFun x cs = inOriginalContext $ (setDirty >>) $ liftTCM $ do
        whenM (isLeft <$> getConstInfo' x) $
-@@ -961,6 +1063,13 @@ evalTCM v = do
+@@ -961,7 +1048,10 @@ evalTCM v = do
        Right cands -> liftTCM $
          buildList <*> mapM (quoteTerm . candidateTerm) cands
  
-+    -- The second argument is continuation.
-+    removeParsThen :: Int -> ([A.TypedBinding] -> A.Expr -> a) -> A.Expr -> a
-+    removeParsThen 0     f e                   = f [] e
-+    removeParsThen npars f (A.Pi _ (n :| _) e) | npars < 0 = __IMPOSSIBLE__
-+    removeParsThen npars f (A.Pi _ (n :| _) e) =
-+      removeParsThen (npars - 1) (\xs e' -> f (n : xs) e') e
-+    removeParsThen _ _ _ = __IMPOSSIBLE__
- 
+-
++    splitPars :: Int -> A.Expr -> ([A.TypedBinding], A.Expr)
++    splitPars 0 e = ([] , e)
++    splitPars npars (A.Pi _ (n :| _) e) = first (n :) (splitPars (npars - 1) e)
++    splitPars npars e = __IMPOSSIBLE__
  ------------------------------------------------------------------------
  -- * Trusted executables
+ ------------------------------------------------------------------------
 -- 
 2.31.0
 
