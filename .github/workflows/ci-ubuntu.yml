@@ -44,8 +44,8 @@ env:
   CABAL_BIN : $HOME/.local/bin
   CABAL_INSTALL: cabal install --installdir=$HOME/.local/bin --overwrite-policy=always --ghc-options='+RTS -M8G -RTS'
 
-  AGDA_REPO   : L-TChen/agda
-  AGDA_COMMIT : 84a19a0d43fc1af694ed239090262198d4446898
+  AGDA_REPO   : agda/agda
+  AGDA_COMMIT : 1b44372081e5b21b1a368d0e63cc09a53c48d20b
 
 jobs:
   test:
@@ -99,6 +99,7 @@ jobs:
         if: ${{ !steps.cache.outputs.cache-hit }}
         run: |
           cd agda
+          git apply ../Agda-unquoteDecl-data.diff
           ${{ env.CABAL_INSTALL }} -foptimise-heavily
           strip ${{ env.CABAL_BIN }}/agda
 
