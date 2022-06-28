@@ -85,7 +85,7 @@ private
 
 instance AlgListO = ⌈ AlgListOD ⌉ᵈ
 
-unquoteDecl data AlgList constructor alg0 alg1 = defineByDataD ⌊ AlgListOD ⌋ᵈ AlgList (alg0 ∷ alg1 ∷ [])
+unquoteDecl data AlgList constructor [] _∷_ = defineByDataD ⌊ AlgListOD ⌋ᵈ AlgList (AlgList.[] List.∷ AlgList._∷_ List.∷ List.[])
 --data AlgList {ℓ' ℓ} {A : Set ℓ} {B : Set ℓ'}
 --  (e : B) (f : A → B → B) : B → Set (ℓ ⊔ ℓ') where
 --  []  : AlgList e f e
@@ -105,7 +105,7 @@ private
 
 instance VecO = ⌈ VecOD ⌉ᵈ
 
-unquoteDecl data Vec constructor vec0 vec1 = defineByDataD ⌊ VecOD ⌋ᵈ Vec (vec0 ∷ vec1 ∷ [])
+unquoteDecl data Vec constructor [] _∷_ = defineByDataD ⌊ VecOD ⌋ᵈ Vec (Vec.[] List.∷ Vec._∷_ List.∷ List.[])
 --data Vec (A : Set ℓ) : (n : ℕ) → Set ℓ where
 --  []  : Vec A 0
 --  _∷_ : (a : A) {n : ℕ} → Vec A n → Vec A (suc n)
@@ -180,7 +180,7 @@ private
 
 instance LenO = ⌈ LenOD ⌉ᵈ
 
-unquoteDecl data Len constructor len0 len1 = defineByDataD ⌊ LenOD ⌋ᵈ Len (len0 ∷ len1 ∷ [])
+unquoteDecl data Len constructor zero suc = defineByDataD ⌊ LenOD ⌋ᵈ Len (Len.zero ∷ Len.suc ∷ [])
 --data Len {A : Set ℓ} : ℕ → List A → Set ℓ where
 --  zero : Len 0 []
 --  suc  : {a : A} {n : ℕ} {as : List A} → Len n as → Len (suc n) (a ∷ as)
@@ -256,7 +256,7 @@ private
 
 instance ListPO = ⌈ ListPOD ⌉ᵈ
 
-unquoteDecl data ListP constructor lp0 lp1 = defineByDataD ⌊ ListPOD ⌋ᵈ ListP (lp0 ∷ lp1 ∷ [])
+unquoteDecl data ListP constructor [] ⟨_,_⟩∷_ = defineByDataD ⌊ ListPOD ⌋ᵈ ListP (ListP.[] ∷ ListP.⟨_,_⟩∷_ ∷ List.[])
 --data ListP {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
 --  []      : ListP P
 --  ⟨_,_⟩∷_ : (a : A) → P a → ListP P → ListP P
@@ -286,7 +286,7 @@ private
 
 instance ListAllO = ⌈ ListAllOD ⌉ᵈ
 
-unquoteDecl data ListAll constructor all0 all1 = defineByDataD ⌊ ListAllOD ⌋ᵈ ListAll (all0 ∷ all1 ∷ [])
+unquoteDecl data ListAll constructor [] _∷_ = defineByDataD ⌊ ListAllOD ⌋ᵈ ListAll (ListAll.[] List.∷ ListAll._∷_ List.∷ List.[])
 --data ListAll {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') where
 --  []  : ListAll P []
 --  _∷_ : {a : A} → P a → {as : List A} → ListAll P as → ListAll P (a ∷ as)
@@ -364,7 +364,7 @@ private
 
 instance ListAnyO = ⌈ ListAnyOD ⌉ᵈ
 
-unquoteDecl data ListAny constructor any0 any1 = defineByDataD ⌊ ListAnyOD ⌋ᵈ ListAny (any0 ∷ any1 ∷ [])
+unquoteDecl data ListAny constructor here there = defineByDataD ⌊ ListAnyOD ⌋ᵈ ListAny (ListAny.here ∷ ListAny.there ∷ [])
 --data ListAny {ℓ' ℓ} {A : Set ℓ} (P : A → Set ℓ') : List A → Set (ℓ ⊔ ℓ') where
 --  here  : ∀ {a as} → P a → ListAny P (a ∷ as)
 --  there : ∀ {a as} → ListAny P as → ListAny P (a ∷ as)

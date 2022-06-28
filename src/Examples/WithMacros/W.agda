@@ -49,7 +49,7 @@ private
   WAnyD : DataD
   WAnyD = AnyD (quote W)
 
-unquoteDecl data WAny constructor wany0 wany1 = defineByDataD WAnyD WAny (wany0 ∷ wany1 ∷ [])
+unquoteDecl data WAny constructor here there = defineByDataD WAnyD WAny (WAny.here ∷ WAny.there ∷ [])
 --data WAny {ℓ'' ℓ ℓ'} {A : Set ℓ} {B : A → Set ℓ'} (P : A → Set ℓ'') :
 --  W A B → Set (ℓ ⊔ ℓ' ⊔ ℓ'') where
 --  here  : ∀ {a ws} → P a → WAny P (sup a ws)

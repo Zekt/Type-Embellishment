@@ -103,7 +103,7 @@ instance TypingO = ⌈ TypingOD ⌉ᵈ
 
 infix 3 _⊢_∶_
 
-unquoteDecl data Typing constructor typ0 typ1 typ2 = defineByDataD ⌊ TypingOD ⌋ᵈ Typing (typ0 ∷ typ1 ∷ typ2 ∷ [])
+unquoteDecl data Typing constructor var app lam = defineByDataD ⌊ TypingOD ⌋ᵈ Typing (Typing.var ∷ Typing.app ∷ Typing.lam ∷ [])
 _⊢_∶_ : List Ty → Λ → Ty → Set
 _⊢_∶_ a b c = Typing a c b
 --data _⊢_∶_ : List Ty → Λ → Ty → Set₀ where

@@ -50,7 +50,7 @@ private
   AccAnyD : DataD
   AccAnyD = AnyD (quote Acc)
 
-unquoteDecl data AccAny constructor accany0 accany1 = defineByDataD AccAnyD AccAny (accany0 ∷ accany1 ∷ [])
+unquoteDecl data AccAny constructor here there = defineByDataD AccAnyD AccAny (AccAny.here ∷ AccAny.there ∷ [])
 --data AccAny {ℓ'' ℓ ℓ'} {A : Set ℓ} {R : A → A → Set ℓ'}
 --  (P : A → Set ℓ'') : (x : A) → Acc R x → Set (ℓ ⊔ ℓ' ⊔ ℓ'') where
 --  here  : ∀ {x accs} → P x → AccAny P x (acc accs)

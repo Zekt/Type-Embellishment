@@ -65,7 +65,8 @@ private
 
 instance B23TreePO = ⌈ B23TreePOD ⌉ᵈ
 
-unquoteDecl data B23TreeP constructor b230 b231 b232 = defineByDataD ⌊ B23TreePOD ⌋ᵈ B23TreeP (b230 ∷ b231 ∷ b232 ∷ [])
+unquoteDecl data B23TreeP constructor node₀ node₂ node₃ =
+  defineByDataD ⌊ B23TreePOD ⌋ᵈ B23TreeP (B23TreeP.node₀ ∷ B23TreeP.node₂ ∷ B23TreeP.node₃ ∷ [])
 --data B23TreeP (P : Value → Set ℓ) : Height → Value → Value → Set ℓ where
 --
 --  node₀ : ⦃ l ≤ r ⦄
@@ -110,7 +111,8 @@ private
 
 instance B23TreeAllO = ⌈ B23TreeAllOD ⌉ᵈ
 
-unquoteDecl data B23TreeAll constructor b23all0 b23all1 b23all2 = defineByDataD ⌊ B23TreeAllOD ⌋ᵈ B23TreeAll (b23all0 ∷ b23all1 ∷ b23all2 ∷ [])
+unquoteDecl data B23TreeAll constructor node₀ node₂ node₃ =
+  defineByDataD ⌊ B23TreeAllOD ⌋ᵈ B23TreeAll (B23TreeAll.node₀ ∷ B23TreeAll.node₂ ∷ B23TreeAll.node₃ ∷ [])
 --data B23TreeAll (P : Value → Set ℓ) : ∀ {h l r} → B23Tree h l r → Set ℓ where
 --
 --  node₀ : ⦃ _ : l ≤ r ⦄
@@ -265,7 +267,12 @@ private
   B23TreeAnyD : DataD
   B23TreeAnyD = AnyD (quote B23Tree)
 
-unquoteDecl data B23TreeAny constructor b23any0 b23any1 b23any2 b23any3 b23any4 b23any5 b23any6 b23any7 = defineByDataD B23TreeAnyD B23TreeAny (b23any0 ∷ b23any1 ∷ b23any2 ∷ b23any3 ∷ b23any4 ∷ b23any5 ∷ b23any6 ∷ b23any7 ∷ [])
+unquoteDecl data B23TreeAny constructor node₂-here node₃-here₀ node₃-here₁ node₂-there₀ node₂-there₁ node₃-there₀ node₃-there₁ node₃-there₂ =
+  defineByDataD B23TreeAnyD B23TreeAny
+    ( B23TreeAny.node₂-here ∷ B23TreeAny.node₃-here₀ ∷ B23TreeAny.node₃-here₁
+    ∷ B23TreeAny.node₂-there₀ ∷ B23TreeAny.node₂-there₁
+    ∷ B23TreeAny.node₃-there₀ ∷ B23TreeAny.node₃-there₁ ∷ B23TreeAny.node₃-there₂
+    ∷ [] )
 --data B23TreeAny (P : Value → Set ℓ) : ∀ {h l r} → B23Tree h l r → Set ℓ where
 --  node₂-here   : ∀ {x   t u  } → P x → B23TreeAny P {suc h} {l} {r} (node₂ x   t u  )
 --  node₃-here₀  : ∀ {x y t u v} → P x → B23TreeAny P {suc h} {l} {r} (node₃ x y t u v)

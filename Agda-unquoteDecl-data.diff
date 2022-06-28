@@ -1318,3 +1318,34 @@ index 2e78d7634..97a951bb2 100644
 -- 
 2.31.0
 
+From 47eb2320689b6d354c6391201d94a5f4b17efe5f Mon Sep 17 00:00:00 2001
+From: Viktor Lin <hi@viktorl.in>
+Date: Mon, 27 Jun 2022 22:30:14 +0800
+Subject: [PATCH] [ reflection ] fix module names of constructors defined by
+ `unquoteDecl`
+
+---
+ src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs b/src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs
+index c1e3007c9..5c597bc00 100644
+--- a/src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs
++++ b/src/full/Agda/Syntax/Translation/ConcreteToAbstract.hs
+@@ -2053,11 +2053,12 @@ instance ToAbstract NiceDeclaration where
+       createModule (Just IsDataModule) m
+       bindModule p x m  -- make it a proper module
+ 
+-      cs' <- withCurrentModule m $ mapM (bindUnquoteConstructorName m p) cs
++      cs' <- mapM (bindUnquoteConstructorName m p) cs
+ 
+       e <- withCurrentModule m $ toAbstract e
+ 
+       rebindName p DataName x x'
++      zipWithM_ (rebindName p ConName) cs cs'
+       withCurrentModule m $ zipWithM_ (rebindName p ConName) cs cs'
+ 
+       fcs <- mapM getConcreteFixity cs
+-- 
+2.31.0
+
