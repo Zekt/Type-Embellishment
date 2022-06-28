@@ -183,12 +183,14 @@ main = do
 
   writeFileUTF8 (allOutputFile ++ ".agda") $
     unlines [ "{-# OPTIONS --rewriting --guardedness --sized-types #-}\n"
+            , "-- !!! THIS MODULE IS NOT SUPPOSED TO BE CHECKED DIRECTLY !!! ---"
             , mkModule allOutputFile
             , format libraryfiles
             ]
 
   writeFileUTF8 (safeOutputFile ++ ".agda") $
     unlines [ "{-# OPTIONS --safe --guardedness #-}\n"
+            , "-- !!! THIS MODULE IS NOT SUPPOSED TO BE CHECKED DIRECTLY !!! ---"
             , mkModule safeOutputFile
             , format $ filter ((Unsafe /=) . status) libraryfiles
             ]
