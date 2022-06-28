@@ -4,7 +4,7 @@
 
 This repo contains
 * representations for inductive families and generic programs,
-* metaprograms and macros for traslation between generic and native datatypes/functions,
+* metaprograms and macros for translation between generic and native datatypes/functions,
 * connections between generic and native definitions, and
 * examples.
 
@@ -14,13 +14,13 @@ There are also highlighted and clickable HTML documents for traversing the modul
 
 * 14 Gigabytes of memory or above.
 * The development version of Agda 2.6.3 ([commit 1b44372](https://github.com/agda/agda/commit/1b44372081e5b21b1a368d0e63cc09a53c48d20b))
-  extended with an experimental syntax `unquoteDecl data` by applying
-  * Agda-unquoteDecl-data.diff 
+  with the patch
+  * `Agda-unquoteDecl-data.diff` to extended Agda with an experimental syntax `unquoteDecl data`
 
 ## Patch & compile Agda
 1. `git clone https://github.com/agda/agda.git`
 2. `cd agda && git checkout 1b44372`
-3. `git apply ../*.diff`
+3. `git apply ../Agda-unquoteDecl-data.diff`
 4. `make install-bin`
 5. Check the Agda binary version by `agda-2.6.3 -V`, which should output `Agda version 2.6.3-8f8b1f9-dirty`
 

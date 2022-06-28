@@ -107,6 +107,14 @@ jobs:
         run: |
           make 
 
-      - name: Check Benchmark.agda
+      - name: Generate listings
         run: |
-          make benchmark
+          make listings
+
+      - name: Deploy HTML
+        uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/master'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: html
+          force_orphan: true

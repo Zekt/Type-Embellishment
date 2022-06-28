@@ -5,6 +5,10 @@ AGDA_EXEC   = $(AGDA_BIN) $(RTS_OPTIONS)
 everything: Everything.agda
 	$(AGDA_EXEC) -i. -isrc Everything.agda --profile=internal
 
+.PHONY: listings
+listings: Everything.agda
+	$(AGDA_EXEC) -i. -isrc --html README.agda -v0
+
 library: Library.agda
 	$(AGDA_EXEC) -i. -isrc Library.agda --profile=internal
 
@@ -31,11 +35,6 @@ example1-defs: ExamplesByMacro.agda
 example2-defs: ExamplesByMacro.agda
 	rm -rf _build/*/agda/src/Examples/WithoutMacros
 	$(AGDA_EXEC) -i. -isrc ExamplesByHand.agda --profile=definitions
-
-benchmark : 
-	rm -f _build/*/agda/Benchmark.agdai
-	$(AGDA_EXEC) Benchmark.agda  -i. --profile=definitions
-	rm -f _build/*/agda/Benchmark.agdai
 
 clean :
 	find . -type f -name '*.agdai' -delete
