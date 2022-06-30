@@ -1,0 +1,26 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Prelude.Monoid</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Symbol">{-#</a> <a id="5" class="Keyword">OPTIONS</a> <a id="13" class="Pragma">--without-K</a> <a id="25" class="Pragma">--safe</a> <a id="32" class="Symbol">#-}</a>
+
+<a id="37" class="Keyword">module</a> <a id="44" href="Prelude.Monoid.html" class="Module">Prelude.Monoid</a> <a id="59" class="Keyword">where</a>
+
+<a id="66" class="Keyword">open</a> <a id="71" class="Keyword">import</a> <a id="78" href="Agda.Builtin.String.html" class="Module">Agda.Builtin.String</a> 
+
+<a id="100" class="Keyword">record</a> <a id="Semigroup"></a><a id="107" href="Prelude.Monoid.html#107" class="Record">Semigroup</a> <a id="117" class="Symbol">{</a><a id="118" href="Prelude.Monoid.html#118" class="Bound">a</a><a id="119" class="Symbol">}</a> <a id="121" class="Symbol">(</a><a id="122" href="Prelude.Monoid.html#122" class="Bound">A</a> <a id="124" class="Symbol">:</a> <a id="126" href="Agda.Primitive.html#311" class="Primitive">Set</a> <a id="130" href="Prelude.Monoid.html#118" class="Bound">a</a><a id="131" class="Symbol">)</a> <a id="133" class="Symbol">:</a> <a id="135" href="Agda.Primitive.html#311" class="Primitive">Set</a> <a id="139" href="Prelude.Monoid.html#118" class="Bound">a</a> <a id="141" class="Keyword">where</a>
+  <a id="149" class="Keyword">infixr</a> <a id="156" class="Number">5</a> <a id="158" href="Prelude.Monoid.html#175" class="Field Operator">_&lt;&gt;_</a>
+  <a id="165" class="Keyword">field</a>
+    <a id="Semigroup._&lt;&gt;_"></a><a id="175" href="Prelude.Monoid.html#175" class="Field Operator">_&lt;&gt;_</a> <a id="180" class="Symbol">:</a> <a id="182" href="Prelude.Monoid.html#122" class="Bound">A</a> <a id="184" class="Symbol">→</a> <a id="186" href="Prelude.Monoid.html#122" class="Bound">A</a> <a id="188" class="Symbol">→</a> <a id="190" href="Prelude.Monoid.html#122" class="Bound">A</a>
+<a id="192" class="Keyword">open</a> <a id="197" href="Prelude.Monoid.html#107" class="Module">Semigroup</a> <a id="207" class="Symbol">⦃...⦄</a> <a id="213" class="Keyword">public</a>
+
+<a id="221" class="Keyword">record</a> <a id="Monoid"></a><a id="228" href="Prelude.Monoid.html#228" class="Record">Monoid</a> <a id="235" class="Symbol">{</a><a id="236" href="Prelude.Monoid.html#236" class="Bound">a</a><a id="237" class="Symbol">}</a> <a id="239" class="Symbol">(</a><a id="240" href="Prelude.Monoid.html#240" class="Bound">A</a> <a id="242" class="Symbol">:</a> <a id="244" href="Agda.Primitive.html#311" class="Primitive">Set</a> <a id="248" href="Prelude.Monoid.html#236" class="Bound">a</a><a id="249" class="Symbol">)</a> <a id="251" class="Symbol">:</a> <a id="253" href="Agda.Primitive.html#311" class="Primitive">Set</a> <a id="257" href="Prelude.Monoid.html#236" class="Bound">a</a> <a id="259" class="Keyword">where</a>
+  <a id="267" class="Keyword">field</a>
+    <a id="Monoid.mempty"></a><a id="277" href="Prelude.Monoid.html#277" class="Field">mempty</a>            <a id="295" class="Symbol">:</a> <a id="297" href="Prelude.Monoid.html#240" class="Bound">A</a>
+    <a id="303" class="Keyword">overlap</a> <a id="311" class="Symbol">⦃</a> <a id="Monoid.super"></a><a id="313" href="Prelude.Monoid.html#313" class="Field">super</a> <a id="319" class="Symbol">⦄</a> <a id="321" class="Symbol">:</a> <a id="323" href="Prelude.Monoid.html#107" class="Record">Semigroup</a> <a id="333" href="Prelude.Monoid.html#240" class="Bound">A</a>
+<a id="335" class="Keyword">open</a> <a id="340" href="Prelude.Monoid.html#228" class="Module">Monoid</a> <a id="347" class="Symbol">⦃...⦄</a> <a id="353" class="Keyword">public</a>
+
+<a id="361" class="Keyword">instance</a>
+  <a id="SemigroupString"></a><a id="372" href="Prelude.Monoid.html#372" class="Function">SemigroupString</a> <a id="388" class="Symbol">:</a> <a id="390" href="Prelude.Monoid.html#107" class="Record">Semigroup</a> <a id="400" href="Agda.Builtin.String.html#309" class="Postulate">String</a>
+  <a id="409" href="Prelude.Monoid.html#175" class="Field Operator">_&lt;&gt;_</a> <a id="414" class="Symbol">⦃</a> <a id="416" href="Prelude.Monoid.html#372" class="Function">SemigroupString</a> <a id="432" class="Symbol">⦄</a> <a id="434" class="Symbol">=</a> <a id="436" href="Agda.Builtin.String.html#511" class="Primitive">primStringAppend</a>
+  
+  <a id="MonoidString"></a><a id="458" href="Prelude.Monoid.html#458" class="Function">MonoidString</a> <a id="471" class="Symbol">:</a> <a id="473" href="Prelude.Monoid.html#228" class="Record">Monoid</a> <a id="480" href="Agda.Builtin.String.html#309" class="Postulate">String</a>
+  <a id="489" href="Prelude.Monoid.html#277" class="Field">mempty</a> <a id="496" class="Symbol">⦃</a> <a id="498" href="Prelude.Monoid.html#458" class="Function">MonoidString</a> <a id="511" class="Symbol">⦄</a> <a id="513" class="Symbol">=</a> <a id="515" class="String">&quot;&quot;</a>
+</pre></body></html>

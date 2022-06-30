@@ -1,0 +1,103 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>README</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Symbol">{-#</a> <a id="5" class="Keyword">OPTIONS</a> <a id="13" class="Pragma">--rewriting</a> <a id="25" class="Pragma">--guardedness</a> <a id="39" class="Pragma">--sized-types</a> <a id="53" class="Symbol">#-}</a>
+
+<a id="58" class="Comment">{-
+  To typecheck this file in Emacs with Agda mode, the current directory needs
+  to be part of the include path: type the following
+
+  ```
+  M-x customize-option RET agda2-program-args RET
+  ```
+
+  and add a new argument by inserting a new string
+
+  ```
+  -i.
+  ```
+
+  Then, apply the setting.
+-}</a>
+
+<a id="358" class="Keyword">module</a> <a id="365" href="README.html" class="Module">README</a> <a id="372" class="Keyword">where</a>
+
+<a id="379" class="Comment">------------------------------------------------------------------------------</a>
+<a id="458" class="Comment">-- Examples using macro</a>
+<a id="482" class="Comment">------------------------------------------------------------------------------</a>
+
+<a id="562" class="Comment">-- Datatypes and functions are generated through tactics using</a>
+<a id="625" class="Comment">-- `unquoteDecl` and `unquoteDecl data`.</a>
+
+<a id="667" class="Comment">-- * Running examples in section 2, 3 and 4.</a>
+<a id="712" class="Keyword">import</a> <a id="719" href="Examples.WithMacros.Acc.html" class="Module">Examples.WithMacros.Acc</a>
+
+<a id="744" class="Comment">-- * Other examples</a>
+<a id="764" class="Keyword">import</a> <a id="771" href="Examples.WithMacros.W.html" class="Module">Examples.WithMacros.W</a>
+<a id="793" class="Keyword">import</a> <a id="800" href="Examples.WithMacros.Nat.html" class="Module">Examples.WithMacros.Nat</a>
+<a id="824" class="Keyword">import</a> <a id="831" href="Examples.WithMacros.List.html" class="Module">Examples.WithMacros.List</a>
+<a id="856" class="Keyword">import</a> <a id="863" href="Examples.WithMacros.BST.html" class="Module">Examples.WithMacros.BST</a>
+<a id="887" class="Keyword">import</a> <a id="894" href="Examples.WithMacros.STLC.html" class="Module">Examples.WithMacros.STLC</a>
+
+<a id="920" class="Comment">------------------------------------------------------------------------------</a>
+<a id="999" class="Comment">-- Main framework</a>
+<a id="1017" class="Comment">------------------------------------------------------------------------------</a>
+
+<a id="1097" class="Comment">-- * Section 2.1, only used to compare with the classic approach of DGP</a>
+<a id="1169" class="Comment">-- but not used in our framework.</a>
+<a id="1203" class="Keyword">import</a> <a id="1210" href="Generics.Description.FixedPoint.html" class="Module">Generics.Description.FixedPoint</a>
+
+<a id="1243" class="Comment">-- * Section 3</a>
+<a id="1258" class="Keyword">import</a> <a id="1265" href="Generics.Description.html" class="Module">Generics.Description</a>
+<a id="1286" class="Keyword">import</a> <a id="1293" href="Generics.Telescope.html" class="Module">Generics.Telescope</a>
+
+<a id="1313" class="Comment">-- * Section 4</a>
+<a id="1328" class="Keyword">import</a> <a id="1335" href="Generics.Algebra.html" class="Module">Generics.Algebra</a>               
+<a id="1367" class="Keyword">import</a> <a id="1374" href="Generics.Recursion.html" class="Module">Generics.Recursion</a>
+
+<a id="1394" class="Comment">-- * Section 5</a>
+<a id="1409" class="Keyword">import</a> <a id="1416" href="Generics.Reflection.html" class="Module">Generics.Reflection</a>
+<a id="1436" class="Keyword">import</a> <a id="1443" href="Generics.Reflection.Telescope.html" class="Module">Generics.Reflection.Telescope</a>
+<a id="1473" class="Keyword">import</a> <a id="1480" href="Generics.Reflection.Datatype.html" class="Module">Generics.Reflection.Datatype</a>
+<a id="1509" class="Keyword">import</a> <a id="1516" href="Generics.Reflection.Connection.html" class="Module">Generics.Reflection.Connection</a>
+<a id="1547" class="Keyword">import</a> <a id="1554" href="Generics.Reflection.Uncurry.html" class="Module">Generics.Reflection.Uncurry</a>
+<a id="1582" class="Keyword">import</a> <a id="1589" href="Generics.Reflection.Recursion.html" class="Module">Generics.Reflection.Recursion</a>
+
+<a id="1620" class="Comment">-- * Section 6</a>
+<a id="1635" class="Keyword">import</a> <a id="1642" href="Generics.RecursionScheme.html" class="Module">Generics.RecursionScheme</a>
+<a id="1667" class="Keyword">import</a> <a id="1674" href="Generics.Ornament.html" class="Module">Generics.Ornament</a>
+<a id="1692" class="Keyword">import</a> <a id="1699" href="Generics.SimpleContainer.html" class="Module">Generics.SimpleContainer</a>
+
+<a id="1725" class="Comment">------------------------------------------------------------------------------</a>
+<a id="1804" class="Comment">-- Utilties</a>
+<a id="1816" class="Comment">------------------------------------------------------------------------------</a>
+
+<a id="1896" class="Comment">-- * A tactic for printing the definition of a given name.</a>
+
+<a id="1956" class="Keyword">import</a> <a id="1963" href="Utils.Reflection.Print.html" class="Module">Utils.Reflection.Print</a>
+
+<a id="1987" class="Comment">-- To inspect the definition of a datatype or a function called `x`, invoke</a>
+<a id="2063" class="Comment">--</a>
+<a id="2066" class="Comment">-- `print D` or `print F`</a>
+<a id="2092" class="Comment">--</a>
+<a id="2095" class="Comment">-- by pressing `Ctrl+C Ctrl+N` in agda mode, the definitions will be printed</a>
+<a id="2172" class="Comment">-- to the debug buffer (*).</a>
+
+<a id="2201" class="Comment">-- (*) To open the debug buffer, see the following instructions</a>
+<a id="2265" class="Comment">-- according to your editor:</a>
+
+<a id="2295" class="Comment">-- (1) For Emacs: select the *Agda Debug* buffer.</a>
+
+<a id="2346" class="Comment">-- (2) For VS Code: execute Agda: Open Debug Buffer in the Command Palette.</a>
+
+<a id="2423" class="Comment">------------------------------------------------------------------------------</a>
+<a id="2502" class="Comment">-- A minimal prelude</a>
+<a id="2523" class="Comment">------------------------------------------------------------------------------</a>
+
+<a id="2603" class="Keyword">import</a> <a id="2610" href="Prelude.html" class="Module">Prelude</a>
+
+<a id="2619" class="Comment">------------------------------------------------------------------------------</a>
+<a id="2698" class="Comment">-- Everything (else)</a>
+<a id="2719" class="Comment">------------------------------------------------------------------------------</a>
+
+<a id="2799" class="Keyword">import</a> <a id="2806" href="Everything.html" class="Module">Everything</a>
+<a id="2817" class="Keyword">import</a> <a id="2824" href="EverythingSafe.html" class="Module">EverythingSafe</a>
+</pre></body></html>

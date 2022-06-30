@@ -1,0 +1,217 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Examples.WithoutMacros.STLC</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Symbol">{-#</a> <a id="5" class="Keyword">OPTIONS</a> <a id="13" class="Pragma">--safe</a> <a id="20" class="Pragma">--with-K</a> <a id="29" class="Symbol">#-}</a>
+
+<a id="34" class="Keyword">module</a> <a id="41" href="Examples.WithoutMacros.STLC.html" class="Module">Examples.WithoutMacros.STLC</a> <a id="69" class="Keyword">where</a>
+
+<a id="76" class="Keyword">open</a> <a id="81" class="Keyword">import</a> <a id="88" href="Prelude.html" class="Module">Prelude</a>
+
+<a id="97" class="Comment">--open import Generics.Description</a>
+<a id="132" class="Comment">--open import Generics.Recursion</a>
+<a id="165" class="Comment">--open import Generics.Reflection</a>
+<a id="199" class="Comment">--</a>
+<a id="202" class="Comment">--open import Generics.Ornament</a>
+<a id="234" class="Comment">--open import Generics.Ornament.Description</a>
+<a id="278" class="Comment">--open import Generics.Ornament.Algebraic</a>
+<a id="320" class="Comment">--open import Generics.Ornament.Algebraic.Isomorphism</a>
+
+<a id="375" class="Keyword">open</a> <a id="380" class="Keyword">import</a> <a id="387" href="Examples.WithoutMacros.Nat.html" class="Module">Examples.WithoutMacros.Nat</a>
+<a id="414" class="Keyword">open</a> <a id="419" class="Keyword">import</a> <a id="426" href="Examples.WithoutMacros.List.html" class="Module">Examples.WithoutMacros.List</a>
+
+<a id="455" class="Comment">--------</a>
+<a id="464" class="Comment">-- Untyped λ-calculus</a>
+
+<a id="487" class="Keyword">data</a> <a id="Λ"></a><a id="492" href="Examples.WithoutMacros.STLC.html#492" class="Datatype">Λ</a> <a id="494" class="Symbol">:</a> <a id="496" href="Agda.Primitive.html#311" class="Primitive">Set</a> <a id="500" class="Keyword">where</a>
+  <a id="Λ.var"></a><a id="508" href="Examples.WithoutMacros.STLC.html#508" class="InductiveConstructor">var</a> <a id="512" class="Symbol">:</a> <a id="514" href="Agda.Builtin.Nat.html#177" class="Datatype">ℕ</a> <a id="516" class="Symbol">→</a> <a id="518" href="Examples.WithoutMacros.STLC.html#492" class="Datatype">Λ</a>
+  <a id="Λ.app"></a><a id="522" href="Examples.WithoutMacros.STLC.html#522" class="InductiveConstructor">app</a> <a id="526" class="Symbol">:</a> <a id="528" href="Examples.WithoutMacros.STLC.html#492" class="Datatype">Λ</a> <a id="530" class="Symbol">→</a> <a id="532" href="Examples.WithoutMacros.STLC.html#492" class="Datatype">Λ</a> <a id="534" class="Symbol">→</a> <a id="536" href="Examples.WithoutMacros.STLC.html#492" class="Datatype">Λ</a>
+  <a id="Λ.lam"></a><a id="540" href="Examples.WithoutMacros.STLC.html#540" class="InductiveConstructor">lam</a> <a id="544" class="Symbol">:</a> <a id="546" href="Examples.WithoutMacros.STLC.html#492" class="Datatype">Λ</a> <a id="548" class="Symbol">→</a> <a id="550" href="Examples.WithoutMacros.STLC.html#492" class="Datatype">Λ</a>
+
+<a id="553" class="Comment">--instance</a>
+<a id="564" class="Comment">--  UntypedTermC : Named (quote Λ) _</a>
+<a id="601" class="Comment">--  unNamed UntypedTermC = genDataC UntypedTermD (genDataT UntypedTermD Λ)</a>
+<a id="676" class="Comment">--    where UntypedTermD = genDataD Λ</a>
+
+<a id="715" class="Comment">--------</a>
+<a id="724" class="Comment">-- Simply typed λ-calculus</a>
+
+<a id="752" class="Keyword">infixr</a> <a id="759" class="Number">5</a> <a id="761" href="Examples.WithoutMacros.STLC.html#800" class="InductiveConstructor Operator">_⇒_</a>
+
+<a id="766" class="Keyword">data</a> <a id="Ty"></a><a id="771" href="Examples.WithoutMacros.STLC.html#771" class="Datatype">Ty</a> <a id="774" class="Symbol">:</a> <a id="776" href="Agda.Primitive.html#311" class="Primitive">Set</a> <a id="780" class="Keyword">where</a>
+  <a id="Ty.base"></a><a id="788" href="Examples.WithoutMacros.STLC.html#788" class="InductiveConstructor">base</a> <a id="793" class="Symbol">:</a> <a id="795" href="Examples.WithoutMacros.STLC.html#771" class="Datatype">Ty</a>
+  <a id="Ty._⇒_"></a><a id="800" href="Examples.WithoutMacros.STLC.html#800" class="InductiveConstructor Operator">_⇒_</a>  <a id="805" class="Symbol">:</a> <a id="807" href="Examples.WithoutMacros.STLC.html#771" class="Datatype">Ty</a> <a id="810" class="Symbol">→</a> <a id="812" href="Examples.WithoutMacros.STLC.html#771" class="Datatype">Ty</a> <a id="815" class="Symbol">→</a> <a id="817" href="Examples.WithoutMacros.STLC.html#771" class="Datatype">Ty</a>
+
+<a id="821" class="Keyword">variable</a>
+  <a id="832" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a> <a id="834" href="Examples.WithoutMacros.STLC.html#834" class="Generalizable">τ&#39;</a> <a id="837" class="Symbol">:</a> <a id="839" href="Examples.WithoutMacros.STLC.html#771" class="Datatype">Ty</a>
+  <a id="844" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a>    <a id="849" class="Symbol">:</a> <a id="851" href="Agda.Builtin.List.html#121" class="Datatype">List</a> <a id="856" href="Examples.WithoutMacros.STLC.html#771" class="Datatype">Ty</a>
+
+<a id="860" class="Keyword">infix</a> <a id="866" class="Number">3</a> <a id="868" href="Examples.WithoutMacros.STLC.html#878" class="Datatype Operator">_⊢_</a>
+
+<a id="873" class="Keyword">data</a> <a id="_⊢_"></a><a id="878" href="Examples.WithoutMacros.STLC.html#878" class="Datatype Operator">_⊢_</a> <a id="882" class="Symbol">:</a> <a id="884" href="Agda.Builtin.List.html#121" class="Datatype">List</a> <a id="889" href="Examples.WithoutMacros.STLC.html#771" class="Datatype">Ty</a> <a id="892" class="Symbol">→</a> <a id="894" href="Examples.WithoutMacros.STLC.html#771" class="Datatype">Ty</a> <a id="897" class="Symbol">→</a> <a id="899" href="Agda.Primitive.html#311" class="Primitive">Set</a> <a id="903" class="Keyword">where</a>
+
+  <a id="_⊢_.var"></a><a id="912" href="Examples.WithoutMacros.STLC.html#912" class="InductiveConstructor">var</a> <a id="916" class="Symbol">:</a> <a id="918" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="920" href="Examples.WithoutMacros.List.html#11976" class="Function Operator">∋</a> <a id="922" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a>
+      <a id="930" class="Symbol">→</a> <a id="932" class="Comment">-----</a>
+        <a id="946" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="948" href="Examples.WithoutMacros.STLC.html#878" class="Datatype Operator">⊢</a> <a id="950" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a>
+
+  <a id="_⊢_.app"></a><a id="955" href="Examples.WithoutMacros.STLC.html#955" class="InductiveConstructor">app</a> <a id="959" class="Symbol">:</a> <a id="961" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="963" href="Examples.WithoutMacros.STLC.html#878" class="Datatype Operator">⊢</a> <a id="965" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a> <a id="967" href="Examples.WithoutMacros.STLC.html#800" class="InductiveConstructor Operator">⇒</a> <a id="969" href="Examples.WithoutMacros.STLC.html#834" class="Generalizable">τ&#39;</a>
+      <a id="978" class="Symbol">→</a> <a id="980" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="982" href="Examples.WithoutMacros.STLC.html#878" class="Datatype Operator">⊢</a> <a id="984" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a>
+        <a id="994" class="Comment">----------</a>
+      <a id="1011" class="Symbol">→</a> <a id="1013" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="1015" href="Examples.WithoutMacros.STLC.html#878" class="Datatype Operator">⊢</a> <a id="1017" href="Examples.WithoutMacros.STLC.html#834" class="Generalizable">τ&#39;</a>
+
+  <a id="_⊢_.lam"></a><a id="1023" href="Examples.WithoutMacros.STLC.html#1023" class="InductiveConstructor">lam</a> <a id="1027" class="Symbol">:</a> <a id="1029" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a> <a id="1031" href="Agda.Builtin.List.html#173" class="InductiveConstructor Operator">∷</a> <a id="1033" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="1035" href="Examples.WithoutMacros.STLC.html#878" class="Datatype Operator">⊢</a> <a id="1037" href="Examples.WithoutMacros.STLC.html#834" class="Generalizable">τ&#39;</a>
+      <a id="1046" class="Symbol">→</a> <a id="1048" class="Comment">----------</a>
+        <a id="1067" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="1069" href="Examples.WithoutMacros.STLC.html#878" class="Datatype Operator">⊢</a> <a id="1071" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a> <a id="1073" href="Examples.WithoutMacros.STLC.html#800" class="InductiveConstructor Operator">⇒</a> <a id="1075" href="Examples.WithoutMacros.STLC.html#834" class="Generalizable">τ&#39;</a>
+
+<a id="1079" class="Comment">--instance</a>
+<a id="1090" class="Comment">--</a>
+<a id="1093" class="Comment">--  TypedTermC : Named (quote _⊢_) _</a>
+<a id="1130" class="Comment">--  unNamed TypedTermC = genDataC TypedTermD (genDataT TypedTermD _⊢_)</a>
+<a id="1201" class="Comment">--    where TypedTermD = genDataD _⊢_</a>
+<a id="1239" class="Comment">--</a>
+<a id="1242" class="Comment">--  TypedTermO : DataO (findDataD (quote _⊢_)) (findDataD (quote Λ))</a>
+<a id="1311" class="Comment">--  TypedTermO = record</a>
+<a id="1335" class="Comment">--    { level  = λ _ → tt</a>
+<a id="1361" class="Comment">--    ; applyL = λ _ → record</a>
+<a id="1391" class="Comment">--        { param  = λ _ → tt</a>
+<a id="1421" class="Comment">--        ; index  = λ _ _ → tt</a>
+<a id="1453" class="Comment">--        ; applyP = λ _ → (Δ[ Γ ] Δ[ τ ] Δ[ i ] ∇ (toℕ i) ι)</a>
+<a id="1515" class="Comment">--                    ∷ ∺ (Δ[ Γ ] Δ[ τ ] Δ[ τ&#39; ] ρ ι (ρ ι ι))</a>
+<a id="1577" class="Comment">--                    ∷ ∺ (Δ[ τ ] Δ[ Γ ] Δ[ τ&#39; ] ρ ι ι) ∷ ∺ [] } }</a>
+<a id="1644" class="Comment">--</a>
+<a id="1647" class="Comment">--  TypedTermFin : Finitary (findDataD (quote _⊢_))</a>
+<a id="1699" class="Comment">--  TypedTermFin = (tt ∷ tt ∷ tt ∷ [])</a>
+<a id="1738" class="Comment">--               ∷ (tt ∷ tt ∷ tt ∷ refl ∷ refl ∷ [])</a>
+<a id="1791" class="Comment">--               ∷ (tt ∷ tt ∷ tt ∷ refl ∷ []) ∷ []</a>
+<a id="1842" class="Comment">--</a>
+<a id="1845" class="Comment">--private</a>
+<a id="1855" class="Comment">--  toΛP : FoldP</a>
+<a id="1872" class="Comment">--  toΛP = forget (quote _⊢_) (quote Λ)</a>
+
+<a id="1913" class="Comment">-- unquoteDecl toΛ = defineFold toΛP toΛ</a>
+<a id="toΛ"></a><a id="1954" href="Examples.WithoutMacros.STLC.html#1954" class="Function">toΛ</a> <a id="1958" class="Symbol">:</a> <a id="1960" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="1962" href="Examples.WithoutMacros.STLC.html#878" class="Datatype Operator">⊢</a> <a id="1964" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a> <a id="1966" class="Symbol">→</a> <a id="1968" href="Examples.WithoutMacros.STLC.html#492" class="Datatype">Λ</a>
+<a id="1970" href="Examples.WithoutMacros.STLC.html#1954" class="Function">toΛ</a> <a id="1974" class="Symbol">(</a><a id="1975" href="Examples.WithoutMacros.STLC.html#912" class="InductiveConstructor">var</a> <a id="1979" href="Examples.WithoutMacros.STLC.html#1979" class="Bound">i</a>  <a id="1982" class="Symbol">)</a> <a id="1984" class="Symbol">=</a> <a id="1986" href="Examples.WithoutMacros.STLC.html#508" class="InductiveConstructor">var</a> <a id="1990" class="Symbol">(</a><a id="1991" href="Examples.WithoutMacros.List.html#12158" class="Function">toℕ</a> <a id="1995" href="Examples.WithoutMacros.STLC.html#1979" class="Bound">i</a><a id="1996" class="Symbol">)</a>
+<a id="1998" href="Examples.WithoutMacros.STLC.html#1954" class="Function">toΛ</a> <a id="2002" class="Symbol">(</a><a id="2003" href="Examples.WithoutMacros.STLC.html#955" class="InductiveConstructor">app</a> <a id="2007" href="Examples.WithoutMacros.STLC.html#2007" class="Bound">t</a> <a id="2009" href="Examples.WithoutMacros.STLC.html#2009" class="Bound">u</a><a id="2010" class="Symbol">)</a> <a id="2012" class="Symbol">=</a> <a id="2014" href="Examples.WithoutMacros.STLC.html#522" class="InductiveConstructor">app</a> <a id="2018" class="Symbol">(</a><a id="2019" href="Examples.WithoutMacros.STLC.html#1954" class="Function">toΛ</a> <a id="2023" href="Examples.WithoutMacros.STLC.html#2007" class="Bound">t</a><a id="2024" class="Symbol">)</a> <a id="2026" class="Symbol">(</a><a id="2027" href="Examples.WithoutMacros.STLC.html#1954" class="Function">toΛ</a> <a id="2031" href="Examples.WithoutMacros.STLC.html#2009" class="Bound">u</a><a id="2032" class="Symbol">)</a>
+<a id="2034" href="Examples.WithoutMacros.STLC.html#1954" class="Function">toΛ</a> <a id="2038" class="Symbol">(</a><a id="2039" href="Examples.WithoutMacros.STLC.html#1023" class="InductiveConstructor">lam</a> <a id="2043" href="Examples.WithoutMacros.STLC.html#2043" class="Bound">t</a>  <a id="2046" class="Symbol">)</a> <a id="2048" class="Symbol">=</a> <a id="2050" href="Examples.WithoutMacros.STLC.html#540" class="InductiveConstructor">lam</a> <a id="2054" class="Symbol">(</a><a id="2055" href="Examples.WithoutMacros.STLC.html#1954" class="Function">toΛ</a> <a id="2059" href="Examples.WithoutMacros.STLC.html#2043" class="Bound">t</a><a id="2060" class="Symbol">)</a>
+
+<a id="2063" class="Comment">--instance toΛC = genFoldC toΛP toΛ</a>
+
+<a id="2100" class="Comment">--------</a>
+<a id="2109" class="Comment">-- Typing relation as an algebraic ornamentation</a>
+
+<a id="2159" class="Comment">--private</a>
+<a id="2169" class="Comment">--  TypingOD : DataOD (findDataD (quote _⊢_))</a>
+<a id="2215" class="Comment">--  TypingOD = AlgOD toΛP</a>
+<a id="2241" class="Comment">--</a>
+<a id="2244" class="Comment">--instance TypingO = ⌈ TypingOD ⌉ᵈ</a>
+
+<a id="2280" class="Keyword">infix</a> <a id="2286" class="Number">3</a> <a id="2288" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">_⊢_∶_</a>
+
+<a id="2295" class="Comment">-- unquoteDecl data Typing constructor c0 c1 c2 = defineByDataD ⌊ TypingOD ⌋ᵈ Typing (c0 ∷ c1 ∷ c2 ∷ [])</a>
+<a id="2400" class="Keyword">data</a> <a id="_⊢_∶_"></a><a id="2405" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">_⊢_∶_</a> <a id="2411" class="Symbol">:</a> <a id="2413" href="Agda.Builtin.List.html#121" class="Datatype">List</a> <a id="2418" href="Examples.WithoutMacros.STLC.html#771" class="Datatype">Ty</a> <a id="2421" class="Symbol">→</a> <a id="2423" href="Examples.WithoutMacros.STLC.html#492" class="Datatype">Λ</a> <a id="2425" class="Symbol">→</a> <a id="2427" href="Examples.WithoutMacros.STLC.html#771" class="Datatype">Ty</a> <a id="2430" class="Symbol">→</a> <a id="2432" href="Agda.Primitive.html#311" class="Primitive">Set₀</a> <a id="2437" class="Keyword">where</a>
+
+  <a id="_⊢_∶_.var"></a><a id="2446" href="Examples.WithoutMacros.STLC.html#2446" class="InductiveConstructor">var</a> <a id="2450" class="Symbol">:</a> <a id="2452" class="Symbol">(</a><a id="2453" href="Examples.WithoutMacros.STLC.html#2453" class="Bound">i</a> <a id="2455" class="Symbol">:</a> <a id="2457" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="2459" href="Examples.WithoutMacros.List.html#11976" class="Function Operator">∋</a> <a id="2461" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a><a id="2462" class="Symbol">)</a>
+      <a id="2470" class="Symbol">→</a> <a id="2472" class="Comment">-------------------</a>
+        <a id="2500" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="2502" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">⊢</a> <a id="2504" href="Examples.WithoutMacros.STLC.html#508" class="InductiveConstructor">var</a> <a id="2508" class="Symbol">(</a><a id="2509" href="Examples.WithoutMacros.List.html#12158" class="Function">toℕ</a> <a id="2513" href="Examples.WithoutMacros.STLC.html#2453" class="Bound">i</a><a id="2514" class="Symbol">)</a> <a id="2516" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">∶</a> <a id="2518" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a>
+
+  <a id="_⊢_∶_.app"></a><a id="2523" href="Examples.WithoutMacros.STLC.html#2523" class="InductiveConstructor">app</a> <a id="2527" class="Symbol">:</a> <a id="2529" class="Symbol">∀</a> <a id="2531" class="Symbol">{</a><a id="2532" href="Examples.WithoutMacros.STLC.html#2532" class="Bound">t</a><a id="2533" class="Symbol">}</a> <a id="2535" class="Symbol">→</a> <a id="2537" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="2539" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">⊢</a> <a id="2541" href="Examples.WithoutMacros.STLC.html#2532" class="Bound">t</a> <a id="2543" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">∶</a> <a id="2545" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a> <a id="2547" href="Examples.WithoutMacros.STLC.html#800" class="InductiveConstructor Operator">⇒</a> <a id="2549" href="Examples.WithoutMacros.STLC.html#834" class="Generalizable">τ&#39;</a>
+      <a id="2558" class="Symbol">→</a> <a id="2560" class="Symbol">∀</a> <a id="2562" class="Symbol">{</a><a id="2563" href="Examples.WithoutMacros.STLC.html#2563" class="Bound">u</a><a id="2564" class="Symbol">}</a> <a id="2566" class="Symbol">→</a> <a id="2568" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="2570" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">⊢</a> <a id="2572" href="Examples.WithoutMacros.STLC.html#2563" class="Bound">u</a> <a id="2574" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">∶</a> <a id="2576" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a>
+      <a id="2584" class="Symbol">→</a> <a id="2586" class="Comment">----------------------</a>
+        <a id="2617" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="2619" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">⊢</a> <a id="2621" href="Examples.WithoutMacros.STLC.html#522" class="InductiveConstructor">app</a> <a id="2625" href="Examples.WithoutMacros.STLC.html#2532" class="Bound">t</a> <a id="2627" href="Examples.WithoutMacros.STLC.html#2563" class="Bound">u</a> <a id="2629" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">∶</a> <a id="2631" href="Examples.WithoutMacros.STLC.html#834" class="Generalizable">τ&#39;</a>
+
+  <a id="_⊢_∶_.lam"></a><a id="2637" href="Examples.WithoutMacros.STLC.html#2637" class="InductiveConstructor">lam</a> <a id="2641" class="Symbol">:</a> <a id="2643" class="Symbol">∀</a> <a id="2645" class="Symbol">{</a><a id="2646" href="Examples.WithoutMacros.STLC.html#2646" class="Bound">t</a><a id="2647" class="Symbol">}</a> <a id="2649" class="Symbol">→</a> <a id="2651" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a> <a id="2653" href="Agda.Builtin.List.html#173" class="InductiveConstructor Operator">∷</a> <a id="2655" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="2657" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">⊢</a> <a id="2659" href="Examples.WithoutMacros.STLC.html#2646" class="Bound">t</a> <a id="2661" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">∶</a> <a id="2663" href="Examples.WithoutMacros.STLC.html#834" class="Generalizable">τ&#39;</a>
+      <a id="2672" class="Symbol">→</a> <a id="2674" class="Comment">----------------------</a>
+        <a id="2705" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="2707" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">⊢</a> <a id="2709" href="Examples.WithoutMacros.STLC.html#540" class="InductiveConstructor">lam</a> <a id="2713" href="Examples.WithoutMacros.STLC.html#2646" class="Bound">t</a> <a id="2715" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">∶</a> <a id="2717" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a> <a id="2719" href="Examples.WithoutMacros.STLC.html#800" class="InductiveConstructor Operator">⇒</a> <a id="2721" href="Examples.WithoutMacros.STLC.html#834" class="Generalizable">τ&#39;</a>
+
+<a id="2725" class="Comment">--instance</a>
+<a id="2736" class="Comment">--  TypingC : Named (quote _⊢_∶_) _</a>
+<a id="2772" class="Comment">--  unNamed TypingC = genDataC ⌊ TypingOD ⌋ᵈ TypingT</a>
+<a id="2825" class="Comment">--    where</a>
+<a id="2837" class="Comment">--      TypingT : DataT ⌊ TypingOD ⌋ᵈ</a>
+<a id="2875" class="Comment">--      TypingT tt tt ((Γ , τ , tt) , t , tt) = Γ ⊢ t ∶ τ</a>
+
+<a id="2934" class="Comment">--------</a>
+<a id="2943" class="Comment">-- Conversion between intrinsically and extrinsically typed terms</a>
+
+<a id="3010" class="Comment">--private</a>
+<a id="3020" class="Comment">--  fromTypingP : FoldP</a>
+<a id="3044" class="Comment">--  fromTypingP = forget (quote _⊢_∶_) (quote _⊢_)</a>
+
+<a id="3096" class="Comment">-- unquoteDecl fromTyping = defineFold fromTypingP fromTyping</a>
+<a id="fromTyping"></a><a id="3158" href="Examples.WithoutMacros.STLC.html#3158" class="Function">fromTyping</a> <a id="3169" class="Symbol">:</a> <a id="3171" class="Symbol">∀</a> <a id="3173" class="Symbol">{</a><a id="3174" href="Examples.WithoutMacros.STLC.html#3174" class="Bound">t</a><a id="3175" class="Symbol">}</a> <a id="3177" class="Symbol">→</a> <a id="3179" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="3181" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">⊢</a> <a id="3183" href="Examples.WithoutMacros.STLC.html#3174" class="Bound">t</a> <a id="3185" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">∶</a> <a id="3187" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a> <a id="3189" class="Symbol">→</a> <a id="3191" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="3193" href="Examples.WithoutMacros.STLC.html#878" class="Datatype Operator">⊢</a> <a id="3195" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a>
+<a id="3197" href="Examples.WithoutMacros.STLC.html#3158" class="Function">fromTyping</a> <a id="3208" class="Symbol">(</a><a id="3209" href="Examples.WithoutMacros.STLC.html#2446" class="InductiveConstructor">var</a> <a id="3213" href="Examples.WithoutMacros.STLC.html#3213" class="Bound">i</a>  <a id="3216" class="Symbol">)</a> <a id="3218" class="Symbol">=</a> <a id="3220" href="Examples.WithoutMacros.STLC.html#912" class="InductiveConstructor">var</a> <a id="3224" href="Examples.WithoutMacros.STLC.html#3213" class="Bound">i</a>
+<a id="3226" href="Examples.WithoutMacros.STLC.html#3158" class="Function">fromTyping</a> <a id="3237" class="Symbol">(</a><a id="3238" href="Examples.WithoutMacros.STLC.html#2523" class="InductiveConstructor">app</a> <a id="3242" href="Examples.WithoutMacros.STLC.html#3242" class="Bound">d</a> <a id="3244" href="Examples.WithoutMacros.STLC.html#3244" class="Bound">e</a><a id="3245" class="Symbol">)</a> <a id="3247" class="Symbol">=</a> <a id="3249" href="Examples.WithoutMacros.STLC.html#955" class="InductiveConstructor">app</a> <a id="3253" class="Symbol">(</a><a id="3254" href="Examples.WithoutMacros.STLC.html#3158" class="Function">fromTyping</a> <a id="3265" href="Examples.WithoutMacros.STLC.html#3242" class="Bound">d</a><a id="3266" class="Symbol">)</a> <a id="3268" class="Symbol">(</a><a id="3269" href="Examples.WithoutMacros.STLC.html#3158" class="Function">fromTyping</a> <a id="3280" href="Examples.WithoutMacros.STLC.html#3244" class="Bound">e</a><a id="3281" class="Symbol">)</a>
+<a id="3283" href="Examples.WithoutMacros.STLC.html#3158" class="Function">fromTyping</a> <a id="3294" class="Symbol">(</a><a id="3295" href="Examples.WithoutMacros.STLC.html#2637" class="InductiveConstructor">lam</a> <a id="3299" href="Examples.WithoutMacros.STLC.html#3299" class="Bound">d</a>  <a id="3302" class="Symbol">)</a> <a id="3304" class="Symbol">=</a> <a id="3306" href="Examples.WithoutMacros.STLC.html#1023" class="InductiveConstructor">lam</a> <a id="3310" class="Symbol">(</a><a id="3311" href="Examples.WithoutMacros.STLC.html#3158" class="Function">fromTyping</a> <a id="3322" href="Examples.WithoutMacros.STLC.html#3299" class="Bound">d</a><a id="3323" class="Symbol">)</a>
+
+<a id="3326" class="Comment">--instance fromTypingC = genFoldC fromTypingP fromTyping</a>
+
+<a id="3384" class="Comment">--private</a>
+<a id="3394" class="Comment">--  toTypingP : IndP</a>
+<a id="3415" class="Comment">--  toTypingP = remember (quote _⊢_∶_)</a>
+
+<a id="3455" class="Comment">-- unquoteDecl toTyping = defineInd toTypingP toTyping</a>
+<a id="toTyping"></a><a id="3510" href="Examples.WithoutMacros.STLC.html#3510" class="Function">toTyping</a> <a id="3519" class="Symbol">:</a> <a id="3521" class="Symbol">(</a><a id="3522" href="Examples.WithoutMacros.STLC.html#3522" class="Bound">t</a> <a id="3524" class="Symbol">:</a> <a id="3526" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="3528" href="Examples.WithoutMacros.STLC.html#878" class="Datatype Operator">⊢</a> <a id="3530" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a><a id="3531" class="Symbol">)</a> <a id="3533" class="Symbol">→</a> <a id="3535" href="Examples.WithoutMacros.STLC.html#844" class="Generalizable">Γ</a> <a id="3537" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">⊢</a> <a id="3539" href="Examples.WithoutMacros.STLC.html#1954" class="Function">toΛ</a> <a id="3543" href="Examples.WithoutMacros.STLC.html#3522" class="Bound">t</a> <a id="3545" href="Examples.WithoutMacros.STLC.html#2405" class="Datatype Operator">∶</a> <a id="3547" href="Examples.WithoutMacros.STLC.html#832" class="Generalizable">τ</a>
+<a id="3549" href="Examples.WithoutMacros.STLC.html#3510" class="Function">toTyping</a> <a id="3558" class="Symbol">(</a><a id="3559" href="Examples.WithoutMacros.STLC.html#912" class="InductiveConstructor">var</a> <a id="3563" href="Examples.WithoutMacros.STLC.html#3563" class="Bound">i</a>  <a id="3566" class="Symbol">)</a> <a id="3568" class="Symbol">=</a> <a id="3570" href="Examples.WithoutMacros.STLC.html#2446" class="InductiveConstructor">var</a> <a id="3574" href="Examples.WithoutMacros.STLC.html#3563" class="Bound">i</a>
+<a id="3576" href="Examples.WithoutMacros.STLC.html#3510" class="Function">toTyping</a> <a id="3585" class="Symbol">(</a><a id="3586" href="Examples.WithoutMacros.STLC.html#955" class="InductiveConstructor">app</a> <a id="3590" href="Examples.WithoutMacros.STLC.html#3590" class="Bound">t</a> <a id="3592" href="Examples.WithoutMacros.STLC.html#3592" class="Bound">u</a><a id="3593" class="Symbol">)</a> <a id="3595" class="Symbol">=</a> <a id="3597" href="Examples.WithoutMacros.STLC.html#2523" class="InductiveConstructor">app</a> <a id="3601" class="Symbol">(</a><a id="3602" href="Examples.WithoutMacros.STLC.html#3510" class="Function">toTyping</a> <a id="3611" href="Examples.WithoutMacros.STLC.html#3590" class="Bound">t</a><a id="3612" class="Symbol">)</a> <a id="3614" class="Symbol">(</a><a id="3615" href="Examples.WithoutMacros.STLC.html#3510" class="Function">toTyping</a> <a id="3624" href="Examples.WithoutMacros.STLC.html#3592" class="Bound">u</a><a id="3625" class="Symbol">)</a>
+<a id="3627" href="Examples.WithoutMacros.STLC.html#3510" class="Function">toTyping</a> <a id="3636" class="Symbol">(</a><a id="3637" href="Examples.WithoutMacros.STLC.html#1023" class="InductiveConstructor">lam</a> <a id="3641" href="Examples.WithoutMacros.STLC.html#3641" class="Bound">t</a>  <a id="3644" class="Symbol">)</a> <a id="3646" class="Symbol">=</a> <a id="3648" href="Examples.WithoutMacros.STLC.html#2637" class="InductiveConstructor">lam</a> <a id="3652" class="Symbol">(</a><a id="3653" href="Examples.WithoutMacros.STLC.html#3510" class="Function">toTyping</a> <a id="3662" href="Examples.WithoutMacros.STLC.html#3641" class="Bound">t</a><a id="3663" class="Symbol">)</a>
+
+<a id="3666" class="Comment">--instance toTypingC = genIndC toTypingP toTyping</a>
+<a id="3716" class="Comment">--</a>
+<a id="3719" class="Comment">--private</a>
+<a id="3729" class="Comment">--  from-toTypingP : IndP</a>
+<a id="3755" class="Comment">--  from-toTypingP = forget-remember-inv (quote _⊢_∶_) (quote _⊢_) (inl it)</a>
+
+<a id="3832" class="Comment">-- unquoteDecl from-toTyping = defineInd from-toTypingP from-toTyping</a>
+<a id="3902" class="Comment">--from-toTyping : (t : Γ ⊢ τ) → fromTyping (toTyping t) ≡ t</a>
+<a id="3962" class="Comment">--from-toTyping (var i  ) = refl</a>
+<a id="3995" class="Comment">--from-toTyping (app t u) = trans&#39; (cong (app (fromTyping (toTyping t))) (from-toTyping u))</a>
+<a id="4087" class="Comment">--                                 (cong (λ n&#39; → app n&#39; u) (from-toTyping t))</a>
+<a id="4165" class="Comment">--from-toTyping (lam t  ) = cong lam (from-toTyping t)</a>
+<a id="4220" class="Comment">--</a>
+<a id="4223" class="Comment">--instance from-toTypingC = genIndC from-toTypingP from-toTyping</a>
+<a id="4288" class="Comment">--</a>
+<a id="4291" class="Comment">--private</a>
+<a id="4301" class="Comment">--  to-fromTypingP : IndP</a>
+<a id="4327" class="Comment">--  to-fromTypingP = remember-forget-inv (quote _⊢_∶_) (quote _⊢_) (inl it)</a>
+
+<a id="4404" class="Comment">-- unquoteDecl to-fromTyping = defineInd to-fromTypingP to-fromTyping</a>
+<a id="4474" class="Comment">--to-fromTyping : ∀ {t} (d : Γ ⊢ t ∶ τ)</a>
+<a id="4514" class="Comment">--              → (toΛ (fromTyping d) , toTyping (fromTyping d))</a>
+<a id="4579" class="Comment">--              ≡ ((t , d) ⦂ Σ[ t&#39; ∈ Λ ] Γ ⊢ t&#39; ∶ τ)  -- [FAIL] manual type annotation</a>
+<a id="4666" class="Comment">--to-fromTyping (var i) = refl</a>
+<a id="4697" class="Comment">--to-fromTyping (app {Γ} {τ} {τ&#39;} {t} d e) =</a>
+<a id="4742" class="Comment">--  trans</a>
+<a id="4752" class="Comment">--   (cong</a>
+<a id="4763" class="Comment">--    (bimap (λ x → x) (DataC.toN (findDataC (quote _⊢_∶_))))</a>
+<a id="4825" class="Comment">--    (cong (bimap (λ x → x) inr)</a>
+<a id="4859" class="Comment">--     (cong (bimap (λ x → x) inl)</a>
+<a id="4894" class="Comment">--      (cong (bimap (λ x → x) (λ section → Γ , section))</a>
+<a id="4952" class="Comment">--       (cong (bimap (λ x → x) (λ section → τ , section))</a>
+<a id="5011" class="Comment">--        (cong (bimap (λ x → x) (λ section → τ&#39; , section))</a>
+<a id="5072" class="Comment">--         (trans</a>
+<a id="5090" class="Comment">--          (cong</a>
+<a id="5108" class="Comment">--           (λ p →</a>
+<a id="5128" class="Comment">--              app (fst p) (toΛ (fromTyping e)) ,</a>
+<a id="5179" class="Comment">--              fst p ,</a>
+<a id="5203" class="Comment">--              snd p , toΛ (fromTyping e) , toTyping (fromTyping e) , refl)</a>
+<a id="5280" class="Comment">--           (to-fromTyping d))</a>
+<a id="5312" class="Comment">--          (cong (bimap (λ x → x) (λ x → t , d , x))</a>
+<a id="5366" class="Comment">--           (trans</a>
+<a id="5386" class="Comment">--            (cong (λ p → app t (fst p) , fst p , snd p , refl)</a>
+<a id="5451" class="Comment">--             (to-fromTyping e))</a>
+<a id="5485" class="Comment">--            refl)))))))))</a>
+<a id="5513" class="Comment">--   refl</a>
+<a id="5523" class="Comment">--to-fromTyping (lam {τ} {Γ} {τ&#39;} d) =</a>
+<a id="5562" class="Comment">--  trans</a>
+<a id="5572" class="Comment">--   (cong</a>
+<a id="5583" class="Comment">--    (bimap (λ x → x) (DataC.toN (findDataC (quote _⊢_∶_))))</a>
+<a id="5645" class="Comment">--    (cong (bimap (λ x → x) inr)</a>
+<a id="5679" class="Comment">--     (cong (bimap (λ x → x) inr)</a>
+<a id="5714" class="Comment">--      (cong (bimap (λ x → x) inl)</a>
+<a id="5750" class="Comment">--       (cong (bimap (λ x → x) (λ section → τ , section))</a>
+<a id="5809" class="Comment">--        (cong (bimap (λ x → x) (λ section → Γ , section))</a>
+<a id="5869" class="Comment">--         (cong (bimap (λ x → x) (λ section → τ&#39; , section))</a>
+<a id="5931" class="Comment">--          (trans</a>
+<a id="5950" class="Comment">--           (cong (λ p → lam (fst p) , fst p , snd p , refl) (to-fromTyping d))</a>
+<a id="6031" class="Comment">--           refl))))))))</a>
+<a id="6057" class="Comment">--   refl</a>
+
+<a id="6068" class="Comment">--instance to-fromTypingC = genIndC to-fromTypingP to-fromTyping</a>
+</pre></body></html>

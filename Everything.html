@@ -1,0 +1,72 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Everything</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Symbol">{-#</a> <a id="5" class="Keyword">OPTIONS</a> <a id="13" class="Pragma">--rewriting</a> <a id="25" class="Pragma">--guardedness</a> <a id="39" class="Pragma">--sized-types</a> <a id="53" class="Symbol">#-}</a>
+
+<a id="58" class="Comment">-- !!! THIS MODULE IS NOT SUPPOSED TO BE CHECKED DIRECTLY !!! ---</a>
+<a id="124" class="Keyword">module</a> <a id="131" href="Everything.html" class="Module">Everything</a> <a id="142" class="Keyword">where</a>
+<a id="148" class="Keyword">import</a> <a id="155" href="Examples.WithMacros.Acc.html" class="Module">Examples.WithMacros.Acc</a>
+<a id="179" class="Keyword">import</a> <a id="186" href="Examples.WithMacros.BST.html" class="Module">Examples.WithMacros.BST</a>
+<a id="210" class="Keyword">import</a> <a id="217" href="Examples.WithMacros.List.html" class="Module">Examples.WithMacros.List</a>
+<a id="242" class="Keyword">import</a> <a id="249" href="Examples.WithMacros.Nat.html" class="Module">Examples.WithMacros.Nat</a>
+<a id="273" class="Keyword">import</a> <a id="280" href="Examples.WithMacros.STLC.html" class="Module">Examples.WithMacros.STLC</a>
+<a id="305" class="Keyword">import</a> <a id="312" href="Examples.WithMacros.W.html" class="Module">Examples.WithMacros.W</a>
+<a id="334" class="Keyword">import</a> <a id="341" href="Examples.WithoutMacros.Acc.html" class="Module">Examples.WithoutMacros.Acc</a>
+<a id="368" class="Keyword">import</a> <a id="375" href="Examples.WithoutMacros.BST.html" class="Module">Examples.WithoutMacros.BST</a>
+<a id="402" class="Keyword">import</a> <a id="409" href="Examples.WithoutMacros.List.html" class="Module">Examples.WithoutMacros.List</a>
+<a id="437" class="Keyword">import</a> <a id="444" href="Examples.WithoutMacros.Nat.html" class="Module">Examples.WithoutMacros.Nat</a>
+<a id="471" class="Keyword">import</a> <a id="478" href="Examples.WithoutMacros.STLC.html" class="Module">Examples.WithoutMacros.STLC</a>
+<a id="506" class="Keyword">import</a> <a id="513" href="Examples.WithoutMacros.W.html" class="Module">Examples.WithoutMacros.W</a>
+<a id="538" class="Keyword">import</a> <a id="545" href="Generics.Algebra.html" class="Module">Generics.Algebra</a>
+<a id="562" class="Keyword">import</a> <a id="569" href="Generics.Description.html" class="Module">Generics.Description</a>
+<a id="590" class="Keyword">import</a> <a id="597" href="Generics.Description.FixedPoint.html" class="Module">Generics.Description.FixedPoint</a>
+<a id="629" class="Keyword">import</a> <a id="636" href="Generics.Ornament.html" class="Module">Generics.Ornament</a>
+<a id="654" class="Keyword">import</a> <a id="661" href="Generics.Ornament.Algebraic.html" class="Module">Generics.Ornament.Algebraic</a>
+<a id="689" class="Keyword">import</a> <a id="696" href="Generics.Ornament.Algebraic.Isomorphism.html" class="Module">Generics.Ornament.Algebraic.Isomorphism</a>
+<a id="736" class="Keyword">import</a> <a id="743" href="Generics.Ornament.Description.html" class="Module">Generics.Ornament.Description</a>
+<a id="773" class="Keyword">import</a> <a id="780" href="Generics.Recursion.html" class="Module">Generics.Recursion</a>
+<a id="799" class="Keyword">import</a> <a id="806" href="Generics.RecursionScheme.html" class="Module">Generics.RecursionScheme</a>
+<a id="831" class="Keyword">import</a> <a id="838" href="Generics.Reflection.html" class="Module">Generics.Reflection</a>
+<a id="858" class="Keyword">import</a> <a id="865" href="Generics.Reflection.Connection.html" class="Module">Generics.Reflection.Connection</a>
+<a id="896" class="Keyword">import</a> <a id="903" href="Generics.Reflection.Datatype.html" class="Module">Generics.Reflection.Datatype</a>
+<a id="932" class="Keyword">import</a> <a id="939" href="Generics.Reflection.Name.html" class="Module">Generics.Reflection.Name</a>
+<a id="964" class="Keyword">import</a> <a id="971" href="Generics.Reflection.Recursion.html" class="Module">Generics.Reflection.Recursion</a>
+<a id="1001" class="Keyword">import</a> <a id="1008" href="Generics.Reflection.Telescope.html" class="Module">Generics.Reflection.Telescope</a>
+<a id="1038" class="Keyword">import</a> <a id="1045" href="Generics.Reflection.Uncurry.html" class="Module">Generics.Reflection.Uncurry</a>
+<a id="1073" class="Keyword">import</a> <a id="1080" href="Generics.SimpleContainer.html" class="Module">Generics.SimpleContainer</a>
+<a id="1105" class="Keyword">import</a> <a id="1112" href="Generics.SimpleContainer.All.html" class="Module">Generics.SimpleContainer.All</a>
+<a id="1141" class="Keyword">import</a> <a id="1148" href="Generics.SimpleContainer.Any.html" class="Module">Generics.SimpleContainer.Any</a>
+<a id="1177" class="Keyword">import</a> <a id="1184" href="Generics.Telescope.html" class="Module">Generics.Telescope</a>
+<a id="1203" class="Keyword">import</a> <a id="1210" href="Prelude.html" class="Module">Prelude</a>
+<a id="1218" class="Keyword">import</a> <a id="1225" href="Prelude.Alternative.html" class="Module">Prelude.Alternative</a>
+<a id="1245" class="Keyword">import</a> <a id="1252" href="Prelude.Applicative.html" class="Module">Prelude.Applicative</a>
+<a id="1272" class="Keyword">import</a> <a id="1279" href="Prelude.Bool.html" class="Module">Prelude.Bool</a>
+<a id="1292" class="Keyword">import</a> <a id="1299" href="Prelude.Char.html" class="Module">Prelude.Char</a>
+<a id="1312" class="Keyword">import</a> <a id="1319" href="Prelude.Coercion.html" class="Module">Prelude.Coercion</a>
+<a id="1336" class="Keyword">import</a> <a id="1343" href="Prelude.Empty.html" class="Module">Prelude.Empty</a>
+<a id="1357" class="Keyword">import</a> <a id="1364" href="Prelude.Eq.html" class="Module">Prelude.Eq</a>
+<a id="1375" class="Keyword">import</a> <a id="1382" href="Prelude.Fin.html" class="Module">Prelude.Fin</a>
+<a id="1394" class="Keyword">import</a> <a id="1401" href="Prelude.Function.html" class="Module">Prelude.Function</a>
+<a id="1418" class="Keyword">import</a> <a id="1425" href="Prelude.Functor.html" class="Module">Prelude.Functor</a>
+<a id="1441" class="Keyword">import</a> <a id="1448" href="Prelude.Level.html" class="Module">Prelude.Level</a>
+<a id="1462" class="Keyword">import</a> <a id="1469" href="Prelude.List.html" class="Module">Prelude.List</a>
+<a id="1482" class="Keyword">import</a> <a id="1489" href="Prelude.Maybe.html" class="Module">Prelude.Maybe</a>
+<a id="1503" class="Keyword">import</a> <a id="1510" href="Prelude.Monad.html" class="Module">Prelude.Monad</a>
+<a id="1524" class="Keyword">import</a> <a id="1531" href="Prelude.Monoid.html" class="Module">Prelude.Monoid</a>
+<a id="1546" class="Keyword">import</a> <a id="1553" href="Prelude.Nat.html" class="Module">Prelude.Nat</a>
+<a id="1565" class="Keyword">import</a> <a id="1572" href="Prelude.Relation.html" class="Module">Prelude.Relation</a>
+<a id="1589" class="Keyword">import</a> <a id="1596" href="Prelude.Relation.Dec.html" class="Module">Prelude.Relation.Dec</a>
+<a id="1617" class="Keyword">import</a> <a id="1624" href="Prelude.Relation.PropositionalEquality.html" class="Module">Prelude.Relation.PropositionalEquality</a>
+<a id="1663" class="Keyword">import</a> <a id="1670" href="Prelude.Show.html" class="Module">Prelude.Show</a>
+<a id="1683" class="Keyword">import</a> <a id="1690" href="Prelude.Sigma.html" class="Module">Prelude.Sigma</a>
+<a id="1704" class="Keyword">import</a> <a id="1711" href="Prelude.String.html" class="Module">Prelude.String</a>
+<a id="1726" class="Keyword">import</a> <a id="1733" href="Prelude.Sum.html" class="Module">Prelude.Sum</a>
+<a id="1745" class="Keyword">import</a> <a id="1752" href="Utils.Error.html" class="Module">Utils.Error</a>
+<a id="1764" class="Keyword">import</a> <a id="1771" href="Utils.Reflection.html" class="Module">Utils.Reflection</a>
+<a id="1788" class="Keyword">import</a> <a id="1795" href="Utils.Reflection.Eq.html" class="Module">Utils.Reflection.Eq</a>
+<a id="1815" class="Keyword">import</a> <a id="1822" href="Utils.Reflection.Print.html" class="Module">Utils.Reflection.Print</a>
+<a id="1845" class="Keyword">import</a> <a id="1852" href="Utils.Reflection.Properties.html" class="Module">Utils.Reflection.Properties</a>
+<a id="1880" class="Keyword">import</a> <a id="1887" href="Utils.Reflection.Show.html" class="Module">Utils.Reflection.Show</a>
+<a id="1909" class="Keyword">import</a> <a id="1916" href="Utils.Reflection.Tactic.html" class="Module">Utils.Reflection.Tactic</a>
+<a id="1940" class="Keyword">import</a> <a id="1947" href="Utils.Reflection.Term.html" class="Module">Utils.Reflection.Term</a>
+<a id="1969" class="Keyword">import</a> <a id="1976" href="Utils.String.html" class="Module">Utils.String</a>
+
+</pre></body></html>
