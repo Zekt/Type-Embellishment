@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - .github/workflows/ci-ubuntu.yml
-      - *.diff
+      - '**.diff'
       - GNUmakefile
       - src/**
   pull_request:
