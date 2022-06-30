@@ -1,4 +1,4 @@
-\documentclass[acmsmall,review,fleqn]{acmart}
+\documentclass[acmsmall,fleqn]{acmart}
 
 %% Rights management information.  This information is sent to you
 %% when you complete the rights form.  These commands have SAMPLE
@@ -252,6 +252,8 @@
 %format tt = "\cons{tt}"
 %format false = "\cons{false}"
 %format true = "\cons{true}"
+%format []ⱽ = [] "_{\Conid V}"
+%format _∷ⱽ_ = _ ∷ "_{\Conid V}" _
 %format here = "\cons{here}"
 %format there = "\cons{there}"
 %format node₀ = "\cons{node_0}"
@@ -484,7 +486,7 @@ Luckily again, in Agda there is a mechanism that can take the place of staging f
 In fact, elaborator reflection is powerful enough for the metaprogrammer to develop general facilities for practical datatype-generic programming.
 Like in Haskell, we can quote programmer-defined datatypes as descriptions for processing by generic programs; conversely, newly computed descriptions can be unquoted as programmer-friendly datatypes rather than decoded using a fixed-point operator, and functions can be defined by unquoting too.
 Besides these standard tasks, elaborator reflection achieves more and serves our purpose nicely:
-To express dependency in types, descriptions are usually higher-order and can be difficult to manipulate, but our metaprogram that manufactures datatypes from descriptions is surprisingly natural thanks to the `local variable creation' technique~\citep{Nanevski2005,Schurmann2005}, which is easily implemented using a few elaborator reflection primitives that interact with the context during type-checking.
+To express dependency in types, descriptions are usually higher-order and can be difficult to manipulate, but our metaprogram that manufactures datatypes from descriptions is surprisingly natural thanks to the `local variable creation' technique~\citep{Nanevski2005,Schurmann2005}, which is easily implemented using a few elaborator reflection primitives that interact with the context during type checking.
 Moreover, we can specialise generic programs to more efficient forms straightforwardly by using (open-term) normalisation ---also an elaborator reflection primitive--- to perform some of the computation early during elaboration.
 (By contrast, to achieve a similar effect with staging, it would be necessary to add annotations to generic programs, making generic libraries harder to develop.)
 
@@ -492,7 +494,7 @@ Moreover, we can specialise generic programs to more efficient forms straightfor
 %This approach, however, makes generic programs entangled with the staging information, making generic programs even harder to write.
 %It will be ideal to keep generic programs from metaprogramming.}
 %
-%\LT{The use of elaborator reflection is essential to us: type-checking and normalisation, for example, are not available in other metaprogramming paradigms and they are hard to implement in full as this would require essentially rebuilding an elaborator.
+%\LT{The use of elaborator reflection is essential to us: type checking and normalisation, for example, are not available in other metaprogramming paradigms and they are hard to implement in full as this would require essentially rebuilding an elaborator.
 %Unlike other approaches using staging~\cite{Yallop-staged-generic-programming,Pickering-staged-SoP} where generic programs are entangled with staging to eliminate the generic representation, the elaborator reflection allows us to normalise a given open term directly.}
 
 Based on elaborator reflection, we have developed a framework in Agda where datatype-generic programs can be instantiated as, and for, a useful range of native datatypes and functions in programmer-friendly and customisable forms.
@@ -934,7 +936,7 @@ Analogous to |PDataD|~(\cref{fig:PDataD}), we use the type |PFoldP| (for `parame
 There are some additional fields that require explanation:
 |PFoldP| is designed to contain sufficient information for manufacturing a corresponding native fold function.
 The fold function needs a type, which refers to the native datatype on which the fold function operates, so |PFoldP| includes a field |Con : PDataC| connecting the datatype description |Desc| on which the algebra operates to a |Native| datatype, enabling us to compute the type of the fold function using |PFoldT| in \cref{fig:PFoldP-PFoldC}.%
-\footnote{Agda's |open| statement can be used to bring the fields of an inhabitant of a record type into scope --- for example, the name |Native| in the definition of |PFoldT| stands for |F .Native| because of |open PFoldP F|.
+\footnote{Agda's |open| statement can be used to bring the fields of an inhabitant of a record type into the scope --- for example, the name |Native| in the definition of |PFoldT| stands for |F .Native| because of |open PFoldP F|.
 Moreover, an |open| statement can be used in a |let|-expression to limit its effect to the body of the |let|-expression.}
 For example, the fold operator of |Acc|
 \begin{code}
@@ -1131,7 +1133,7 @@ where the structure of the type expression is turned into the composition of sev
 %The quotation of an expression~|e| can be obtained by |quoteTerm e| and the resolved unique name for a definition~|f| or a constructor by |quote f|.
 %For example, |quoteTerm acc| is |con (quote acc) []|, where the empty list~|[]| indicates that no arguments are given to the |acc| constructor.
 
-The central component of elaborator reflection is the elaborator monad |TC| (short for `type-checking monad'~\citep{Agda}), which stores states needed for elaboration such as the context of the call site, the scope of names with its definition, and the set of metavariables.
+The central component of elaborator reflection is the elaborator monad |TC| (short for `type-checking monad'), which stores states needed for elaboration such as the context of the call site, the scope of names with its definition, and the set of metavariables.
 Metaprograms take the form of |TC| computations, and have access to a set of primitive operations used during elaboration --- for example, the primitive |unify : Term → Term → TC ⊤| unifies two given terms and solves some of the metavariables (thereby changing the elaborator state).
 
 At elaboration time, we can run a metaprogram and splice an expression into the source file.
@@ -1159,7 +1161,7 @@ The extended syntax is
 \begin{code}
 unquoteDecl data d constructor c₁ {-"\ldots\;"-} cₙ = {-"\;\cdots"-}
 \end{code}
-which introduces a datatype~|d| and its constructors |c₁|,~\ldots,~|cₙ| into the scope.
+which introduces the names of a datatype~|d| and its constructors |c₁|,~\ldots,~|cₙ| into the scope.
 The definitions of |d|~and |c₁|,~\ldots,~|cₙ| are supplied by the metaprogram using the new primitives |declareData| and |defineData|, whose details are omitted from the presentation.
 
 Below we look at some actual metaprograms for generating the components in our framework.
@@ -1191,7 +1193,7 @@ Note that |T|~is a function from |A|, and |V|~a function from |⟦ U ⟧ᵗ|, fo
 We solve this problem by creating a \emph{local variable}.
 The |TC| monad stores the context during elaboration, which can be extended by a variable of a given type to run a |TC| computation locally, using the primitive $|extendContext| : |Type → TC A → TC A|$.
 The first argument of |extendContext| is a reflected type, which should be the quotation of the actual value of~|A|, but this value is not known until elaboration and thus cannot be obtained by |quoteTerm|; to obtain the quotation, we use the primitive $|quoteTC| : |A → TC Term|$.
-Then, in the second argument of |extendContext|, the local variable can be actually brought into scope by another primitive $|unquoteTC| : |Term → TC A|$ which unquotes a given reflected expression within the |TC| monad.
+Then, in the second argument of |extendContext|, the local variable can be actually brought into the scope by another primitive $|unquoteTC| : |Term → TC A|$ which unquotes a given reflected expression within the |TC| monad.
 The above construction amounts to a |TC| computation
 \begin{code}
 exCxtT : (B : Set) → (Type → B → TC A) → TC A
@@ -1362,7 +1364,7 @@ foldAcc′ A R P p x a = fold-base foldAccP foldAcc′ A R P p x a
 \end{code}
 where |fold-base| generically expresses the computation pattern of fold functions in the usual non-recursive form that abstracts the recursive call as an extra argument~|rec|:
 \begin{code}
-fold-base : (F : PFoldP) → FoldNT F → FoldNT F
+fold-base : (F : PFoldP) → PFoldNT F → PFoldNT F
 fold-base F rec =
   let open PFoldP F in curryᵗ λ ps → curryᵗ λ is →
   applyP ps ∘ fmapᵖᵈ Desc (λ {is} → uncurryᵗ (uncurryᵗ rec ps) is) ∘ Con .fromN
@@ -1482,10 +1484,10 @@ data Acc {ℓ ℓ' : Level} {A : Set ℓ} (R : A → A → Set ℓ') : A → Set
 where the universe levels |ℓ|~and~|ℓ'| in the types of |A|~and~|R| can be arbitrary.
 Our framework ought to support such \emph{universe-polymorphic} datatypes given their prevalence in Agda.
 
-Agda supports universe polymorphism through a currently unique system where (finite) universe levels are internalised and have a type |Level : Set|.
+Agda supports universe polymorphism through a currently unique system where (finite) universe levels are made explicit and first-class by giving them a type |Level : Set|.
 Levels can be constructed with the primitives |lzero : Level| and |lsuc : Level → Level| in the same way as natural numbers are constructed, but we cannot pattern-match levels with |lzero| and |lsuc|.
 There is also an operator |_⊔_ : Level → Level → Level| that computes the maximum of two levels.
-The internalisation makes it convenient to encode universe-polymorphic datatypes --- just put levels inside datatype descriptions.
+First-class levels make it convenient to encode universe-polymorphic datatypes --- just put levels inside datatype descriptions.
 It is also possible to compute new datatypes where the universe levels are the results of non-trivial computation, which can be reasoned about.
 Besides showing that it is possible to deal with universe-polymorphic entities generically, our encoding in this section also serves as a practical justification of (Agda's) first-class universe levels, as we make essential use of the capabilities of computing and reasoning about levels internally.
 
@@ -1572,14 +1574,13 @@ Since the elements of a telescope can now be |Set|s of arbitrary finite levels, 
 
 Next we adapt the description datatypes |ConDs|, |ConD|, and |RecD|.
 A first instinct might be copying what has been done for |Tel| (as constructor descriptions can be viewed as a slightly more complex kind of telescopes), enriching the |Set|-arguments to |Set ℓ| and perhaps indexing the datatypes with the maximum level, but this is not enough:
-the range of definitions depending on |Tel| (such as |⟦_⟧ᵗ| and |Curriedᵗ|) is limited and requires only the computation of the maximum level, so indexing suffices; on the other hand, generic libraries built on the description datatypes may construct whatever they want from descriptions, and the need for non-trivial level computation will naturally arise if those constructions are universe-polymorphic.
-For example, in \cref{sec:algebraic-ornamentation,sec:simple-containers} we will compute new universe-polymorphic datatypes from old ones, and will need to specify the new levels in terms of the old ones (and even reason about them).
+the range of definitions depending on |Tel| (such as |⟦_⟧ᵗ| and |Curriedᵗ|) is limited and requires only the computation of the maximum level, so indexing suffices; on the other hand, generic libraries may construct whatever they want from descriptions, and the need for non-trivial level computation will naturally arise if those constructions are universe-polymorphic --- in \cref{sec:algebraic-ornamentation,sec:simple-containers} we will compute new universe-polymorphic datatypes from old ones, and will need to specify the new levels in terms of the old ones (and even reason about them).
 For a concrete example we can look at now, consider how the type of a base functor |⟦ D ⟧ᶜˢ| should be enriched:
 One place where we use the base functor is the type of an algebra |{i : I} → ⟦ D ⟧ᶜˢ X i → X i| where |X : I → Set ℓ|~is the result type, which can have any level depending on what the algebra computes, so |ℓ|~should be universally quantified in the type of |⟦ D ⟧ᶜˢ|.
 But then, what should the level of the type |⟦ D ⟧ᶜˢ X i| be?
 This level ---call it~|ℓ'|--- needs to be computed from |ℓ|~and the structure of~|D|, and the computation is non-trivial --- for example, if |D|~is |[]|, then |⟦ D ⟧ᶜˢ X i == ⊥|, in which case |ℓ'|~is simply |lzero|; if |D|~is non-empty, then |ℓ|~may or may not appear in~|ℓ'|, depending on whether there is a constructor with a |ρ|-field or not.
 
-To allow level computation to be performed as freely as possible, we choose to index the description datatypes with as much useful information as possible.
+To allow level computation to be performed as freely as possible, we choose to index the description datatypes with as much useful information as possible~(\cref{fig:DataD}).
 The index in the type of a description is a list which not only contains the levels of the fields but also encodes the description constructors used.
 Starting from the simplest |RecD| datatype, we index it with |RecB == List Level|, recording the levels of the |π|-fields.
 For |ConD|, the index type is |ConB == List (Level ⊎ RecB)|, whose element sum type is used to record whether a field is |σ|~or~|ρ|.
@@ -1613,7 +1614,7 @@ It may appear that we skipped several steps applying the associativity and commu
 \subsection{Ordinary Parameters}
 \label{sec:UP-parameters}
 
-The changes to |PDataD| should be mostly unsurprising except the new fields |alevel| and |level-ineq|, which make sure that a corresponding datatype definition would pass Agda's universe checker.
+The changes to |PDataD|~(\cref{fig:DataD}) should be mostly unsurprising except the new fields |alevel| and |level-ineq|, which make sure that a corresponding datatype definition would pass Agda's universe checker.
 Here we are using the simpler datatype level--checking rule employed when Agda's \verb"--without-K" option~\citep{Cockx-pattern-matching-without-K} is turned on: the level of a datatype should at least be the maximum level of its index types, which is |ilevel| in our descriptions.
 If there are more components in the datatype level, they are specified in |alevel|, and the final datatype level is |alevel ⊔ ilevel|.
 The datatype level is not uniquely determined by the content of the datatype ---for example, we could define alternative versions of natural numbers at any level--- but must be no less than the level of any |π|- or |σ|-field of the constructors; this is enforced by |level-ineq|, where the relation |ℓ ⊑ ℓ'| is defined by |ℓ ⊔ ℓ' ≡ ℓ'|.
@@ -1630,7 +1631,7 @@ CurriedL    zero    X = X tt
 CurriedL (  suc n)  X = (ℓ : Level) → CurriedL n (λ ℓs → X (ℓ , ℓs))
 \end{code}
 However, the hole~`|?|' is problematic since it should be a finite level when |n|~is zero (meaning that there is no level quantification), or~|ω| when |n|~is non-zero, but currently Agda's universe polymorphism supports only finite levels.
-To produce curried types with level quantifications, we have to operate at the meta-level (evading the type-checker) and generate the level quantifications in their syntax trees in relevant metaprograms such as |defineFold|, of which |definePFold|~(\cref{fig:definePFold}) is a cut-down version.
+To produce curried types with level quantifications, we have to operate at the meta-level (evading the type checker) and generate the level quantifications in their syntax trees in relevant metaprograms such as |defineFold|, of which |definePFold|~(\cref{fig:definePFold}) is a cut-down version.
 The need for the special treatment is one reason that we separate level parameters from ordinary ones instead of allowing the two kinds of parameters to mix freely.
 
 %\begin{code}
@@ -1665,7 +1666,7 @@ We can then use the connection |AccC| to instantiate |fold-operator| to the fold
 \begin{code}
 foldAccP = fold-operator AccC
 \end{code}
-from which the fold operator/function |foldAcc| can be manufactured by using the |unquoteDecl| syntax to introduce the name |foldAcc| into scope, and then invoking the metaprogram |defineFold| with the fold program and the newly introduced name:
+from which the fold operator/function |foldAcc| can be manufactured by using the |unquoteDecl| syntax~(\cref{sec:elab}) to introduce the name |foldAcc| into the scope, and then invoking the metaprogram |defineFold| with the fold program and the newly introduced name:
 \begin{code}
 unquoteDecl foldAcc = defineFold foldAccP foldAcc
 \end{code}
@@ -1709,9 +1710,9 @@ foldr-map-fusion f e g = foldr-fusion (foldr f e) refl (λ { _ _ _ refl → refl
 where $|map g| = |foldr [] (_∷_ ∘ g)|$.
 (The law could also be proved generically, but first we would need to give |map| a generic definition, which requires extra machinery not developed in this paper.)
 
-In general, if the library user is not satisfied with the form of a manufactured function (argument order, visibility, etc), they can print the function definition, change it to a form they want, and connect the customised version back to the library in the same way as we treated |foldr|.
+In general, if the library user is not satisfied with the form of a manufactured function or datatype (argument order, visibility, etc), they can print the definition, change it to a form they want, and connect the customised version back to the library in the same way as how we treated |foldr|.
 This customisation can be tiresome if it has to be done frequently, however, and there should be ways to get the manufactured forms right most of the time.
-We have implemented a cheap solution where argument name suggestions (for definition-printing) and visibility specifications are included in |FoldP| (and |IndP|) and processed by relevant components such as |Curriedᵗ|, and the solution works well for our small selection of examples.
+We have implemented a cheap solution for functions where argument name suggestions (for definition printing) and visibility specifications are included in |FoldP| (and |IndP|) and processed by relevant components such as |Curriedᵗ|, and the solution works well for our small selection of examples.
 More systematic solutions are probably needed for larger libraries though, for example name suggestion based on machine learning~\citep{Alon-code2vec} and visibility calculation by analysing which arguments can be inferred by unification.
 
 Let us switch to the perspective of the library programmer and look at |fold-operator| in a bit more detail.
@@ -1785,11 +1786,7 @@ The first thing we can derive from an ornament is
 \begin{code}
 forget : DataC D M → DataC E N → DataO D E → FoldP
 \end{code}
-which instantiates to a forgetful function from~|M| to~|N| --- if we instantiate |forget| with |ListO|,
-\begin{code}
-lenP = forget ListC NatC ListO
-\end{code}
-(where |ListC| and |NatC| are connections for |List| and~|ℕ| respectively) the function manufactured from |lenP| will be list |length|~(\cref{sec:introduction}), which discards the additional element field.
+which instantiates to a forgetful function from~|M| to~|N| --- if we instantiate |forget| to $|lenP| = |forget ListC NatC ListO|$ where |ListC| and |NatC| are connections for |List| and~|ℕ| respectively, the function manufactured from |lenP| will be list |length|~(\cref{sec:introduction}), which discards the list elements.
 
 More can be derived from special kinds of ornaments, with a notable example being `algebraic ornaments'.
 In our formulation, given a fold program |F : FoldP| we can compute a more informative version of the description~|F .Desc| and an ornament between them:
@@ -1804,11 +1801,11 @@ data AlgList {A : Set ℓ} {B : Set ℓ'} (e : B) (f : A → B → B) : B → Se
   _∷_  : (a : A) → ∀ {b} → AlgList e f b →  AlgList e f (  f a b)
 \end{code}
 But it is usually easier to program with more specialised datatypes such as |Vec|~(\cref{sec:introduction}), which is a standard example of algebraic ornamentation.
-To manufacture |Vec|, we use the |unquoteDecl data| syntax to introduce the names of the datatype and its constructors into scope, and invoke the metaprogram |defineByDataD| with the description $|VecD| = |AlgD lenP|$ and the newly introduced names (where the constructor names are collected in a list):
-%\footnote{The declaration form is somewhat verbose, but is chosen so that Agda's scope- and type-checking can be kept unchanged.}
+To manufacture |Vec| (modulo constructor naming and argument visibility), we use the |unquoteDecl data| syntax~(\cref{sec:elab}) to introduce the names of the datatype and constructors into the scope, and invoke the metaprogram |defineByDataD| with the description $|VecD| = |AlgD lenP|$, the datatype name, and the list of the constructor names:
 \begin{code}
-unquoteDecl data Vec constructor [] _∷_ = defineByDataD VecD Vec ([] ∷ _∷_ ∷ [])
+unquoteDecl data Vec constructor []ⱽ _∷ⱽ_ = defineByDataD VecD Vec ([]ⱽ ∷ _∷ⱽ_ ∷ [])
 \end{code}
+(This form of declaration is somewhat verbose but works as a temporary solution that avoids drastic changes to the internals of Agda.)
 Then we generate a datatype connection between |VecD| and (a wrapper around) |Vec| so that we can instantiate generic programs for |Vec| later:
 \begin{code}
 VecC = genDataC VecD (genDataT VecD Vec)
@@ -1864,7 +1861,7 @@ Subsequently we need to prove |level-ineq| for |AlgD F|, which requires non-triv
 In this case the datatype computation is not difficult, but it still makes sense to reason that the computed levels will always pass the universe check, and Agda conveniently allows us to perform the reasoning internally.
 %The reasoning is not difficult, but is probably one of the first examples that require non-trivial reasoning about universe levels.
 
-\subsection{Predicates on Simple Containers}
+\subsection{Simple Containers}
 \label{sec:simple-containers}
 
 \begin{figure}
@@ -1917,7 +1914,7 @@ The top layer |SC| on |DataD| only quantifies over the level parameters, and the
 First is the element type~|El|, which can refer to the ordinary parameters.
 Then in |pos| we assign a |Bool| to every |σ|-field indicating whether it is an element or not.
 More precisely, the assignments are performed on the |struct| field of the description, and might not make sense since any |σ|-field could be marked with |true|, not just those of type~|El|.
-However, the |coe| field of |SCᵖ| makes sure that the types of the fields marked with |true| are equal to~|El|; subsequently, when a generic program sees such a field, it can use the equality to coerce the type of the field to |El|.
+However, the |coe| field of |SCᵖ| makes sure that the types of the fields marked with |true| are equal to~|El|; subsequently, when a generic program encounters such a field, it can use the equality to coerce the type of the field to |El|.
 
 The |All| predicate is simpler since it is just the datatype created along with a promotion isomorphism (\cref{sec:algebraic-ornamentation}).
 For example, to derive |ListAll|, we mark the element field of |List| in an |SC ListD| structure, from which we can compute a more informative |ListWP| datatype that requires every element~|a| to be supplemented with a proof of |P a|:
@@ -1926,7 +1923,7 @@ data ListWP {A : Set ℓ} (P : A → Set ℓ') : Set (ℓ ⊔ ℓ') where
   []       :                             ListWP P
   ⟨_,_⟩∷_  : (a : A) → P a → ListWP P →  ListWP P
 \end{code}
-Then the ornament between |ListWP| and |List| gives rise to |ListAll| and an isomorphism between |ListWP P| and |Σ (List A) (ListAll P)|, allowing us to convert between a list of pairs of an element and a proof (|ListWP P|) and a pair of a list of elements (|List A|) and a list of proofs (|ListAll P|).
+Then the ornament between |ListWP| and |List| gives rise to |ListAll| and a promotion isomorphism~(\cref{sec:algebraic-ornamentation}) that allows us to convert between |ListWP P| (a list of pairs of an element and a proof) and |Σ (List A) (ListAll P)| (a pair of a list of elements and a list of proofs).
 
 The |Any| predicate is more interesting since its structure is rather different from that of the original datatype, although in the case of |List|, the |Any| structure happens to degenerate quite a bit:
 \begin{code}
@@ -2050,16 +2047,7 @@ It is nice not having to write |B23TAny| and |lookupB23TAny| by hand.
 \section{Discussion}
 \label{sec:discussion}
 
-\paragraph{Interoperability between generic and native entities}
-
-Our framework makes generic constructions parametrised by our version of datatype descriptions interoperable with native datatypes and functions.
-Generic libraries using their own descriptions could achieve the same by duplicating our framework, but there are alternatives:
-In Haskell, \citet{Magalhaes-GGP} provide automatic conversions between the datatype representations of several libraries ---targeting different families of datatypes--- and a representative representation, through which native datatypes are connected to all the libraries at once; our descriptions (possibly with extensions to support mutual recursion, induction-recursion, etc) can serve as a representative representation.
-Moreover, in a dependently typed setting it is possible to attain better uniformity and reusability by defining families of datatypes as predicates on a single representation like in \cref{sec:simple-containers}, in contrast to a simply typed setting where different families of datatypes need to be modelled by separate representations.
-
-%\todo[inline]{Missing the feature that converts fold functions to algebras, although there seems to be some overlap between this feature and the functionalities of the termination checker; update the reflection API?}
-
-\paragraph{Optimisation of datatype-generic programs}
+\subsection{Efficiency}
 
 %\Josh{The Haskell programmer produces recursive function definitions~\citep{de-Vries-true-SoP}.
 %We adopt the approach where generic function representations are non-recursive and then weaved into recursive definitions.}
@@ -2084,7 +2072,7 @@ Our metaprogram |define|($\Conid{P}$)|Fold|~(\cref{sec:specialising}) is a parti
 Indeed, it has been observed that we can perform partial evaluation in functional languages by normalisation~\citep{Filinski-semantic-partial-evaluation}, which |define|($\Conid{P}$)|Fold| does.
 
 % seperation of concerns + reasoning of metaprogram (generic struture not apearing in residual program), ref principles in staged-sop
-Similar to a partial evaluator, a staged generic program is a more specialised program-generator --- the generic/general program to be specialised has been fixed.
+Similar to a partial evaluator, a staged generic program is a more specialised program generator --- the generic/general program to be specialised has been fixed.
 %It essentially acts as an intermediate between a partial evaluator and a specialised program. 
 %So not only do we share the same purpose, we share similar means to achieve it as well.
 However, staging requires manually inserting staging annotations; this puts burdens on the programmer and mixes a part of the instantiation process with generic definitions.
@@ -2102,35 +2090,34 @@ However, as generic programs become more complex, we may need more advanced code
 %However, their techniques can still be of use to us if elaborator reflection is better designed.
 %For example, elaborator reflection may provide an interface for adding normalisation rules in certain contexts, such that programmers can optimise instantiation of generic programs~\citep{de-Vries-masters-thesis} without modifying the global language behaviour.
 
-\paragraph{Performance overhead of the framework}
-
 While programs instantiated using our framework are optimised, there is still the overhead of type-checking the additional definitions required by our framework and running the metaprograms to generate code.
 Minimising this overhead is particularly important for an interactive development environment (which Agda is famous for).
 We performed a quick experiment comparing two versions of all our examples: the first version used our metaprograms to instantiate the generic programs, whereas the second version contained printed (hand-written) definitions only, without anything from our framework.
 The result was disappointing: on a typical laptop, it took about 66~seconds to check the first version, and about 5~seconds to check the second version.
 %(We notice that some connections take significantly more time to check than the others, in particular those related to the |All| predicate, which is defined using two layers of ornamentation; this also means that for simpler definitions the overhead is more tolerable.)
-We think that the experiment is more an indication of how much the current implementation of Agda’s type-checker and elaborator reflection (and, to a lesser extent, our metaprograms) can still be optimised, since the overhead inherently associated with our core idea ---instantiating generic programs with normalisation and unquotation--- should not be so high (and our metaprograms are just straightforward implementations of the idea).
-But however high the overhead is, it can always be alleviated by separate compilation ---collecting generic entities in separate files, which are checked only once and do not interfere with subsequent interactive development sessions--- or copying and pasting printed definitions into the programmer’s files.
-These solutions require the programmer’s effort, but as generic libraries become more powerful and the user interface gets improved, the cost will be easily outweighed by the benefit of not having to write the definitions that can generated.
+We think that the experiment is more an indication of how much the current implementation of Agda’s type checker and elaborator reflection (and, to a lesser extent, our metaprograms) can still be optimised, since the overhead inherently associated with our core idea ---instantiating generic programs with normalisation and unquotation--- should not be so high (and our metaprograms are just straightforward implementations of the idea).
+But however high the overhead is, it can always be alleviated by separate compilation ---collecting generic entities in separate files, which are checked only once and do not interfere with subsequent interactive development sessions--- or copying and pasting printed definitions into the source files.
+These solutions require the programmer's effort, but as generic libraries become more powerful and the user interface gets improved, the cost will be outweighed by the benefit of not having to write the definitions that can generated.
 
-\paragraph{Analysis of higher-order encodings}
-The local variable creation technique has been used extensively to analyse higher-order encodings, but it has to be used with caution.  
-Agda's elaborator checks if a local variable escapes its context in the result of |extendContext| during the runtime of elaboration.\footnote{%
-In previous versions of Agda, the existing de Bruijn indices in an extended context were not weakened~\citep{AgdaIssue3831} and the check was not implemented in full until the recent version 2.6.2 of Agda~\citep{AgdaIssue4898}.}
-This is similar to the |nu| constructor of the typed tactic language Mtac~\citep{Ziliani2015}, which checks the escape of local variables during tactic execution.
-Indeed, \citet{Chen-Mtac-Agda} implemented Mtac's |nu| constructor by elaborator reflection in the same way.
-By contrast, the $\nu$-operator for \emph{local name creation} in a modal calculus \citep{Nanevski2005} and a two-level functional language \citep{Schurmann2005} statically ensures that local names cannot escape their scope. 
+%\paragraph{Local variable creation}
+%
+%The local variable creation technique has been used extensively to analyse higher-order encodings, but it has to be used with caution.
+%Agda's elaborator checks if a local variable escapes its context in the result of |extendContext| during elaboration time.
+%%\footnote{In previous versions of Agda, the existing de Bruijn indices in an extended context were not weakened~\citep{AgdaIssue3831} and the check was not implemented in full until the recent version 2.6.2 of Agda~\citep{AgdaIssue4898}.}
+%This is similar to the |nu| constructor of the typed tactic language Mtac~\citep{Ziliani2015}, which checks the escape of local variables during tactic execution.
+%Indeed, \citet{Chen-Mtac-Agda} implemented Mtac's |nu| constructor by elaborator reflection in the same way.
+%By contrast, the $\nu$~operator for \emph{local name creation} in a modal calculus \citep{Nanevski2005} and a two-level functional language \citep{Schurmann2005} statically ensures that local names cannot escape their scope.
 
-Our higher-order encodings are not actually higher-order abstract syntax~\citep{Harper1993}, since exotic terms such as |Bool ∷ λ { false → [ A ∶ Set ] [] ; true → [ P ∶ (ℕ → Set) ] [] }| are not excluded by the typing discipline.
-As argued by \citet{McBride-ornaments}, exotic terms (which we do not use) could be exploited for richer expressiveness, but then it is harder to analyse and deviates too much from Agda's current datatype declarations, which our framework targets.
+%Our higher-order encodings are not actually higher-order abstract syntax~\citep{Harper1993}, since exotic terms such as |Bool ∷ λ { false → [ A ∶ Set ] [] ; true → [ P ∶ (ℕ → Set) ] [] }| are not excluded by the typing discipline.
+%As argued by \citet{McBride-ornaments}, exotic terms (which we do not use) could be exploited for richer expressiveness, but then it is harder to analyse and deviates too much from Agda's current datatype declarations, which our framework targets.
 
-\paragraph{Dependently typed datatype-generic libraries}
-Our framework makes it possible and worthwhile to develop datatype-generic libraries for wider and practical use in Agda.
-The change to traditional Agda generic programs required by our framework is a mild generalisation from the operators |μ|~and |fold| to datatype and fold connections capturing the behaviour of the operators, so it is easy to adapt existing libraries to our framework as well as develop new ones.
-There are still many opportunities to explore for dependently typed datatype-generic libraries:
+\subsection{Dependently Typed Datatype-Generic Libraries}
+
+Our framework makes it possible and worthwhile to develop dependently typed datatype-generic libraries for wider and practical use in Agda (and other languages when the framework is ported there).
+There are still many opportunities to explore for such libraries:
 Even for recursion schemes~\citep{Yang-recursion-schemes}, a standard datatype-generic example, we can start supplying theorems about them like in \cref{sec:fold-operators}.
-Datatypes derived from others, such as the lifted predicates |All| and |Any| in \cref{sec:simple-containers}, are also common and should be treated generically (as opposed to manually duplicating an instance for each datatype as in the standard library~\citep{Agda-stdlib}).
-Domain-specific organisation of datatypes with intrinsic invariants is another important goal, for which ornaments~\citep{McBride-ornaments} still have much potential (although the community has focussed mostly on lifting ornaments to programs and proofs~\citep{Dagand-functional-ornaments,McDonell-Ghostbuster,Williams-principle-ornamentation,Ringer-ornaments-Coq}).
+Derived datatypes, such as the lifted predicates |All| and |Any| in \cref{sec:simple-containers}, are also common and should be treated generically, as opposed to duplicating an instance for each datatype as in the standard library (version~1.7.1 at the time of writing).
+Domain-specific organisation of datatypes with intrinsic invariants is another important goal, for which ornaments~\citep{McBride-ornaments} still have much potential (although the community has focussed mostly on lifting ornaments to programs and proofs~\citep{Dagand-functional-ornaments,Williams-principle-ornamentation,Ringer-ornaments-Coq}).
 For example, \cref{sec:algebraic-ornamentation} mentions that the relationship between intrinsically and extrinsically typed \textlambda-terms can be captured as an ornament, whose properties and derived constructions should be formulated generically for reuse in developments of typed embedded languages --- a direction already proved fruitful by \citet{Allais-binding-syntax-universe-JFP}.
 
 %\todo[inline]{Success of the App Store: dependent types need richer type structures and allow assumptions about datatype descriptions to derive more functionalities (boring if we can only automate Eq, Show, Read etc), so DGP has much more potential in dependently typed settings; also, keep generic programs natural so that libraries can be developed more easily — no staging (which is not in the current dependently typed languages anyway)!}
@@ -2140,7 +2127,20 @@ For example, \cref{sec:algebraic-ornamentation} mentions that the relationship b
 %Ornaments have been used to lift functions, but its original purpose ---organisation of datatypes--- should not be forgotten (\citet{McBride-ornaments}; porting some constructions from \citet{Ko-OAOAOO}; more experimental developments~\citep{Ko-OrnJFP, Dagand-functional-ornaments}; theory and developments about function transportation in simply typed settings~\cite{Williams-principle-ornamentation, Williams-ornaments-in-practice}; realistic dependently typed application and automated synthesis of ornaments~\citep{McDonell-Ghostbuster,Ringer-ornaments-Coq}).
 %Make \citet{McBride-pivotal, Allais-binding-syntax-universe-JFP} native.}
 
-\paragraph{Code generation versus first-class datatypes}
+The change to traditional generic programs required by our framework is a mild generalisation from the operators |μ|~and |fold|~(\cref{sec:recap}) to datatype and fold connections capturing the behaviour of the operators, so it is easy to adapt existing generic libraries (as well as develop new ones).
+To interface with our metaprograms, the generic-library developer can reimplement their libraries on our descriptions, or translate their descriptions to ours --- in Haskell, \citet{Magalhaes-GGP} provide automatic conversions between the datatype representations of several generic libraries and a representative representation, through which native datatypes are connected to all the libraries at once; our descriptions %(possibly with extensions to support mutual recursion, induction-recursion, etc)
+can serve as a representative representation.
+
+Our framework also helps with backward compatibility when existing non-generic library components can be derived from some new generic constructions.
+Rather than replacing those components with |unquoteDecl| definitions, we can simply supply connections for the components (like how we treated |foldr| in \cref{sec:fold-operators}); in this way, existing code is not broken, and the library user only needs to understand the new generic constructions when starting to use them.
+
+%Moreover, in a dependently typed setting it is possible to attain better uniformity and reusability by defining families of datatypes as predicates on a single representation like in \cref{sec:simple-containers}, in contrast to a simply typed setting where different families of datatypes need to be modelled by separate representations.
+
+%\todo[inline]{Missing the feature that converts fold functions to algebras, although there seems to be some overlap between this feature and the functionalities of the termination checker; update the reflection API?}
+
+\subsection{Foundations}
+
+\subsubsection{Code Generation versus First-Class Datatypes}
 
 Similar to staged approaches~\citep{Yallop-staged-generic-programming,Pickering-staged-SoP}, our framework instantiates generic programs by generating code separately for each native instance.
 A potential problem is code duplication, on which we take a conservative position: while we cannot solve the problem, which is inherent in languages with datatype declarations, we do alleviate it a little by removing the overhead of manual instantiation and maintaining explicit connections between generic and instantiated entities, which generic libraries can exploit.
@@ -2156,25 +2156,36 @@ While waiting for better languages to emerge, it is also important to enable the
 
 %\todo[inline]{\citet{Chapman-levitation} propose a more radical redesign of type theory where datatype definitions are first-class, but the theory is still at an early stage of development and lacks an implementation; our proposal is more practical and serves as a platform for the development of mature datatype-generic libraries, which can be ported to new platforms when ready}
 
-\paragraph{Foundations}
-While the use of universe polymorphic-datatypes is convenient in practice, its theory is, surprisingly, an unexplored territory, and the notion of universe polymorphism is less studied than it should be.
-To the best of our efforts, we did not find any type theory backing Agda's current design of first-class universe levels and universe polymorphism.
-Even worse, without universe cumulativity, subject reduction does not hold for expressions in |Setω|~\citep{AgdaIssue5810}.
-\citet{Kovacs-universe-hierarchies} initiated a theoretical framework for first-class universe levels which is able to model features like bounded universe polymorphism, but its metatheory is bare-bones and lacks, for example, an elaboration algorithm needed for implementation.  
-A type theory of first-class datatypes \citep{Chapman-levitation} requires internal universe-polymorphic encodings, but most of internal encodings \citep{Dybjer-indexed-induction-recursion,nordvallforsberg2013thesis,Kaposi2020a} do not encode universe polymorphism.
+\subsubsection{Typed Metaprogramming}
 
-Due to the nature of uni-typed encodings, our experience with Agda's elaborator reflection was painful, especially in contrast to datatype-generic programming.
-Elaborator reflection is a useful paradigm but it has not been specified in theory, and to use it the understanding of the inner workings of elaborator is much needed.
-More importantly, the correctness of a macro can only be verified externally at best, but it is internally guaranteed by typed metaprogramming like staging.
-\citet{Christiansen-elaborator-reflection} argued that programs in the reflected elaborator are shorter and simpler than typed metaprograms, but they also admitted the additional cost is for the mandatory correctness.
-Hopefully, the best of two worlds could be combined. 
+One important issue that we have not been able to address fully is the correctness of our metaprograms.
+Agda's syntax and semantics are somewhat complicated and already make it hard for the metaprogrammer to consider all possible scenarios.
+Even worse, since elaborator reflection has no formal specification and the reflected representations are only uni-typed, the metaprogrammer gets little help from the documentation or the type checker.
+To get metaprograms right, the metaprogrammer needs to tweak the metaprograms based on their understandings of the elaborator's inner workings, and perform extensive testing.
+Correctness arguments can only be given informally (like in \cref{sec:by-hand}).
+
+In contrast to our experience with Agda's elaborator reflection, which was painful, our datatype-generic programming experience is more pleasant overall.
+Datatype-generic programming can be seen as a form of typed metaprogramming because datatype-generic programs manipulate datatype representations just like metaprograms, with a notable difference being that the representations are precisely typed.
+%The rest of the story is standard: while it is slower to write a precisely typed program, the programmer is guided by more type information during the program development, and once finished, the program is guaranteed to be correct by the type checker.
+\citet{Christiansen-elaborator-reflection} argued that their metaprograms were shorter and simpler because correctness proofs were not mandatory, but we find that correctness proofs ---especially those implicitly embedded in precisely typed data--- lead to a smoother development process, notably without having to rely on testing for correctness guarantees.
+
+One way for elaborator reflection to offer better correctness guarantees about meta-level constructions is to introduce more precise types, and (dependently typed) datatype-generic programming already provides a working solution for typing a good range of the constructions.
+Our work can thus be regarded as bringing in a more precisely typed alternative to some of the uni-typed reflected representations, allowing the metaprogrammer to gain better correctness guarantees for some of their constructions.
+A possible next step is to give more precise types to the elaborator reflection API itself:
+%Hopefully, the best of two worlds could be combined. 
 Say, suppose that we have a type |TTerm A| of |A|-typed reflected expressions.
-Normalisation (by evaluation) always works on well-typed expressions, so the type of |normalise| could be |TTerm A → TTerm A|;
-type checking transforms a possibly ill-formed expression to a typed expression if successful, so the type of |checkType| could be |Term → (A : Set ℓ) → TC (TTerm A)|.
-Typed reflected expressions also benefit efficiency, since they need not be elaborated again.%
-\todo{datatype-generic programming as a form of typed metaprogramming}
+Normalisation (by evaluation) always works on well-typed expressions, so the type of |normalise| could be |TTerm A → TTerm A|.
+Type checking transforms a possibly ill-formed expression to a typed expression if successful, so the type of |checkType| could be |Term → (A : Set ℓ) → TC (TTerm A)|.
+Typed reflected expressions also benefit efficiency, since they need not be elaborated again.
 
-We hope that our framework can serve as inspiration and a call for a foundation for universes and metaprogramming not only for theoretical interests but also for practical needs.
+\subsubsection{Universe Polymorphism}
+
+While universe polymorphism is a convenient feature in practice, it is ignored by most of the existing datatype encodings \citep{Dybjer-indexed-induction-recursion,Chapman-levitation,nordvallforsberg2013thesis,Kaposi2020a}.
+Our universe-polymorphic datatype descriptions are made possible by Agda's first-class universe levels, which allow us to express non-trivial level computation and guarantee level-correctness just like we can guarantee the correctness of typed metaprograms without testing or checking the generated entities.
+On the other hand, theoretically there does not seem to be any type theory backing Agda's design, and some problems have already surfaced --- for example, currently subject reduction does not hold for expressions in |Setω| without universe cumulativity~\citep{AgdaIssue5810}.
+\citet{Kovacs-universe-hierarchies} initiated a model-theoretic study of first-class universe levels, including features such as bounded universe polymorphism, but the metatheory is bare-bones and lacks, for example, an elaboration algorithm needed for implementation, so there is still a significant gap between theory and practice.
+
+We hope that our work can serve as inspiration and a call for better foundations for universes and metaprogramming not only for theoretical interests but also for practical needs.
 
 %\paragraph{Conclusion}
 %
@@ -2191,10 +2202,10 @@ We hope that our framework can serve as inspiration and a call for a foundation 
 %% (and NOT an unnumbered section). This ensures the proper
 %% identification of the section in the article metadata, and the
 %% consistent spelling of the heading.
-%\begin{acks}
-%We thank the anonymous reviewers and shepherd for their great help in improving the presentation of this paper.
-%The work is supported by the \grantsponsor{MOST}{Ministry of Science and Technology of Taiwan}{https://www.most.gov.tw/} under grant \grantnum{MOST}{MOST 109-2222-E-001-002-MY3}.
-%\end{acks}
+\begin{acks}
+We thank the anonymous reviewers and shepherd for their great help in improving the presentation of this paper.
+The work is supported by the \grantsponsor{MOST}{Ministry of Science and Technology of Taiwan}{https://www.most.gov.tw/} under grant \grantnum{MOST}{MOST 109-2222-E-001-002-MY3}.
+\end{acks}
 
 %%
 %% The next two lines define the bibliography style to be used, and
