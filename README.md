@@ -12,7 +12,7 @@ There are also highlighted and clickable HTML documents for traversing the modul
 
 ## Requirement
 
-* 14 Gigabytes of memory or above.
+* 6GB of memory or above.
 * The development version of Agda 2.6.3 ([commit 1b44372](https://github.com/agda/agda/commit/1b44372081e5b21b1a368d0e63cc09a53c48d20b))
   with the patch
   * `Agda-unquoteDecl-data.diff` to extended Agda with an experimental syntax `unquoteDecl data`
