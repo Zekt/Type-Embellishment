@@ -52,9 +52,9 @@
 \newcommand{\varcitet}[3][]{\citeauthor{#2}#3~[\ifthenelse{\isempty{#1}}{\citeyear{#2}}{\citeyear[#1]{#2}}]}
 \newcommand{\NoPeriod}[1]{\,}
 
-%\usepackage[color=yellow,textsize=scriptsize]{todonotes}
-%\setlength{\marginparwidth}{1.25cm}
-\usepackage[disable]{todonotes}
+\usepackage[color=yellow,textsize=scriptsize]{todonotes}
+\setlength{\marginparwidth}{1.25cm}
+%\usepackage[disable]{todonotes}
 
 \newcommand{\LT}[1]{\todo[author=LT,inline,color=green!40,caption={}]{{#1}}}
 \newcommand{\Josh}[1]{\todo[author=Josh,inline,caption={}]{{#1}}}
@@ -435,9 +435,9 @@ The existing dependently typed datatype-generic libraries~\citep{McBride-ornamen
 What is going wrong?
 
 One major problem, we argue, is the lack of interoperability.
-The prevalent approach to datatype-generic programming in Agda (recapped in \cref{sec:recap}) is to construct a family of datatype `descriptions' and then decode the descriptions to actual datatypes via some least fixed-point operator~|μ|.
+The prevalent approach to datatype-generic programming in Agda (recapped in \cref{sec:recap}) is to construct a family of datatype \emph{descriptions} and then decode the descriptions to actual datatypes via some least fixed-point operator~|μ|.
 Generic programs take descriptions as parameters and work only on datatypes decoded from descriptions.
-Although this approach is theoretically rooted in the idea of universe à~la Tarski~\citep{ML-TT73,ML-TT84} and serves as a simulation of a more recent theory of datatypes~\citep{Chapman-levitation} (discussed in \cref{sec:discussion}), it is not what we want:
+Although this approach is theoretically rooted in the idea of universe à~la Tarski~\citep{ML-TT73,ML-TT84} and serves as a simulation of a more recent theory of datatypes~\citep{Chapman-levitation} (discussed in \cref{sec:first-class-datatypes}), it is not what we want:
 Generic libraries usually use their own version of datatype descriptions and are incompatible with each other, so only one library can be chosen at a time, which is unreasonable.
 Moreover, decoded datatypes are essentially segregated from native datatypes, and there is no point for the Agda programmer to abandon most of the language support and libraries developed for native datatypes in exchange for one generic library.
 
@@ -481,7 +481,7 @@ Unfortunately, compiler optimisation does not work for us because instantiated f
 %\Josh{Old attempts at optimising DGP and why they don't work: There have been many attempts at removing overheads by compiler optimisation, but this is not enough for dependently typed programming, where programs may appear in later types and be reasoned about (and haven’t been processed by the compiler at all).
 %And compiler optimisations need to be fine-tuned to produce what we want; why not just generate what we want in the first place?}
 
-Luckily again, in Agda there is a mechanism that can take the place of staging for generic program instantiation: elaborator reflection (inspired by Idris~\citep{Christiansen-elaborator-reflection}), through which the Agda metaprogrammer has access to operations for elaborating the surface language to the core, in addition to the usual metaprogramming features such as quoting and unquoting.
+Luckily again, in Agda there is a mechanism that can take the place of staging for generic program instantiation: \emph{elaborator reflection} (inspired by Idris~\citep{Christiansen-elaborator-reflection}), through which the Agda metaprogrammer has access to operations for elaborating the surface language to the core, in addition to the usual metaprogramming features such as quoting and unquoting.
 %It turns out that datatype-generic programming and elaborator reflection are a perfect match in Agda.
 In fact, elaborator reflection is powerful enough for the metaprogrammer to develop general facilities for practical datatype-generic programming.
 Like in Haskell, we can quote programmer-defined datatypes as descriptions for processing by generic programs; conversely, newly computed descriptions can be unquoted as programmer-friendly datatypes rather than decoded using a fixed-point operator, and functions can be defined by unquoting too.
@@ -511,6 +511,7 @@ After recapping standard datatype-generic programming~(\cref{sec:recap}) and ref
 To simplify the presentation, up to this point we assume |Set : Set| and introduce only a slimmed-down version of our framework.
 Then, leaving |Set : Set| behind, we sketch how the full framework supports universe polymorphism~(\cref{sec:universe-polymorphism}), and give a demo of the framework using some existing generic constructions~(\cref{sec:examples}).
 Finally we conclude with some discussions~(\cref{sec:discussion}).
+Our code is available at \url{https://doi.org/10.5281/zenodo.6603498}.
 
 %We do not need radically new datatype-generic programming techniques, but do need to adapt our datatype descriptions ---restricted to inductive families~\citep{Dybjer1994} in this paper--- to support commonly used Agda features, in particular universe polymorphism~(\cref{sec:parameters}).
 %Our generic programs instantiate to native entities that are close to hand-written forms, and work on existing native entities ---whose forms can be flexibly customised--- through `connections' to their generic counterparts~(\cref{sec:connections}).
@@ -539,7 +540,7 @@ Finally we conclude with some discussions~(\cref{sec:discussion}).
 \label{sec:recap}
 
 We start from a recap of standard datatype-generic programming (in a dependently typed setting).
-The core idea of datatype-genericity is to encode datatype definitions as `descriptions', which can take a variety of forms but should be some kind of first-class data on which computation can be performed.
+The core idea of datatype-genericity is to encode datatype definitions as \emph{descriptions}, which can take a variety of forms but should be some kind of first-class data on which computation can be performed.
 Programs that manipulate datatype descriptions in some way are dubbed `(datatype-)\allowbreak generic programs', and can perform constructions tailored for individual datatypes by analysing input descriptions or produce new datatypes by computing output descriptions.
 The power of generic programs depends crucially on the range of datatypes encoded by the chosen descriptions.
 In \cref{sec:ConDs} we fix on a class of descriptions covering inductive families~\citep{Dybjer1994} in the form of sums of products.
@@ -600,7 +601,7 @@ The first layer is the list of constructors, which for |Acc<| consists of only |
 the type of |acc| has two fields |n|~and |as|, which constitute the second layer;
 the type of the field~|as| is described in the third layer as it ends with the recursive occurrence |Acc< m|, in front of which there are function arguments |m|~and~|lt|.
 Corresponding to the three layers, we use three datatypes of descriptions |ConDs|, |ConD|, and |RecD| in \cref{fig:basic-descriptions} ---all parametrised by an index type~|I|--- to encode datatype definitions.
-Generic programs can then perform constructions depending on the number of constructors, the types of fields, the indices of recursive occurrences, etc.
+(Generic programs can then perform constructions depending on the number of constructors, the types of fields, the indices of recursive occurrences, etc.)
 For example, |Acc<| is described by
 \begin{code}
 Acc<D : ConDs ℕ
@@ -670,17 +671,17 @@ foldAcc< :  {P : ℕ → Set} (p : ∀ n → (∀ m → m < n → P m) → P n) 
             ∀ {n} → Acc< n → P n
 foldAcc< p (acc n as) = p n (λ m lt → foldAcc< p (as m lt))
 \end{code}
-However, the point of using described datatypes such as |μ Acc<D| is that we do not have to write |foldAcc<| ourselves but can simply derive it as an instantiation of a generic grogram.
+However, the point of using decoded datatypes such as |μ Acc<D| is that we do not have to write |foldAcc<| ourselves but can simply derive it as an instantiation of a generic grogram.
 The class of generic programs we will focus on in this paper is `($F$-)algebras'~\citep{Bird-AoP} (where the functor~$F$ is always some base functor |⟦ D ⟧ᶜˢ| in this paper), whose type is defined by
 \begin{code}
 Alg : ConDs I → (I → Set) → Set
 Alg D X = ∀ {i} → ⟦ D ⟧ᶜˢ X i → X i
 \end{code}
-Algebras are useful because they are the interesting part of a fold function:
-By a `fold function' we mean a function defined recursively on an argument of some datatype by (i)~pattern-matching the argument with all possible constructors, (ii)~applying the function recursively to all the recursive fields, and (iii)~somehow computing the final result from the recursively computed sub-results and the non-recursive fields.
+where the result type~|X| is traditionally called the `carrier' of the algebra.
+Algebras are the interesting part of a `fold function', by which we mean a function defined recursively on an argument of some datatype by (i)~pattern-matching the argument with all possible constructors, (ii)~applying the function recursively to all the recursive fields, and (iii)~somehow computing the final result from the recursively computed sub-results and the non-recursive fields.
 For example, |foldAcc<| is a fold function, and so are a lot of common functions such as list |length|.
 The first two steps are the same for all fold functions on the same datatype, whereas the third step is customisable and represented by an algebra, whose argument of type |⟦ D ⟧ᶜˢ X i| represents exactly the input of step~(iii).
-We can define a generic |fold| operator that expresses the computation pattern of fold functions and can be specialised with an algebra,
+We can define a generic |fold| operator that expresses the computation pattern of fold functions,
 \begin{code}
 {-# TERMINATING #-}
 fold : (D : ConDs I) → Alg D X → ∀ {i} → μ D i → X i
@@ -748,9 +749,8 @@ In this section it may appear that, to use our framework, the programmer needs t
 \label{sec:PDataD}
 
 It is conceptually straightforward to encode a parametrised datatype, since parameters are just variables in the context which can be referred to by the index type and constructor types, and we know an easy way to extend the context --- just use the host language's function space.
-So, traditionally, a parametrised datatype could be described by a parameter type |P : Set|, a parametrised index type |I : P → Set|, and a parametrised list of constructor descriptions |(p : P) → ConDs (I p)|.
-For example, we could describe |Acc| with |P == Σ[ A ∶ Set ] (A → A → Set)|, |I == λ (A , _) → A|, and a parametrised description that looks like |Acc<D|.
-This encoding works well in principle, but there is one refinement that can make the encoding work better in practice.
+So, traditionally, a parametrised datatype could be encoded by a parameter type |P : Set|, a parametrised index type |I : P → Set|, and a parametrised list of constructor descriptions |(p : P) → ConDs (I p)|.
+For example, we could encode |Acc| with |P == Σ[ A ∶ Set ] (A → A → Set)|, |I == λ (A , _) → A|, and a parametrised description that looks like |Acc<D|.
 
 \begin{figure}
 \codefigure
@@ -788,14 +788,14 @@ Curriedᵗ (T  ++  U)  X = Curriedᵗ T (λ t →  Curriedᵗ (U t) (λ u  → X
 \label{fig:Curried}
 \end{figure}
 
+The encoding above works well in principle, but there is one refinement that can make the encoding work better in practice.
 We will eventually need to convert a description to a datatype, and it would be unsatisfactory if the parameter and index types in the datatype were not in the conventional curried form.
 %When currying, the encoding of multiple types in one nested |Σ|-type is ambiguous --- how do we know whether a |Σ|-type is supposed to be interpreted as two types, with the latter depending on the former, or just one type?
-To make this currying easier, we introduce telescopes~\citep{de-Bruijn-telescopes} to represent lists of parameter or index types, as shown in \cref{fig:Tel}.%
+To make this currying easier, we introduce \emph{telescopes}~\citep{de-Bruijn-telescopes} to represent lists of parameter or index types, as shown in \cref{fig:Tel}; also shown is the  semantics of a telescope |⟦ T ⟧ᵗ|, which is a nested |Σ|-type inhabited by tuples whose components have the types in~|T|.%
 \footnote{|⊤| is the unit type with one constructor~|tt|.}
 Again we use the host language's function space to bring variables of the types in the front of a telescope into the context of the rest of the telescope.
 Besides the usual cons constructor~`|∷|', we also include a constructor~`|++|' for appending telescopes (which requires indexed induction-recursion~\citep{Dybjer-indexed-induction-recursion} to define), making our telescopes tree-shaped.
-This allows us to combine tuples |t : ⟦ T ⟧ᵗ| and |u : ⟦ U t ⟧ᵗ| directly into |(t , u) : ⟦ T ++ U ⟧ᵗ|, from which we can still easily retrieve |t|~and~|u| because we did not insist on flattening |T ++ U| (to use only~`|∷|') and re-associating the possibly deeply nested tuple $(t , u)$ to the right.
-We will see how this structure is useful to generic libraries when we reach \cref{sec:fold-operators}.
+This allows us to combine tuples |t : ⟦ T ⟧ᵗ| and |u : ⟦ U t ⟧ᵗ| directly into |(t , u) : ⟦ T ++ U ⟧ᵗ|, from which we can still easily retrieve |t|~and~|u| because we did not insist on flattening |T ++ U| (to use only~`|∷|') and re-associating the possibly deeply nested tuple $(t , u)$ to the right --- we will see how this structure is useful to generic libraries when we reach \cref{sec:fold-operators}.
 %The index~|ℓ| in the type |Tel ℓ| of a telescope~|T| is the maximum level appearing in~|T|.
 %This level is important since it is the universe level of the type |⟦ T ⟧ᵗ|, which is a nested |Σ|-type inhabited by tuples whose components have the types in~|T|.
 %More subtly, the indexing also precludes overly universe-polymorphic telescopes like |Level ∷ (λ ℓ → Set ℓ ∷ (λ _ → []))|, since in a cons telescope (and similarly in an appended telescope), the maximum level~|ℓ'| in the tail has to be determined independently from the |A|-typed value in the context.
@@ -803,9 +803,9 @@ A couple of syntax declarations will make telescopes slightly easier to write an
 \begin{code}
 syntax _∷_ A (λ x → T) = [ x ∶ A ] T{-"\,"-};{-"\quad"-} syntax _++_ T (λ t → U) = [[ t ∶ T ]] U
 \end{code}
-For example, the parameters of |Acc| can be represented as |[ A ∶ Set ] [ R ∶ (A → A → Set) ] []| instead of |Set ∷ (λ A → (A → A → Set) ∷ (λ R → []))|.
+For example, the parameters of |Acc| can be written as |[ A ∶ Set ] [ R ∶ (A → A → Set) ] []| instead of |Set ∷ (λ A → (A → A → Set) ∷ (λ R → []))|.
 From a telescope~|T| it is straightforward to compute a curried function type |Curriedᵗ T X|~(\cref{fig:Curried}) which has arguments with the types in~|T|, and ends with a given type |X : ⟦ T ⟧ᵗ → Set| that can refer to all the arguments (collectively represented as a tuple of type |⟦ T ⟧ᵗ|).
-It is also straightforward to convert between this curried function type and its uncurried counterpart with the functions |curryᵗ : ((t : ⟦ T ⟧ᵗ) → X t) → Curriedᵗ T X| and |uncurryᵗ| in the opposite direction (whose definitions are omitted).
+It is also straightforward to convert between this curried function type and its uncurried counterpart with the functions |curryᵗ : ((t : ⟦ T ⟧ᵗ) → X t) → Curriedᵗ T X| and |uncurryᵗ| in the opposite direction (whose definitions are omitted from the presentation).
 %With these, we will be able to compute curried forms of parameters and indices when they appear in types (such as the type of the fold operator of |Acc|).
 
 \begin{figure}
@@ -879,8 +879,8 @@ AccT (A , R , _) (as , _) = Acc R as
 \end{code}
 Note that |AccT| allows the form of the native datatype to be customised: we can change the order and visibility of the arguments (for example, the visibility of~|A| is set to implicit in |Acc|) as long as we change |AccT| accordingly.
 Also, corresponding to the |con| constructor of~|μ|, we need a function |toN| to construct inhabitants of~|N|, and moreover, we need to perform pattern matching, which can be simulated by an inverse |fromN| of |toN|.
-These are packed into the record type |PDataC| of `datatype connections' in \cref{fig:PDataC}, replacing |μ|'s functionalities.
-(Strictly speaking, the inverse property |fromN-toN| here is only propositional whereas for |con| it is definitional, but this does not pose a problem for our examples in \cref{sec:examples}.)
+These are packed into the record type |PDataC| of datatype \emph{connections} in \cref{fig:PDataC}, replacing the functionalities of~|μ|.
+(A fine difference between |PDataC| and~|μ| is that the inverse property |fromN-toN| here is only propositional whereas for |con| it is definitional, but this does not pose a problem for our examples in \cref{sec:examples}.)
 %|DataC| is an example of generic definitions that benefit from the |DataT| wrapper --- the types of the fields would have been much messier if |N|~were in a curried form.
 An inhabitant of |PDataC D N| performs invertible conversion between the branches of the sum structure in~|D| with the constructors of~|N|, and the conversion is highly mechanical --- for example,
 \begin{code}
@@ -890,9 +890,9 @@ AccC = record  {  toN        = λ { (inl (x , as , refl))  → acc x as         
                ;  fromN-toN  = λ { (inl (x , as , refl))  → refl                 }
                ;  toN-fromN  = λ { (acc x as)             → refl                 } }
 \end{code}
-Note that the order and visibility of constructor arguments can be customised as well.
+Note that the order and visibility of constructor arguments can be customised here.
 
-The introduction of |PDataC| supports a symmetric architecture where generic and native entities may grow separately but can be kept in sync (reminiscent of `delta-based bidirectional transformations'~\citep[Section~3.3]{Abou-Saleh-BX-intro}): we may compute a new description from an old one and then manufacture a native datatype from the new description, or write a native datatype and then derive its description; in either case, a connection is established between the generic and native entities at the end.
+The introduction of |PDataC| supports a symmetric architecture where generic and native entities may grow separately but can be kept `in sync' (reminiscent of `delta-based bidirectional transformations'~\citep[Section~3.3]{Abou-Saleh-BX-intro}): we may compute a new description from an old one and then manufacture a native datatype from the new description, or write a native datatype and then derive its description; in either case, a connection is established between the generic and native entities at the end.
 This architecture generalises the standard one involving~|μ|, where |D|~has a connection only with |μ D|, whereas in our architecture, connections can be established between any pair of description and datatype as long as they correspond.
 In particular, the forms of native datatypes and constructors (curried versus uncurried forms, order and visibility of arguments, etc) are not tightly coupled with descriptions (especially datatype-generically computed ones, which usually have prescribed forms) and can be customised by the programmer, which is vital in practice.
 
@@ -932,19 +932,20 @@ record PFoldC (F : PFoldP) (f : PFoldT F) : Set where field
 \end{figure}
 
 Like descriptions, algebras can also be parametrised --- in fact, |foldAcc<Alg| is \cref{sec:recap} is already an algebra with two parameters |P|~and~|p|.
-Analogous to |PDataD|~(\cref{fig:PDataD}), we use the type |PFoldP| (for `parametrised fold programs') defined in \cref{fig:PFoldP-PFoldC} to store an algebra with its parameters.
-There are some additional fields that require explanation:
+Analogous to |PDataD|~(\cref{fig:PDataD}), we use the type |PFoldP| (for `parametrised fold programs') defined in \cref{fig:PFoldP-PFoldC} to store an algebra with its parameter telescope and carrier.
+There are some more fields that require explanation:
 |PFoldP| is designed to contain sufficient information for manufacturing a corresponding native fold function.
-The fold function needs a type, which refers to the native datatype on which the fold function operates, so |PFoldP| includes a field |Con : PDataC| connecting the datatype description |Desc| on which the algebra operates to a |Native| datatype, enabling us to compute the type of the fold function using |PFoldT| in \cref{fig:PFoldP-PFoldC}.%
+The fold function needs a type, which refers to the native datatype on which the fold function operates, so |PFoldP| includes a field |Con : PDataC Desc Native| connecting the datatype description |Desc| on which the algebra operates to a |Native| datatype, enabling us to compute the type of the fold function using |PFoldT| in \cref{fig:PFoldP-PFoldC}.%
 \footnote{Agda's |open| statement can be used to bring the fields of an inhabitant of a record type into the scope --- for example, the name |Native| in the definition of |PFoldT| stands for |F .Native| because of |open PFoldP F|.
 Moreover, an |open| statement can be used in a |let|-expression to limit its effect to the body of the |let|-expression.}
+What remains to be explained is the field |param|, which, as can be seen in the definition of |PFoldT|, is used to compute the parameters for the native datatype from the parameters of the fold function.
 For example, the fold operator of |Acc|
 \begin{code}
 foldAcc :  {A : Set} {R : A → A → Set} {P : A → Set}
            (p : ∀ x → (∀ y → R y x → P y) → P x) → ∀ {x} → Acc R x → P x
 foldAcc p (acc x as) = p x (λ y lt → foldAcc p (as y lt))
 \end{code}
-is encoded as the fold program
+is encoded as the fold program (which ignores parameter visibility)
 \begin{code}
 foldAccP : PFoldP
 foldAccP = record
@@ -957,10 +958,8 @@ foldAccP = record
 \end{code}
 %(which is an instantiation of a generic program in \cref{sec:fold-operators}).
 
-Following the same architecture, we are also going to connect algebras with native fold functions.
-In the definition of |PFoldT|, we also see that the field |param| is used to compute the parameters for the native datatype argument from the parameters of the fold function.
-So, given |F : PFoldP|, it can be connected to some |f : PFoldT F|, but what should the connection be?
-Since |f|~is supposed to replace an instantiation of the generic |fold| operator, what we need to know about~|f| is that it satisfies a suitably instantiated version of the defining equation of |fold|.
+Following the same architecture for datatypes, we are also going to connect algebras with native fold functions.
+Here a fold function~|f : PFoldT F| corresponding to some |F : PFoldP| is supposed to replace an instantiation of the generic |fold| operator using the algebra in~|F|, so what we need to know about~|f| is that it satisfies a suitably instantiated version of the defining equation of |fold|.
 This |equation| constitutes the only field of the record type |PFoldC| in \cref{fig:PFoldP-PFoldC}.
 Proofs of the |equation| are usually by definition --- for example, |foldAccP| and |foldAcc| are connected by
 \begin{code}
@@ -975,7 +974,7 @@ When we get to examples that require induction in \cref{sec:examples}, it should
 \section{Establishing Connections Using Elaborator Reflection}
 \label{sec:reflection}
 
-As explained at the end of \cref{sec:PDataC}, our framework can be thought of as keeping native and generic entities in sync through connections.
+As explained at the end of \cref{sec:PDataC}, our framework can be thought of as keeping native and generic entities `in sync' through connections.
 This syncing can be tedious: whenever we write a native datatype~|N|, we need to produce its description~|D|, a wrapper~|T| around~|N|, and a connection between |D|~and~|T|; conversely, whenever we compute a new datatype description, we also need to produce the corresponding native datatype, wrapper, and connection; and the same goes for instantiating generic programs as native functions.
 Fortunately, such tasks can be automated by a set of metaprograms supplied by our framework.
 
@@ -1115,7 +1114,7 @@ Among these datatypes, the one we will see most frequently is |Term|, the dataty
 %where every expression is in weak head normal form and every application is in spine-normal form.
 %Type expressions are a part of |Term| but usually marked as |Type| ---a synonym of |Term|--- for clarity.
 The quotation of an expression~|e| can be obtained as |quoteTerm e : Term|; this syntax makes it easy to produce concrete examples of |Term| --- for example, we may evaluate |quoteTerm ((A : Set) → Vec A zero)| and get%
-\footnote{In fact there is some additional information embedded in |Term|s such as argument visibility (being implicit or not) and binder names, which we suppress in our presentation for brevity.}
+\footnote{In fact there is some additional information embedded in |Term|s such as argument visibility and binder names, which we suppress in our presentation for brevity.}
 \begin{code}
 pi (agda-sort (lit 0)) (def (quote Vec) (var 0 [] ∷ con (quote zero) [] ∷ [])) : Term
 \end{code}
@@ -1123,7 +1122,7 @@ where the structure of the type expression is turned into the composition of sev
 \begin{itemize}[leftmargin=*]
 \item |pi : Term → Term → Term|, which represents a dependent function type,
 \item |agda-sort : Sort → Term|, where |Sort| is the datatype representing sorts such as |Set| and |Set ℓ|,
-\item |def : Name → List Term → Term| and |con : Name → List Term → Term|, representing the application of a top-level definition or constructor (referred to by a quoted name of the form |quote n : Name| in this example) to a list of arguments,
+\item |def : Name → List Term → Term| and |con : Name → List Term → Term|, representing the application of a top-level definition or constructor ---referred to by a quoted name of the form |quote n : Name| in this example--- to a list of arguments,
 \item |var : ℕ → List Term → Term|, which is similar to |def| and |con| except that the first argument is a variable in the form of a de Bruijn index.
 \end{itemize}
 
@@ -1133,28 +1132,28 @@ where the structure of the type expression is turned into the composition of sev
 %The quotation of an expression~|e| can be obtained by |quoteTerm e| and the resolved unique name for a definition~|f| or a constructor by |quote f|.
 %For example, |quoteTerm acc| is |con (quote acc) []|, where the empty list~|[]| indicates that no arguments are given to the |acc| constructor.
 
-The central component of elaborator reflection is the elaborator monad |TC| (short for `type-checking monad'), which stores states needed for elaboration such as the context of the call site, the scope of names with its definition, and the set of metavariables.
+The central component of elaborator reflection is the elaborator monad |TC| (short for `Type Checking'), which stores states needed for elaboration such as the context of the call site, the scope of names with its definition, and the set of metavariables.
 Metaprograms take the form of |TC| computations, and have access to a set of primitive operations used during elaboration --- for example, the primitive |unify : Term → Term → TC ⊤| unifies two given terms and solves some of the metavariables (thereby changing the elaborator state).
 
 At elaboration time, we can run a metaprogram and splice an expression into the source file.
-A more convenient way to do so is to use macros, a special kind of metaprograms of type |A₁ → {-"\cdots\;"-} → Aₙ → Term → TC ⊤| declared with the keyword |macro|.
+A more convenient way to do so is to use macros, a special kind of metaprograms of type |A₁ → {-"\cdots\;"-} → Aₙ → Term → TC ⊤| declared with the keyword |macro| and called with the first |n|~arguments.
 During elaboration, the call site of a macro~|M| becomes a metavariable~|x|, which is represented as |meta x [] : Term| and supplied as the last argument of~|M| for manipulation inside~|M|.
-A minimal example is%
-\todo{Use a more intuitive example?}
+A minimal example is
 \begin{code}
 macro give = unify
 \end{code}
-Elaborating |give e| will splice the given expression |e : Term| in place of the call, if Agda does nothing to its argument~|e|.
-In fact, Agda quotes macro arguments of types |Term| and |Name| upon invocation, so elaborating |give e| amounts to running |unify (quoteTerm e) (meta x [])|. 
-Afterwards, the call site becomes~|e| (and is elaborated again).
+which is called with one argument of type |Term|.
+Elaborating |give e| will splice the given expression~|e| in place of the call:
+If a macro argument has type |Term| or |Name|, the expression supplied for the argument in a macro call will be automatically quoted by |quoteTerm| or |quote|, so elaborating |give e| amounts to running |unify (quoteTerm e) (meta x [])|. 
+Afterwards, the call site becomes~|e| and is elaborated again.
 In general, we can compute whatever expression we need inside a macro and then place it at the call site by unifying it with~|x|.
 
 Another way to use a metaprogram is to compute a top-level function by
 \begin{code}
 unquoteDecl f = {-"\;\cdots"-}
 \end{code}
-where |f|~is the function being defined, and the right-hand side calls the metaprogram.
-This metaprogram usually needs to take the name~|f| as an argument, so that ---analogously to how we write functions by hand--- it can declare the type of the function using |declareDef : Name → Term → TC ⊤| and give the definition of the function using |defineFun : Name → List Clause → TC ⊤| (where |Clause| is the datatype of reflected function clauses).
+where introduces the function name~|f| into the scope.
+The right-hand side invokes a metaprogram, which needs to take the name~|f| as an argument, so that ---analogously to how we write top-level functions by hand--- it can declare the type of~|f| using |declareDef : Name → Term → TC ⊤| and give the definition of~|f| using |defineFun : Name → List Clause → TC ⊤| (where |Clause| is the datatype of reflected function clauses).
 
 We have extended the |unquoteDecl| mechanism to allow metaprograms to define datatypes as well.
 The extended syntax is
@@ -1162,20 +1161,20 @@ The extended syntax is
 unquoteDecl data d constructor c₁ {-"\ldots\;"-} cₙ = {-"\;\cdots"-}
 \end{code}
 which introduces the names of a datatype~|d| and its constructors |c₁|,~\ldots,~|cₙ| into the scope.
-The definitions of |d|~and |c₁|,~\ldots,~|cₙ| are supplied by the metaprogram using the new primitives |declareData| and |defineData|, whose details are omitted from the presentation.
+The definitions of |d|~and |c₁|,~\ldots,~|cₙ| are supplied by the metaprogram using the new primitives |declareData| and |defineData| (whose details are omitted from the presentation).
 
-Below we look at some actual metaprograms for generating the components in our framework.
+%Below we look at some actual metaprograms for generating the components in our framework.
 
 \subsection{Translating Higher-Order Representations with Local Variable Creation}\label{sec:translation}
 
-Our first task is to translate |PDataD|, a fully typed higher-order representation, into the reflected language to declare native datatypes.
+Our first task is to translate |PDataD|, a fully typed higher-order representation, into the reflected language to define native datatypes.
 The reflected language is, by contrast, a uni-typed first-order representation using de Bruijn indices and \emph{not} hygienic, posing a challenge.
 Rather than presenting the full detail, it suffices to see how telescopes~(\cref{fig:Tel}) are handled to get the essence of the translation.
 For example, the tree-shaped telescope |[[ (A , _) ∶ [ _ ∶ Set ] [] ]] [ _ ∶ (A → A) ] []| of type |Tel| should be translated to this (flattened) list of reflected types
 \begin{equation}\label{eq:telescope}
 |`Set ∷ pi (var 0 []) (var 1 []) ∷ [] : Telescope|
 \end{equation}
-where the type |Telescope| is a part of the elaborator reflection API and stands for |List Term| (and the variables |var 0 []| and |var 1 []| in |pi| both refer to the quotation $|`Set| = |agda-sort (lit 0)|$ of |Set|).
+where the type |Telescope == List Term| is a part of the elaborator reflection API (and the variables |var 0 []| and |var 1 []| in |pi| both refer to the quotation $|`Set| = |agda-sort (lit 0)|$ of |Set|).
 
 One obvious approach is to analyse the quotation of the input |Tel|.
 Such a macro needs to analyse abstract syntax trees \emph{modulo judgemental equality} --- it has to check which case is being analysed by reducing, say, a reflected expression |def (quote f) xs| for a definition~|f| to one of the three cases |con (quote Tel.[]) []|, |con (quote Tel._∷_) xs|, and |con (quote Tel._++_) xs|.
@@ -1191,12 +1190,12 @@ fromTel  (U ++  V)  = ... fromTel (V ?) ...
 \end{code}
 Note that |T|~is a function from |A|, and |V|~a function from |⟦ U ⟧ᵗ|, for some \emph{arbitrary} |A|~and~|U|; how do we give their arguments?
 We solve this problem by creating a \emph{local variable}.
-The |TC| monad stores the context during elaboration, which can be extended by a variable of a given type to run a |TC| computation locally, using the primitive $|extendContext| : |Type → TC A → TC A|$.
+The |TC| monad stores the context during elaboration, which can be extended by a variable of a given type to run a |TC| computation locally, using the primitive $|extendContext| : |Term → TC A → TC A|$.
 The first argument of |extendContext| is a reflected type, which should be the quotation of the actual value of~|A|, but this value is not known until elaboration and thus cannot be obtained by |quoteTerm|; to obtain the quotation, we use the primitive $|quoteTC| : |A → TC Term|$.
 Then, in the second argument of |extendContext|, the local variable can be actually brought into the scope by another primitive $|unquoteTC| : |Term → TC A|$ which unquotes a given reflected expression within the |TC| monad.
 The above construction amounts to a |TC| computation
 \begin{code}
-exCxtT : (B : Set) → (Type → B → TC A) → TC A
+exCxtT : (B : Set) → (Term → B → TC A) → TC A
 exCxtT B f = do  `B ← quoteTC B
                  extendContext `B (unquoteTC (var 0 []) >>= λ x → f `B x)
 \end{code}
@@ -1334,9 +1333,9 @@ where $|`[]| = |con (quote Tel.[]) []|$ and $|`A `∷ `T| = |con (quote Tel._∷
 \subsection{Instantiating Fold Programs with Normalisation}
 \label{sec:specialising}
 
-In this paper we are only interested in the direction of manufacturing native fold functions from |PFoldP|, leaving the opposite direction as future work.
-We will first work out a concrete example manually~(\cref{sec:by-hand}) while developing some generic definitions used by the metaprogram |definePFold|~(\cref{sec:definePFold}).
-The full detail of |definePFold| is not shown since it requires a deeper understanding of the reflection API, but the metaprogram is essentially just a careful formalisation of the manual process.
+Our second task is to write a metaprogram |definePFold|~(\cref{sec:definePFold}) to manufacture a native fold function from a |PFoldP|.
+Before writing |definePFold|, we will work out a concrete example manually and develop some generic definitions~(\cref{sec:by-hand}), which |definePFold| will use.
+We will not show the full detail of |definePFold| since it requires a more extensive understanding of the elaborator reflection API, but the metaprogram is essentially just a careful formalisation of the manual process.
 
 \subsubsection{Instantiation by Hand}
 \label{sec:by-hand}
@@ -1410,7 +1409,7 @@ definePFold F f = do
 \label{fig:definePFold}
 \end{figure}
 
-To formalise the manual process in \cref{sec:by-hand}, we define a |TC| computation |definePFold|~(\cref{fig:definePFold}) to instantiate a given |F : PFoldP| as a native function~|f| by
+Now we formalise the manual process above as a |TC| computation |definePFold|~(\cref{fig:definePFold}), which instantiates a given |F : PFoldP| as a native function~|f| by
 \begin{enumerate*}[label=(\roman*)]
   \item generating the instantiated type using |PFoldNT|, 
   \item generating a clause for each constructor of the datatype specified in~|F|, and
@@ -1531,7 +1530,7 @@ data RecD (I : Set (HL ℓⁱ)) : (HL RecB) → Set{-"_{\highlight{addition}{\te
 \end{figure}
 
 Our framework makes a simplifying assumption that holds for common universe-polymorphic datatypes (for example |Acc| above): we assume that there is a list of level parameters separate from other ordinary parameters, and only these level parameters are involved in universe polymorphism.
-Under this assumption, to describe a possibly universe-polymorphic datatype, we start with a number |n : ℕ| of level parameters, from which we can compute a type |Level ^ n| of tuples of |n|~levels (as defined by |A ^ zero == ⊤| and |A ^ (suc n) == A × (A ^ n)|), and then provide a function of type |Level ^ n → PDataD|, which brings |n|~level parameters into the scope of the definition of a |PDataD|.
+Under this assumption, to describe a possibly universe-polymorphic datatype, we start with a number |n : ℕ| of level parameters, from which we can compute a type |Level ^ n| of tuples of |n|~levels as defined by |A ^ zero == ⊤| and |A ^ (suc n) == A × (A ^ n)|, and then provide a function of type |Level ^ n → PDataD|, which brings |n|~level parameters into the scope of the definition of a |PDataD|.
 We create a new description layer |DataD| for level parametrisation, which is shown in \cref{fig:DataD} along with the existing four layers adapted to accommodate levels, to be explained below in \cref{sec:UP-telescopes,sec:UP-sums-of-products,sec:UP-parameters}.
 The rest of our framework are similarly adapted, so there are also definitions of |DataT|, |DataC|, |FoldP|, |FoldT|, and |FoldC|, which we omit from the presentation.
 Finally, the metaprograms in \cref{sec:reflection} are extended to treat level parameters, but due to the current limit of Agda's universe polymorphism, the treatment is different from that of ordinary parameters, and is briefly sketched in \cref{sec:UP-levels}.
@@ -1566,7 +1565,7 @@ mutual
 Before we adapt the descriptions, telescopes need to be adapted too, as shown in \cref{fig:Tel-omega}.
 The core change is made to the type of the first argument of~`|∷|', from |Set| to |Set ℓ|.
 We also add an index of type |Level| to |Tel| such that |T : Tel ℓ| implies that the maximum level appearing in~|T| is~|ℓ|.
-This maximum level is important since it is the universe level of the type |⟦ T ⟧ᵗ|, which is a nested |Σ|-type inhabited by tuples whose components have the types in~|T|.
+This maximum level is important since it is the universe level of the type |⟦ T ⟧ᵗ|.
 Since the elements of a telescope can now be |Set|s of arbitrary finite levels, the level of the type of the telescope itself has to be greater than all those levels, and is set as the first infinite level~|ω| here.
 
 \subsection{Sum-of-Products Descriptions}
@@ -1576,7 +1575,7 @@ Next we adapt the description datatypes |ConDs|, |ConD|, and |RecD|.
 A first instinct might be copying what has been done for |Tel| (as constructor descriptions can be viewed as a slightly more complex kind of telescopes), enriching the |Set|-arguments to |Set ℓ| and perhaps indexing the datatypes with the maximum level, but this is not enough:
 the range of definitions depending on |Tel| (such as |⟦_⟧ᵗ| and |Curriedᵗ|) is limited and requires only the computation of the maximum level, so indexing suffices; on the other hand, generic libraries may construct whatever they want from descriptions, and the need for non-trivial level computation will naturally arise if those constructions are universe-polymorphic --- in \cref{sec:algebraic-ornamentation,sec:simple-containers} we will compute new universe-polymorphic datatypes from old ones, and will need to specify the new levels in terms of the old ones (and even reason about them).
 For a concrete example we can look at now, consider how the type of a base functor |⟦ D ⟧ᶜˢ| should be enriched:
-One place where we use the base functor is the type of an algebra |{i : I} → ⟦ D ⟧ᶜˢ X i → X i| where |X : I → Set ℓ|~is the result type, which can have any level depending on what the algebra computes, so |ℓ|~should be universally quantified in the type of |⟦ D ⟧ᶜˢ|.
+One place where we use the base functor is the type of an algebra |∀ {i} → ⟦ D ⟧ᶜˢ X i → X i| where |X : I → Set ℓ|~is the result type, which can have any level depending on what the algebra computes, so |ℓ|~should be universally quantified in the type of |⟦ D ⟧ᶜˢ|.
 But then, what should the level of the type |⟦ D ⟧ᶜˢ X i| be?
 This level ---call it~|ℓ'|--- needs to be computed from |ℓ|~and the structure of~|D|, and the computation is non-trivial --- for example, if |D|~is |[]|, then |⟦ D ⟧ᶜˢ X i == ⊥|, in which case |ℓ'|~is simply |lzero|; if |D|~is non-empty, then |ℓ|~may or may not appear in~|ℓ'|, depending on whether there is a constructor with a |ρ|-field or not.
 
@@ -1619,7 +1618,7 @@ Here we are using the simpler datatype level--checking rule employed when Agda's
 If there are more components in the datatype level, they are specified in |alevel|, and the final datatype level is |alevel ⊔ ilevel|.
 The datatype level is not uniquely determined by the content of the datatype ---for example, we could define alternative versions of natural numbers at any level--- but must be no less than the level of any |π|- or |σ|-field of the constructors; this is enforced by |level-ineq|, where the relation |ℓ ⊑ ℓ'| is defined by |ℓ ⊔ ℓ' ≡ ℓ'|.
 With |level-ineq|, we could even define a universe-polymorphic version of the |μ|~operator~(\cref{sec:recap}), so even the traditional approach to datatype-genericity could be extended to incorporate universe polymorphism.
-In general, the ability to manipulate and reason about levels internally seems crucial to datatype-genericity, because computation of universe-polymorphic datatype descriptions ---in particular the levels in the descriptions--- can be arbitrarily complex, and it may no longer be feasible to infer levels or check level constraints automatically as can be done for specific datatypes in languages with typical ambiguity~\citep{Sozeau-universe-polymorphism-Coq}.
+In general, the ability to manipulate and reason about levels internally is probably crucial to datatype-genericity, because computation of universe-polymorphic datatype descriptions ---in particular the levels in the descriptions--- can be arbitrarily complex, and it may no longer be feasible to infer levels or check level constraints automatically as can be done for specific datatypes in languages with typical ambiguity~\citep{Sozeau-universe-polymorphism-Coq}.
 
 \subsection{Level Parameters}
 \label{sec:UP-levels}
@@ -1647,7 +1646,7 @@ The need for the special treatment is one reason that we separate level paramete
 As a demo of our framework, here we provide some samples of generic constructions that should have been made available to the Agda programmer.
 To be more precise, these constructions are not new (or not too novel compared to those in the literature), but they have not been in the main toolbox of the Agda programmer, who prefers to work with native datatypes and functions;
 our framework makes it possible to instantiate these constructions for native entities.
-We will omit the details except those related to the design of our framework, and briefly discuss mechanisms that could make these constructions more convenient to use.
+We will omit the details except those related to the design of our framework, and briefly discuss possible mechanisms that could make these constructions more convenient to use.
 
 \subsection{Fold Operators}
 \label{sec:fold-operators}
@@ -1690,7 +1689,7 @@ Note that this version of |foldr| is different from the one manufactured by |def
 However, we can still connect |foldr| with |foldListP| by manually writing a wrapper to specify the argument order,
 \begin{code}
 foldrT : FoldT foldListP
-foldrT (ℓ' , ℓ , tt) ((A , tt) , B , e , f , tt) = foldr f e
+foldrT (ℓ' , ℓ , _) ((A , _) , B , e , f , _) = foldr f e
 \end{code}
 and then generating a fold connection (using a variant of |genFoldC| that takes a wrapper)
 \begin{code}
@@ -2141,6 +2140,7 @@ Rather than replacing those components with |unquoteDecl| definitions, we can si
 \subsection{Foundations}
 
 \subsubsection{Code Generation versus First-Class Datatypes}
+\label{sec:first-class-datatypes}
 
 Similar to staged approaches~\citep{Yallop-staged-generic-programming,Pickering-staged-SoP}, our framework instantiates generic programs by generating code separately for each native instance.
 A potential problem is code duplication, on which we take a conservative position: while we cannot solve the problem, which is inherent in languages with datatype declarations, we do alleviate it a little by removing the overhead of manual instantiation and maintaining explicit connections between generic and instantiated entities, which generic libraries can exploit.
