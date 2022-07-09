@@ -1,23 +1,21 @@
-\documentclass[acmsmall,fleqn]{acmart}
+\documentclass[acmsmall,screen,fleqn]{acmart}
 
 %% Rights management information.  This information is sent to you
 %% when you complete the rights form.  These commands have SAMPLE
 %% values in them; it is your responsibility as an author to replace
 %% the commands and values with those provided to you when you
 %% complete the rights form.
-%\setcopyright{none}
 \setcopyright{rightsretained}
-\copyrightyear{2022}
+\acmPrice{}
+\acmDOI{10.1145/3547629}
 \acmYear{2022}
-%\acmDOI{10.1145/1122445.1122456}
-
-%%
-%% These commands are for a JOURNAL article.
+\copyrightyear{2022}
+\acmSubmissionID{icfp22main-p20-p}
 \acmJournal{PACMPL}
 \acmVolume{6}
 \acmNumber{ICFP}
-\acmArticle{0}
-\acmMonth{9}
+\acmArticle{98}
+\acmMonth{8}
 
 %%
 %% Submission ID.
@@ -1564,8 +1562,7 @@ mutual
 
 Before we adapt the descriptions, telescopes need to be adapted too, as shown in \cref{fig:Tel-omega}.
 The core change is made to the type of the first argument of~`|∷|', from |Set| to |Set ℓ|.
-We also add an index of type |Level| to |Tel| such that |T : Tel ℓ| implies that the maximum level appearing in~|T| is~|ℓ|.
-This maximum level is important since it is the universe level of the type |⟦ T ⟧ᵗ|.
+We also add an index of type |Level| to |Tel| such that |T : Tel ℓ| implies that the maximum level appearing in~|T| is~|ℓ|; this maximum level is important since it is the universe level of the type |⟦ T ⟧ᵗ|.
 Since the elements of a telescope can now be |Set|s of arbitrary finite levels, the level of the type of the telescope itself has to be greater than all those levels, and is set as the first infinite level~|ω| here.
 
 \subsection{Sum-of-Products Descriptions}
@@ -1653,7 +1650,7 @@ We will omit the details except those related to the design of our framework, an
 
 The generic program that instantiates to fold operators on native datatypes is given the type
 \begin{code}
-fold-operator : (C : DataC D N) → FoldP
+fold-operator : DataC D N → FoldP
 \end{code}
 %For example, the fold program |foldAccP| can be obtained as |fold-operator AccC|.
 As an example of instantiating the generic program, suppose that we have written the datatype |Acc| manually, and want to derive its fold operator.
@@ -2180,7 +2177,7 @@ Typed reflected expressions also benefit efficiency, since they need not be elab
 
 \subsubsection{Universe Polymorphism}
 
-While universe polymorphism is a convenient feature in practice, it is ignored by most of the existing datatype encodings \citep{Dybjer-indexed-induction-recursion,Chapman-levitation,nordvallforsberg2013thesis,Kaposi2020a}.
+While universe polymorphism is a convenient feature in practice, it is ignored by most of the existing datatype encodings~\citep{Dybjer-indexed-induction-recursion,Chapman-levitation,nordvallforsberg2013thesis,Kaposi2020a}.
 Our universe-polymorphic datatype descriptions are made possible by Agda's first-class universe levels, which allow us to express non-trivial level computation and guarantee level-correctness just like we can guarantee the correctness of typed metaprograms without testing or checking the generated entities.
 On the other hand, theoretically there does not seem to be any type theory backing Agda's design, and some problems have already surfaced --- for example, currently subject reduction does not hold for expressions in |Setω| without universe cumulativity~\citep{AgdaIssue5810}.
 \citet{Kovacs-universe-hierarchies} initiated a model-theoretic study of first-class universe levels, including features such as bounded universe polymorphism, but the metatheory is bare-bones and lacks, for example, an elaboration algorithm needed for implementation, so there is still a significant gap between theory and practice.
