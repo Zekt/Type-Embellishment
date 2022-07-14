@@ -1198,21 +1198,20 @@ exCxtT B f = do  `B ← quoteTC B
                  extendContext `B (unquoteTC (var 0 []) >>= λ x → f `B x)
 \end{code}
 which creates a local variable~|x| of type~|B| for use in a |TC| computation~|f|.
-
-As for |⟦ U ⟧ᵗ|, if we merely created a local variable |u : ⟦ U ⟧ᵗ|, then each reference to a component of |u| would be formed by projections |fst| and |snd|. 
-For example, instead of \eqref{eq:telescope} we would have
-\begin{code}
-  `Set :: pi (def (quote fst) ((var 0 []) :: [])) (def (quote fst) ((var 1 []) :: [])) :: [] 
-\end{code}
-To eliminate projections, we generalise |exCxtT| to extend the context with a telescope:
+This function can be generalised to extend the context with a telescope:
 \begin{code}
 exCxtTel : (T : Tel) (f : ⟦ T ⟧ᵗ → TC A) → TC A
 exCxtTel []          f = f tt
 exCxtTel (A ∷   T)   f = exCxtT    A  (λ _  x  → exCxtTel (T x) λ t  → f (x  , t  ))
 exCxtTel (T ++  U)   f = exCxtTel  T  (λ    t  → exCxtTel (U t) λ u  → f (t  , u  ))
 \end{code}
-and create a list of local variables for each type in |U : Tel| as a tuple.
 
+As for |⟦ U ⟧ᵗ|, if we merely created a local variable |u : ⟦ U ⟧ᵗ|, then each reference to a component of |u| would be formed by projections |fst| and |snd|. 
+For example, instead of \eqref{eq:telescope} we would have
+\begin{code}
+  `Set :: pi (def (quote fst) ((var 0 []) :: [])) (def (quote fst) ((var 1 []) :: [])) :: [] 
+\end{code}
+To eliminate projections, we use |exCxtTel| to create a list of local variables for each type in |U : Tel| as a tuple.
 The last two cases of |fromTel| can then be defined by
 \begin{code}
 fromTel (A ∷ T) = do  {-"\hspace{4em}"-}  fromTel (U ++ V) = do  Γ ← fromTel U
