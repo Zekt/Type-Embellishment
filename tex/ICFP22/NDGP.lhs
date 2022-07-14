@@ -50,8 +50,8 @@
 \newcommand{\varcitet}[3][]{\citeauthor{#2}#3~[\ifthenelse{\isempty{#1}}{\citeyear{#2}}{\citeyear[#1]{#2}}]}
 \newcommand{\NoPeriod}[1]{\,}
 
-\usepackage[color=yellow,textsize=scriptsize]{todonotes}
-\setlength{\marginparwidth}{1.25cm}
+%\usepackage[color=yellow,textsize=scriptsize]{todonotes}
+%\setlength{\marginparwidth}{1.25cm}
 %\usepackage[disable]{todonotes}
 
 \newcommand{\LT}[1]{\todo[author=LT,inline,color=green!40,caption={}]{{#1}}}
@@ -1130,10 +1130,10 @@ where the structure of the type expression is turned into the composition of sev
 %The quotation of an expression~|e| can be obtained by |quoteTerm e| and the resolved unique name for a definition~|f| or a constructor by |quote f|.
 %For example, |quoteTerm acc| is |con (quote acc) []|, where the empty list~|[]| indicates that no arguments are given to the |acc| constructor.
 
-The central component of elaborator reflection is the elaborator monad |TC| (short for `Type Checking'), which stores states needed for elaboration such as the context of the call site, the scope of names with its definition, and the set of metavariables.
+The central component of elaborator reflection is the elaborator monad |TC|, short for `Type Checking', which stores states needed for elaboration such as the context of the call site, the scope of names with its definition, and the set of metavariables.
 Metaprograms take the form of |TC| computations, and have access to a set of primitive operations used during elaboration --- for example, the primitive |unify : Term → Term → TC ⊤| unifies two given terms and solves some of the metavariables (thereby changing the elaborator state).
 
-At elaboration time, we can run a metaprogram and splice an expression into the source file.
+At elaboration time, we can run a metaprogram and splice an expression into the source code.
 A more convenient way to do so is to use macros, a special kind of metaprograms of type |A₁ → {-"\cdots\;"-} → Aₙ → Term → TC ⊤| declared with the keyword |macro| and called with the first |n|~arguments.
 During elaboration, the call site of a macro~|M| becomes a metavariable~|x|, which is represented as |meta x [] : Term| and supplied as the last argument of~|M| for manipulation inside~|M|.
 A minimal example is
@@ -1168,7 +1168,7 @@ The definitions of |d|~and |c₁|,~\ldots,~|cₙ| are supplied by the metaprogra
 Our first task is to translate |PDataD|, a fully typed higher-order representation, into the reflected language to define native datatypes.
 The reflected language is, by contrast, a uni-typed first-order representation using de Bruijn indices and \emph{not} hygienic, posing a challenge.
 Rather than presenting the full detail, it suffices to see how telescopes~(\cref{fig:Tel}) are handled to get the essence of the translation.
-For example, the tree-shaped telescope |[[ (A , _) ∶ [ _ ∶ Set ] [] ]] [ _ ∶ (A → A) ] []| of type |Tel| should be translated to this (flattened) list of reflected types
+For example, the tree-shaped telescope |[[ (A , _) ∶ [ _ ∶ Set ] [] ]] [ _ ∶ (A → A) ] []| of type |Tel| should be translated to this flattened list of reflected types
 \begin{equation}\label{eq:telescope}
 |`Set ∷ pi (var 0 []) (var 1 []) ∷ [] : Telescope|
 \end{equation}
@@ -1198,20 +1198,21 @@ exCxtT B f = do  `B ← quoteTC B
                  extendContext `B (unquoteTC (var 0 []) >>= λ x → f `B x)
 \end{code}
 which creates a local variable~|x| of type~|B| for use in a |TC| computation~|f|.
-This function can be generalised to extend the context with a telescope:
-\begin{code}
-exCxtTel : (T : Tel) (f : ⟦ T ⟧ᵗ → TC A) → TC A
-exCxtTel []          f = f tt
-exCxtTel (A ∷   T)   f = exCxtT    A  (λ _  x  → exCxtTel (T x) λ t  → f (x  , t  ))
-exCxtTel (T ++  U)   f = exCxtTel  T  (λ    t  → exCxtTel (U t) λ u  → f (t  , u  ))
-\end{code}
 
 As for |⟦ U ⟧ᵗ|, if we merely created a local variable |u : ⟦ U ⟧ᵗ|, then each reference to a component of |u| would be formed by projections |fst| and |snd|. 
 For example, instead of \eqref{eq:telescope} we would have
 \begin{code}
   `Set :: pi (def (quote fst) ((var 0 []) :: [])) (def (quote fst) ((var 1 []) :: [])) :: [] 
 \end{code}
-To eliminate projections, we use |exCxtTel| to create a list of local variables for each type in |U : Tel| as a tuple.
+To eliminate projections, we generalise |exCxtT| to extend the context with a telescope:
+\begin{code}
+exCxtTel : (T : Tel) (f : ⟦ T ⟧ᵗ → TC A) → TC A
+exCxtTel []          f = f tt
+exCxtTel (A ∷   T)   f = exCxtT    A  (λ _  x  → exCxtTel (T x) λ t  → f (x  , t  ))
+exCxtTel (T ++  U)   f = exCxtTel  T  (λ    t  → exCxtTel (U t) λ u  → f (t  , u  ))
+\end{code}
+and create a list of local variables for each type in |U : Tel| as a tuple.
+
 The last two cases of |fromTel| can then be defined by
 \begin{code}
 fromTel (A ∷ T) = do  {-"\hspace{4em}"-}  fromTel (U ++ V) = do  Γ ← fromTel U
@@ -1338,7 +1339,7 @@ We will not show the full detail of |definePFold| since it requires a more exten
 \subsubsection{Instantiation by Hand}
 \label{sec:by-hand}
 
-As a concrete example, let us manufacture from the fold program |foldAccP| in \cref{sec:PFoldP-PFoldC} a variant of the fold operator for |Acc| (whose arguments are all made explicit to avoid the complication of handling argument visibility):
+As a concrete example, let us manufacture from the fold program |foldAccP| in \cref{sec:PFoldP-PFoldC} a variant of the fold operator for |Acc| (for demonstration purposes whose arguments are all made explicit to avoid the complication of handling argument visibility):
 \begin{code}
 foldAcc′ :  (A : Set) (R : A → A → Set) (P : A → Set)
             (p : ∀ x → (∀ y → R y x → P y) → P x) → ∀ x → Acc R x → P x
@@ -2071,7 +2072,7 @@ Indeed, it has been observed that we can perform partial evaluation in functiona
 Similar to a partial evaluator, a staged generic program is a more specialised program generator --- the generic/general program to be specialised has been fixed.
 %It essentially acts as an intermediate between a partial evaluator and a specialised program. 
 %So not only do we share the same purpose, we share similar means to achieve it as well.
-However, staging requires manually inserting staging annotations; this puts burdens on the programmer and mixes a part of the instantiation process with generic definitions.
+However, staging requires manually inserting staging annotations; this not only puts burdens on the programmer but also mixes a part of the instantiation process with generic definitions.
 %Moreover, \citet[Section~4.2]{Pickering-staged-SoP} need to perform certain manipulations on generic programs, are undesireable since they alter the definitions of generic programs.
 Our approach separates how we instantiate generic programs (by metaprograms) from how we define them (as algebras).
 As a result, our generic programs are annotation-free, making them easier to write and read.
@@ -2144,7 +2145,7 @@ A potential problem is code duplication, on which we take a conservative positio
 A possible solution to the problem was proposed by \citet{Chapman-levitation} in the form of a more radically redesigned type theory where datatype declarations are replaced with first-class descriptions, and the |μ|~operator becomes the exclusive built-in mechanism for manufacturing datatypes.
 Generic programs in this theory are directly computable and do not require instantiation.
 However, there have been no subsequent developments of the theory, in particular a practical implementation.
-While waiting for better languages to emerge, it is also important to enable the development and practical use of datatype-generic libraries as soon as possible, which our framework does.
+While waiting for better languages to emerge, it is also important to enable the development and practical use of datatype-generic libraries, which our framework does.
 
 %\Josh{The language supports a single generic representation akin to the generic |μ| and |fold| operators, which avoid code duplication/explosion but (potentially?) sacrificing efficiency~\citep{Allais-n-ary-functions}.
 %No development since levitation, in particular no implementation.
