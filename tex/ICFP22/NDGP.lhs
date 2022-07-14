@@ -1,4 +1,4 @@
-\documentclass[acmsmall,screen,fleqn]{acmart}
+\documentclass[acmsmall,screen,review,fleqn]{acmart}
 
 %% Rights management information.  This information is sent to you
 %% when you complete the rights form.  These commands have SAMPLE
@@ -433,7 +433,7 @@ The existing dependently typed datatype-generic libraries~\citep{McBride-ornamen
 What is going wrong?
 
 One major problem, we argue, is the lack of interoperability.
-The prevalent approach to datatype-generic programming in Agda (recapped in \cref{sec:recap}) is to construct a family of datatype \emph{descriptions} and then decode the descriptions to actual datatypes via some least fixed-point operator~|μ|.
+The prevalent approach to datatype-generic programming in Agda is to construct a family of datatype \emph{descriptions} and then decode the descriptions to actual datatypes via some least fixed-point operator~|μ|.
 Generic programs take descriptions as parameters and work only on datatypes decoded from descriptions.
 Although this approach is theoretically rooted in the idea of universe à~la Tarski~\citep{ML-TT73,ML-TT84} and serves as a simulation of a more recent theory of datatypes~\citep{Chapman-levitation} (discussed in \cref{sec:first-class-datatypes}), it is not what we want:
 Generic libraries usually use their own version of datatype descriptions and are incompatible with each other, so only one library can be chosen at a time, which is unreasonable.
@@ -451,13 +451,13 @@ foldr f e (a ∷ as)  = f a (foldr f e as)
 but also theorems about |foldr|, such as the following `fold fusion' theorem (which allows us to optimise the composition of a |foldr| and a function~|h| as a single |foldr|):
 \begin{code}
 foldr-fusion :  {A : Set ℓ} {B : Set ℓ'} {C : Set ℓ''}
-                (h : B → C) {e : B} {f : A → B → B} {e' : C} {f' : A → C → C} →
+                (h : B → C) {e : B} {f : A → B → B} {e' : C} {f' : A → C → C}
                 (he : h e ≡ e') (hf : ∀ a b c → h b ≡ c → h (f a b) ≡ f' a c)
                 (as : List A) → h (foldr f e as) ≡ foldr f' e' as
 foldr-fusion h he hf []        = he
 foldr-fusion h he hf (a ∷ as)  = hf a _ _ (foldr-fusion h he hf as)
 \end{code}
-Note that both |foldr| and |foldr-fusion| are fully universe-polymorphic (otherwise they would be inconvenient to use).
+Note that both |foldr| and |foldr-fusion| are \emph{fully universe-polymorphic} (otherwise they would be inconvenient to use).
 Also important (especially in a dependently typed setting) is the ability to derive new datatypes --- the standard example is the derivation of vectors from list |length|,
 \begin{code}
 data Vec (A : Set ℓ) : ℕ → Set ℓ where                              length : {A : Set ℓ} → List A → ℕ
@@ -501,7 +501,7 @@ These metaprograms are general in the sense that they are decoupled from generic
 To interface with the metaprograms, generic libraries should (either directly or indirectly) target the datatype descriptions and function representations provided by our framework, which are expressive: we support inductive families~\citep{Dybjer1994} and both fold and inductive functions, all of which can be parametrised and universe-polymorphic.
 
 We expect that datatype-generic libraries built with our framework will be more attractive to the practical Agda programmer.
-As the elaborator reflection features used by our framework become more widespread, our design will be portable to other languages too (in particular dependently typed ones) --- for example, by including an open-term normalisation operation, a metaprogramming system immediately gains the ability to optimise definitions.
+As the elaborator reflection features used by our framework become more widespread, our design will be portable to other languages too (in particular dependently typed ones) --- for example, if a metaprogramming system includes a normalisation operation (like Idris), it will immediately gain the ability to optimise definitions.
 Moreover, Agda's currently unique design of universe polymorphism ---where universe levels are made explicit and first-class--- plays an important role in our universe-polymorphic datatype descriptions, and our work serves as a practical justification for further investigation into such design~\citep{Kovacs-universe-hierarchies}.
 
 For the rest of the paper:
@@ -509,7 +509,7 @@ After recapping standard datatype-generic programming~(\cref{sec:recap}) and ref
 To simplify the presentation, up to this point we assume |Set : Set| and introduce only a slimmed-down version of our framework.
 Then, leaving |Set : Set| behind, we sketch how the full framework supports universe polymorphism~(\cref{sec:universe-polymorphism}), and give a demo of the framework using some existing generic constructions~(\cref{sec:examples}).
 Finally we conclude with some discussions~(\cref{sec:discussion}).
-Our code is available at \url{https://doi.org/10.5281/zenodo.6603498}.
+Our code is available on Zenodo at \url{https://doi.org/10.5281/zenodo.6603498}.
 
 %We do not need radically new datatype-generic programming techniques, but do need to adapt our datatype descriptions ---restricted to inductive families~\citep{Dybjer1994} in this paper--- to support commonly used Agda features, in particular universe polymorphism~(\cref{sec:parameters}).
 %Our generic programs instantiate to native entities that are close to hand-written forms, and work on existing native entities ---whose forms can be flexibly customised--- through `connections' to their generic counterparts~(\cref{sec:connections}).
