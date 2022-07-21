@@ -64,9 +64,9 @@ Type `make AGDA_BIN=agda-2.6.3` to check all modules in the `src` directory with
 	    │   └── ...
 	    └── ...
 
-[^1]: `Alg` is renamed to `Algᶜˢ` in the files.  
-[^2]: Definitions in the main text before section 4 and those in figure 1 to 8 are not universe polymorphic, thus are different from their corresponding definitions in the files. See section 5 for their exact definitions.  
-[^3]: Instead of `AlgO` and `AlgD` in section 3.2, an `AlgOD` that combines both is defined.  
+(^1): `Alg` is renamed to `Algᶜˢ` in the files.  
+(^2): Definitions in the main text before section 4 and those in figure 1 to 8 are not universe polymorphic, thus are different from their corresponding definitions in the files. See section 5 for their exact definitions.  
+(^3): Instead of `AlgO` and `AlgD` in section 3.2, an `AlgOD` that combines both is defined.  
 
 (\*) To inspect the definition of a datatype `D` or a function `F`, import this module and normalise `print D` or `print F` (Ctrl+C Ctrl+N in agda mode), the definitions will be printed to the debug buffer(\*\*).  
 (\*\*) To open the debug buffer, select the `*Agda Debug*` buffer in Emacs, or execute `Agda: Open Debug Buffer` in the Command Palette of Visual Studio Code (see [agda-mode](https://marketplace.visualstudio.com/items?itemName=banacorn.agda-mode)).
