@@ -22,7 +22,7 @@ There are also highlighted and clickable HTML documents for traversing the modul
 2. `cd agda && git checkout 1b44372`
 3. `git apply ../Agda-unquoteDecl-data.diff`
 4. `make install-bin`
-5. Check the Agda binary version by `agda-2.6.3 -V`, which should output `Agda version 2.6.3-1b44372-dirty`
+5. Check the Agda binary version by `agda-2.6.3 -V`, which should output `Agda version 2.6.3-8f8b1f9-dirty`
 
 ## Check all modules
 Type `make AGDA_BIN=agda-2.6.3` to check all modules in the `src` directory with the patched Agda binary.
