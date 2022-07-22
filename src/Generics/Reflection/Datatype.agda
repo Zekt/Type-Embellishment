@@ -53,9 +53,7 @@ module _ {T : Tel ℓ} (`A : ⟦ T ⟧ᵗ → TC Type) where
   ConDsToTypes (D ∷ Ds) = ⦇ ConDToType D ∷ ConDsToTypes Ds ⦈
 
 getCons : Name → (`Param : Telescope) → PDataD → TC Types
-getCons d `Param Dᵖ = exCxtTel Param λ ps →
-  map (prependToType `Param) <$>
-      ConDsToTypes (typeOfData d ps) (applyP ps)
+getCons d `Param Dᵖ = exCxtTel Param λ ps → ConDsToTypes (typeOfData d ps) (applyP ps)
   where open PDataD Dᵖ
 {-# INLINE getCons #-}
 
@@ -79,7 +77,7 @@ defineByDataD dataD dataN conNs = exCxtℓs #levels λ ℓs → do
   -- dprint (strErr "Type:\n" ∷ termErr dT ∷ [])
   declareData dataN (#levels + length `Param) (prependToType `Levels dT)
 
-  conTs ← withNormalisation true $ map (prependToType `Levels) <$> getCons dataN `Param Dᵖ
+  conTs ← withNormalisation true $ getCons dataN `Param Dᵖ
 
   let |conTs| = length conTs ; |conNs| = length conNs
   when (|conTs| /= |conNs|) $ typeError {A = ⊤}
