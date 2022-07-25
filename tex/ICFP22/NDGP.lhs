@@ -1,4 +1,4 @@
-\documentclass[acmsmall,screen,review,fleqn]{acmart}
+\documentclass[acmsmall,screen,fleqn,review]{acmart}
 
 %% Rights management information.  This information is sent to you
 %% when you complete the rights form.  These commands have SAMPLE
@@ -1390,19 +1390,25 @@ foldAccC′ = record { equation = λ { (inl (x , as , refl)) → refl } }
 
 \begin{figure}
 \codefigure
+\begin{minipage}[t]{.475\textwidth}
 \begin{code}
 definePFold : PFoldP → Name → TC ⊤
 definePFold F f = do
   -- step (i)
-    `type ← normalise =<< quoteTC (PFoldNT F)
-    declareDef f `type
-  -- step (ii)
-    cls ←  caseM (getDefinition =<< PFoldPToNativeName F) of λ
-             {  (data-type pars cs)  → forM cs (conClause pars)
-             ;  _                    → typeError [] }
-  -- step (iii)
-    defineFun f =<< mapRHS normalise cls
+  `type ← normalise =<< quoteTC (PFoldNT F)
+  declareDef f `type
 \end{code}
+\end{minipage}%
+\begin{minipage}[t]{.525\textwidth}
+\begin{code}
+  -- step (ii)
+  cls ←  caseM (getDefinition =<< PFoldPToNativeName F) of λ
+           {  (data-type pars cs)  → forM cs (conClause pars)
+           ;  _                    → typeError [] }
+  -- step (iii)
+  defineFun f =<< mapRHS normalise cls
+\end{code}
+\end{minipage}
 \caption{The metaprogram |definePFold| for generating a top-level fold function from a fold program}
 \label{fig:definePFold}
 \end{figure}
@@ -1432,7 +1438,7 @@ For step~(ii), we use the primitive $|getDefinition| : |Name → TC Definition|$
 First we need to explain how clauses are handled in a bit more detail:
 A clause takes the form $|Δ| \vdash \overline{p} \hookrightarrow e$ where $\overline{p}$ is a list of patterns and $e$~a reflected expression; the types of the variables in~$\overline{p}$ are specified in the context~|Δ|.
 It may appear that the context~|Δ| needs to be fully specified beforehand, but actually it is not the case.
-This is because the reflected language plays the dual role of unchecked input and checked output of the elaborator~\cite{Cockx2020}: the context of a checked clause is fully specified, whereas the context of an unchecked clause, which has the form $\overline{p} \hookrightarrow e$, can simply be filled with unsolved metavariables represented by |unknown : Term|.
+This is because the reflected language plays the dual role of unchecked input and checked output of the elaborator~\citep{Cockx2020}: the context of a checked clause is fully specified, whereas the context of an unchecked clause, which has the form $\overline{p} \hookrightarrow e$, can simply be filled with unsolved metavariables represented by |unknown : Term|.
 
 Back to the clauses we should generate for~|f|: Abstracted from~\eqref{eq:fold-base-before}, each clause has the form
 \begin{equation} \label{eq:clause}
