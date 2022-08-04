@@ -509,7 +509,7 @@ After recapping standard datatype-generic programming~(\cref{sec:recap}) and ref
 To simplify the presentation, up to this point we assume |Set : Set| and introduce only a slimmed-down version of our framework.
 Then, leaving |Set : Set| behind, we sketch how the full framework supports universe polymorphism~(\cref{sec:universe-polymorphism}), and give a demo of the framework using some existing generic constructions~(\cref{sec:examples}).
 Finally we conclude with some discussions~(\cref{sec:discussion}).
-Our code is available on Zenodo at \url{https://doi.org/10.5281/zenodo.6603498}.
+Our code is available on Zenodo~\citep{Ko-NDGP-artefact}.
 
 %We do not need radically new datatype-generic programming techniques, but do need to adapt our datatype descriptions ---restricted to inductive families~\citep{Dybjer1994} in this paper--- to support commonly used Agda features, in particular universe polymorphism~(\cref{sec:parameters}).
 %Our generic programs instantiate to native entities that are close to hand-written forms, and work on existing native entities ---whose forms can be flexibly customised--- through `connections' to their generic counterparts~(\cref{sec:connections}).
